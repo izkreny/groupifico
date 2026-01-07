@@ -21,7 +21,7 @@ Groupifico is strictly focused on fundamental parts of your group:
 - Polls (quick and easy feedback)
 - Membership fees (Treasury)
 
-_MAYBE?_
+_Maybe?_
 
 - Comments / Notes
 - Files / Attachments
@@ -35,7 +35,7 @@ _MAYBE?_
   - ERB + partials + layout
   - DaisyUI
 
-_MAYBE?_
+_Maybe?_
 - Snappy Rails PWA with push notifications via Hotwire
 ---
 - ViewComponents
@@ -52,7 +52,7 @@ _MAYBE?_
 - User can login to the app via magic link/code sent to email
 - User can become a Member of one or more Groups
 
-_MAYBE?_
+_Maybe?_
 - Login via Google Account and/or Passkey
 - Login with code sent to mobile phone via SMS
 - Add more fields via (Groups?) Profile(s)
@@ -62,7 +62,7 @@ _MAYBE?_
 - Members belong to the Group and have status and roles
 - They can create/interact with Events, Polls, etc.
 
-_MAYBE?_
+_Maybe?_
 - Start / end date of membership
 - Membership history
 - Multiple roles aka role system based on modules
@@ -71,7 +71,7 @@ _MAYBE?_
 - Main organizational group entity
 - Only (event) admin can create events
 
-_MAYBE?_
+_Maybe?_
 - Deadline for RSVP (status)
 - Duplicate event
 ---
@@ -97,7 +97,7 @@ _MAYBE?_
   - Lyrics
   - Notes
 
-_MAYBE?_
+_Maybe?_
 - Extra fields:
   - Duration
   - Key
@@ -112,7 +112,7 @@ _MAYBE?_
 #### Treasury
 - Membership fees
 
-### MAYBE?
+### Maybe?
 - Translations aka il8n
 - Comments
 - Seasons
@@ -133,65 +133,53 @@ config:
 ---
 
 erDiagram
-    USER   1  to 0+ MEMBER   : "become / belong"
-    MEMBER 0+ to 1  GROUP    : "belong / has"
-    GROUP  1  to 0+ EVENT    : "has    / belong"
-    EVENT  1  to 0+ ATTENDEE : "has    / belong"
-    MEMBER 1  to 0+ ATTENDEE : "become / belong"
-    GROUP  0+ to 1  ADDRESS  : "has    / belong"
-    EVENT  0+ to 1  ADDRESS  : "has    / belong"
+    direction TB
+    USER   1  to 1+ MEMBER   : "↓ become … belong ↑"
+    MEMBER 1+ to 1  GROUP    : "↓ belong … has ↑"
+    GROUP  1  to 1+ EVENT    : "↓ has    … belong ↑"
+    EVENT  1  to 1+ ATTENDEE : "↓ has    … belong ↑"
+    MEMBER 1  to 1+ ATTENDEE : "↓ become … belong ↑"
+    GROUP  1+ to 1  ADDRESS  : "↓ has    … belong ↑"
+    EVENT  1+ to 1  ADDRESS  : "↓ has    … belong ↑"
 
     USER {
-        integer id           PK "NOT NULL"
-        string  uid          UK "NOT NULL"
-        string  first_name      "NOT NULL"
-        string  last_name       "NOT NULL"
-        string  email        UK "NOT NULL"
-        string  mobile_phone UK "NOT NULL"
+        uid          STRING "UK"
+        first_name   STRING
+        last_name    STRING
+        email        STRING "UK"
+        mobile_phone STRING "UK"
     }
 
     GROUP {
-        integer id          PK "NOT NULL"
-        string  uid         UK "NOT NULL"
-        enum    type           "NOT NULL, values: [group, choir, band], default: _via_domain_name_"
-        string  name           "NOT NULL"
-        text    description    "NULL"
-        integer address_id  FK "NOT NULL"
+        uid         STRING "UK"
+        name        STRING
+        description TEXT
+        group_type  STRING "ENUM"
     }
 
     MEMBER {
-        integer id       PK "NOT NULL"
-        integer user_id  FK "NOT NULL"
-        integer group_id FK "NOT NULL"
-        enum    status      "NOT NULL, values: [pending, active, paused, inactive], default: pending"
-        enum    role        "NOT NULL, values: [owner, admin, moderator, member], default: member"
+        status STRING "ENUM"
+        role   STRING "ENUM"
     }
 
     EVENT {
-        integer  id          PK "NOT NULL"
-        integer  group_id    FK "NOT NULL"
-        string   uid            "NOT NULL"
-        integer  creator_id  FK "NOT NULL, source: member_id"
-        integer  manager_id  FK "NULL, source: member_id"
-        string   name           "NOT NULL"
-        text     description    "NULL"
-        enum     status         "NOT NULL, values: [unconfirmed, confirmed, concluded, canceled, declined], default: unconfirmed"
-        enum     type           "NOT NULL, values: [rehearsal, gig], default: rehearsal"
-        datetime start          "NOT NULL"
-        datetime end            "NOT NULL"
-        integer  address_id  FK "NOT NULL"
+        uid         STRING
+        creator_id  INTEGER "FK: MEMBER"
+        manager_id  INTEGER "FK: MEMBER"
+        name        STRING
+        description TEXT
+        start       DATETIME
+        end         DATETIME
+        status      STRING "ENUM"
+        event_type  SRING "ENUM"
     }
 
     ATTENDEE {
-        integer id        PK "NOT NULL"
-        integer event_id  FK "NOT NULL"
-        integer member_id FK "NOT NULL"
-        enum    status       "NOT NULL, values: [reserved, invited, yes, maybe, no], default: reserved"
+        status STRING "ENUM"
     }
 
     ADDRESS {
-        integer id PK "NOT NULL"
-        string name "NOT NULL"
+        name STRING
         %% Add other details as city, country, street, etc.
         %% Implement later geo coordinates aka location
     }

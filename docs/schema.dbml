@@ -1,0 +1,126 @@
+Project groupifico {
+  database_type: 'SQLite'
+}
+
+// RELATIONSHIPS
+Ref "↓ become  … belong ↑": users.id          < members.user_id     [delete: no action, update: no action]
+Ref "↓ belong  … has ↑":   members.group_id  > groups.id           [delete: no action, update: no action]
+Ref "↓ has     … belong ↑": groups.id         < events.group_id     [delete: no action, update: no action]
+Ref "↓ has     … belong ↑": events.id         < attendees.event_id  [delete: no action, update: no action]
+Ref "↓ become  … belong ↑": members.id        < attendees.member_id [delete: no action, update: no action]
+Ref "↓ has     … belong ↑": groups.address_id < addresses.id        [delete: no action, update: no action]
+Ref "↓ has     … belong ↑": events.address_id < addresses.id        [delete: no action, update: no action]
+Ref "↓ created … has ↑":    events.creator_id < members.id          [delete: no action, update: no action]
+Ref "↓ managed … has ↑":    events.manager_id < members.id          [delete: no action, update: no action]
+
+// TABLES
+Table users {
+  ~primary_key
+  uid          VARCHAR(255) [not null, unique]
+  first_name   VARCHAR(255) [not null]
+  last_name    VARCHAR(255) [not null]
+  email        VARCHAR(255) [not null, unique]
+  mobile_phone VARCHAR(255) [not null, unique]
+  ~timestamps
+}
+
+Table groups {
+  ~primary_key
+  uid         VARCHAR(255) [unique, not null] // TODO: additional check constraint on application level
+  group_type  group_type   [not null] // TODO: default value based on hostname
+  name        VARCHAR(255) [not null]
+  description TEXT         [null]
+  address_id  INTEGER      [null]
+  ~timestamps
+}
+
+Table members {
+  ~primary_key
+  user_id  INTEGER       [not null]
+  group_id INTEGER       [not null]
+  status   member_status [not null, default: 'active']
+  role     member_role   [not null, default: 'member']
+  ~timestamps
+}
+
+Table events {
+  ~primary_key
+  group_id    INTEGER      [not null]
+  uid         VARCHAR(255) [not null]
+  creator_id  INTEGER      [not null]
+  manager_id  INTEGER      [null]
+  name        VARCHAR(255) [not null]
+  description TEXT         [null]
+  status      event_status [not null, default: 'unconfirmed']
+  event_type  event_type   [not null] // TODO: Create special entity with event types, maybe based on group_type (as special Entity itself)?
+  start       DATETIME     [not null]
+  end         DATETIME     [not null]
+  address_id  INTEGER      [not null]
+  ~timestamps
+}
+
+Table attendees {
+  ~primary_key
+  member_id INTEGER         [not null] // TODO: FK
+  event_id  INTEGER         [not null] // TODO: FK
+  status    attendee_status [not null, default: 'reserved']
+  ~timestamps
+}
+
+Table addresses {
+  ~primary_key
+  name VARCHAR(255) [not null]
+  // Add other details as city, country, street, etc.
+  // Implement later geo coordinates aka location
+  ~timestamps
+}
+
+// TABLE PARTIALS
+TablePartial primary_key {
+  id INTEGER [primary key, unique, not null, increment]
+}
+
+TablePartial timestamps {
+  created_at DATETIME(6)
+  updated_at DATETIME(6)
+}
+
+// ENUMS
+Enum group_type {
+  group
+  choir
+  band
+}
+
+Enum member_status {
+  active
+  paused
+  inactive
+}
+
+Enum member_role {
+  owner
+  administrator
+  manager
+  member
+}
+
+Enum event_status {
+  unconfirmed
+  confirmed
+  concluded
+  canceled
+}
+
+Enum event_type {
+  rehearsal
+  gig
+}
+
+Enum attendee_status {
+  reserved
+  invited
+  yes
+  maybe
+  no
+}
