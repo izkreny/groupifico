@@ -3,35 +3,53 @@ Project groupifico {
 }
 
 // RELATIONSHIPS
-Ref "↓ become  … belong ↑": users.id          < members.user_id     [delete: no action, update: no action]
-Ref "↓ belong  … has ↑":   members.group_id  > groups.id           [delete: no action, update: no action]
-Ref "↓ has     … belong ↑": groups.id         < events.group_id     [delete: no action, update: no action]
-Ref "↓ has     … belong ↑": events.id         < attendees.event_id  [delete: no action, update: no action]
-Ref "↓ become  … belong ↑": members.id        < attendees.member_id [delete: no action, update: no action]
-Ref "↓ has     … belong ↑": groups.address_id < addresses.id        [delete: no action, update: no action]
-Ref "↓ has     … belong ↑": events.address_id < addresses.id        [delete: no action, update: no action]
-Ref "↓ created … has ↑":    events.creator_id < members.id          [delete: no action, update: no action]
-Ref "↓ managed … has ↑":    events.manager_id < members.id          [delete: no action, update: no action]
+// < … one-to-many … users.id      < posts.user_id
+// > … many-to-one … posts.user_id > users.id
+// - … one-to-one  … users.id      - user_profiles.user_id
+Ref: users.id     < members.user_id       [delete: cascade, update: cascade]
+Ref: users.id     - user_profiles.user_id [delete: cascade, update: cascade]
+Ref: groups.id    < members.group_id      [delete: cascade, update: cascade]
+Ref: groups.id    < events.group_id       [delete: cascade, update: cascade]
+Ref: events.id    < attendees.event_id    [delete: cascade, update: cascade]
+Ref: members.id   < attendees.member_id   [delete: cascade, update: cascade]
+Ref: addresses.id < groups.address_id     [delete: cascade, update: cascade]
+Ref: addresses.id < events.address_id     [delete: cascade, update: cascade]
+Ref: members.id   < events.creator_id     [delete: cascade, update: cascade]
+Ref: members.id   < events.manager_id     [delete: cascade, update: cascade]
 
-// TABLES
+// TABLES & ENUMS
 Table users {
   ~primary_key
-  uid          VARCHAR(255) [not null, unique]
-  first_name   VARCHAR(255) [not null]
-  last_name    VARCHAR(255) [not null]
-  email        VARCHAR(255) [not null, unique]
-  mobile_phone VARCHAR(255) [not null, unique]
+  email VARCHAR(250) [not null, unique, note: 'case_sensitive: false']
+  ~timestamps
+}
+
+Table user_profiles {
+  ~primary_key
+  user_id      INTEGER      [unique, not null]
+  username     VARCHAR(50)  [unique, not null, note: 'automaticaly generated random UID'] // TODO
+  first_name   VARCHAR(250)
+  last_name    VARCHAR(250)
+  time_zone    VARCHAR(250) [not null, note: 'resolved via browser'] // TODO: as separate entity?!?
+  mobile_phone VARCHAR(50)  [unique]
   ~timestamps
 }
 
 Table groups {
   ~primary_key
-  uid         VARCHAR(255) [unique, not null] // TODO: additional check constraint on application level
-  group_type  group_type   [not null] // TODO: default value based on hostname
-  name        VARCHAR(255) [not null]
-  description TEXT         [null]
   address_id  INTEGER      [null]
+  username    VARCHAR(50)  [unique, not null] // TODO: additional validation check on application level
+  name        VARCHAR(250) [not null]
+  description TEXT         // TODO: as field in separate group_profiles table?
+  time_zone   VARCHAR(250) // TODO: Maybe?!?
+  group_type  group_type   [not null] // TODO: default value based on hostname
   ~timestamps
+}
+
+Enum group_type {
+  group
+  choir
+  band
 }
 
 Table members {
@@ -43,55 +61,6 @@ Table members {
   ~timestamps
 }
 
-Table events {
-  ~primary_key
-  group_id    INTEGER      [not null]
-  uid         VARCHAR(255) [not null]
-  creator_id  INTEGER      [not null]
-  manager_id  INTEGER      [null]
-  name        VARCHAR(255) [not null]
-  description TEXT         [null]
-  status      event_status [not null, default: 'unconfirmed']
-  event_type  event_type   [not null] // TODO: Create special entity with event types, maybe based on group_type (as special Entity itself)?
-  start       DATETIME     [not null]
-  end         DATETIME     [not null]
-  address_id  INTEGER      [not null]
-  ~timestamps
-}
-
-Table attendees {
-  ~primary_key
-  member_id INTEGER         [not null] // TODO: FK
-  event_id  INTEGER         [not null] // TODO: FK
-  status    attendee_status [not null, default: 'reserved']
-  ~timestamps
-}
-
-Table addresses {
-  ~primary_key
-  name VARCHAR(255) [not null]
-  // Add other details as city, country, street, etc.
-  // Implement later geo coordinates aka location
-  ~timestamps
-}
-
-// TABLE PARTIALS
-TablePartial primary_key {
-  id INTEGER [primary key, unique, not null, increment]
-}
-
-TablePartial timestamps {
-  created_at DATETIME(6)
-  updated_at DATETIME(6)
-}
-
-// ENUMS
-Enum group_type {
-  group
-  choir
-  band
-}
-
 Enum member_status {
   active
   paused
@@ -100,9 +69,26 @@ Enum member_status {
 
 Enum member_role {
   owner
-  administrator
+  admin
   manager
   member
+}
+
+Table events {
+  ~primary_key
+  group_id    INTEGER      [not null]
+  creator_id  INTEGER      [not null]
+  manager_id  INTEGER      [null]
+  address_id  INTEGER      [null]
+  uid         VARCHAR(15)  [not null] // TODO
+  name        VARCHAR(250) [not null]
+  description TEXT
+  start       DATETIME     [not null]
+  end         DATETIME     [not null]
+  time_zone   VARCHAR(250) // TODO: Maybe?!?
+  status      event_status [not null, default: 'unconfirmed'] // TODO: implement business logic aka validation depending on existence of manager(?!?) and address data
+  event_type  event_type   [not null] // TODO: Create special entity with event types, maybe based on group_type (as special Entity itself)?
+  ~timestamps
 }
 
 Enum event_status {
@@ -115,6 +101,15 @@ Enum event_status {
 Enum event_type {
   rehearsal
   gig
+  other
+}
+
+Table attendees {
+  ~primary_key
+  member_id INTEGER         [not null]
+  event_id  INTEGER         [not null]
+  status    attendee_status [not null, default: 'reserved']
+  ~timestamps
 }
 
 Enum attendee_status {
@@ -123,4 +118,30 @@ Enum attendee_status {
   yes
   maybe
   no
+}
+
+Table addresses {
+  ~primary_key
+  name            VARCHAR(250) [not null]
+  street_name     VARCHAR(250)
+  building_number VARCHAR(250)
+  city            VARCHAR(250)
+  postal_code     VARCHAR(100)
+  state_code      VARCHAR(50)  [note: 'ISO 3166-2 code']
+  country_code    VARCHAR(5)   [note: 'ISO 3166-1 alpha-2 code']
+  latitude        FLOAT        [note: 'user can not edit']
+  longitude       FLOAT        [note: 'user can not edit']
+  ~timestamps
+
+  Note: 'Based on ISO 20022 PostalAddress type'
+}
+
+// TABLE PARTIALS
+TablePartial primary_key {
+  id INTEGER [primary key, unique, increment, not null]
+}
+
+TablePartial timestamps {
+  created_at DATETIME(6) [not null]
+  updated_at DATETIME(6) [not null]
 }
