@@ -3,19 +3,20 @@ Project groupifico {
 }
 
 // RELATIONSHIPS
-// < … one-to-many … users.id      < posts.user_id
-// > … many-to-one … posts.user_id > users.id
-// - … one-to-one  … users.id      - user_profiles.user_id
-Ref: users.id     < members.user_id       [delete: cascade, update: cascade]
-Ref: users.id     - user_profiles.user_id [delete: cascade, update: cascade]
-Ref: groups.id    < members.group_id      [delete: cascade, update: cascade]
-Ref: groups.id    < events.group_id       [delete: cascade, update: cascade]
-Ref: events.id    < attendees.event_id    [delete: cascade, update: cascade]
-Ref: members.id   < attendees.member_id   [delete: cascade, update: cascade]
-Ref: addresses.id < groups.address_id     [delete: cascade, update: cascade]
-Ref: addresses.id < events.address_id     [delete: cascade, update: cascade]
-Ref: members.id   < events.creator_id     [delete: cascade, update: cascade]
-Ref: members.id   < events.manager_id     [delete: cascade, update: cascade]
+// One  to Many:  "<"  …  users.id      < posts.user_id
+// Many to  One:  ">"  …  posts.user_id > users.id
+// One  to  One:  "-"  …  users.id      - user_profiles.user_id
+Ref: users.id     < members.user_id       [delete: cascade,  update: cascade]
+Ref: users.id     - user_profiles.user_id [delete: cascade,  update: cascade]
+Ref: groups.id    < members.group_id      [delete: cascade,  update: cascade]
+Ref: groups.id    < events.group_id       [delete: cascade,  update: cascade]
+Ref: events.id    < attendees.event_id    [delete: cascade,  update: cascade]
+Ref: members.id   < attendees.member_id   [delete: cascade,  update: cascade]
+Ref: addresses.id < groups.address_id     [delete: restrict, update: cascade]
+Ref: addresses.id < events.address_id     [delete: restrict, update: cascade]
+// ActiveRecord Associations only (Relationships without SQL Foreign Keys constraints)
+Ref: members.id   < events.creator_id     [delete: set default, update: cascade]
+Ref: members.id   < events.manager_id     [delete: set null,    update: cascade]
 
 // TABLES & ENUMS
 Table users {
@@ -40,7 +41,7 @@ Table groups {
   address_id  INTEGER      [null]
   username    VARCHAR(50)  [unique, not null] // TODO: additional validation check on application level
   name        VARCHAR(250) [not null]
-  description TEXT         // TODO: as field in separate group_profiles table?
+  description TEXT(100000) // TODO: as field in separate group_profiles table?
   time_zone   VARCHAR(250) // TODO: Maybe?!?
   group_type  group_type   [not null] // TODO: default value based on hostname
   ~timestamps
@@ -59,6 +60,8 @@ Table members {
   status   member_status [not null, default: 'active']
   role     member_role   [not null, default: 'member']
   ~timestamps
+
+  Note: 'Index: User can not become a Member of the same Group twice i.e. Group can not have two Members that belong to the same User'
 }
 
 Enum member_status {
@@ -69,9 +72,9 @@ Enum member_status {
 
 Enum member_role {
   owner
+  member
   admin
   manager
-  member
 }
 
 Table events {
@@ -82,12 +85,12 @@ Table events {
   address_id  INTEGER      [null]
   uid         VARCHAR(15)  [not null] // TODO
   name        VARCHAR(250) [not null]
-  description TEXT
+  description TEXT(100000)
   start       DATETIME     [not null]
   end         DATETIME     [not null]
   time_zone   VARCHAR(250) // TODO: Maybe?!?
   status      event_status [not null, default: 'unconfirmed'] // TODO: implement business logic aka validation depending on existence of manager(?!?) and address data
-  event_type  event_type   [not null] // TODO: Create special entity with event types, maybe based on group_type (as special Entity itself)?
+  event_type  event_type   [not null] // TODO: Create special entity with event types, maybe based on group_type (as special Entity itself)? Also make it optional?
   ~timestamps
 }
 
@@ -99,9 +102,9 @@ Enum event_status {
 }
 
 Enum event_type {
+  other
   rehearsal
   gig
-  other
 }
 
 Table attendees {
@@ -110,6 +113,8 @@ Table attendees {
   event_id  INTEGER         [not null]
   status    attendee_status [not null, default: 'reserved']
   ~timestamps
+
+  Note: 'Index: Member can not become an Attendee of the same Event twice i.e. Event can not have two Attendees that belong to the same Member'
 }
 
 Enum attendee_status {
