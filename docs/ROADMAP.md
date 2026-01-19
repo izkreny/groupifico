@@ -6,17 +6,26 @@
 
 ### User
 - Login via Google Account and/or Passkey
+- Add verification workflow when user enter mobile phone
 - Login with code sent to mobile phone via SMS
 - Add more fields via (Groups?) Profile(s)
   - [Get](https://stackoverflow.com/a/37512371/21188433) Time Zone from [browser](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/resolvedOptions)
 - Soft delete (anonymize)
 
+### User Profile
+- Add phone normalization and validation gem: [phonelib](https://github.com/daddyz/phonelib) or [PhonyRails](https://github.com/joost/phony_rails) (via [phony](https://github.com/floere/phony))
+
 ### Member aka _Group membership_
+- Add uniquness custom validation
 - Start / end date of membership
 - Membership history
 - Multiple roles aka role system based on modules
 
 ### Event
+- Change `start` and `end` fields to the `starts_at` and `ends_at`
+- Automatically fill `creator_id` before validation or save?
+- Automatically fill end with 2.hours from start also before validate AR callback
+- Consider changing `event_type` to `category` or just `event_tag` (because type is more for for example Reccuring or one-off)
 - Only (event) admin can create events
 - Deadline for RSVP (status)
 - Duplicate event
@@ -27,6 +36,7 @@
 - Status workflow (rules)
 
 ### Attendee
+- Add uniquness custom validation
 - Track RSVP (status) changes...
 
 ## Other Domain Models
@@ -42,7 +52,7 @@
 - Fields:
   - Name
   - URL
-  - url_type (for icons) - maybe allow user to select custom icon? Or just make it easy to place emoji or icon inside te name field?! Or make separate feature depending it is linktree or social links, maybe based on link_type enum?
+  - `url_type` (for icons) - maybe allow user to select custom icon? Or just make it easy to place emoji or icon inside te name field?! Or make separate feature depending it is linktree or social links, maybe based on `link_type` enum?
   - color (only for linktree feature?!) e.g. primary, secondary, info, warning...
 - Implement statistics
 
