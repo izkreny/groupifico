@@ -24,5 +24,5 @@ class Attendee < ApplicationRecord
   belongs_to :member
   belongs_to :event
 
-  enum :status, %i[ reserved invited yes maybe no ], default: :reserved
+  enum :status, %i[ reserved invited yes maybe no ], default: :reserved, validate: true
 end

@@ -33,6 +33,12 @@ class Event < ApplicationRecord
   has_many :attendees, dependent: :destroy
   has_many :members, through: :attendees
 
-  enum :status, %i[ unconfirmed confirmed concluded canceled ], default: :unconfirmed
-  enum :event_type, %i[ other rehearsal gig ], default: :rehearsal
+  enum :status, %i[ unconfirmed confirmed concluded canceled ], default: :unconfirmed, validate: true
+  enum :event_type, %i[ other rehearsal gig ], default: :rehearsal, validate: true
+
+  validates_associated :address, :manager
+  validates :name, :start, :end, presence: true
+  validates :name, length: { maximum: 250 }
+  validates :description, length: { maximum: 25_000 }
+  validates :end, comparison: { greater_than: :start }
 end

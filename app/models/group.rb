@@ -19,5 +19,9 @@ class Group < ApplicationRecord
   has_many :members, dependent: :destroy
   has_many :events, dependent: :destroy
 
-  enum :group_type, %i[ group choir band ], default: :choir
+  enum :group_type, %i[ general choir band ], default: :choir, validate: true
+
+  validates_associated :address
+  validates :name, presence: true, length: { maximum: 250 }
+  validates :description, length: { maximum: 25_000 }
 end

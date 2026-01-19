@@ -15,4 +15,6 @@ class User < ApplicationRecord
   has_one :profile, class_name: "UserProfile", dependent: :destroy
   has_many :members, dependent: :destroy
   has_many :groups, through: :members
+
+  validates :email, presence: true, uniqueness: { case_sensitive: false }, length: { maximum: 250 }, format: { with: URI::MailTo::EMAIL_REGEXP }
 end

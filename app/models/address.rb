@@ -18,4 +18,11 @@
 class Address < ApplicationRecord
   has_many :events
   has_many :groups
+
+  validates :name, presence: true
+  validates :building_number, :city, :name, :street_name, length: { maximum: 250 }
+  validates :postal_code, length: { maximum: 100 }
+  validates :state_code, length: { maximum: 50 }
+  validates :country_code, length: { maximum: 5 }
+  validates :latitude, :longitude, numericality: true, allow_nil: true
 end

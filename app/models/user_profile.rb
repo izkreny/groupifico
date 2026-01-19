@@ -21,4 +21,7 @@
 #
 class UserProfile < ApplicationRecord
   belongs_to :user
+
+  validates :first_name, :last_name, length: { maximum: 250 }
+  validates :mobile_phone, uniqueness: true, length: { maximum: 50 }
 end

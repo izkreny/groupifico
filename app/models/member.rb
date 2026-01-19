@@ -30,6 +30,6 @@ class Member < ApplicationRecord
   has_many :created_events, class_name: "Event", foreign_key: "creator_id", inverse_of: :creator
   has_many :managed_events, class_name: "Event", foreign_key: "manager_id", inverse_of: :manager
 
-  enum :status, %i[ active paused inactive ], default: :active
-  enum :role, %i[ owner member admin manager ], default: :member
+  enum :status, %i[ active paused inactive ], default: :active, validate: true
+  enum :role, %i[ owner member admin manager ], default: :member, validate: true
 end
