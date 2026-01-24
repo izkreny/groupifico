@@ -1,29 +1,36 @@
-# == Schema Information
+# ## Schema Information
 #
-# Table name: events
+# Table name: `events`
 #
-#  id          :integer          not null, primary key
-#  description :text(100000)
-#  end         :datetime         not null
-#  event_type  :integer          not null
-#  name        :string(250)      not null
-#  start       :datetime         not null
-#  status      :integer          not null
-#  created_at  :datetime         not null
-#  updated_at  :datetime         not null
-#  address_id  :integer
-#  creator_id  :bigint           not null
-#  group_id    :integer          not null
-#  manager_id  :bigint
+# ### Columns
 #
-# Indexes
+# Name               | Type               | Attributes
+# ------------------ | ------------------ | ---------------------------
+# **`id`**           | `integer`          | `not null, primary key`
+# **`description`**  | `text(100000)`     |
+# **`end`**          | `datetime`         | `not null`
+# **`event_type`**   | `integer`          | `not null`
+# **`name`**         | `string(250)`      | `not null`
+# **`start`**        | `datetime`         | `not null`
+# **`status`**       | `integer`          | `not null`
+# **`created_at`**   | `datetime`         | `not null`
+# **`updated_at`**   | `datetime`         | `not null`
+# **`address_id`**   | `integer`          |
+# **`creator_id`**   | `bigint`           | `not null`
+# **`group_id`**     | `integer`          | `not null`
+# **`manager_id`**   | `bigint`           |
 #
-#  index_events_on_group_id  (group_id)
+# ### Indexes
 #
-# Foreign Keys
+# * `index_events_on_group_id`:
+#     * **`group_id`**
 #
-#  address_id  (address_id => addresses.id) ON DELETE => restrict ON UPDATE => cascade
-#  group_id    (group_id => groups.id) ON DELETE => cascade ON UPDATE => cascade
+# ### Foreign Keys
+#
+# * `address_id` (_ON DELETE => restrict ON UPDATE => cascade_):
+#     * **`address_id => addresses.id`**
+# * `group_id` (_ON DELETE => cascade ON UPDATE => cascade_):
+#     * **`group_id => groups.id`**
 #
 class Event < ApplicationRecord
   belongs_to :group

@@ -17,7 +17,7 @@
 :exclude_sti_subclasses: false
 :exclude_tests: false
 :force: false
-:format_markdown: false
+:format_markdown: true
 :format_rdoc: false
 :format_yard: false
 :frozen: false

@@ -1,15 +1,20 @@
-# == Schema Information
+# ## Schema Information
 #
-# Table name: users
+# Table name: `users`
 #
-#  id         :integer          not null, primary key
-#  email      :string(250)      not null
-#  created_at :datetime         not null
-#  updated_at :datetime         not null
+# ### Columns
 #
-# Indexes
+# Name              | Type               | Attributes
+# ----------------- | ------------------ | ---------------------------
+# **`id`**          | `integer`          | `not null, primary key`
+# **`email`**       | `string(250)`      | `not null`
+# **`created_at`**  | `datetime`         | `not null`
+# **`updated_at`**  | `datetime`         | `not null`
 #
-#  index_users_on_email  (email) UNIQUE
+# ### Indexes
+#
+# * `index_users_on_email` (_unique_):
+#     * **`email`**
 #
 class User < ApplicationRecord
   has_one :profile, class_name: "UserProfile", dependent: :destroy

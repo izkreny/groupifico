@@ -1,25 +1,35 @@
-# == Schema Information
+# ## Schema Information
 #
-# Table name: members
+# Table name: `members`
 #
-#  id         :integer          not null, primary key
-#  role       :integer          not null
-#  status     :integer          not null
-#  created_at :datetime         not null
-#  updated_at :datetime         not null
-#  group_id   :integer          not null
-#  user_id    :integer          not null
+# ### Columns
 #
-# Indexes
+# Name              | Type               | Attributes
+# ----------------- | ------------------ | ---------------------------
+# **`id`**          | `integer`          | `not null, primary key`
+# **`role`**        | `integer`          | `not null`
+# **`status`**      | `integer`          | `not null`
+# **`created_at`**  | `datetime`         | `not null`
+# **`updated_at`**  | `datetime`         | `not null`
+# **`group_id`**    | `integer`          | `not null`
+# **`user_id`**     | `integer`          | `not null`
 #
-#  index_members_on_group_id              (group_id)
-#  index_members_on_user_id               (user_id)
-#  index_members_on_user_id_and_group_id  (user_id,group_id) UNIQUE
+# ### Indexes
 #
-# Foreign Keys
+# * `index_members_on_group_id`:
+#     * **`group_id`**
+# * `index_members_on_user_id`:
+#     * **`user_id`**
+# * `index_members_on_user_id_and_group_id` (_unique_):
+#     * **`user_id`**
+#     * **`group_id`**
 #
-#  group_id  (group_id => groups.id) ON DELETE => cascade ON UPDATE => cascade
-#  user_id   (user_id => users.id) ON DELETE => cascade ON UPDATE => cascade
+# ### Foreign Keys
+#
+# * `group_id` (_ON DELETE => cascade ON UPDATE => cascade_):
+#     * **`group_id => groups.id`**
+# * `user_id` (_ON DELETE => cascade ON UPDATE => cascade_):
+#     * **`user_id => users.id`**
 #
 class Member < ApplicationRecord
   belongs_to :user

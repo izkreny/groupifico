@@ -1,18 +1,23 @@
-# == Schema Information
+# ## Schema Information
 #
-# Table name: groups
+# Table name: `groups`
 #
-#  id          :integer          not null, primary key
-#  description :text(100000)
-#  group_type  :integer          not null
-#  name        :string(250)      not null
-#  created_at  :datetime         not null
-#  updated_at  :datetime         not null
-#  address_id  :integer
+# ### Columns
 #
-# Foreign Keys
+# Name               | Type               | Attributes
+# ------------------ | ------------------ | ---------------------------
+# **`id`**           | `integer`          | `not null, primary key`
+# **`description`**  | `text(100000)`     |
+# **`group_type`**   | `integer`          | `not null`
+# **`name`**         | `string(250)`      | `not null`
+# **`created_at`**   | `datetime`         | `not null`
+# **`updated_at`**   | `datetime`         | `not null`
+# **`address_id`**   | `integer`          |
 #
-#  address_id  (address_id => addresses.id) ON DELETE => restrict ON UPDATE => cascade
+# ### Foreign Keys
+#
+# * `address_id` (_ON DELETE => restrict ON UPDATE => cascade_):
+#     * **`address_id => addresses.id`**
 #
 class Group < ApplicationRecord
   belongs_to :address, optional: true, touch: true
