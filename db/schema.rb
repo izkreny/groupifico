@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_12_190123) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_24_115144) do
   create_table "addresses", force: :cascade do |t|
     t.string "building_number", limit: 250
     t.string "city", limit: 250
@@ -38,15 +38,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_12_190123) do
 
   create_table "events", force: :cascade do |t|
     t.integer "address_id"
+    t.integer "category"
     t.datetime "created_at", null: false
     t.bigint "creator_id", null: false
     t.text "description", limit: 100000
-    t.datetime "end", null: false
-    t.integer "event_type", null: false
+    t.datetime "ends_at", null: false
     t.integer "group_id", null: false
     t.bigint "manager_id"
     t.string "name", limit: 250, null: false
-    t.datetime "start", null: false
+    t.datetime "starts_at", null: false
     t.integer "status", null: false
     t.datetime "updated_at", null: false
     t.index ["group_id"], name: "index_events_on_group_id"

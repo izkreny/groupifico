@@ -7,11 +7,11 @@
 # Name               | Type               | Attributes
 # ------------------ | ------------------ | ---------------------------
 # **`id`**           | `integer`          | `not null, primary key`
+# **`category`**     | `integer`          |
 # **`description`**  | `text(100000)`     |
-# **`end`**          | `datetime`         | `not null`
-# **`event_type`**   | `integer`          | `not null`
+# **`ends_at`**      | `datetime`         | `not null`
 # **`name`**         | `string(250)`      | `not null`
-# **`start`**        | `datetime`         | `not null`
+# **`starts_at`**    | `datetime`         | `not null`
 # **`status`**       | `integer`          | `not null`
 # **`created_at`**   | `datetime`         | `not null`
 # **`updated_at`**   | `datetime`         | `not null`
@@ -41,11 +41,11 @@ class Event < ApplicationRecord
   has_many :members, through: :attendees
 
   enum :status, %i[ unconfirmed confirmed concluded canceled ], default: :unconfirmed, validate: true
-  enum :event_type, %i[ other rehearsal gig ], default: :rehearsal, validate: true
+  enum :category, %i[ other rehearsal gig ], default: :other, validate: true
 
   validates_associated :address, :manager
-  validates :name, :start, :end, presence: true
+  validates :name, :starts_at, presence: true
   validates :name, length: { maximum: 250 }
   validates :description, length: { maximum: 25_000 }
-  validates :end, comparison: { greater_than: :start }
+  validates :ends_at, comparison: { greater_than: :starts_at }
 end
