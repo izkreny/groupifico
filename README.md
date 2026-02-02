@@ -99,18 +99,18 @@ erDiagram
   }
 
   USER_PROFILE {
-    username     STRING "UK"
+    %%username     STRING "UK"
     first_name   STRING
     last_name    STRING
-    time_zone    STRING
+    %%time_zone    STRING
     mobile_phone STRING "UK"
   }
 
   GROUP {
-    username    STRING "UK"
+    %%username    STRING "UK"
     name        STRING
     description TEXT
-    time_zone   STRING
+    %%time_zone   STRING
     group_type  INTEGER "ENUM"
   }
 
@@ -122,14 +122,14 @@ erDiagram
   EVENT {
     creator_id  INTEGER "FK: MEMBER"
     manager_id  INTEGER "FK: MEMBER"
-    uid         STRING "UK: GROUP"
+    %%uid         STRING "UK: GROUP"
     name        STRING
     description TEXT
-    start       DATETIME
-    end         DATETIME
-    time_zone   STRING
+    starts_at   DATETIME
+    ends_at     DATETIME
+    %%time_zone   STRING
     status      INTEGER "ENUM"
-    event_type  INTEGER "ENUM"
+    category    INTEGER "ENUM"
   }
 
   ATTENDEE {
