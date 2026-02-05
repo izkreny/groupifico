@@ -37,8 +37,8 @@ class Event < ApplicationRecord
   belongs_to :address, optional: true, touch: true
   belongs_to :creator, class_name: "Member", foreign_key: "creator_id", inverse_of: :created_events
   belongs_to :manager, class_name: "Member", foreign_key: "manager_id", inverse_of: :managed_events, optional: true
-  has_many :attendees, dependent: :destroy
-  has_many :members, through: :attendees
+  has_many :registrations, dependent: :destroy
+  has_many :attendees, through: :registrations, source: :member
 
   enum :status, %i[ unconfirmed confirmed concluded canceled ], default: :unconfirmed, validate: true
   enum :category, %i[ other rehearsal gig ], default: :other, validate: true

@@ -10,10 +10,10 @@
 
 ACTIVE_RECORDS_MODELS = [
   Address,
-  Attendee,
   Event,
   Group,
   Member,
+  Registration,
   User,
   UserProfile
 ].freeze
@@ -37,7 +37,7 @@ def populate_empty_database
   # Assign owner role to the first member of each group
   groups.each { it.members.first.owner! }
 
-  # Create 10 past concluded events for both groups and add attendees
+  # Create 10 past concluded events for both groups and add registrations
   groups.each do |group|
     options = {
       group: group,
@@ -47,12 +47,12 @@ def populate_empty_database
     }
     FactoryBot.create_list(:event, 10, :from_the_past, :with_all_attributes, :concluded, options) do |event|
       group.members.each do |member|
-        FactoryBot.create(:attendee, event: event, member: member, status: [ :yes, :maybe, :no ].sample)
+        FactoryBot.create(:registration, event: event, member: member, status: [ :yes, :maybe, :no ].sample)
       end
     end
   end
 
-  # Create 10 future unconfirmed events for both groups and add attendees
+  # Create 10 future unconfirmed events for both groups and add registrations
   groups.each do |group|
     options = {
       group: group,
@@ -62,7 +62,7 @@ def populate_empty_database
     }
     FactoryBot.create_list(:event, 10, :from_the_future, :with_all_attributes, options) do |event|
       group.members.each do |member|
-        FactoryBot.create(:attendee, event: event, member: member, status: [ :yes, :maybe, :no ].sample)
+        FactoryBot.create(:registration, event: event, member: member, status: [ :yes, :maybe, :no ].sample)
       end
     end
   end

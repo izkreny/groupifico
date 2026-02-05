@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_24_115144) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_05_082509) do
   create_table "addresses", force: :cascade do |t|
     t.string "building_number", limit: 250
     t.string "city", limit: 250
@@ -23,17 +23,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_24_115144) do
     t.string "state_code", limit: 50
     t.string "street_name", limit: 250
     t.datetime "updated_at", null: false
-  end
-
-  create_table "attendees", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.integer "event_id", null: false
-    t.integer "member_id", null: false
-    t.integer "status", null: false
-    t.datetime "updated_at", null: false
-    t.index ["event_id"], name: "index_attendees_on_event_id"
-    t.index ["member_id", "event_id"], name: "index_attendees_on_member_id_and_event_id", unique: true
-    t.index ["member_id"], name: "index_attendees_on_member_id"
   end
 
   create_table "events", force: :cascade do |t|
@@ -73,6 +62,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_24_115144) do
     t.index ["user_id"], name: "index_members_on_user_id"
   end
 
+  create_table "registrations", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "event_id", null: false
+    t.integer "member_id", null: false
+    t.integer "status", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_id"], name: "index_registrations_on_event_id"
+    t.index ["member_id", "event_id"], name: "index_registrations_on_member_id_and_event_id", unique: true
+    t.index ["member_id"], name: "index_registrations_on_member_id"
+  end
+
   create_table "user_profiles", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "first_name", limit: 250
@@ -91,12 +91,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_24_115144) do
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 
-  add_foreign_key "attendees", "events", on_update: :cascade, on_delete: :cascade
-  add_foreign_key "attendees", "members", on_update: :cascade, on_delete: :cascade
   add_foreign_key "events", "addresses", on_update: :cascade, on_delete: :restrict
   add_foreign_key "events", "groups", on_update: :cascade, on_delete: :cascade
   add_foreign_key "groups", "addresses", on_update: :cascade, on_delete: :restrict
   add_foreign_key "members", "groups", on_update: :cascade, on_delete: :cascade
   add_foreign_key "members", "users", on_update: :cascade, on_delete: :cascade
+  add_foreign_key "registrations", "events", on_update: :cascade, on_delete: :cascade
+  add_foreign_key "registrations", "members", on_update: :cascade, on_delete: :cascade
   add_foreign_key "user_profiles", "users", on_update: :cascade, on_delete: :cascade
 end
