@@ -17,18 +17,21 @@ ACTIVE_RECORDS_MODELS = [
   User,
   UserProfile
 ].freeze
+NUMBER_OF_GROUPS            = 2   # DO NOT CHANGE THIS! :) TODO: Make this configurable as well
+NUMBER_OF_MEMBERS_PER_GROUP = 22  # Minimum is two!
+NUMBER_OF_EVENTS_PER_GROUP  = 44  # Use even number!
 
 def populate_empty_database
   # Make Faker always produce same results aka enable deterministic output
   Faker::Config.random = Random.new(666)
 
-  # Create 2 groups with unique 10 members in each group
-  groups = FactoryBot.create_list(:group, 2, :with_all_attributes) do |group|
-    FactoryBot.create_list(:member, 10, :with_all_attributes, group: group)
+  # Create groups with unique members in each group
+  groups = FactoryBot.create_list(:group, NUMBER_OF_GROUPS, :with_all_attributes) do |group|
+    FactoryBot.create_list(:member, NUMBER_OF_MEMBERS_PER_GROUP - 1, :with_all_attributes, group: group)
   end
 
-  # Create two new users who are members of both groups
-  FactoryBot.create_list(:user, 2, :with_full_profile) do |user|
+  # Create one member that belongs to each group
+  FactoryBot.create_list(:user, 1, :with_full_profile) do |user|
     groups.each do |group|
       FactoryBot.create(:member, user: user, group: group)
     end
@@ -37,7 +40,7 @@ def populate_empty_database
   # Assign owner role to the first member of each group
   groups.each { it.members.first.owner! }
 
-  # Create 10 past concluded events for both groups and add registrations
+  # Create past concluded events for groups and add registrations
   groups.each do |group|
     options = {
       group: group,
@@ -45,14 +48,14 @@ def populate_empty_database
       manager: group.members.sample,
       address: nil
     }
-    FactoryBot.create_list(:event, 10, :from_the_past, :with_all_attributes, :concluded, options) do |event|
+    FactoryBot.create_list(:event, NUMBER_OF_EVENTS_PER_GROUP / 2, :from_the_past, :with_all_attributes, options) do |event|
       group.members.each do |member|
         FactoryBot.create(:registration, event: event, member: member, status: [ :yes, :maybe, :no ].sample)
       end
     end
   end
 
-  # Create 10 future unconfirmed events for both groups and add registrations
+  # Create future events for groups and add registrations
   groups.each do |group|
     options = {
       group: group,
@@ -60,7 +63,7 @@ def populate_empty_database
       manager: group.members.sample,
       address: nil
     }
-    FactoryBot.create_list(:event, 10, :from_the_future, :with_all_attributes, options) do |event|
+    FactoryBot.create_list(:event, NUMBER_OF_EVENTS_PER_GROUP / 2, :from_the_future, :with_all_attributes, options) do |event|
       group.members.each do |member|
         FactoryBot.create(:registration, event: event, member: member, status: [ :yes, :maybe, :no ].sample)
       end

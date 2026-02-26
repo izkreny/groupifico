@@ -42,10 +42,12 @@ FactoryBot.define do
 
     trait :from_the_past do
       starts_at { Faker::Date.unique.between(from: 180.days.ago, to: 7.days.ago) + 10.hours }
+      status    { [ :concluded, :concluded, :canceled ].sample } # Rig the odds for :concluded 🎲
     end
 
     trait :from_the_future do
       starts_at { Faker::Date.unique.between(from: 7.days.from_now, to: 180.days.from_now) + 10.hours }
+      status    { [ :unconfirmed, :confirmed, :confirmed, :canceled ].sample } # Rig the odds for :confirmed 🎲
     end
 
     trait :with_all_attributes do
