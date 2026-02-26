@@ -48,4 +48,7 @@ class Event < ApplicationRecord
   validates :name, length: { maximum: 250 }
   validates :description, length: { maximum: 25_000 }
   validates :ends_at, comparison: { greater_than: :starts_at }
+
+  scope :upcoming, ->(group) { where(group: group).where(status: :confirmed).where(starts_at: Time.now..) }
+  scope :past,     ->(group) { where(group: group).where(status: :concluded).where(starts_at: ...Time.now) }
 end
