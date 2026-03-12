@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_05_082509) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_12_074637) do
   create_table "addresses", force: :cascade do |t|
     t.string "building_number", limit: 250
     t.string "city", limit: 250
@@ -73,6 +73,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_05_082509) do
     t.index ["member_id"], name: "index_registrations_on_member_id"
   end
 
+  create_table "sessions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "ip_address"
+    t.datetime "updated_at", null: false
+    t.string "user_agent"
+    t.integer "user_id", null: false
+    t.index ["user_id"], name: "index_sessions_on_user_id"
+  end
+
   create_table "user_profiles", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "first_name", limit: 250
@@ -87,6 +96,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_05_082509) do
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email", limit: 250, null: false
+    t.string "password_digest", null: false
     t.datetime "updated_at", null: false
     t.index ["email"], name: "index_users_on_email", unique: true
   end
@@ -98,5 +108,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_05_082509) do
   add_foreign_key "members", "users", on_update: :cascade, on_delete: :cascade
   add_foreign_key "registrations", "events", on_update: :cascade, on_delete: :cascade
   add_foreign_key "registrations", "members", on_update: :cascade, on_delete: :cascade
+  add_foreign_key "sessions", "users"
   add_foreign_key "user_profiles", "users", on_update: :cascade, on_delete: :cascade
 end
