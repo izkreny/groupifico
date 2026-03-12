@@ -4,12 +4,13 @@
 #
 # ### Columns
 #
-# Name              | Type               | Attributes
-# ----------------- | ------------------ | ---------------------------
-# **`id`**          | `integer`          | `not null, primary key`
-# **`email`**       | `string(250)`      | `not null`
-# **`created_at`**  | `datetime`         | `not null`
-# **`updated_at`**  | `datetime`         | `not null`
+# Name                   | Type               | Attributes
+# ---------------------- | ------------------ | ---------------------------
+# **`id`**               | `integer`          | `not null, primary key`
+# **`email`**            | `string(250)`      | `not null`
+# **`password_digest`**  | `string`           | `not null`
+# **`created_at`**       | `datetime`         | `not null`
+# **`updated_at`**       | `datetime`         | `not null`
 #
 # ### Indexes
 #
@@ -23,7 +24,8 @@ FactoryBot.define do
       last_name  { Faker::Name.unique.last_name }
     end
 
-    email { Faker::Internet.unique.email(name: "#{first_name} #{last_name}") }
+    email    { Faker::Internet.unique.email(name: "#{first_name} #{last_name}") }
+    password { Faker::Internet.password }
 
     trait :with_full_profile do
       after(:build) do |user, context|
