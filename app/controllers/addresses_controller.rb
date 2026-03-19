@@ -1,12 +1,12 @@
 class AddressesController < ApplicationController
   before_action :set_address, only: %i[ show edit update destroy ]
 
-  # GET /addresses or /addresses.json
+  # GET /addresses
   def index
     @addresses = Address.all
   end
 
-  # GET /addresses/1 or /addresses/1.json
+  # GET /addresses/1
   def show
   end
 
@@ -19,52 +19,39 @@ class AddressesController < ApplicationController
   def edit
   end
 
-  # POST /addresses or /addresses.json
+  # POST /addresses
   def create
     @address = Address.new(address_params)
 
-    respond_to do |format|
-      if @address.save
-        format.html { redirect_to @address, notice: "Address was successfully created." }
-        format.json { render :show, status: :created, location: @address }
-      else
-        format.html { render :new, status: :unprocessable_entity }
-        format.json { render json: @address.errors, status: :unprocessable_entity }
-      end
+    if @address.save
+      redirect_to @address, notice: "Address was successfully created."
+    else
+      render :new, status: :unprocessable_entity
     end
   end
 
-  # PATCH/PUT /addresses/1 or /addresses/1.json
+  # PATCH/PUT /addresses/1
   def update
-    respond_to do |format|
-      if @address.update(address_params)
-        format.html { redirect_to @address, notice: "Address was successfully updated.", status: :see_other }
-        format.json { render :show, status: :ok, location: @address }
-      else
-        format.html { render :edit, status: :unprocessable_entity }
-        format.json { render json: @address.errors, status: :unprocessable_entity }
-      end
+    if @address.update(address_params)
+      redirect_to @address, notice: "Address was successfully updated.", status: :see_other
+    else
+      render :edit, status: :unprocessable_entity
     end
   end
 
-  # DELETE /addresses/1 or /addresses/1.json
+  # DELETE /addresses/1
   def destroy
     @address.destroy!
 
-    respond_to do |format|
-      format.html { redirect_to addresses_path, notice: "Address was successfully destroyed.", status: :see_other }
-      format.json { head :no_content }
-    end
+    redirect_to addresses_path, notice: "Address was successfully destroyed.", status: :see_other
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
     def set_address
       @address = Address.find(params.expect(:id))
     end
 
-    # Only allow a list of trusted parameters through.
     def address_params
-      params.fetch(:address, {})
+      params.expect(address: [ :name, :street_name, :building_number, :city, :postal_code, :state_code, :country_code, :latitude, :longitude ])
     end
 end
