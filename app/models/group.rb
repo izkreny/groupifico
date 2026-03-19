@@ -21,6 +21,7 @@
 #
 class Group < ApplicationRecord
   belongs_to :address, optional: true, touch: true
+  accepts_nested_attributes_for :address, reject_if: -> { it.values.all?(&:empty?) }
   has_many :members, dependent: :destroy
   has_many :events, dependent: :destroy
 
