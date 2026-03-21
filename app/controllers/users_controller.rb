@@ -3,7 +3,6 @@ class UsersController < ApplicationController
 
   # GET /users
   def index
-    # binding.irb
     @users = User.all
   end
 

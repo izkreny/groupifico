@@ -12,13 +12,11 @@ class GroupsController < ApplicationController
 
   # GET /groups/new
   def new
-    @group         = Group.new
-    @group.address = Address.new
+    @group = Group.new
   end
 
   # GET /groups/1/edit
   def edit
-    @group.address = Address.new unless @group.address
   end
 
   # POST /groups
