@@ -1,0 +1,13 @@
+<nav>
+  <ul>
+    <li>
+      <%= link_to "Home", root_path %>
+    </li>
+    <li>
+      <%= button_to "Log out", session_path, method: :delete if authenticated? %>
+    </li>
+    <li>
+      <%= link_to "Log in", new_session_path unless authenticated? %>
+    </li>
+  </ul>
+</nav>

@@ -24,19 +24,9 @@
   </head>
 
   <body>
-    <nav>
-      <ul>
-        <li>
-          <%= link_to "Home", root_path %>
-        </li>
-        <li>
-          <%= button_to "Log out", session_path, method: :delete if authenticated? %>
-        </li>
-        <li>
-          <%= link_to "Log in", new_session_path unless authenticated? %>
-        </li>
-      </ul>
-  </nav>  
+    <%= render "layouts/navigation" %>
+    <%= render "layouts/flash" %>
+
     <main class="container mx-auto mt-28 px-5 flex">
       <%= yield %>
     </main>
