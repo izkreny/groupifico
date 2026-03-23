@@ -1,21 +1,14 @@
 <%= form_with(model: user_profile, class: "contents") do |form| %>
-  <% if user_profile.errors.any? %>
-    <div id="error_explanation" class="bg-red-50 text-red-500 px-3 py-2 font-medium rounded-md mt-3">
-      <h2><%= pluralize(user_profile.errors.count, "error") %> prohibited this user_profile from being saved:</h2>
+  <%= render "shared/errors", object: user_profile %>
 
-      <ul class="list-disc ml-6">
-        <% user_profile.errors.each do |error| %>
-          <li><%= error.full_message %></li>
-        <% end %>
-      </ul>
-    </div>
-  <% end %>
-
-  <div class="inline">
+  <div class="main">
     <%= form.text_field :first_name %>
     <%= form.text_field :last_name %>
     <%= form.telephone_field :mobile_phone %>
     <%= form.number_field :user_id %>
+  </div>
+
+  <div class="inline">
     <%= form.submit class: "w-full sm:w-auto rounded-md px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white inline-block font-medium cursor-pointer" %>
   </div>
 <% end %>
