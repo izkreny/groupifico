@@ -25,7 +25,7 @@ FactoryBot.define do
     end
 
     email    { Faker::Internet.unique.email(name: "#{first_name} #{last_name}") }
-    password { Faker::Internet.password }
+    password { "0000" } # Faker::Internet.password
 
     trait :with_full_profile do
       after(:build) do |user, context|
