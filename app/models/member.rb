@@ -42,4 +42,12 @@ class Member < ApplicationRecord
 
   enum :status, %i[ active paused inactive ], default: :active, validate: true
   enum :role, %i[ owner member admin manager ], default: :member, validate: true
+
+  def full_name
+    if profile.first_name.present? || profile.last_name.present?
+      "#{profile.first_name} #{profile.last_name}".chomp
+    else
+      user.email.split("@").first
+    end
+  end
 end
