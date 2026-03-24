@@ -35,6 +35,7 @@
 class Event < ApplicationRecord
   belongs_to :group
   belongs_to :address, optional: true, touch: true
+  accepts_nested_attributes_for :address, reject_if: -> { it.values.all?(&:empty?) }
   belongs_to :creator, class_name: "Member", foreign_key: "creator_id", inverse_of: :created_events
   belongs_to :manager, class_name: "Member", foreign_key: "manager_id", inverse_of: :managed_events, optional: true
   has_many :registrations, dependent: :destroy

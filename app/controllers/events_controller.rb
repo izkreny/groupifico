@@ -1,60 +1,51 @@
 class EventsController < ApplicationController
   before_action :set_event, only: %i[ show edit update destroy ]
 
-  # GET /events or /events.json
+  # GET /events
   def index
     @events = Event.all
   end
 
-  # GET /events/1 or /events/1.json
+  # GET /events/1
   def show
   end
 
   # GET /events/new
   def new
-    @event = Event.new
+    @event         = Event.new
+    @event.address = Address.new
   end
 
   # GET /events/1/edit
   def edit
+    @event.address = Address.new unless @event.address
   end
 
-  # POST /events or /events.json
+  # POST /events
   def create
     @event = Event.new(event_params)
 
-    respond_to do |format|
-      if @event.save
-        format.html { redirect_to @event, notice: "Event was successfully created." }
-        format.json { render :show, status: :created, location: @event }
-      else
-        format.html { render :new, status: :unprocessable_entity }
-        format.json { render json: @event.errors, status: :unprocessable_entity }
-      end
+    if @event.save
+      redirect_to @event, notice: "Event was successfully created."
+    else
+      render :new, status: :unprocessable_entity
     end
   end
 
-  # PATCH/PUT /events/1 or /events/1.json
+  # PATCH/PUT /events/1
   def update
-    respond_to do |format|
-      if @event.update(event_params)
-        format.html { redirect_to @event, notice: "Event was successfully updated.", status: :see_other }
-        format.json { render :show, status: :ok, location: @event }
-      else
-        format.html { render :edit, status: :unprocessable_entity }
-        format.json { render json: @event.errors, status: :unprocessable_entity }
-      end
+    if @event.update(event_params)
+      redirect_to @event, notice: "Event was successfully updated.", status: :see_other
+    else
+      render :edit, status: :unprocessable_entity
     end
   end
 
-  # DELETE /events/1 or /events/1.json
+  # DELETE /events/1
   def destroy
     @event.destroy!
 
-    respond_to do |format|
-      format.html { redirect_to events_path, notice: "Event was successfully destroyed.", status: :see_other }
-      format.json { head :no_content }
-    end
+    redirect_to events_path, notice: "Event was successfully destroyed.", status: :see_other
   end
 
   private
@@ -65,6 +56,12 @@ class EventsController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def event_params
-      params.fetch(:event, {})
+      params.expect(
+        event: [ :name, :description, :starts_at, :ends_at, :status, :category, :group_id, :creator_id, :manager_id,
+          address_attributes: [
+            :id, :name, :street_name, :building_number, :city, :postal_code, :state_code, :country_code, :latitude, :longitude
+          ]
+        ]
+      )
     end
 end
