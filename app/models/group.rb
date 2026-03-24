@@ -24,10 +24,19 @@ class Group < ApplicationRecord
   accepts_nested_attributes_for :address, reject_if: -> { it.values.all?(&:empty?) }
   has_many :members, dependent: :destroy
   has_many :events, dependent: :destroy
+  has_many :events_addresses, -> { distinct }, through: :events, source: :address
 
   enum :group_type, %i[ general choir band ], default: :choir, validate: true
 
   validates_associated :address
   validates :name, presence: true, length: { maximum: 250 }
   validates :description, length: { maximum: 25_000 }
+
+  def addresses
+    if address
+      @addresses ||= events_addresses | [ address ]
+    else
+      @addresses ||= events_addresses
+    end
+  end
 end

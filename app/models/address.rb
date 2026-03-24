@@ -20,8 +20,8 @@
 # **`updated_at`**       | `datetime`         | `not null`
 #
 class Address < ApplicationRecord
+  has_one :group
   has_many :events
-  has_many :groups
 
   validates :name, presence: true
   validates :building_number, :city, :name, :street_name, length: { maximum: 250 }
