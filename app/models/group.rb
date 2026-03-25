@@ -24,6 +24,7 @@ class Group < ApplicationRecord
   accepts_nested_attributes_for :address, reject_if: -> { it.values.all?(&:empty?) }
   has_many :members, dependent: :destroy
   has_many :events, dependent: :destroy
+  # TODO: add order by `counter_cache` aka Adress field `events_count`
   has_many :events_addresses, -> { distinct }, through: :events, source: :address
 
   enum :group_type, %i[ general choir band ], default: :choir, validate: true
@@ -34,9 +35,9 @@ class Group < ApplicationRecord
 
   def addresses
     if address
-      @addresses ||= events_addresses | [ address ]
+      events_addresses | [ address ]
     else
-      @addresses ||= events_addresses
+      events_addresses
     end
   end
 end
