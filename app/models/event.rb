@@ -35,6 +35,7 @@
 class Event < ApplicationRecord
   belongs_to :group
   belongs_to :address, optional: true, touch: true
+  accepts_nested_attributes_for :address, reject_if: -> { it.values.all?(&:empty?) }
   belongs_to :creator, class_name: "Member", foreign_key: "creator_id", inverse_of: :created_events
   belongs_to :manager, class_name: "Member", foreign_key: "manager_id", inverse_of: :managed_events, optional: true
   has_many :registrations, dependent: :destroy
@@ -49,6 +50,12 @@ class Event < ApplicationRecord
   validates :description, length: { maximum: 25_000 }
   validates :ends_at, comparison: { greater_than: :starts_at }
 
-  scope :upcoming, ->(group) { where(group: group).where(status: :confirmed).where(starts_at: Time.now..) }
-  scope :past,     ->(group) { where(group: group).where(status: :concluded).where(starts_at: ...Time.now) }
+  scope :upcoming, -> { where(starts_at: Time.now..) }
+  scope :ongoing,  -> { where(starts_at: ...Time.now).where(ends_at: Time.now..) }
+  scope :past,     -> { where(ends_at: ...Time.now) }
+
+  # TODO: add event's time_zone context
+  def same_day?
+    starts_at.to_date == ends_at.to_date
+  end
 end
