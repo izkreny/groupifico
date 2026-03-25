@@ -11,11 +11,14 @@
     <%= form.label          :starts_at %>
     <%= form.datetime_field :starts_at %>
 
+    <%= form.label          :ends_at %>
+    <%= form.datetime_field :ends_at %>
+
     <%= form.label  :status %>
-    <%= form.select :status, Event.statuses.keys.map { [it.upcase, it] } %>
+    <%= form.select :status, event_statuses %>
 
     <%= form.label  :category %>
-    <%= form.select :category, Event.categories.keys %>
+    <%= form.select :category, event_categories %>
 
     <%= form.label             :creator_id %>
     <%= form.collection_select :creator_id, event.group.members, :id, :full_name %>
