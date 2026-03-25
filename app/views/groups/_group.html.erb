@@ -5,6 +5,10 @@
       (<%= group.group_type %>)
       <br>
       <%= group.address&.name %>
+      <br>
+      <%= link_to "Members", group_members_path(group) %>
+      |
+      <%= link_to "Events", group_events_path(group) %>
     </li>
   </ul>
   <p><%= group.description %></p>
