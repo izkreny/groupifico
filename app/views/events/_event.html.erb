@@ -8,7 +8,9 @@
   <br>
   @ <%= event.address&.name %>
   <br>
-  Created by <%= event.creator.full_name %>
+  Created by <%= event.creator&.full_name %>
   |
-  Managed by <%= event.manager.full_name %>
+  Managed by <%= event.manager&.full_name %>
+  <br>
+  <%= link_to "Registrations", group_event_registrations_path(event.group, event) %>
 </div>

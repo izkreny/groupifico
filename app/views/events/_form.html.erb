@@ -1,4 +1,4 @@
-<%= form_with(model: event, class: "contents") do |form| %>
+<%= form_with(model: [group, event], class: "contents") do |form| %>
   <%= render "shared/errors", object: event %>
 
   <div class="main">

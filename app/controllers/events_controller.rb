@@ -1,9 +1,10 @@
 class EventsController < ApplicationController
+  before_action :set_group
   before_action :set_event, only: %i[ show edit update destroy ]
 
   # GET /events
   def index
-    @events = Event.all
+    @events = @group.events
   end
 
   # GET /events/1
@@ -12,7 +13,7 @@ class EventsController < ApplicationController
 
   # GET /events/new
   def new
-    @event         = Event.new
+    @event         = @group.events.new
     @event.address = Address.new
   end
 
@@ -23,10 +24,10 @@ class EventsController < ApplicationController
 
   # POST /events
   def create
-    @event = Event.new(event_params)
+    @event = @group.events.new(event_params)
 
     if @event.save
-      redirect_to @event, notice: "Event was successfully created."
+      redirect_to [ @group, @event ], notice: "Event was successfully created."
     else
       render :new, status: :unprocessable_entity
     end
@@ -35,7 +36,7 @@ class EventsController < ApplicationController
   # PATCH/PUT /events/1
   def update
     if @event.update(event_params)
-      redirect_to @event, notice: "Event was successfully updated.", status: :see_other
+      redirect_to group_event_path, notice: "Event was successfully updated.", status: :see_other
     else
       render :edit, status: :unprocessable_entity
     end
@@ -45,16 +46,18 @@ class EventsController < ApplicationController
   def destroy
     @event.destroy!
 
-    redirect_to events_path, notice: "Event was successfully destroyed.", status: :see_other
+    redirect_to group_events_path, notice: "Event was successfully destroyed.", status: :see_other
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
-    def set_event
-      @event = Event.find(params.expect(:id))
+    def set_group
+      @group = Group.find(params.expect(:group_id))
     end
 
-    # Only allow a list of trusted parameters through.
+    def set_event
+      @event = @group.events.find(params.expect(:id))
+    end
+
     def event_params
       params.expect(
         event: [ :name, :description, :starts_at, :ends_at, :status, :category, :group_id, :creator_id, :manager_id,
