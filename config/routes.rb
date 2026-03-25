@@ -1,13 +1,18 @@
 Rails.application.routes.draw do
-  resources :registrations
-  resources :events
-  resources :members
-  resources :addresses
-  resources :groups
-  resources :user_profiles
   resource :session
   resources :passwords, param: :token
-  resources :users
+  resources :addresses
+
+  resources :users do
+    resources :user_profiles
+  end
+
+  resources :groups do
+    resources :members
+    resources :events do
+      resources :registrations
+    end
+  end
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
