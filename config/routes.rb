@@ -3,8 +3,8 @@ Rails.application.routes.draw do
   resources :passwords, param: :token
   resources :addresses
 
-  resources :users do
-    resources :user_profiles
+  resource :user do
+    resource :profile, controller: "user_profiles"
   end
 
   resources :groups do

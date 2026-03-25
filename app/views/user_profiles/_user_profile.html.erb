@@ -1,7 +1,7 @@
 <div id="<%= dom_id user_profile %>" class="w-full sm:w-auto my-5 space-y-5">
   <ul>
     <li>
-      <%= "#{user_profile.first_name} #{user_profile.last_name}" %>
+      <%= user_profile.full_name %>
     </li>
     <li>
       <%= user_profile.mobile_phone %>

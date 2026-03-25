@@ -1,11 +1,6 @@
 class UsersController < ApplicationController
   before_action :set_user, only: %i[ show edit update destroy ]
 
-  # GET /users
-  def index
-    @users = User.all
-  end
-
   # GET /users/1
   def show
   end
@@ -43,12 +38,12 @@ class UsersController < ApplicationController
   def destroy
     @user.destroy!
 
-    redirect_to users_path, notice: "User was successfully destroyed.", status: :see_other
+    redirect_to user_path, notice: "User was successfully destroyed.", status: :see_other
   end
 
   private
     def set_user
-      @user = User.find(params.expect(:id))
+      @user = Current.user
     end
 
     def user_params
