@@ -1,9 +1,11 @@
 class RegistrationsController < ApplicationController
+  before_action :set_group
+  before_action :set_event
   before_action :set_registration, only: %i[ show edit update destroy ]
 
   # GET /registrations
   def index
-    @registrations = Registration.all
+    @registrations = @event.registrations
   end
 
   # GET /registrations/1
@@ -12,7 +14,7 @@ class RegistrationsController < ApplicationController
 
   # GET /registrations/new
   def new
-    @registration = Registration.new
+    @registration = @event.registrations.new
   end
 
   # GET /registrations/1/edit
@@ -21,10 +23,10 @@ class RegistrationsController < ApplicationController
 
   # POST /registrations
   def create
-    @registration = Registration.new(registration_params)
+    @registration = @event.registrations.new(registration_params)
 
     if @registration.save
-      redirect_to @registration, notice: "Registration was successfully created."
+      redirect_to [ @group, @event, @registration ], notice: "Registration was successfully created."
     else
       render :new, status: :unprocessable_entity
     end
@@ -33,7 +35,7 @@ class RegistrationsController < ApplicationController
   # PATCH/PUT /registrations/1
   def update
     if @registration.update(registration_params)
-      redirect_to @registration, notice: "Registration was successfully updated.", status: :see_other
+      redirect_to group_event_registration_path, notice: "Registration was successfully updated.", status: :see_other
     else
       render :edit, status: :unprocessable_entity
     end
@@ -43,12 +45,20 @@ class RegistrationsController < ApplicationController
   def destroy
     @registration.destroy!
 
-    redirect_to registrations_path, notice: "Registration was successfully destroyed.", status: :see_other
+    redirect_to group_event_registrations_path, notice: "Registration was successfully destroyed.", status: :see_other
   end
 
   private
+    def set_group
+      @group = Group.find(params.expect(:group_id))
+    end
+
+    def set_event
+      @event = @group.events.find(params.expect(:event_id))
+    end
+
     def set_registration
-      @registration = Registration.find(params.expect(:id))
+      @registration = @event.registrations.find(params.expect(:id))
     end
 
     def registration_params
