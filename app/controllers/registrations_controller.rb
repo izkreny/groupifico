@@ -3,25 +3,20 @@ class RegistrationsController < ApplicationController
   before_action :set_event
   before_action :set_registration, only: %i[ show edit update destroy ]
 
-  # GET /registrations
   def index
     @registrations = @event.registrations
   end
 
-  # GET /registrations/1
   def show
   end
 
-  # GET /registrations/new
   def new
     @registration = @event.registrations.new
   end
 
-  # GET /registrations/1/edit
   def edit
   end
 
-  # POST /registrations
   def create
     @registration = @event.registrations.new(registration_params)
 
@@ -32,7 +27,6 @@ class RegistrationsController < ApplicationController
     end
   end
 
-  # PATCH/PUT /registrations/1
   def update
     if @registration.update(registration_params)
       redirect_to group_event_registration_path, notice: "Registration was successfully updated.", status: :see_other
@@ -41,7 +35,6 @@ class RegistrationsController < ApplicationController
     end
   end
 
-  # DELETE /registrations/1
   def destroy
     @registration.destroy!
 

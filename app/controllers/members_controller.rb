@@ -2,25 +2,20 @@ class MembersController < ApplicationController
   before_action :set_group
   before_action :set_member, only: %i[ show edit update destroy ]
 
-  # GET /members
   def index
     @members = @group.members # TODO: Set up active and paused ones as default
   end
 
-  # GET /members/1
   def show
   end
 
-  # GET /members/new
   def new
     @member = @group.members.new
   end
 
-  # GET /members/1/edit
   def edit
   end
 
-  # POST /members
   def create
     @member = @group.members.new(member_params)
 
@@ -31,7 +26,6 @@ class MembersController < ApplicationController
     end
   end
 
-  # PATCH/PUT /members/1
   def update
     if @member.update(member_params)
       redirect_to group_member_path, notice: "Member was successfully updated.", status: :see_other
@@ -40,7 +34,6 @@ class MembersController < ApplicationController
     end
   end
 
-  # DELETE /members/1
   def destroy
     @member.destroy!
 

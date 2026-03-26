@@ -1,20 +1,16 @@
 class UsersController < ApplicationController
   before_action :set_user, only: %i[ show edit update destroy ]
 
-  # GET /users/1
   def show
   end
 
-  # GET /users/new
   def new
     @user = User.new
   end
 
-  # GET /users/1/edit
   def edit
   end
 
-  # POST /users
   def create
     @user = User.new(user_params)
 
@@ -25,7 +21,6 @@ class UsersController < ApplicationController
     end
   end
 
-  # PATCH/PUT /users/1
   def update
     if @user.update(user_params)
       redirect_to @user, notice: "User was successfully updated.", status: :see_other
@@ -34,7 +29,6 @@ class UsersController < ApplicationController
     end
   end
 
-  # DELETE /users/1
   def destroy
     @user.destroy!
 

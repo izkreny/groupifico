@@ -1,27 +1,22 @@
 class GroupsController < ApplicationController
   before_action :set_group, only: %i[ show edit update destroy ]
 
-  # GET /groups
   def index
     @groups = Group.all
   end
 
-  # GET /groups/1
   def show
   end
 
-  # GET /groups/new
   def new
     @group         = Group.new
     @group.address = Address.new
   end
 
-  # GET /groups/1/edit
   def edit
     @group.address = Address.new unless @group.address
   end
 
-  # POST /groups
   def create
     @group = Group.new(group_params)
 
@@ -32,7 +27,6 @@ class GroupsController < ApplicationController
     end
   end
 
-  # PATCH/PUT /groups/1
   def update
     if @group.update(group_params)
       redirect_to @group, notice: "Group was successfully updated.", status: :see_other
@@ -41,7 +35,6 @@ class GroupsController < ApplicationController
     end
   end
 
-  # DELETE /groups/1
   def destroy
     @group.destroy!
 

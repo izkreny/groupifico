@@ -1,20 +1,16 @@
 class UserProfilesController < ApplicationController
   before_action :set_user_profile, only: %i[ show edit update destroy ]
 
-  # GET /user_profile/1
   def show
   end
 
-  # GET /user_profile/new
   def new
     @user_profile = UserProfile.new
   end
 
-  # GET /user_profile/1/edit
   def edit
   end
 
-  # POST /user_profile
   def create
     @user_profile = UserProfile.new(user_profile_params)
 
@@ -25,7 +21,6 @@ class UserProfilesController < ApplicationController
     end
   end
 
-  # PATCH/PUT /user_profile/1
   def update
     if @user_profile.update(user_profile_params)
       redirect_to @user_profile, notice: "User profile was successfully updated.", status: :see_other
@@ -34,7 +29,6 @@ class UserProfilesController < ApplicationController
     end
   end
 
-  # DELETE /user_profile/1
   def destroy
     @user_profile.destroy!
 
