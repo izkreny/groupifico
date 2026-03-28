@@ -6,14 +6,17 @@ Rails.application.routes.draw do
   resource :user do
     resource :profile, controller: "user_profiles"
   end
+  resolve("User")        { [ :user         ] }
+  resolve("UserProfile") { [ :user_profile ] }
+
 
   resources :groups do
     resources :members
     resources :events do
+      # get "duplicate", on: :member # TODO: later...
       resources :registrations
     end
   end
-  # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.
