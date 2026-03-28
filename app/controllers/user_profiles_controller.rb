@@ -15,7 +15,8 @@ class UserProfilesController < ApplicationController
     @user_profile = UserProfile.new(user_profile_params)
 
     if @user_profile.save
-      redirect_to @user_profile, notice: "User profile was successfully created."
+      redirect_to user_profile_path,
+        notice: "User profile was successfully created."
     else
       render :new, status: :unprocessable_entity
     end
@@ -23,7 +24,9 @@ class UserProfilesController < ApplicationController
 
   def update
     if @user_profile.update(user_profile_params)
-      redirect_to @user_profile, notice: "User profile was successfully updated.", status: :see_other
+      redirect_to user_profile_path,
+        notice: "User profile was successfully updated.",
+        status: :see_other
     else
       render :edit, status: :unprocessable_entity
     end
@@ -32,7 +35,9 @@ class UserProfilesController < ApplicationController
   def destroy
     @user_profile.destroy!
 
-    redirect_to user_profile_path, notice: "User profile was successfully destroyed.", status: :see_other
+    redirect_to user_profile_path,
+      notice: "User profile was successfully destroyed.",
+      status: :see_other
   end
 
   private

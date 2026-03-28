@@ -3,7 +3,7 @@ class EventsController < ApplicationController
   before_action :set_event, only: %i[ show edit update destroy ]
 
   def index
-    @events = @group.events
+    @events = @group.events # TODO: upcoming, past, ongoing, with filters
   end
 
   def show
@@ -22,7 +22,8 @@ class EventsController < ApplicationController
     @event = @group.events.new(event_params)
 
     if @event.save
-      redirect_to [ @group, @event ], notice: "Event was successfully created."
+      redirect_to group_event_path(@group, @event),
+        notice: "Event was successfully created."
     else
       render :new, status: :unprocessable_entity
     end
@@ -30,7 +31,9 @@ class EventsController < ApplicationController
 
   def update
     if @event.update(event_params)
-      redirect_to group_event_path, notice: "Event was successfully updated.", status: :see_other
+      redirect_to group_event_path(@group, @event),
+        notice: "Event was successfully updated.",
+        status: :see_other
     else
       render :edit, status: :unprocessable_entity
     end
@@ -39,7 +42,9 @@ class EventsController < ApplicationController
   def destroy
     @event.destroy!
 
-    redirect_to group_events_path, notice: "Event was successfully destroyed.", status: :see_other
+    redirect_to group_events_path(@group),
+      notice: "Event was successfully destroyed.",
+      status: :see_other
   end
 
   private

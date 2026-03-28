@@ -21,7 +21,8 @@ class RegistrationsController < ApplicationController
     @registration = @event.registrations.new(registration_params)
 
     if @registration.save
-      redirect_to [ @group, @event, @registration ], notice: "Registration was successfully created."
+      redirect_to group_event_registration_path(@group, @event, @registration),
+        notice: "Registration was successfully created."
     else
       render :new, status: :unprocessable_entity
     end
@@ -29,7 +30,9 @@ class RegistrationsController < ApplicationController
 
   def update
     if @registration.update(registration_params)
-      redirect_to group_event_registration_path, notice: "Registration was successfully updated.", status: :see_other
+      redirect_to group_event_registration_path(@group, @event, @registration),
+        notice: "Registration was successfully updated.",
+        status: :see_other
     else
       render :edit, status: :unprocessable_entity
     end
@@ -38,7 +41,9 @@ class RegistrationsController < ApplicationController
   def destroy
     @registration.destroy!
 
-    redirect_to group_event_registrations_path, notice: "Registration was successfully destroyed.", status: :see_other
+    redirect_to group_event_registrations_path(@group, @event),
+      notice: "Registration was successfully destroyed.",
+      status: :see_other
   end
 
   private

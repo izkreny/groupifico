@@ -20,7 +20,8 @@ class MembersController < ApplicationController
     @member = @group.members.new(member_params)
 
     if @member.save
-      redirect_to [ @group, @member ], notice: "Member was successfully created."
+      redirect_to group_member_path(@group, @member),
+        notice: "Member was successfully created."
     else
       render :new, status: :unprocessable_entity
     end
@@ -28,7 +29,9 @@ class MembersController < ApplicationController
 
   def update
     if @member.update(member_params)
-      redirect_to group_member_path, notice: "Member was successfully updated.", status: :see_other
+      redirect_to group_member_path(@group, @member),
+        notice: "Member was successfully updated.",
+        status: :see_other
     else
       render :edit, status: :unprocessable_entity
     end
@@ -37,7 +40,9 @@ class MembersController < ApplicationController
   def destroy
     @member.destroy!
 
-    redirect_to group_members_path, notice: "Member was successfully destroyed.", status: :see_other
+    redirect_to group_members_path(@group),
+      notice: "Member was successfully destroyed.",
+      status: :see_other
   end
 
   private
