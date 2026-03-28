@@ -1,14 +1,22 @@
 Rails.application.routes.draw do
-  resources :registrations
-  resources :events
-  resources :members
-  resources :addresses
-  resources :groups
-  resources :user_profiles
   resource :session
   resources :passwords, param: :token
-  resources :users
-  # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
+  resources :addresses
+
+  resource :user do
+    resource :profile, controller: "user_profiles"
+  end
+  resolve("User")        { [ :user         ] }
+  resolve("UserProfile") { [ :user_profile ] }
+
+
+  resources :groups do
+    resources :members
+    resources :events do
+      # get "duplicate", on: :member # TODO: later...
+      resources :registrations
+    end
+  end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.
