@@ -26,8 +26,29 @@
     <%= form.label             :manager_id %>
     <%= form.collection_select :manager_id, event.group.members, :id, :full_name %>
 
-    <%= form.fields_for :address do |address_form| %>
-      <%= render "addresses/form_fields", form: address_form %>
+    <% if event.group.addresses.present? %>
+      <br>
+      <strong>
+        <%= event.address.persisted? ? "Change address:" : "Select existing address:" %>
+      </strong>
+      <br>
+      <%= form.label             :address_id %>
+      <%= form.collection_select :address_id, event.group.addresses, :id, :name, prompt: true %>
+    <% end %>
+    <br>
+
+    <% if event.address.persisted? %>
+      <%= link_to "Edit '#{event.address.name}' address", edit_address_path(event.address), target: "_blank" %>
+      |
+      <%= link_to "Create new address", new_address_path, target: "_blank" %>
+    <% else %>
+      <strong>
+        Create new address:
+      </strong>
+      <br>
+      <%= form.fields_for :address do |address_form| %>
+        <%= render "addresses/form_fields", form: address_form %>
+      <% end %>
     <% end %>
   </div>
 

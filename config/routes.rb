@@ -13,7 +13,7 @@ Rails.application.routes.draw do
   resources :groups do
     resources :members
     resources :events do
-      # get "duplicate", on: :member # TODO: later...
+      get "duplicate", on: :member
       resources :registrations
     end
   end

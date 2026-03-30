@@ -58,4 +58,19 @@ class Event < ApplicationRecord
   def same_day?
     starts_at.to_date == ends_at.to_date
   end
+
+  def shift_by(duration)
+    self.starts_at += duration
+    self.ends_at   += duration
+
+    self
+  end
+
+  def duplicate
+    raise ArgumentError, "Unable to duplicate the event!" unless self.duplicable?
+    event        = self.dup
+    event.status = "unconfirmed" unless event.unconfirmed?
+
+    event
+  end
 end
