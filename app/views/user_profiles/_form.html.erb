@@ -1,14 +1,23 @@
 <%= form_with(model: user_profile, class: "contents") do |form| %>
   <%= render "shared/errors", object: user_profile %>
 
-  <div class="main">
-    <%= form.text_field :first_name %>
-    <%= form.text_field :last_name %>
-    <%= form.telephone_field :mobile_phone %>
-    <%= form.number_field :user_id %>
-  </div>
+  <fieldset class="fieldset">
+    <legend class="fieldset-legend">Profile details</legend>
+
+    <%= form.label      :first_name, class: "label" %>
+    <%= form.text_field :first_name, class: "input w-full" %>
+
+    <%= form.label      :last_name, class: "label" %>
+    <%= form.text_field :last_name, class: "input w-full" %>
+
+    <%= form.label           :mobile_phone, class: "label" %>
+    <%= form.telephone_field :mobile_phone, class: "input w-full" %>
+
+    <%= form.label        :user_id, class: "label" %>
+    <%= form.number_field :user_id, class: "input w-full" %>
+  </fieldset>
 
   <div class="inline">
-    <%= form.submit class: "w-full sm:w-auto rounded-md px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white inline-block font-medium cursor-pointer" %>
+    <%= form.submit class: "btn btn-primary" %>
   </div>
 <% end %>

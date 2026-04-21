@@ -1,19 +1,21 @@
 <%= form_with(model: group, class: "contents") do |form| %>
   <%= render "shared/errors", object: group %>
 
-  <div class="main">
-    <%= form.label      :name %>
-    <%= form.text_field :name %>
+  <fieldset class="fieldset">
+    <legend class="fieldset-legend">Group details</legend>
 
-    <%= form.label     :description %>
-    <%= form.text_area :description %>
+    <%= form.label      :name, class: "label" %>
+    <%= form.text_field :name, class: "input w-full" %>
+
+    <%= form.label     :description, class: "label" %>
+    <%= form.text_area :description, class: "textarea w-full" %>
 
     <%= form.fields_for :address do |address_form| %>
       <%= render "addresses/form_fields", form: address_form %>
     <% end %>
-  </div>
+  </fieldset>
 
   <div class="inline">
-    <%= form.submit class: "w-full sm:w-auto rounded-md px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white inline-block font-medium cursor-pointer" %>
+    <%= form.submit class: "btn btn-primary" %>
   </div>
 <% end %>

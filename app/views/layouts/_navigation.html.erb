@@ -1,10 +1,12 @@
-<nav>
-  <ul>
-    <li>
-      <%= link_to "Home", root_path %>
-    </li>
-    <li>
-      <%= authenticated? ? button_to("Log out", session_path, method: :delete) : link_to("Log in", new_session_path) %>
-    </li>
-  </ul>
+<nav class="navbar bg-base-200">
+  <div class="navbar-start">
+    <%= link_to "Home", root_path, class: "btn btn-ghost" %>
+  </div>
+  <div class="navbar-end">
+    <% if authenticated? %>
+      <%= button_to "Log out", session_path, method: :delete, class: "btn btn-ghost" %>
+    <% else %>
+      <%= link_to "Log in", new_session_path, class: "btn btn-ghost" %>
+    <% end %>
+  </div>
 </nav>

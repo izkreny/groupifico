@@ -1,58 +1,60 @@
 <%= form_with(model: [group, event], class: "contents") do |form| %>
   <%= render "shared/errors", object: event %>
 
-  <div class="main">
-    <%= form.label      :name %>
-    <%= form.text_field :name %>
+  <fieldset class="fieldset">
+    <legend class="fieldset-legend">Event details</legend>
 
-    <%= form.label     :description %>
-    <%= form.text_area :description %>
+    <%= form.label      :name, class: "label" %>
+    <%= form.text_field :name, class: "input w-full" %>
 
-    <%= form.label          :starts_at %>
-    <%= form.datetime_field :starts_at %>
+    <%= form.label     :description, class: "label" %>
+    <%= form.text_area :description, class: "textarea w-full" %>
 
-    <%= form.label          :ends_at %>
-    <%= form.datetime_field :ends_at %>
+    <%= form.label          :starts_at, class: "label" %>
+    <%= form.datetime_field :starts_at, class: "input w-full" %>
 
-    <%= form.label  :status %>
-    <%= form.select :status, event_statuses %>
+    <%= form.label          :ends_at, class: "label" %>
+    <%= form.datetime_field :ends_at, class: "input w-full" %>
 
-    <%= form.label  :category %>
-    <%= form.select :category, event_categories %>
+    <%= form.label  :status, class: "label" %>
+    <%= form.select :status, event_statuses, {}, class: "select w-full" %>
 
-    <%= form.label             :creator_id %>
-    <%= form.collection_select :creator_id, event.group.members, :id, :full_name %>
+    <%= form.label  :category, class: "label" %>
+    <%= form.select :category, event_categories, {}, class: "select w-full" %>
 
-    <%= form.label             :manager_id %>
-    <%= form.collection_select :manager_id, event.group.members, :id, :full_name %>
+    <%= form.label             :creator_id, class: "label" %>
+    <%= form.collection_select :creator_id, event.group.members, :id, :full_name, {}, class: "select w-full" %>
+
+    <%= form.label             :manager_id, class: "label" %>
+    <%= form.collection_select :manager_id, event.group.members, :id, :full_name, {}, class: "select w-full" %>
 
     <% if event.group.addresses.present? %>
-      <br>
+      <div class="divider"></div>
       <strong>
         <%= event.address.persisted? ? "Change address:" : "Select existing address:" %>
       </strong>
-      <br>
-      <%= form.label             :address_id %>
-      <%= form.collection_select :address_id, event.group.addresses, :id, :name, prompt: true %>
+
+      <%= form.label             :address_id, class: "label" %>
+      <%= form.collection_select :address_id, event.group.addresses, :id, :name, { prompt: true }, class: "select w-full" %>
     <% end %>
-    <br>
 
     <% if event.address.persisted? %>
-      <%= link_to "Edit '#{event.address.name}' address", edit_address_path(event.address), target: "_blank" %>
-      |
-      <%= link_to "Create new address", new_address_path, target: "_blank" %>
+      <div class="mt-2">
+        <%= link_to "Edit '#{event.address.name}' address", edit_address_path(event.address), target: "_blank", class: "link link-hover" %>
+        |
+        <%= link_to "Create new address", new_address_path, target: "_blank", class: "link link-hover" %>
+      </div>
     <% else %>
-      <strong>
-        Create new address:
-      </strong>
-      <br>
+      <div class="divider"></div>
+      <strong>Create new address:</strong>
+
       <%= form.fields_for :address do |address_form| %>
         <%= render "addresses/form_fields", form: address_form %>
       <% end %>
     <% end %>
-  </div>
+  </fieldset>
 
   <div class="inline">
-    <%= form.submit class: "w-full sm:w-auto rounded-md px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white inline-block font-medium cursor-pointer" %>
+    <%= form.submit class: "btn btn-primary" %>
   </div>
 <% end %>
