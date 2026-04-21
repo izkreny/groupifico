@@ -60,17 +60,15 @@ class Event < ApplicationRecord
   end
 
   def shift_by(duration)
-    self.starts_at += duration
-    self.ends_at   += duration
-
-    self
+    self.tap do |event|
+      event.starts_at += duration
+      event.ends_at   += duration
+    end
   end
 
   def duplicate
-    raise ArgumentError, "Unable to duplicate the event!" unless self.duplicable?
-    event        = self.dup
-    event.status = "unconfirmed" unless event.unconfirmed?
-
-    event
+    self.dup.tap do |event|
+      event.status = :unconfirmed
+    end
   end
 end
