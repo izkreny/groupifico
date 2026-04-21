@@ -58,4 +58,17 @@ class Event < ApplicationRecord
   def same_day?
     starts_at.to_date == ends_at.to_date
   end
+
+  def shift_by(duration)
+    self.tap do |event|
+      event.starts_at += duration
+      event.ends_at   += duration
+    end
+  end
+
+  def duplicate
+    self.dup.tap do |event|
+      event.status = :unconfirmed
+    end
+  end
 end
