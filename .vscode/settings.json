@@ -1,0 +1,5 @@
+{
+  "rubyLsp.indexing": {
+    "excludedGems": ["minitest"]
+  }
+}
