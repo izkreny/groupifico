@@ -30,13 +30,14 @@ class UserProfile < ApplicationRecord
   belongs_to :user
 
   validates :first_name, :last_name, length: { maximum: 250 }
-  validates :mobile_phone, uniqueness: true, length: { maximum: 50 }
+  # TODO: Add as well a proper mobile phone format normalization/validation, mabye via special gem
+  validates :mobile_phone, uniqueness: { case_sensitive: false }, length: { maximum: 50 }, allow_blank: true
 
   # TODO: Maybe create a `full_name` field in the `members` table?
   #       And call `after_save` on `User[Profile]` to update it...
   def full_name
     if first_name.present? || last_name.present?
-      "#{first_name} #{last_name}".chomp
+      "#{first_name} #{last_name}".strip
     else
       user.email.split("@").first
     end
