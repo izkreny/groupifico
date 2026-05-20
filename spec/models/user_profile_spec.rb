@@ -7,6 +7,7 @@ RSpec.describe UserProfile, type: :model do
 
   describe "(validations)" do
     subject { create(:user_profile) }
+
     it { is_expected.to validate_length_of(:first_name).is_at_most(250) }
     it { is_expected.to validate_length_of(:last_name).is_at_most(250) }
     it { is_expected.to validate_length_of(:mobile_phone).is_at_most(50) }
