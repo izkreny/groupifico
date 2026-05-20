@@ -332,6 +332,9 @@ GEM
       rubocop (>= 1.72)
       rubocop-performance (>= 1.24)
       rubocop-rails (>= 2.30)
+    rubocop-rspec (3.9.0)
+      lint_roller (~> 1.1)
+      rubocop (~> 1.81)
     ruby-lsp (0.26.9)
       language_server-protocol (~> 3.17.0)
       prism (>= 1.2, < 2.0)
@@ -450,6 +453,7 @@ DEPENDENCIES
   rails (~> 8.1.1)
   rspec-rails (~> 8.0.0)
   rubocop-rails-omakase
+  rubocop-rspec
   ruby-lsp-rspec
   selenium-webdriver
   shoulda-matchers (~> 7.0)
@@ -583,6 +587,7 @@ CHECKSUMS
   rubocop-performance (1.26.1) sha256=cd19b936ff196df85829d264b522fd4f98b6c89ad271fa52744a8c11b8f71834
   rubocop-rails (2.35.2) sha256=088865be9675922a5c8f13c00055a71ab768ea5eed211437cffd2a8b46b64ac2
   rubocop-rails-omakase (1.1.0) sha256=2af73ac8ee5852de2919abbd2618af9c15c19b512c4cfc1f9a5d3b6ef009109d
+  rubocop-rspec (3.9.0) sha256=8fa70a3619408237d789aeecfb9beef40576acc855173e60939d63332fdb55e2
   ruby-lsp (0.26.9) sha256=33a01c001c00a76b4e821efc04ed7572983430f31ca5d6f3e343d0b6ccab4129
   ruby-lsp-rspec (0.1.29) sha256=798be579723376cd56b17d32373288fb1163e4cfe2024c7d068516a1cf214ee5
   ruby-progressbar (1.13.0) sha256=80fc9c47a9b640d6834e0dc7b3c94c9df37f08cb072b7761e4a71e22cff29b33
