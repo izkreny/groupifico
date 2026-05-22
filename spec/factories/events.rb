@@ -34,19 +34,30 @@
 #
 FactoryBot.define do
   factory :event do
+    transient do
+      past_datetime   { Faker::Date.between(from: 180.days.ago, to: 7.days.ago) + 10.hours }
+      future_datetime { Faker::Date.between(from: 7.days.from_now, to: 180.days.from_now) + 10.hours }
+    end
+
     name      { Faker::TvShows::Simpsons.episode_title }
-    starts_at { Faker::Date.unique.between_except(from: 180.days.ago, to: 180.days.from_now, excepted: Date.today) + 10.hours }
+    starts_at { Faker::Date.between_except(from: 180.days.ago, to: 180.days.from_now, excepted: Date.today) + 10.hours }
     ends_at   { starts_at + 1.hour }
     group
     creator
 
     trait :from_the_past do
-      starts_at { Faker::Date.unique.between(from: 180.days.ago, to: 7.days.ago) + 10.hours }
+      starts_at { past_datetime }
       status    { [ :concluded, :concluded, :canceled ].sample } # Rig the odds for :concluded 🎲
     end
 
+    trait :ongoing do
+      starts_at { past_datetime }
+      ends_at   { future_datetime }
+      status    { :confirmed }
+    end
+
     trait :from_the_future do
-      starts_at { Faker::Date.unique.between(from: 7.days.from_now, to: 180.days.from_now) + 10.hours }
+      starts_at { future_datetime }
       status    { [ :unconfirmed, :confirmed, :confirmed, :canceled ].sample } # Rig the odds for :confirmed 🎲
     end
 

@@ -68,7 +68,7 @@ class Event < ApplicationRecord
 
   def duplicate
     self.dup.tap do |event|
-      event.status = :unconfirmed
+      event.status = Event.new.status
     end
   end
 end
