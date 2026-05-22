@@ -6,12 +6,15 @@ RSpec.describe UserProfile, type: :model do
   end
 
   describe "(validations)" do
-    subject { create(:user_profile) }
-
     it { is_expected.to validate_length_of(:first_name).is_at_most(250) }
     it { is_expected.to validate_length_of(:last_name).is_at_most(250) }
     it { is_expected.to validate_length_of(:mobile_phone).is_at_most(50) }
-    it { is_expected.to validate_uniqueness_of(:mobile_phone).case_insensitive.allow_blank }
+
+    describe "(uniqeness)" do
+      subject { create(:user_profile) }
+
+      it { is_expected.to validate_uniqueness_of(:mobile_phone).case_insensitive.allow_blank }
+    end
   end
 
   describe "#full_name" do

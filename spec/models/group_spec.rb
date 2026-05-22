@@ -11,11 +11,13 @@ RSpec.describe Group, type: :model do
     describe "nested attributes for address with ':reject_if' option" do
       it "does not build an address if all provided address attributes are empty" do
         group = build(:group, address_attributes: { name: "", city: "" })
+
         expect(group.address).to be_nil
       end
 
       it "builds an address if at least one of the provided address attributes is not empty" do
         group = build(:group, address_attributes: { name: "", city: "Ur" })
+
         expect(group.address).not_to be_nil
       end
     end
@@ -28,6 +30,7 @@ RSpec.describe Group, type: :model do
   describe "(validations)" do
     it "is invalid if the address is not valid" do
       valid_group_with_invalid_address = build(:group, address: build(:address, name: ""))
+
       expect(valid_group_with_invalid_address).to be_invalid
     end
 
@@ -45,6 +48,7 @@ RSpec.describe Group, type: :model do
 
     it "returns an empty array if the events do not have addresses" do
       create(:event, group:)
+
       expect(group.events_addresses).to be_empty
     end
 
@@ -53,6 +57,7 @@ RSpec.describe Group, type: :model do
 
       it "returns that specific address exactly once" do
         create_list(:event, 2, group:, address:)
+
         expect(group.events_addresses).to contain_exactly(address)
       end
     end
@@ -62,32 +67,36 @@ RSpec.describe Group, type: :model do
         first_address, second_address = build_list(:address, 2)
         create(:event, group:, address: first_address)
         create(:event, group:, address: second_address)
+
         expect(group.events_addresses).to contain_exactly(first_address, second_address)
       end
     end
   end
 
   describe "#addresses" do
-    let(:group) { build(:group, address: group_address) }
-    let(:events_addresses_mock) { [ build(:address) ] }
-
-    before do
-      allow(group).to receive(:events_addresses).and_return(events_addresses_mock)
-    end
-
     context "when the group has an address" do
-      let(:group_address) { build(:address) }
+      let(:group_address) { create(:address) }
+      let(:group)         { create(:group, address: group_address) }
 
-      it "returns the events' addresses combined with the group's address" do
-        expect(group.addresses).to match_array(events_addresses_mock | [ group_address ])
+      it "returns the events' addresses combined with the group's address if they differ" do
+        event = create(:event, group:, address: build(:address))
+
+        expect(group.addresses).to contain_exactly(event.address, group_address)
+      end
+
+      it "returns only the group address if it is also used by all events" do
+        event = create(:event, group:, address: group_address)
+
+        expect(group.addresses).to contain_exactly(event.address)
       end
     end
 
     context "when the group does not have an address" do
-      let(:group_address) { nil }
-
       it "returns just the events' addresses" do
-        expect(group.addresses).to eq(events_addresses_mock)
+        group = create(:group)
+        event = create(:event, group:, address: build(:address))
+
+        expect(group.addresses).to contain_exactly(event.address)
       end
     end
   end

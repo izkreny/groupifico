@@ -49,14 +49,14 @@ RSpec.describe Event, type: :model do
     it { is_expected.to validate_length_of(:name).is_at_most(250) }
     it { is_expected.to validate_length_of(:description).is_at_most(25_000) }
 
-    it "is invalid if event's end is before its start date and time" do
+    it "is invalid if the event's end is before its start date and time" do
       invalid_event = build(:event, starts_at: Time.now, ends_at: Time.now - 1.hour)
 
       expect(invalid_event).to be_invalid
     end
   end
 
-  describe "#upcoming (scope)" do
+  describe ".upcoming" do
     before do
       create(:event, :from_the_past)
       create(:event, :ongoing)
@@ -77,7 +77,7 @@ RSpec.describe Event, type: :model do
     end
   end
 
-  describe "#ongoing (scope)" do
+  describe ".ongoing" do
     before do
       create(:event, :from_the_past)
       create(:event, :from_the_future)
@@ -98,7 +98,7 @@ RSpec.describe Event, type: :model do
     end
   end
 
-  describe "#past (scope)" do
+  describe ".past" do
     before do
       create(:event, :ongoing)
       create(:event, :from_the_future)
@@ -141,7 +141,7 @@ RSpec.describe Event, type: :model do
   describe "#shift_by(duration)" do
     let(:event) { build(:event) }
 
-    context "when duration is zero" do
+    context "when the duration is zero" do
      it "returns the event with all attributes unchanged" do
         original_attributes = event.attributes.deep_dup
 
@@ -149,7 +149,7 @@ RSpec.describe Event, type: :model do
       end
     end
 
-    context "when duration is (plus) 2 hours" do
+    context "when the duration is positive, e.g., 2 hours" do
       it "returns the event with the start and end shifted forward by 2 hours" do
         expect { event.shift_by(2.hours) }
           .to  change(event, :starts_at).by(2.hours)
@@ -157,7 +157,7 @@ RSpec.describe Event, type: :model do
       end
     end
 
-    context "when duration is minus 2 hours" do
+    context "when the duration is negative, e.g., -2 hours" do
       it "returns the event with the start and end shifted backward by 2 hours" do
         expect { event.shift_by(-2.hours) }
           .to  change(event, :starts_at).by(-2.hours)
@@ -165,7 +165,7 @@ RSpec.describe Event, type: :model do
       end
     end
 
-    context "when duration is not zero" do
+    context "when the duration is not zero" do
      it "returns the event with all attributes unchanged EXCEPT start and end" do
         original_attributes = event.attributes.except("starts_at", "ends_at").deep_dup
 
@@ -175,13 +175,16 @@ RSpec.describe Event, type: :model do
   end
 
   describe "#duplicate" do
-    it "returns a new unsaved event with duplicated attributes and the default event status" do
-      event                           = create(:event, status: :confirmed)
+    let(:event)            { create(:event, status: :confirmed) }
+    let(:duplicated_event) { event.duplicate }
+
+    it "returns a new unsaved event with duplicated attributes and the default event status" do # rubocop:disable RSpec/MultipleExpectations
       duplicated_attributes           = event.attributes.dup
       duplicated_attributes["status"] = described_class.new.status
       [ "id", "created_at", "updated_at" ].each { duplicated_attributes[it] = nil }
 
-      expect(event.duplicate.attributes).to eq(duplicated_attributes)
+      expect(duplicated_event.attributes).to eq(duplicated_attributes)
+      expect(duplicated_event).not_to be_persisted
     end
   end
 end
