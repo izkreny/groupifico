@@ -75,28 +75,31 @@ RSpec.describe Group, type: :model do
 
   describe "#addresses" do
     context "when the group has an address" do
-      let(:group_address) { create(:address) }
-      let(:group)         { create(:group, address: group_address) }
+      let(:group_address)      { build(:address) }
+      let(:event_address)      { build(:address) }
+      let(:group_with_address) { create(:group, address: group_address) }
 
       it "returns the events' addresses combined with the group's address if they differ" do
-        event = create(:event, group:, address: build(:address))
+        create(:event, group: group_with_address, address: event_address)
 
-        expect(group.addresses).to contain_exactly(event.address, group_address)
+        expect(group_with_address.addresses).to contain_exactly(event_address, group_address)
       end
 
       it "returns only the group address if it is also used by all events" do
-        event = create(:event, group:, address: group_address)
+        create(:event, group: group_with_address, address: group_address)
 
-        expect(group.addresses).to contain_exactly(event.address)
+        expect(group_with_address.addresses).to contain_exactly(group_address)
       end
     end
 
     context "when the group does not have an address" do
-      it "returns just the events' addresses" do
-        group = create(:group)
-        event = create(:event, group:, address: build(:address))
+      let(:event_address)         { build(:address) }
+      let(:group_without_address) { create(:group) }
 
-        expect(group.addresses).to contain_exactly(event.address)
+      it "returns just the events' addresses" do
+        create(:event, group: group_without_address, address: event_address)
+
+        expect(group_without_address.addresses).to contain_exactly(event_address)
       end
     end
   end

@@ -111,7 +111,7 @@ RSpec.describe Event, type: :model do
       end
     end
 
-    context "when there are events that ended" do
+    context "when there are events that have ended" do
       it "returns all of them" do
         past_event = create(:event, :from_the_past)
 
@@ -178,12 +178,15 @@ RSpec.describe Event, type: :model do
     let(:event)            { create(:event, status: :confirmed) }
     let(:duplicated_event) { event.duplicate }
 
-    it "returns a new unsaved event with duplicated attributes and the default event status" do # rubocop:disable RSpec/MultipleExpectations
+    it "returns an event with duplicated attributes and the default event status" do
       duplicated_attributes           = event.attributes.dup
       duplicated_attributes["status"] = described_class.new.status
       [ "id", "created_at", "updated_at" ].each { duplicated_attributes[it] = nil }
 
       expect(duplicated_event.attributes).to eq(duplicated_attributes)
+    end
+
+    it "returns a new unsaved event" do
       expect(duplicated_event).not_to be_persisted
     end
   end
