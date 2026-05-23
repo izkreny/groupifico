@@ -28,8 +28,8 @@ FactoryBot.define do
     password { "0000" } # Faker::Internet.password
 
     trait :with_full_profile do
-      after(:build) do |user, context|
-        build(
+      after(:create) do |user, context|
+        create(
           :user_profile,
           :with_all_attributes,
           user: user,

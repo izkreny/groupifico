@@ -31,7 +31,10 @@ class UserProfile < ApplicationRecord
 
   validates :first_name, :last_name, length: { maximum: 250 }
   # TODO: Add as well a proper mobile phone format normalization/validation, mabye via special gem
-  validates :mobile_phone, uniqueness: { case_sensitive: false }, length: { maximum: 50 }, allow_blank: true
+  validates :mobile_phone, uniqueness: { case_sensitive: false }, length: { maximum: 50 }, allow_nil: true
+  # nilify empty mobile phone because there is a unique index on the nullable `mobile_phone` database field
+  normalizes :mobile_phone, with: ->(mobile_phone) { mobile_phone.strip.empty? ? nil : mobile_phone }
+
 
   # TODO: Maybe create a `full_name` field in the `members` table?
   #       And call `after_save` on `User[Profile]` to update it...
