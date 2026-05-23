@@ -36,8 +36,13 @@ FactoryBot.define do
     member
 
     trait :with_all_attributes do
-      association :event,  :with_all_attributes
-      association :member, :with_all_attributes
+      transient do
+        address { association :address, :with_all_attributes }
+        group   { association :group,   :with_all_attributes, address: }
+      end
+
+      member { association :member, :with_all_attributes, group: }
+      event  { association :event,  :with_all_attributes, group:, address:, creator: member }
     end
   end
 end

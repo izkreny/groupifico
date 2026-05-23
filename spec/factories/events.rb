@@ -42,8 +42,8 @@ FactoryBot.define do
     name      { Faker::TvShows::Simpsons.episode_title }
     starts_at { Faker::Date.between_except(from: 180.days.ago, to: 180.days.from_now, excepted: Date.today) + 10.hours }
     ends_at   { starts_at + 1.hour }
-    group
-    creator
+    group     { association :group }
+    creator   { association :creator, group: }
 
     trait :from_the_past do
       starts_at { past_datetime }
@@ -63,10 +63,10 @@ FactoryBot.define do
 
     trait :with_all_attributes do
       description { Faker::TvShows::Simpsons.quote }
-      association :group,   :with_all_attributes
-      association :creator, :with_all_attributes
-      association :manager, :with_all_attributes
-      association :address, :with_all_attributes
+      address     { association :address, :with_all_attributes }
+      group       { association :group,   :with_all_attributes, address: }
+      creator     { association :creator, :with_all_attributes, group: }
+      manager     { creator }
     end
   end
 end
