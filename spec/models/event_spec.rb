@@ -179,7 +179,7 @@ RSpec.describe Event, type: :model do
     let(:duplicated_event) { event.duplicate }
 
     it "returns an event with duplicated attributes and the default event status" do
-      duplicated_attributes           = event.attributes.dup
+      duplicated_attributes           = event.attributes.deep_dup
       duplicated_attributes["status"] = described_class.new.status
       [ "id", "created_at", "updated_at" ].each { duplicated_attributes[it] = nil }
 
