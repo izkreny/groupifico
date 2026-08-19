@@ -85,6 +85,7 @@
 - Reports
   - For ZAMP!!!
 - Files / Attachments
+  - Pick an image processor for Active Storage variants. `variant_processor` is unset, so Rails defaults it to `:mini_magick` and ImageMagick is installed nowhere: not in CI, not in the `Dockerfile`. What is installed instead is `libvips`, so either set `config.active_storage.variant_processor = :vips` or install ImageMagick. Until one of those happens any transformation raises, and the application boots only because Active Storage rescues the `LoadError` rather than propagating it.
 - Dashboard
 - Later:
   - Tasks
