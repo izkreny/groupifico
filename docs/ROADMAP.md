@@ -85,6 +85,7 @@
 - Reports
   - For ZAMP!!!
 - Files / Attachments
+  - Re-enable Active Storage variants. `config.active_storage.variant_processor` is `:disabled` in `config/application.rb`, because nothing needs a variant yet and the Rails 8.1 default of `:vips` makes libvips a boot dependency of every environment, CI included. To turn them on: set it back to `:vips`, add `gem "ruby-vips"`, and install libvips in the CI jobs that boot the application. The `Dockerfile` already installs it, so production needs no change. While it stays `:disabled` a transform returns the original image instead of raising, so this is a silent no-op rather than an error.
 - Dashboard
 - Later:
   - Tasks
