@@ -5,8 +5,15 @@ updates:
   schedule:
     interval: weekly
   open-pull-requests-limit: 10
+  labels: [ "infra" ]
+  # `ci` is not a commit type in this repository; `build` absorbed it.
+  commit-message:
+    prefix: build
 - package-ecosystem: github-actions
   directory: "/"
   schedule:
     interval: weekly
   open-pull-requests-limit: 10
+  labels: [ "infra" ]
+  commit-message:
+    prefix: build
