@@ -33,7 +33,3 @@ The local gate is `bin/ci`, a superset of all four jobs that also replants the t
 ## Dependabot carries no labels
 
 `.github/dependabot.yml` sets `labels: []` on both update entries, and that empty list is load-bearing. Labels belong on issues and never on pull requests, and with the key absent Dependabot applies `dependencies` plus an ecosystem label and **creates those labels itself if they do not exist**. Deleting them without the empty list only postpones them to the next bump.
-
-## No commitlint and no Node toolchain
-
-There is no commitlint, no npm manifest and no Node anywhere: the front end is importmap, so JavaScript is vendored rather than built. The `scope-enum` rule from the skills review has nothing to run inside and never will while that holds. Type and scope discipline here is a convention a reader enforces, not a hook that does.
