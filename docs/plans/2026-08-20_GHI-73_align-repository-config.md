@@ -24,7 +24,7 @@ The two dependabot pull requests that held the three doomed labels, #70 and #71,
 - Delete the `dependencies`, `ruby` and `github_actions` labels, now that no open pull request carries them
 - Regroup `.github/workflows/ci.yml` into two jobs split on whether the job boots the application: `lint` gets `bin/rubocop`, `bin/brakeman` and `bin/bundler-audit`, `test` gets `bin/importmap audit` and `bin/rspec`. Delete the `system-test` job. Keep the RuboCop cache step in `lint`, and change nothing about how any command is invoked, so a failure after this can only be the grouping
 - Write `.agents/github.md` recording the four per-repo overrides, **after** the workflow edit rather than before, because the third override is the list of check-run names and the point of the file is to be true
-- Write the decision record at `docs/adr/2026-08-19_github-repository-conventions_0001.md`, creating `docs/adr/`: squash-only merges, the required check list, why the required approving review count is zero, and what `system-test` took with it when it went
+- Write the decision record at `docs/adr/2026-08-20_github-repository-conventions_0001.md`, creating `docs/adr/`: squash-only merges, the required check list, why the required approving review count is zero, and what `system-test` took with it when it went
 - Push, read the new check names off the pull request with `gh pr checks`, then set branch protection's required checks to exactly those two. In that order, and before merging anything
 
 ## Verification
@@ -47,5 +47,5 @@ What those gates cannot see, and what therefore needs judgement:
 
 ## Open questions
 
-- The decision record is the repository's first, and `docs/adr/` does not exist yet. The filename `2026-08-19_github-repository-conventions_0001.md` comes from the issue verbatim, including the 19th rather than the 20th; keeping it as written is the assumption unless the date should track the day the record is actually written.
+- **Resolved.** The decision record is the repository's first, and `docs/adr/` did not exist yet. The filename carries the day the record was written, `2026-08-20`, rather than the `2026-08-19` issue #73 named, and that issue's fifth acceptance criterion was edited to match rather than left pointing at a path nothing would create.
 - Restoring `system-test` alongside the first system specs is recorded in the decision record, which is durable but passive. Should a follow-up issue carry it instead, so it appears in the tracker rather than only in prose?
