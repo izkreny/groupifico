@@ -16,6 +16,11 @@ module Groupifico
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w[assets tasks])
 
+    # No attachment in the application needs a variant yet, and the vips default
+    # would make libvips a boot dependency of every environment. Set this back to
+    # :vips and install libvips in CI on the day variants are actually used.
+    config.active_storage.variant_processor = :disabled
+
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files
