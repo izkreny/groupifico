@@ -48,11 +48,13 @@ This is not a judgement that review is optional. It is that GitHub cannot expres
 
 So the gate moved rather than disappeared. It lives in the `github-pr-flow` merge workflow, which refuses to land a pull request with no review record, and the review itself is the owner reading the diff with the `/code-review` skill on it. What GitHub enforces is that CI passed; what the workflow enforces is that a human looked. Splitting them this way is the only arrangement available, and it is worth knowing that the second half is a convention rather than a server-side rule: it can be skipped by an agent that does not read the skill, and nothing will stop it.
 
-### Labels are the layer axis plus `bug`, and Dependabot carries none
+### The layer axis is closed, the rest of the taxonomy arrives on demand, and Dependabot carries none
 
-The label set is `backend`, `frontend`, `fullstack`, `infra`, `docs`, plus `bug`. `dependencies`, `ruby` and `github_actions` were deleted with #73.
+The **layer axis** is mandatory and closed: `backend`, `frontend`, `fullstack`, `infra`, `docs`, exactly one on everything that is not an epic. That part is the decision.
 
-Those three were Dependabot's defaults, and they were a second axis running parallel to the first: a dependency bump is `infra` work on the layer axis, and labelling it `dependencies` as well answers a question no filter asks.
+Every other axis in the standards is **open, and its labels arrive when something needs one**. So the labels that exist today are those five plus `bug`, and that is a snapshot rather than a taxonomy: `spike` on the nature axis, `epic` on the structure axis, and `urgent` and `someday` on the priority axis are all legitimate here and simply have not been wanted yet. `gh issue create` fails on a label that does not exist rather than creating it, so the first issue that needs one is what prompts making it.
+
+`dependencies`, `ruby` and `github_actions` were deleted with #73, and they are not in that category. They were Dependabot's defaults rather than missing values of an existing axis: a second axis running parallel to the layer one, on which a dependency bump is already `infra` work, so labelling it `dependencies` as well answered a question no filter asks.
 
 **Deleting them was not enough, and this is the part worth remembering.** With no `labels` key, Dependabot applies `dependencies` plus an ecosystem label and creates those labels itself if the repository does not have them, so the deletion would have been undone by the next bump. `.github/dependabot.yml` therefore sets `labels: []` on both entries, which is also the correct end state on its own terms: labels belong on issues, never on pull requests, and a Dependabot pull request has no issue to hang a layer on.
 
