@@ -24,7 +24,7 @@ Two things had to be read rather than recalled, because the fix is a one-line re
 Move the seed check ahead of the suite and reset the database between them:
 
     step "Tests: Seeds", "env RAILS_ENV=test bin/rails db:seed:replant"
-    step "Tests: Reset", "bin/rails db:test:prepare"
+    step "Tests: Reset database", "bin/rails db:test:prepare"
     step "Tests: Rails", "bin/rspec"
 
 **The reset goes before the suite, not after the seed check as the run's last step, and that is the whole design decision.** Both orders end with a clean database, so both satisfy the issue as written. Only this one is self-enforcing: delete the reset and `bin/rspec` runs on seeded rows inside `bin/ci` itself, so the run goes red on the spot. With the reset last, deleting it breaks nothing `bin/ci` can see, and the bug returns silently one command later, which is exactly how it arrived.
@@ -37,7 +37,7 @@ Not touched: the two commented-out `bin/rails test` and `test:system` steps stay
 
 ## Steps
 
-- Reorder the test block in `config/ci.rb`: `Tests: Seeds`, then a new `Tests: Reset` running `bin/rails db:test:prepare`, then `Tests: Rails`
+- Reorder the test block in `config/ci.rb`: `Tests: Seeds`, then a new `Tests: Reset database` running `bin/rails db:test:prepare`, then `Tests: Rails`
 - Comment the reorder in place, one line on why the reset precedes the suite, since the ordering is the fix and a future edit that moves it would look harmless
 - Run the verification sequence end to end, in order, with nothing between `bin/ci` and the `bin/rspec` that follows it
 
@@ -62,4 +62,4 @@ What those gates cannot see:
 
 ## Open questions
 
-- `Tests: Reset` is the step's name here, grouping it with the tests it feeds. `Setup: Test database` would group it with `Setup` instead, at the cost of sitting three steps away from the one it undoes. Which reads better in the run output?
+- **Resolved.** The step is named `Tests: Reset database`. `Tests: Reset` alone was the proposal and reads as though the run itself is being reset; the extra word says which of the three things in play the step touches, and it still groups with the tests it feeds rather than with `Setup` three steps away.
