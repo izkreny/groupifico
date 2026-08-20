@@ -1,10 +1,12 @@
 # GitHub conventions for this repository
 
-Per-repo overrides for the `github-solo-dev-repo` and `github-pr-flow` skills. Every entry below contradicts a default one of those skills assumes, and this file wins on the conflict. Anything not listed here follows the skills' own standards.
+Per-repo facts for the `github-solo-dev-repo` and `github-pr-flow` skills: the values they tell you to look up here rather than assume, and the places this repository differs from their defaults. This file wins on any conflict. Anything not listed here follows the skills' own standards.
 
 ## The only remote is named `upstream`
 
-`git remote` prints exactly one name and it is `upstream`, never `origin`. Any command that hardcodes `origin` fails here, and the first push of a branch is the worst place to discover that, because it fails immediately after the plan commit has already landed. Resolve the remote rather than assuming it; the first push of a branch is:
+`git remote` prints exactly one name and it is `upstream`, never `origin`. The skills already treat the remote's name as a per-repo fact and give a recipe for resolving it, so this section overrides nothing; it is the answer that recipe is looking for, recorded once so nothing has to run `git remote` to find it.
+
+The first push of a branch is:
 
     git push -u upstream <branch>
 
@@ -12,19 +14,23 @@ Per-repo overrides for the `github-solo-dev-repo` and `github-pr-flow` skills. E
 
 `build`, `docs`, `feat`, `fix`, `refactor`, `test`. Six, against the skills' default five.
 
-`build` is the one that differs in substance: it absorbs both `chore` and `ci`, and it accounts for roughly half the commits on `main`. Neither `chore` nor `ci` is a type here. The one `ci:` subject on `main`, 9b0bcc2, is a dependabot squash and was a mistake, which is why `.github/dependabot.yml` now pins the bot's prefix to `build`.
+`build` is the one that differs in substance: it absorbs both `chore` and `ci`, and it accounts for roughly half the commits on `main`. Neither `chore` nor `ci` is a type here. The one `ci:` subject on `main`, 9b0bcc2, is a dependabot squash and was a mistake.
 
 One vocabulary, three places: the branch name, the commit headers on the branch, and the pull request title.
 
 ## CI check-run names
 
-`lint` and `test`. Those two, and nothing else.
+`lint`, `scan_js`, `scan_ruby` and `test`. Those four, and nothing else.
 
-They are job ids from `.github/workflows/ci.yml`, because no job there sets a job-level `name:`. `main` requires both of them, `enforce_admins` is on, so adding or renaming a job means moving `required_status_checks` in the same change or every open pull request waits forever on a check that never reports.
+They are job ids from `.github/workflows/ci.yml`, because no job there sets a job-level `name:`. `main` requires all four, and `enforce_admins` is on, so adding or renaming a job means moving `required_status_checks` in the same change or every open pull request waits forever on a check that never reports.
 
-The two jobs are split on whether the job boots the application. `lint` does not: RuboCop, Brakeman, bundler-audit. `test` does: `bin/importmap audit` and `bin/rspec`.
+The four run in parallel and stay separate deliberately. Merging them into one job couples failures that have nothing to do with each other: a RuboCop nit would hide the security scans behind it, and a red scan would stop `actions/cache` saving the RuboCop cache, since its post step is guarded by `success()`. The decision record `docs/adr/2026-08-20_github-repository-conventions_0001.md` has the detail. Do not group them again.
 
-The local gate is `bin/ci`, a superset of both jobs that also replants the test seeds. Never invent a check command for this repository; it is that one.
+The local gate is `bin/ci`, a superset of all four jobs that also replants the test seeds. Never invent a check command for this repository; it is that one.
+
+## Dependabot carries no labels
+
+`.github/dependabot.yml` sets `labels: []` on both update entries, and that empty list is load-bearing. Labels belong on issues and never on pull requests, and with the key absent Dependabot applies `dependencies` plus an ecosystem label and **creates those labels itself if they do not exist**. Deleting them without the empty list only postpones them to the next bump.
 
 ## No commitlint and no Node toolchain
 
