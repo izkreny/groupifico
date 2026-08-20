@@ -30,6 +30,12 @@ The consequence worth stating out loud: **the pull request title is load-bearing
 
 `enforce_admins` is true. Those four are job ids in `.github/workflows/ci.yml` rather than job names, because nothing there sets a job-level `name:`. `strict` is false, so a branch need not be up to date with `main` before it merges.
 
+**All four are pinned to `app_id` 15368, which is GitHub Actions.** A required check stores an app id alongside its name, and that id decides who is allowed to report it. Left unset, anything reporting the right name satisfies the requirement, including a commit status posted straight to the Statuses API from a laptop with a `repo`-scoped token and no work done at all. Pinned, only a check run from Actions counts. Without the pin, `enforce_admins` closes the bypass where an admin merges past a red check, and leaves open the one where a green check is simply asserted; the four names are produced by the workflow and by nothing else, so the pin costs nothing and closes it.
+
+The pin has to be explicit in both directions, because omitting `app_id` does not mean "any app". The API documents omission as "automatically select the GitHub App that has recently provided this check", so a check added without an id silently inherits whoever reported it last. `-1` is the documented value for "explicitly allow any app". This asymmetry was found the hard way, on this branch: removing three checks and adding two back produced two pinned entries and two unpinned ones from identical requests.
+
+**`system-test` is the intended exception, and it is provisional.** When #79 brings that job back, its required check should be added with `app_id: -1` rather than pinned, because a browser suite may be run locally instead of on a runner, with `gh signoff` setting the status by hand; `config/ci.rb` already carries that step commented out. That is a preference to be tested rather than a settled rule: if local signoff turns out not to be worth it, pin `system-test` like the rest and delete this paragraph.
+
 `enforce_admins` is on for the reason it is usually off: there is one committer, and that committer is an admin. A protection rule an admin may bypass is not a rule, it is a reminder, and it protects the repository exactly as long as the owner remembers it is there. Turning it on costs a real merge that has to wait for a real check, which is the point.
 
 `strict` is false because requiring every branch to be up to date would mean a rebase before every merge, on a repository where branches rarely touch the same files. The price is that a semantic conflict between two branches can land green; the local `bin/ci` run on the branch, and the fact that both branches are the same person's, is what covers that instead.
@@ -75,11 +81,11 @@ Its `actions/upload-artifact` step, which kept screenshots from failed system te
 
 ```sh
 gh api repos/izkreny/groupifico --jq '{allow_squash_merge, allow_merge_commit, allow_rebase_merge, squash_merge_commit_title, squash_merge_commit_message, delete_branch_on_merge}'
-gh api repos/izkreny/groupifico/branches/main/protection --jq '{checks: .required_status_checks.contexts, admins: .enforce_admins.enabled, reviews: .required_pull_request_reviews.required_approving_review_count}'
+gh api repos/izkreny/groupifico/branches/main/protection --jq '{checks: .required_status_checks.checks, admins: .enforce_admins.enabled, reviews: .required_pull_request_reviews.required_approving_review_count}'
 gh label list
 ```
 
-**Adding or renaming a CI job is now a two-part change, permanently.** The workflow edit and the `required_status_checks` update have to land together, with the new names read off a real pull request via `gh pr checks` first. Forgetting the second half leaves every open pull request blocked on a check that will never report, and `enforce_admins` means there is no way to merge past it: the recovery is to fix protection, not to force the merge. Issue #79 will hit this, since it adds a fifth job.
+**Adding or renaming a CI job is now a two-part change, permanently.** The workflow edit and the `required_status_checks` update have to land together, with the new names read off a real pull request via `gh pr checks` first, and with `app_id` stated rather than omitted, per the pinning section above. Forgetting the second half leaves every open pull request blocked on a check that will never report, and `enforce_admins` means there is no way to merge past it: the recovery is to fix protection, not to force the merge. Issue #79 will hit this, since it adds a fifth job.
 
 **A second committer invalidates the review decision.** The zero-approval argument holds only because the author and the reviewer are the same person. Add a committer and `required_approving_review_count` should become one that same day, at which point the convention half of the gate can be retired.
 
