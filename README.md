@@ -110,7 +110,8 @@ erDiagram
   %% ENTITIES
 
   %% UNIQUE INDEX (email)
-  %% FK: user_profiles, members and sessions all reference users, ON DELETE CASCADE, ON UPDATE CASCADE
+  %% FK: user_profiles and members reference users, ON DELETE CASCADE, ON UPDATE CASCADE
+  %% FK: sessions references users with no options, so NO ACTION; has_many dependent: :destroy cleans them up
   USER {
     %% email limit: 250 chars. Normalised to stripped lowercase, uniqueness validated case-insensitively
     STRING email           "UK, NN"
