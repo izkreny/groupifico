@@ -42,7 +42,7 @@
 - Attachments or links to other entities e.g. Songs, File uploads?
 - Belong to season (either whole year or some specifit date range)
 - iCalendar one-way sync
-- Status workflow (rules)
+- Status workflow (rules), including validating the status against whether a manager and address data exist
 
 ### Registration
 - Add [locking](https://guides.rubyonrails.org/active_record_querying.html#locking-records-for-update) to avoid rewriting of RSVP data?! Maybe it will be unnecessary with Hotwire...but again.
