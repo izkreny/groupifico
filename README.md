@@ -38,7 +38,7 @@ For more information, check out the detailed [roadmap](./docs/ROADMAP.md).
 
 #### User
 - Global application identity via unique email
-- User can login to the app via magic link/code sent to email
+- User logs in with an email and password, and the session persists until signed out
 - User can become a Member of one or more Groups
 
 #### Member aka _Group membership_
@@ -48,10 +48,10 @@ For more information, check out the detailed [roadmap](./docs/ROADMAP.md).
 #### Event
 - Main organizational group entity
 
-#### Attendee
-- Member can attend an Event
-- Member can be invited and respond
-- Attendance can be reserved and presence later confirmed
+#### Registration
+- Member registers for an Event
+- Member can be invited to an Event and respond
+- A registration can be reserved and the presence later confirmed
 
 ### Other Domain Models
 
@@ -60,91 +60,137 @@ For more information, check out the detailed [roadmap](./docs/ROADMAP.md).
 
 ### Entity Relationship Diagram
 
-To have a clear and simple overview of an application architecture, only basic information is provided. For more details, you can refer to the comprehensive database schema in [DBML syntax](./docs/schema.dbml) or review the Rails [schema.rb](./db/schema.rb) file.
+The diagram renders only what is needed to read the schema: entity, attribute, type, key and nullability. Everything else about a column, its limit, its enum options, its default and its foreign key rules, sits in a `%%` comment in the source of this file directly above the line it describes, and never reaches the picture. So read the rendered diagram for the shape, the source of this section for the detail, and the Rails [schema.rb](./db/schema.rb) for the authority.
 
-> [!IMPORTANT]  
-> - Foreign key attributes are omitted if visible relationships exist
+Attributes read `type name "key, comment"`: type before name, which is mermaid's own order, with the keys inside the comment rather than as native mermaid keys so that every entity box stays two columns wide. The reasoning behind that and every other choice here is [ADR 0002](./docs/adr/2026-08-21_erd-notation-conventions_0002.md).
+
+| Token | Meaning |
+|---|---|
+| `PK` | Primary key |
+| `UK` | Unique key |
+| `FK: ENTITY` | Active Record reference to that entity, shown only where no relationship line does. Not necessarily a database constraint |
+| `ENUM` | Integer column backed by an Active Record enum; its options and default are in the `%%` comment above it |
+| `NN` | `NOT NULL`, the column is required |
+| `NULL` | The column is nullable |
+| `AI` | Auto-increment |
+
+> [!IMPORTANT]
+> - Foreign key attributes are omitted where a relationship line already shows the link. `creator_id` and `manager_id` are the exception, because both point at `MEMBER` so their names cannot say where they point, and neither has a database constraint behind it.
+> - The `sessions` table is not drawn. Authentication gets its own diagram once passwordless login lands, rather than crowding this one.
+> - Column limits are Rails-level facts. SQLite does not enforce a declared length, so a limit is what the model validations are set from and what a move to another database engine would need, not a constraint the database applies.
 
 ```mermaid
 ---
 title: Groupifico ERD
 # IMPORTANT!
 # - Official syntax for entity attributes is: `type name key "comment"`
-# - Syntax for entity attributes used below: `name TYPE "key + comment"`
+# - Syntax for entity attributes used below: `type name "key, comment"`
 ---
-
 
 erDiagram
   direction TB
+
   %% DEFAULT ATTRIBUTES
-  "DEFAULT attributes for each ENTITY" {
-    id         INTEGER  "PK, UK"
-    created_at DATETIME
-    updated_at DATETIME
+  "Default attributes for each ENTITY" {
+    INTEGER  id         "PK, UK, NN, AI"
+    DATETIME created_at "NN"
+    DATETIME updated_at "NN"
   }
 
   %% RELATIONSHIPS
-  USER   1  to 1+ MEMBER       : "↓ become … belong ↑"
-  USER   1  to 1  USER_PROFILE : "↓ has    … belong ↑"
-  MEMBER 1+ to 1  GROUP        : "↓ belong … has ↑"
-  GROUP  1  to 1+ EVENT        : "↓ has    … belong ↑"
-  EVENT  1  to 1+ ATTENDEE     : "↓ has    … belong ↑"
-  MEMBER 1  to 1+ ATTENDEE     : "↓ become … belong ↑"
-  GROUP  0+ to 1  ADDRESS      : "↓ has    … belong ↑"
-  EVENT  0+ to 1  ADDRESS      : "↓ has    … belong ↑"
+  USER    1   to  0+           MEMBER        :  "↓ become … belong ↑"
+  USER    1   to  zero or one  USER_PROFILE  :  "↓ has    … belong ↑"
+  MEMBER  0+  to  1            GROUP         :  "↓ belong … has ↑"
+  GROUP   1   to  0+           EVENT         :  "↓ has    … belong ↑"
+  EVENT   1   to  0+           REGISTRATION  :  "↓ has    … belong ↑"
+  MEMBER  1   to  0+           REGISTRATION  :  "↓ has    … belong ↑"
+  GROUP   0+  to  1            ADDRESS       :  "↓ has    … belong ↑"
+  EVENT   0+  to  1            ADDRESS       :  "↓ has    … belong ↑"
 
   %% ENTITIES
+
+  %% UNIQUE INDEX (email)
+  %% FK: user_profiles and members reference users, ON DELETE CASCADE, ON UPDATE CASCADE
+  %% FK: sessions references users with no options, so NO ACTION; has_many dependent: :destroy cleans them up
   USER {
-    email STRING "UK"
+    %% email limit: 250 chars. Normalised to stripped lowercase, uniqueness validated case-insensitively
+    STRING email           "UK, NN"
+    %% password_digest holds the bcrypt hash from has_secure_password. No limit declared
+    STRING password_digest "NN"
   }
 
+  %% UNIQUE INDEX (user_id), UNIQUE INDEX (mobile_phone)
+  %% FK: user_id references users, ON DELETE CASCADE, ON UPDATE CASCADE
   USER_PROFILE {
-    username     STRING "UK"
-    first_name   STRING
-    last_name    STRING
-    time_zone    STRING
-    mobile_phone STRING "UK"
+    %% first_name limit: 250 chars
+    STRING first_name   "NULL"
+    %% last_name limit: 250 chars
+    STRING last_name    "NULL"
+    %% mobile_phone limit: 50 chars
+    STRING mobile_phone "UK, NULL"
   }
 
+  %% FK: address_id references addresses, ON DELETE RESTRICT, ON UPDATE CASCADE
   GROUP {
-    username    STRING "UK"
-    name        STRING
-    description TEXT
-    time_zone   STRING
-    group_type  INTEGER "ENUM"
+    %% name limit: 250 chars
+    STRING  name        "NN"
+    %% description limit: 100000 bytes at the column, validated at 25000 chars in the model
+    TEXT    description "NULL"
+    %% ENUM group_type options: general | choir | band. Default: choir
+    INTEGER group_type  "ENUM, NN"
   }
 
+  %% UNIQUE INDEX (user_id, group_id): a User cannot become a Member of the same Group twice
+  %% FK: user_id and group_id both ON DELETE CASCADE, ON UPDATE CASCADE
   MEMBER {
-    status INTEGER "ENUM"
-    role   INTEGER "ENUM"
+    %% ENUM status options: active | paused | inactive. Default: active
+    INTEGER status "ENUM, NN"
+    %% ENUM role options: owner | member | admin | manager. Default: member
+    INTEGER role   "ENUM, NN"
   }
 
+  %% FK: group_id ON DELETE CASCADE, address_id ON DELETE RESTRICT, both ON UPDATE CASCADE
+  %% FK: creator_id and manager_id have no database constraint, they are Active Record associations only
   EVENT {
-    creator_id  INTEGER "FK: MEMBER"
-    manager_id  INTEGER "FK: MEMBER"
-    uid         STRING "UK: GROUP"
-    name        STRING
-    description TEXT
-    start       DATETIME
-    end         DATETIME
-    time_zone   STRING
-    status      INTEGER "ENUM"
-    event_type  INTEGER "ENUM"
+    BIGINT   creator_id  "FK: MEMBER, NN"
+    BIGINT   manager_id  "FK: MEMBER, NULL"
+    %% name limit: 250 chars
+    STRING   name        "NN"
+    %% description limit: 100000 bytes at the column, validated at 25000 chars in the model
+    TEXT     description "NULL"
+    DATETIME starts_at   "NN"
+    %% ends_at is validated greater_than starts_at
+    DATETIME ends_at     "NN"
+    %% ENUM status options: unconfirmed | confirmed | concluded | canceled. Default: unconfirmed
+    INTEGER  status      "ENUM, NN"
+    %% ENUM category options: other | rehearsal | gig. Default: other
+    INTEGER  category    "ENUM, NULL"
   }
 
-  ATTENDEE {
-    status INTEGER "ENUM"
+  %% UNIQUE INDEX (member_id, event_id): a Member cannot register for the same Event twice
+  %% FK: member_id and event_id both ON DELETE CASCADE, ON UPDATE CASCADE
+  REGISTRATION {
+    %% ENUM status options: reserved | invited | yes | maybe | no. Default: reserved
+    INTEGER status "ENUM, NN"
   }
 
+  %% Fields follow the ISO 20022 PostalAddress type
   ADDRESS {
-    name            STRING
-    street_name     STRING
-    building_number STRING
-    city            STRING
-    postal_code     STRING
-    state_code      STRING
-    country_code    STRING
-    latitude        FLOAT
-    longitude       FLOAT
+    %% name limit: 250 chars
+    STRING name            "NN"
+    %% street_name limit: 250 chars
+    STRING street_name     "NULL"
+    %% building_number limit: 250 chars
+    STRING building_number "NULL"
+    %% city limit: 250 chars
+    STRING city            "NULL"
+    %% postal_code limit: 100 chars
+    STRING postal_code     "NULL"
+    %% state_code limit: 50 chars. ISO 3166-2 code
+    STRING state_code      "NULL"
+    %% country_code limit: 5 chars. ISO 3166-1 alpha-2 code
+    STRING country_code    "NULL"
+    FLOAT  latitude        "NULL"
+    FLOAT  longitude       "NULL"
   }
 ```

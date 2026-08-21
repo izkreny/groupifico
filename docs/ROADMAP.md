@@ -3,9 +3,15 @@
 ## Core Domain Models
 
 ### Group
+- `username` column: unique, with an additional validation check at application level. Never built
+- `time_zone` column. Maybe
+- Move `description` into a separate `group_profiles` table?
+- Default `group_type` from the hostname
+- Make the creator a Member with the `owner` role when a Group is created. `GroupsController#create` saves the Group and nothing else, so a Group currently exists with no Members at all, which is why the ERD says `MEMBER 0+ to 1 GROUP`
 
 ### User
 - Login via Google Account and/or Passkey
+- Passwordless login: magic link or one-time code sent to email. The README described this as already built until #81, when it turned out the schema has had `password_digest` and a `sessions` table since March
 - Add verification workflow when user enter mobile phone
 - Login with code sent to mobile phone via SMS
 - Add more fields via (Groups?) Profile(s)
@@ -13,6 +19,8 @@
 - Soft delete (anonymize)
 
 ### User Profile
+- `username` column: unique, automatically generated random UID. Documented in the DBML file deleted by #81, never built
+- `time_zone` column: resolved via the browser, or its own entity rather than a column. Never built; see the Time Zone item under User
 - Add phone normalization and validation gem: [phonelib](https://github.com/daddyz/phonelib) or [PhonyRails](https://github.com/joost/phony_rails) (via [phony](https://github.com/floere/phony))
 
 ### Member aka _Group membership_
@@ -22,10 +30,12 @@
 - Multiple roles aka role system based on modules
 
 ### Event
-- Change `start` and `end` fields to the `starts_at` and `ends_at`
+- `uid` column: unique within the Group. Never built
+- `time_zone` column. Maybe
+- Event categories as their own entity, maybe derived from `group_type`, and maybe optional
+- Decide what happens to `creator_id` and `manager_id` when a Member goes. The deleted DBML file recorded the intent as `set default` for `creator_id` and `set null` for `manager_id`; today neither column has a database foreign key and `has_many :created_events` carries no `dependent:`, so nothing at either layer covers it
 - Automatically fill `creator_id` before validation or save?
 - Automatically fill end with 2.hours from start also before validate AR callback
-- Consider changing `event_type` to `category` or just `event_tag` (because type is more for for example Reccuring or one-off)
 - Only (event) admin can create events
 - Deadline for RSVP (status)
 - Duplicate event
@@ -33,9 +43,10 @@
 - Attachments or links to other entities e.g. Songs, File uploads?
 - Belong to season (either whole year or some specifit date range)
 - iCalendar one-way sync
-- Status workflow (rules)
+- Status workflow (rules), including validating the status against whether a manager and address data exist
 
-### Attendee
+### Registration
+- Add [locking](https://guides.rubyonrails.org/active_record_querying.html#locking-records-for-update) to avoid rewriting of RSVP data?! Maybe it will be unnecessary with Hotwire...but again.
 - Add uniquness custom validation
 - Track RSVP (status) changes...
 
@@ -45,6 +56,8 @@
 - Use Geocoding JavaScript frontend library or [geocoder gem](https://github.com/alexreisner/geocoder) (via Hotwire?) to automatically parse address in free-form and fill **ALL** possible ISO 20022 fields.
 - Provide as well visual map
 - Incorporate Country info via https://github.com/countries/countries
+- Add [counter_cache](https://guides.rubyonrails.org/association_basics.html#counter-cache) ?
+- Derive `latitude` and `longitude` from geocoding instead of accepting them from the user. The deleted DBML file claimed the user cannot edit them, which was never true: both are permitted in `AddressesController` and rendered as form fields
 
 ### Links
 - For group menu/linktree page
