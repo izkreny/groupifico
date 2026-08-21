@@ -61,7 +61,8 @@ Gates, each with an exit code:
 - `grep -ric attendee README.md docs/ROADMAP.md` reports zero in both files. Scoped to those two on purpose: `docs/plans/` legitimately says the word.
 - Each migrated DBML fact is present in `README.md`: `cascade`, `restrict`, ISO 3166-2, ISO 3166-1, ISO 20022, both uniqueness notes, and every enum value list from the models.
 
-- `mmdc -i README.md -o <scratchpad>/readme-erd.svg` exits zero, which renders the embedded diagram through the same mermaid version a browser would use and so proves it parses. This gate exists only once the owner has installed the CLI, which is their call and their machine; until then the diagram's rendering is unproven, the box stays empty, and `ready` refuses on it rather than the claim being waved through. The repository itself gains no mermaid dependency: there is no Node package manifest here and this adds none.
+- `PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium mmdc -i README.md -o <scratchpad>/readme-erd.svg` exits zero, which renders the embedded diagram through the same mermaid version a browser would use and so proves it parses. The environment variable is not optional: `mmdc` 11.16.0 installs without a browser and fails with "Could not find chrome-headless-shell" until pointed at one, and this machine already has `chromium` and `google-chrome-stable` from zypper, so downloading a third browser would be waste. The repository itself gains no mermaid dependency: there is no Node package manifest here and this adds none.
+- The rendered SVG contains none of the `%%` text and all of the attributes. **Verified, not assumed:** a probe diagram with `%%` lines above an entity and above individual attributes inside its block rendered with zero occurrences of that text in the output, while `INTEGER status "ENUM"` and `TEXT description` both appeared. That is what makes the two-layer convention above real rather than hoped for.
 
 Judgement, which no exit code covers:
 
@@ -78,6 +79,8 @@ What these gates cannot see: whether a roadmap entry preserves the intent of the
 - **Authentication is out of scope for this diagram**, and the ERD declares the omission.
 - **Rendering becomes a real gate** once the owner installs the mermaid CLI, and the readability check stays an `[owner]` box because no renderer can answer it.
 
+- **`EVENT.creator_id` and `EVENT.manager_id` stay as attributes.** Not drawn as relationships. The reason is an asymmetry the diagram already encodes: `group_id` and `member_id` can be omitted because their names say where they point, by a convention every reader knows, while `creator_id` and `manager_id` do not, since both point at `MEMBER`. The two that need saying are said, the rest are silent, and the `[!IMPORTANT]` note states that rule. Two more edges, dashed or not, cost the drawing more than they add. Mermaid also has no way to attach an edge to a single attribute, so a relationship line could not express which column it belongs to anyway.
+
 ## Open questions
 
-- `EVENT.creator_id` and `EVENT.manager_id`. **Recommended: draw both as relationships and drop the two attributes.** Mermaid's `optionally to` keyword gives a dashed, non-identifying line, which is exactly what these two are: `db/schema.rb` has no `add_foreign_key` for either, so they are Active Record associations with no database constraint behind them. A dashed line says that; an attribute called `creator_id` only says a column exists. The cost is two more edges on an already busy graph, and whether two parallel edges between `MEMBER` and `EVENT` read well is worth rendering before committing to it, which the CLI will make cheap. Awaiting the owner's word in the thread.
+None. Every question this plan opened was settled in the PR discussion.
