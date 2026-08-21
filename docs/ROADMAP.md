@@ -32,6 +32,7 @@
 - `uid` column: unique within the Group. Never built
 - `time_zone` column. Maybe
 - Event categories as their own entity, maybe derived from `group_type`, and maybe optional
+- Decide what happens to `creator_id` and `manager_id` when a Member goes. The deleted DBML file recorded the intent as `set default` for `creator_id` and `set null` for `manager_id`; today neither column has a database foreign key and `has_many :created_events` carries no `dependent:`, so nothing at either layer covers it
 - Automatically fill `creator_id` before validation or save?
 - Automatically fill end with 2.hours from start also before validate AR callback
 - Only (event) admin can create events
