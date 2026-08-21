@@ -67,8 +67,8 @@ Attributes read `type name "key, comment"`, which is mermaid's own order, with t
 | Token | Meaning |
 |---|---|
 | `PK` | Primary key |
-| `UK` | Unique key, backed by a unique index |
-| `FK: ENTITY` | Foreign key pointing at that entity, shown only where no relationship line does |
+| `UK` | Unique key |
+| `FK: ENTITY` | Active Record reference to that entity, shown only where no relationship line does. Not necessarily a database constraint |
 | `ENUM` | Integer column backed by an Active Record enum; its options and default are in the `%%` comment above it |
 | `NN` | `NOT NULL`, the column is required |
 | `NULL` | The column is nullable |
