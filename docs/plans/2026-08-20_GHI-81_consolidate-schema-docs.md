@@ -34,11 +34,10 @@ Readability wins over completeness wherever the two pull apart, because a diagra
 
 - The `"DEFAULT attributes for each ENTITY"` pseudo-entity stays.
 - **Rails types, not SQL types**: `STRING`, `TEXT`, `INTEGER`, `DATETIME`, `FLOAT`, matching how the schema is actually written and read here.
-- **Column limits live in the comment, with their unit named**: characters for a `string`, bytes for a `text`.
-- **Keys stay in the comment**, using only the key vocabulary the diagram already uses, with nothing new invented.
-- **Casing**: field lowercase, type uppercase, keys uppercase, comment capitalised.
-- **`ENUM` stays `ENUM`** and keeps its options, and the rest of a column's detail joins it in the same row, in that one quoted comment.
-- Table-level facts that belong to no single column, the uniqueness notes and the foreign key delete and update rules, go on their own `%%` lines above the entity, which is the only position mermaid strips.
+- **Attribute order is mermaid's own: `type name "key, comment"`.** Type uppercase, name lowercase, keys uppercase, comment capitalised.
+- **Keys stay in the rendered comment**, using only the key vocabulary the diagram already uses, with nothing new invented. `ENUM` stays `ENUM`.
+- **The detail does not render.** Everything beyond the key goes on a `%%` line immediately above its own attribute, inside the entity block: the column limit with its unit named, the enum's options, the default, and any field note. The preprocessor deletes those lines before the parser ever sees them, so they cost the rendered diagram nothing and cost a reader of `README.md` one glance. This is the whole design: **a rendered diagram anyone can scan, and a source that carries everything the DBML file did.**
+- Table-level facts that belong to no single column, the uniqueness notes and the foreign key delete and update rules, go the same way, on `%%` lines above the entity.
 - **Authentication stays out of this diagram.** `sessions` gets no entity and the prose gets no `Session` section, because passwordless login is still coming and the auth model will be drawn separately rather than crowding this one. The omission is declared in a `%%` line rather than left silent, since an undeclared missing table is the exact failure that made the DBML file untrustworthy.
 
 **Everything that is intent rather than schema moves to `docs/ROADMAP.md`.** The unbuilt columns and the DBML file's `// TODO` annotations are design notes that were living in a schema document, which is why the schema document kept looking wrong. The ERD ends up describing only what exists, and the roadmap holds what does not.
@@ -73,11 +72,12 @@ What these gates cannot see: whether a roadmap entry preserves the intent of the
 ## Settled in the PR discussion
 
 - **Types.** Rails types with the limit in the comment, not `VARCHAR(n)`. Both halves of the reason were checked: a Rails `limit` is characters for `string` and bytes for `text`, and SQLite enforces no declared length at all, so a SQL type in this diagram would state a constraint the database does not have.
-- **Per-column detail rides in the quoted comment, not in a trailing `%%`.** Mermaid strips `%%` only at the start of a line, so a trailing one breaks the parse. Same row, different mechanism.
+- **Attribute order is `type name "key, comment"`**, type uppercase and name lowercase, matching mermaid's own convention rather than the twisted order in place today.
+- **The rendered comment stays short and the detail goes in `%%` lines above each attribute.** A trailing `%%` on the same row would break the parse, and a comment long enough to hold the detail would wreck the diagram it documents, so the detail leaves the rendered layer entirely.
+- **The limits are documentation, not enforcement.** SQLite ignores them, so their value is as the reference the model validations are set from, and as the numbers a future migration to another engine would need. `description` at 100,000 bytes against a 25,000-character validation is a deliberate four-bytes-per-character projection, worst case for multi-byte characters, and the ERD records it as such rather than as two unrelated numbers.
 - **Authentication is out of scope for this diagram**, and the ERD declares the omission.
 - **Rendering becomes a real gate** once the owner installs the mermaid CLI, and the readability check stays an `[owner]` box because no renderer can answer it.
 
 ## Open questions
 
 - `EVENT.creator_id` and `EVENT.manager_id`. **Recommended: draw both as relationships and drop the two attributes.** Mermaid's `optionally to` keyword gives a dashed, non-identifying line, which is exactly what these two are: `db/schema.rb` has no `add_foreign_key` for either, so they are Active Record associations with no database constraint behind them. A dashed line says that; an attribute called `creator_id` only says a column exists. The cost is two more edges on an already busy graph, and whether two parallel edges between `MEMBER` and `EVENT` read well is worth rendering before committing to it, which the CLI will make cheap. Awaiting the owner's word in the thread.
-- **Attribute order.** The convention settled as `type name "key, comment"`, type first. The casing instruction that followed reads "field lowercase, type uppercase", listing the field first, which may or may not have been a change of mind about the order. One or the other, before a single row is written twice.
