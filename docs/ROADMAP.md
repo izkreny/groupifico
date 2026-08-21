@@ -7,6 +7,7 @@
 - `time_zone` column. Maybe
 - Move `description` into a separate `group_profiles` table?
 - Default `group_type` from the hostname
+- Make the creator a Member with the `owner` role when a Group is created. `GroupsController#create` saves the Group and nothing else, so a Group currently exists with no Members at all, which is why the ERD says `MEMBER 0+ to 1 GROUP`
 
 ### User
 - Login via Google Account and/or Passkey
