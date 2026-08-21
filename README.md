@@ -150,8 +150,7 @@ erDiagram
   }
 
   %% FK: group_id ON DELETE CASCADE, address_id ON DELETE RESTRICT, both ON UPDATE CASCADE
-  %% FK: creator_id and manager_id have no database constraint at all, they are Active Record
-  %% FK: associations only, and both are bigint in the schema while every other reference is integer
+  %% FK: creator_id and manager_id have no database constraint, they are Active Record associations only
   EVENT {
     INTEGER  creator_id  "FK: MEMBER, NN"
     INTEGER  manager_id  "FK: MEMBER, NULL"
