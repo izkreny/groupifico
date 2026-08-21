@@ -28,6 +28,8 @@ The salvage source is the abandoned `docs-update` branch, whose February README 
 
 Rewrite the ERD in place rather than starting from the DBML file. The diagram already has the shape, the relationship lines and the section comments; what it needs is correct entity contents, the DBML detail folded into the comment column, and the attribute order untwisted.
 
+**The conventions get written down twice, on purpose, because they have two audiences.** The legend goes in `README.md` next to the diagram and says what the notation means; a reader needs it to read the picture at all. The reasoning goes in a new ADR and says why the notation is that and not something else; nobody reading the diagram needs it, and anybody proposing to change it needs all of it. Splitting them is what keeps the README short: the argument for Rails types over `VARCHAR(n)`, or for keys in the comment over native keys, would double the length of the section it sits in and serve nobody trying to understand the schema.
+
 ### The ERD conventions, settled in the PR discussion
 
 Readability wins over completeness wherever the two pull apart, because a diagram nobody can scan is worth less than the DBML file it replaces.
@@ -37,6 +39,16 @@ Readability wins over completeness wherever the two pull apart, because a diagra
 - **Attribute order is mermaid's own: `type name "key, comment"`.** Type uppercase, name lowercase, keys uppercase, comment capitalised.
 - **Keys stay in the rendered comment**, using only the key vocabulary the diagram already uses, with nothing new invented. `ENUM` stays `ENUM`.
 - **The detail does not render.** Everything beyond the key goes on a `%%` line immediately above its own attribute, inside the entity block: the column limit with its unit named, the enum's options, the default, and any field note. The preprocessor deletes those lines before the parser ever sees them, so they cost the rendered diagram nothing and cost a reader of `README.md` one glance. This is the whole design: **a rendered diagram anyone can scan, and a source that carries everything the DBML file did.**
+- **Each `%%` line names the field and the concern it describes**, so it still reads correctly on its own if the attribute below it ever moves:
+
+```
+  %% UNIQUE (member_id, event_id): a Member cannot register for the same Event twice
+  %% FK: both columns ON DELETE CASCADE, ON UPDATE CASCADE
+  REGISTRATION {
+    %% ENUM status options: reserved | invited | yes | maybe | no. Default: reserved
+    INTEGER status "ENUM"
+  }
+```
 - Table-level facts that belong to no single column, the uniqueness notes and the foreign key delete and update rules, go the same way, on `%%` lines above the entity.
 - **Authentication stays out of this diagram.** `sessions` gets no entity and the prose gets no `Session` section, because passwordless login is still coming and the auth model will be drawn separately rather than crowding this one. The omission is declared in a `%%` line rather than left silent, since an undeclared missing table is the exact failure that made the DBML file untrustworthy.
 
@@ -49,6 +61,8 @@ Readability wins over completeness wherever the two pull apart, because a diagra
 - Fold the DBML detail into the diagram: enum values with their defaults, foreign key delete and update rules, the ISO field notes, and the uniqueness notes for `members` and `registrations`.
 - Correct the second line of the `IMPORTANT!` note in the diagram's frontmatter so it states the convention actually in use.
 - Rewrite the README domain-model prose: `Registration` in place of `Attendee`, and password-and-session login in place of the magic link.
+- Write the legend into `README.md`, beside the diagram, replacing the single `[!IMPORTANT]` line: what the notation means, which is what a reader needs in order to read the picture.
+- Write ADR 0002 in `docs/adr/`, named 2026-08-21_erd-notation-conventions_0002.md and left unbackticked here because the docs check resolves backticked paths and this one does not exist yet. It records why the notation is what it is, which is what a maintainer needs in order to change it. Same shape as ADR 0001: Status, Context, Decision, Consequences.
 - Move intent into `docs/ROADMAP.md`: the unbuilt `username`, `time_zone` and `uid` columns, the DBML file's `// TODO` notes, the magic-link login idea, an RSVP locking note and a `counter_cache` note, and rename the section `### Registration`.
 
 ## Verification
@@ -56,9 +70,10 @@ Readability wins over completeness wherever the two pull apart, because a diagra
 Gates, each with an exit code:
 
 - `bin/ci` exits zero. This is the repository's only check command, per its own agent config, and a docs-only branch is expected to leave it untouched rather than exempt from it.
-- `/home/izkreny/.claude/skills/github-pr-flow/scripts/docs-check.py`, run with `--root .` and `--ignore 'docs/schema.dbml'` over `README.md`, `docs/ROADMAP.md` and this plan file, exits zero: every backticked path still resolves once the DBML file is gone, and every fence is closed. The ignore covers this plan's own references to the file being deleted, and the file list is scoped to what this branch touches, because two older plan files already fail the check on paths that belong to installed gems rather than to this tree.
+- `/home/izkreny/.claude/skills/github-pr-flow/scripts/docs-check.py`, run with `--root .` and `--ignore 'docs/schema.dbml'` over `README.md`, `docs/ROADMAP.md`, `docs/adr/` and this plan file, exits zero: every backticked path still resolves once the DBML file is gone, and every fence is closed. The ignore covers this plan's own references to the file being deleted, and the file list is scoped to what this branch touches, because two older plan files already fail the check on paths that belong to installed gems rather than to this tree.
 - Every `create_table` name in `db/schema.rb` except the authentication tables appears as an entity in the ERD, and every attribute in the ERD is a column that exists in `db/schema.rb`. Checked by a throwaway script in the scratchpad, not committed, reported both directions, with the deliberately omitted foreign key columns and the omitted authentication tables listed rather than silently allowed.
-- `grep -ric attendee README.md docs/ROADMAP.md` reports zero in both files. Scoped to those two on purpose: `docs/plans/` legitimately says the word.
+- `grep -ric attendee README.md docs/ROADMAP.md` reports zero in both
+- Every notation the diagram actually uses appears in the README legend. Taken from the diagram rather than from intent: the distinct key strings inside the rendered comments, so a notation invented while writing forty rows cannot ship undocumented. files. Scoped to those two on purpose: `docs/plans/` legitimately says the word.
 - Each migrated DBML fact is present in `README.md`: `cascade`, `restrict`, ISO 3166-2, ISO 3166-1, ISO 20022, both uniqueness notes, and every enum value list from the models.
 
 - `PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium mmdc -i README.md -o <scratchpad>/readme-erd.svg` exits zero, which renders the embedded diagram through the same mermaid version a browser would use and so proves it parses. The environment variable is not optional: `mmdc` 11.16.0 installs without a browser and fails with "Could not find chrome-headless-shell" until pointed at one, and this machine already has `chromium` and `google-chrome-stable` from zypper, so downloading a third browser would be waste. The repository itself gains no mermaid dependency: there is no Node package manifest here and this adds none.
