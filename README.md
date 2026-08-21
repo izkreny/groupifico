@@ -152,8 +152,8 @@ erDiagram
   %% FK: group_id ON DELETE CASCADE, address_id ON DELETE RESTRICT, both ON UPDATE CASCADE
   %% FK: creator_id and manager_id have no database constraint, they are Active Record associations only
   EVENT {
-    INTEGER  creator_id  "FK: MEMBER, NN"
-    INTEGER  manager_id  "FK: MEMBER, NULL"
+    BIGINT   creator_id  "FK: MEMBER, NN"
+    BIGINT   manager_id  "FK: MEMBER, NULL"
     %% name limit: 250 chars
     STRING   name        "NN"
     %% description limit: 100000 bytes at the column, validated at 25000 chars in the model
