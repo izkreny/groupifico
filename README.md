@@ -62,7 +62,7 @@ For more information, check out the detailed [roadmap](./docs/ROADMAP.md).
 
 The diagram renders only what is needed to read the schema: entity, attribute, type, key and nullability. Everything else about a column, its limit, its enum options, its default and its foreign key rules, sits in a `%%` comment in the source of this file directly above the line it describes, and never reaches the picture. So read the rendered diagram for the shape, the source of this section for the detail, and the Rails [schema.rb](./db/schema.rb) for the authority.
 
-Attributes read `type name "key, comment"`, which is mermaid's own order, with the keys inside the comment rather than as native mermaid keys so that every entity box stays two columns wide. The reasoning behind that and every other choice here is [ADR 0002](./docs/adr/2026-08-21_erd-notation-conventions_0002.md).
+Attributes read `type name "key, comment"`: type before name, which is mermaid's own order, with the keys inside the comment rather than as native mermaid keys so that every entity box stays two columns wide. The reasoning behind that and every other choice here is [ADR 0002](./docs/adr/2026-08-21_erd-notation-conventions_0002.md).
 
 | Token | Meaning |
 |---|---|
