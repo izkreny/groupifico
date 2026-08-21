@@ -38,7 +38,7 @@ For more information, check out the detailed [roadmap](./docs/ROADMAP.md).
 
 #### User
 - Global application identity via unique email
-- User can login to the app via magic link/code sent to email
+- User logs in with an email and password, and the session persists until signed out
 - User can become a Member of one or more Groups
 
 #### Member aka _Group membership_
@@ -48,10 +48,10 @@ For more information, check out the detailed [roadmap](./docs/ROADMAP.md).
 #### Event
 - Main organizational group entity
 
-#### Attendee
-- Member can attend an Event
-- Member can be invited and respond
-- Attendance can be reserved and presence later confirmed
+#### Registration
+- Member registers for an Event
+- Member can be invited to an Event and respond
+- A registration can be reserved and the presence later confirmed
 
 ### Other Domain Models
 
