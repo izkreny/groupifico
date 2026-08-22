@@ -21,7 +21,7 @@ _Coming soon:_
 - Polls (quick and easy feedback)
 - Membership fees (Treasury)
 
-For more information, check out the detailed [roadmap](./docs/ROADMAP.md).
+For more information, check out the [backlog](https://github.com/izkreny/groupifico/issues/84).
 
 ## Architecture
 
