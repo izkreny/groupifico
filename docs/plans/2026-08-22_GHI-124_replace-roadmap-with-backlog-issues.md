@@ -8,7 +8,9 @@ Plan for #124.
 
 `docs/ROADMAP.md` and the issue tracker held the same backlog, and the file was the copy that went stale. It listed three items that had already shipped, it was edited on the abandoned `docs-update` branch as well as on `main`, and nothing about it could be filtered, labelled, assigned, blocked or searched.
 
-The extraction has already happened. Every heading in the file is now a sub-issue of the `backlog` epic, #84, which holds 61 children: 58 drafts, one spike, one `bug`, one fully specified `infra` issue, and this one. What is left is the file itself.
+The extraction has already happened. Every heading in the file is now a sub-issue of the `backlog` epic, #84: 58 drafts, one spike, one `bug`, one fully specified `infra` issue, and this one. What is left is the file itself.
+
+The epic also holds #76, #79 and #83, which came from the tracker rather than from the roadmap and are outside this branch's scope. They are there because the owner wants every open issue parented to it, so `#84` now means "all open work" and not only "what the roadmap held".
 
 **This branch therefore deletes rather than migrates.** The mapping below is the record of where each section went, and it is the reason this plan exists at all: `git log` will show a file being deleted, and a reader six months from now needs to know it was moved rather than abandoned.
 
@@ -57,7 +59,7 @@ Gates, each with an exit code:
 - `bin/ci` exits zero. It is this repository's only check command, per its own agent config, and a docs-only branch is expected to leave it green rather than be exempt from it.
 - `/home/izkreny/.claude/skills/github-pr-flow/scripts/docs-check.py`, run with `--root .` and `--ignore 'docs/ROADMAP.md'` over `README.md`, `docs/plans/` and this plan file, exits zero: every other backticked path still resolves and every fence is closed. The ignore covers this plan's own references to the file being deleted and the #81 plan's, which is the same allowance the #81 branch took for `docs/schema.dbml`.
 - `grep -rn -i roadmap README.md` reports nothing, and `git ls-files docs/ROADMAP.md` reports nothing.
-- Every issue number in the mapping table above resolves to an open issue whose parent is #84. Checked by a throwaway script in the scratchpad, not committed, reporting both directions: no number in the table that is not a child of #84, and no child of #84 missing from the table except #124 itself.
+- Every issue number in the mapping table above resolves to an open issue whose parent is #84. Checked by a throwaway script in the scratchpad, not committed, reporting both directions: no number in the table that is not a child of #84, and no child of #84 missing from the table except #124 itself and the three non-roadmap issues named in the Context, #76, #79 and #83. Those three are excluded by number rather than by rule, so a fourth appearing later fails the gate and has to be accounted for deliberately.
 
 Judgement, which no exit code covers:
 
