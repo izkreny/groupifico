@@ -6,7 +6,7 @@ Plan for #124.
 
 ## Context
 
-`docs/ROADMAP.md` and the issue tracker held the same backlog, and the file was the copy that went stale. It listed three items that had already shipped, it was edited on the abandoned `docs-update` branch as well as on `main`, and nothing about it could be filtered, labelled, assigned, blocked or searched.
+`docs/ROADMAP.md` and the issue tracker held the same backlog, and the file was the copy that went stale. It kept listing work that had already shipped: #82 struck two such bullets out of it, and a third, "Duplicate event", was still there when this branch deleted it. It had also been edited on `main` and on the abandoned `docs-update` branch at the same time, and nothing about it could be filtered, labelled, assigned, blocked or searched.
 
 The extraction has already happened. Every heading in the file is now a sub-issue of the `backlog` epic, #84, which holds 66 children: 60 drafts, one spike, one `bug`, and one fully specified `infra` issue. What is left is the file itself.
 
