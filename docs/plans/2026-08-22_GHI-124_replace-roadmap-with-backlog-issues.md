@@ -8,7 +8,7 @@ Plan for #124.
 
 `docs/ROADMAP.md` and the issue tracker held the same backlog, and the file was the copy that went stale. It kept listing work that had already shipped: #82 struck two such bullets out of it, and a third, "Duplicate event", was still there when this branch deleted it. It had also been edited on `main` and on the abandoned `docs-update` branch at the same time, and nothing about it could be filtered, labelled, assigned, blocked or searched.
 
-The extraction has already happened. Every heading in the file is now a sub-issue of the `backlog` epic, #84, which holds 66 children: 60 drafts, one spike, one `bug`, and one fully specified `infra` issue. What is left is the file itself.
+The extraction has already happened. Every heading in the file is now a sub-issue of the `backlog` epic, #84, which holds 66 children: 60 drafts, plus six that are startable as written - the #119 spike, two bugs (#83, #138) and three `infra` issues (#76, #79, #123). What is left is the file itself.
 
 Six of those children did not come from the roadmap and are outside this branch's scope. #76, #79 and #83 were already in the tracker. #147 and #148 came from a sweep of `README.md` for intent the roadmap never recorded: the _Coming soon_ list promises notifications, and the ERD block promises a second diagram for authentication once passwordless login lands. #149 holds the work salvaged from the `add_integration_specs` branch, per the settled section below. They are there because the owner wants every open issue parented to the epic, so `#84` now means "all open work" rather than only "what the roadmap held", and the label rather than the parent relation is what separates startable work from a backlog entry. This issue is the one deliberate exception, parented to nothing, because it is the migration itself rather than a thing the migration produced.
 
@@ -34,7 +34,7 @@ Six of those children did not come from the roadmap and are outside this branch'
 
 #135 appears three times because the `time_zone` bullets under `### Group`, `### User Profile` and `### Event` are one question about where a time zone lives, not three independent columns.
 
-One bullet is deliberately unmapped. "Duplicate event" is already built as `Event#duplicate`; only its interface is missing, and that is #98.
+One bullet was already half-built before it was mapped. "Duplicate event" is `Event#duplicate` in `app/models/event.rb`, which exists; #98 carries only the missing interface, which is why it appears in the `### Event` row rather than being left out.
 
 ## Approach
 
