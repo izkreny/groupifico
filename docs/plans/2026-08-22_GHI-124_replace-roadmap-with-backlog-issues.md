@@ -57,7 +57,9 @@ That makes the docs check the one interesting part of this branch. `/home/izkren
 Gates, each with an exit code:
 
 - `bin/ci` exits zero. It is this repository's only check command, per its own agent config, and a docs-only branch is expected to leave it green rather than be exempt from it.
-- `/home/izkreny/.claude/skills/github-pr-flow/scripts/docs-check.py`, run with `--root .` and `--ignore 'docs/ROADMAP.md'` over `README.md`, `docs/plans/` and this plan file, exits zero: every other backticked path still resolves and every fence is closed. The ignore covers this plan's own references to the file being deleted and the #81 plan's, which is the same allowance the #81 branch took for `docs/schema.dbml`.
+- `/home/izkreny/.claude/skills/github-pr-flow/scripts/docs-check.py`, run with `--root .` and `--ignore 'docs/ROADMAP.md'` over exactly three files, exits zero: `README.md`, this plan, and `docs/plans/2026-08-20_GHI-81_consolidate-schema-docs.md`. Those are every document that names the deleted file, plus the one this branch edits. The ignore covers the two plans' references to it, which is the same allowance the #81 branch took for `docs/schema.dbml`.
+
+  **The file list is scoped deliberately, and pointing the check at `docs/plans/` instead would fail.** `docs/plans/2026-08-19_GHI-72_update-ruby-and-gems.md` line 38 and `docs/plans/2026-08-20_GHI-75_clean-test-database.md` line 20 each backtick a path inside an installed gem rather than in this tree, so the check cannot resolve either. Both failures are identical when the same command runs against `upstream/main`, so they predate this branch and belong to their own change. The #81 plan recorded the same two files failing for the same reason, and this is the second branch to route around them rather than the first. Fixing them means unbackticking paths in the plans of merged pull requests, which falsifies a historical record for a cosmetic gain - the same reason this branch leaves the #81 plan's roadmap references alone.
 - `grep -rn -i roadmap README.md` reports nothing, and `git ls-files docs/ROADMAP.md` reports nothing.
 - Every issue number in the mapping table above resolves to an open issue whose parent is #84. Checked by a throwaway script in the scratchpad, not committed, reporting both directions: no number in the table that is not a child of #84, and no child of #84 missing from the table except the six non-roadmap issues named in the Context: #76, #79, #83, #147, #148 and #149. Those six are excluded by number rather than by rule, so a seventh appearing later fails the gate and has to be accounted for deliberately. This issue is not a child of #84 and so is not expected in either direction.
 
@@ -66,7 +68,7 @@ Judgement, which no exit code covers:
 - **[owner]** The replacement sentence in `README.md` reads as a pointer to live work rather than as an apology for a deleted file.
 - **[owner]** The mapping table is honest: each section's issues actually cover what that section said, rather than merely being the right count.
 
-What these gates cannot see: whether a draft's body preserves the intent of the bullet it replaced or only its words; whether the three `time_zone` bullets really are one question, which is an assumption this plan makes and #135 inherits; and whether anything on the unmerged `docs-update` branch still needs salvaging before that branch is deleted.
+What these gates cannot see: whether a draft's body preserves the intent of the bullet it replaced or only its words; whether the three `time_zone` bullets really are one question, which is an assumption this plan makes and #135 inherits; and whether #149's body preserves everything worth keeping from the `add_integration_specs` branch, which is now the only record of it outside the branch itself.
 
 ## Settled while writing this plan
 
