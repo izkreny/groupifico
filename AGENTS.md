@@ -4,7 +4,7 @@
 - Write concise, idiomatic, and modern `Ruby` code.
 - Follow `Ruby on Rails` conventions and best practices.
 - When solving problems, apply:
-  - **Object-Oriented Design (OOD)** in the style of Sandi Metz, except where she conflicts with the 37signals Rails/Hotwire recommendations, which win
+  - **Object-Oriented Design (OOD)** in the style of Sandi Metz, except where she conflicts with the 37signals recommendations, which win
   - **Domain-Driven Design (DDD)** in the style of Eric Evans
   - **Refactoring** in the style of Martin Fowler
 
@@ -30,5 +30,6 @@
 ## REFERENCE EXAMPLES
 
 - Reference Rails codebases live under `/home/izkreny/Projects/examples/rails/`.
+- `rails_rails` outranks everything on framework capability questions: what edge Rails already ships gets used, or locally backported, before anything is hand-built.
 - `basecamp_*` solutions get preference on application patterns.
 - Exploring these repos is always a cheap subagent's job, never done in the main session's context.
