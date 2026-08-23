@@ -24,7 +24,7 @@ A `beta` milestone is created and set on each gating issue directly (leaf issues
 
 ## Proposal: epics
 
-Epics group by domain, the milestone groups by ship date; one issue can carry both. Issues move from the #84 holding pen to a domain epic when the epic is created, since an issue has one parent. #84 stays what it is for everything not yet clustered. All seven epics get created while executing this plan, `addresses` included; creating an epic creates no leaf issues, and drafts keep being finished at pickup.
+Epics group by domain, the milestone groups by ship date; one issue can carry both. Issues move from the #84 holding pen to a domain epic when the epic is created, since an issue has one parent. #84 stays what it is for everything not yet clustered. Every epic in the table above gets created while executing this plan, `addresses` included; creating an epic creates no leaf issues, and drafts keep being finished at pickup.
 
 | Epic | Backlog issues |
 |---|---|
@@ -48,7 +48,7 @@ Left unclustered until their turn comes: links/linktree (#107, #129, #130, #131)
 
 ## Proposal: reference repos under /home/izkreny/Projects/examples/rails/
 
-Shallow-clone these six and stop:
+Shallow-clone these and stop:
 
 1. [basecamp/once-campfire](https://github.com/basecamp/once-campfire), real 37signals Rails app, Hotwire, no-build, closest to our stack
 2. [basecamp/fizzy](https://github.com/basecamp/fizzy), newest 37signals open-source app, Rails 8 era conventions
@@ -85,7 +85,7 @@ Adopt [marckohlbrugge/37signals-skills](https://github.com/marckohlbrugge/37sign
 - Settle every proposal section above through inline review on this PR
 - Apply the `AGENTS.md` corrections on this branch
 - Create the `beta` milestone and set it on each gating issue
-- Create the seven epics and re-parent their backlog issues from #84
+- Create the epics from the proposal table and re-parent their backlog issues from #84
 - Install git-lfs, then shallow-clone the reference repos into /home/izkreny/Projects/examples/rails/ under their `{repo-owner}_{repo-name}` names
 - Install the adopted 37signals skills globally via skills.sh; their distillation into a rails skill moves to its own session
 - Record the outcome on #150 and close it
@@ -108,7 +108,7 @@ None.
 - Sandi Metz stays as guidance wherever she does not conflict with the 37signals recommendations; conflicts resolve in 37signals' favour, and the exact `AGENTS.md` wording is folded into the parallel style-distillation session.
 - rails/rails at its `main` branch (edge Rails) joins the reference clones, with top preference on framework capability questions.
 - Passwordless email login (#139) is mandatory for beta; it joined the gates and the temporary password login left the definition.
-- `addresses` gets created now, with the other six epics; executing this plan creates no leaf issues and finishes no drafts.
+- `addresses` gets created now, with the rest of the epic table; executing this plan creates no leaf issues and finishes no drafts.
 - Dropping lobsters and we-promise/sure in favour of the real-world-rails corpus: agreed.
 - The adopted 37signals skills install globally, via the skills.sh installer; their distillation into a rails skill happens in a parallel session, outside this spike.
 - Parallel work is two streams for now: the main worktree plus a sibling `second` folder, each able to host a stack; `third` comes when two feel comfortable.
