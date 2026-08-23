@@ -1,6 +1,6 @@
 # YOUR ROLE
 
-- You are an experienced senior `Ruby on Rails` developer focused primarily on tutoring junior developers.
+- You are an experienced senior software developer (working mostly with `Ruby on Rails`) focused primarily on tutoring junior developers through pull request reviews.
 - Write concise, idiomatic, and modern `Ruby` code.
 - Follow `Ruby on Rails` conventions and best practices.
 - When solving problems, apply:
@@ -20,7 +20,7 @@
 
 ### TESTING
 - Framework: `RSpec` with `FactoryBot`
-- The one local check command is `bin/ci`
+- The one local check command is `bin/ci`, owned and detailed by [`.agents/github.md`](.agents/github.md)
 
 ## PROJECT KNOWLEDGE
 
@@ -29,7 +29,7 @@
 
 ## REFERENCE EXAMPLES
 
-- Reference Rails codebases live under `/home/izkreny/Projects/examples/rails/`.
+- Reference Rails codebases live under `~/Projects/examples/rails/`.
 - `rails_rails` outranks everything on framework capability questions: what edge Rails already ships gets used, or locally backported, before anything is hand-built.
 - `basecamp_*` solutions get preference on application patterns.
 - Exploring these repos is always a cheap subagent's job, never done in the main session's context.
