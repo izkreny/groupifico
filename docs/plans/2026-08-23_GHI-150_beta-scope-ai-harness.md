@@ -6,15 +6,16 @@ This is the deliverable of spike #150, drafted for inline review on the draft PR
 
 ## Proposal: definition of beta
 
-Beta is the smallest Groupifico one real group can run on: a person signs up with email and password, creates a group, members join it, events get created, members register for them and presence gets confirmed. It is deployed to the production VPS and the pilot group uses it for real.
+Beta is the smallest Groupifico one real group can run on: a person signs in through passwordless email login (#139), creates a group, members join it, events get created, members register for them and presence gets confirmed. It is deployed to the production VPS and the pilot group uses it for real.
 
-Everything else is explicitly out of beta: every other sign-in method (#85, #125, #139), notifications (#147), polls, songs, posts, treasury, i18n (#111), PWA (#120), dashboard (#116), ViewComponents (#121), and all address enrichment (#104, #105, #106, #133, #145).
+Everything else is explicitly out of beta: every other sign-in method (#85, #125), notifications (#147), polls, songs, posts, treasury, i18n (#111), PWA (#120), dashboard (#116), ViewComponents (#121), and all address enrichment (#104, #105, #106, #133, #145).
 
 ## Proposal: beta milestone gates
 
 A `beta` milestone is created and set on each gating issue directly (leaf issues, not only epics, since milestone filters read the issue's own milestone). The gates:
 
 - #149 cover the existing code with specs, plus #79 restoring the system-test CI job
+- #139 passwordless email login, replacing the temporary password login
 - #83 and #138, the two known bugs
 - #93 module based role system, with #96 as its first enforcement
 - #91 and #102, the two uniqueness validations that protect data integrity
@@ -23,7 +24,7 @@ A `beta` milestone is created and set on each gating issue directly (leaf issues
 
 ## Proposal: epics
 
-Epics group by domain, the milestone groups by ship date; one issue can carry both. Issues move from the #84 holding pen to a domain epic when the epic is created, since an issue has one parent. #84 stays what it is for everything not yet clustered.
+Epics group by domain, the milestone groups by ship date; one issue can carry both. Issues move from the #84 holding pen to a domain epic when the epic is created, since an issue has one parent. #84 stays what it is for everything not yet clustered. All seven epics get created while executing this plan, `addresses` included; creating an epic creates no leaf issues, and drafts keep being finished at pickup.
 
 | Epic | Backlog issues |
 |---|---|
@@ -37,11 +38,13 @@ Epics group by domain, the milestone groups by ship date; one issue can carry bo
 
 Left unclustered until their turn comes: links/linktree (#107, #129, #130, #131), songs (#108, #127, #132), polls (#109), fees (#110), i18n (#111), comments/posts (#112, #113), seasons (#114), reports (#115), dashboard (#116), tasks (#117), spike #119, PWA (#120), ViewComponents (#121), native app (#122), notifications (#147). Clustering them now would mean inventing epics nothing ships from yet.
 
-## Proposal: working 2-3 issues in parallel
+## Proposal: working 2 issues in parallel
 
-- Each issue is one branch in its own git worktree, so streams never touch each other's working tree.
-- Pick concurrent issues from different epics, or at least different layers, so the diffs do not overlap; two issues inside one epic usually share files and belong in sequence or in a `gh stack` instead.
-- The first parallel trio under this scheme: #149 (specs), #83 (bug, backend), #76 (deploy, infra). Three epics, near-zero file overlap.
+- Two issues at a time for now; the layout extends to a third when the owner finds two comfortable.
+- The existing checkout at /home/izkreny/Projects/groupifico/git/main stays the main worktree; the second stream works in a sibling worktree folder at /home/izkreny/Projects/groupifico/git/second, and a third would be /home/izkreny/Projects/groupifico/git/third.
+- Each worktree folder hosts one issue's branch, or a `gh stack` of dependent branches, so the external reviewer/mentor can follow one stream per folder.
+- Pick concurrent issues from different epics, or at least different layers, so the diffs do not overlap; two issues inside one epic usually share files and belong in sequence or in a stack instead.
+- The first parallel pair: #149 (specs) and #76 (deploy, infra). #83 would collide with #149, since fixing member `full_name` touches the same specs #149 is writing.
 
 ## Proposal: reference repos under /home/izkreny/Projects/examples/rails/
 
@@ -53,16 +56,24 @@ Shallow-clone these five and stop:
 4. [hitobito/hitobito](https://github.com/hitobito/hitobito), group hierarchies with members and events, the same domain as Groupifico
 5. [steveclarke/real-world-rails](https://github.com/steveclarke/real-world-rails), 200+ production open-source Rails apps in one repo, built for AI agents to search architectural patterns
 
+Ground rules for the folder:
+
+- Clone folder names follow `{repo-owner}_{repo-name}`: basecamp_once-campfire, basecamp_fizzy, basecamp_writebook, hitobito_hitobito, steveclarke_real-world-rails.
+- git-lfs is installed before any clone, through the package-management skill.
+- When the examples disagree, the basecamp_* solutions get preference.
+- Exploration inside the examples, above all inside steveclarke_real-world-rails, is always delegated to a cheap subagent (sonnet, or haiku for pure lookup), never done in the main session's context. This stands in until the rails-explorer skill the owner plans separately lands.
+
 The corpus in row 5 is why lobsters/lobsters and we-promise/sure from the first candidate round are dropped: it covers the "idiomatic long-lived Rails" role on its own. The full survey of the owner's starred Rails list, including the larger apps deliberately skipped, is in the comments on #150.
 
 ## Proposal: 37signals skills and other harness helpers
 
-Adopt [marckohlbrugge/37signals-skills](https://github.com/marckohlbrugge/37signals-skills) selectively: take the Rails/Hotwire/Turbo guidance, leave out its testing philosophy (fixtures, Minitest), which would contradict the RSpec+FactoryBot suite we keep. Evaluate, without installing blindly: [palkan/layered-rails-skills](https://github.com/palkan/layered-rails-skills), [obie/claude-on-rails](https://github.com/obie/claude-on-rails), [ThibautBaissac/rails_ai_agents](https://github.com/ThibautBaissac/rails_ai_agents).
+Adopt [marckohlbrugge/37signals-skills](https://github.com/marckohlbrugge/37signals-skills) selectively: take the Rails/Hotwire/Turbo guidance, leave out its testing philosophy (fixtures, Minitest), which would contradict the RSpec+FactoryBot suite we keep. The adopted skills install globally, via the skills.sh installer. Distilling their material into one rails skill, or into the local AI files, happens in its own parallel session, outside this spike. Evaluate there, without installing blindly: [palkan/layered-rails-skills](https://github.com/palkan/layered-rails-skills), [obie/claude-on-rails](https://github.com/obie/claude-on-rails), [ThibautBaissac/rails_ai_agents](https://github.com/ThibautBaissac/rails_ai_agents).
 
 ## Proposal: AGENTS.md corrections
 
 - Name DaisyUI alongside Tailwind CSS in the front-end stack; it is in the README and a DaisyUI MCP workflow is connected, yet `AGENTS.md` never mentions it.
 - Name RSpec and FactoryBot in the stack, and `bin/ci` as the one local check command.
+- Record the examples-folder rules: basecamp_* solutions get preference, and exploration of the examples is always delegated to a cheap subagent.
 - Point at `.agents/github.md` for the repository's GitHub conventions, so a plain coding session sees they exist.
 - Drop the TDD mandate, per the owner's decision.
 - Revisit the Sandi Metz OOD framing; the replacement wording is an open question below.
@@ -73,9 +84,9 @@ Adopt [marckohlbrugge/37signals-skills](https://github.com/marckohlbrugge/37sign
 - Settle every proposal section above through inline review on this PR
 - Apply the `AGENTS.md` corrections on this branch
 - Create the `beta` milestone and set it on each gating issue
-- Create the approved epics and re-parent their backlog issues from #84
-- Shallow-clone the approved reference repos into /home/izkreny/Projects/examples/rails/
-- Evaluate the 37signals skills selection, record what was adopted in this plan's `## Settled` section
+- Create the seven epics and re-parent their backlog issues from #84
+- Install git-lfs, then shallow-clone the reference repos into /home/izkreny/Projects/examples/rails/ under their `{repo-owner}_{repo-name}` names
+- Install the adopted 37signals skills globally via skills.sh; their distillation into a rails skill moves to its own session
 - Record the outcome on #150 and close it
 
 ## Verification
@@ -89,8 +100,13 @@ What these gates cannot see: whether the beta cut is actually the smallest shipp
 
 ## Open questions
 
-- Is password-only login enough for beta, or does #139 (passwordless email login) move into the gates?
-- Does `addresses` earn an epic now, or do its issues stay in #84 until an address issue is actually picked up?
-- Dropping lobsters and we-promise/sure in favour of the real-world-rails corpus: agreed?
 - What replaces the Sandi Metz OOD framing in `AGENTS.md`: softened wording, a different reference, or removal?
-- Do the adopted 37signals skills install globally (`/home/izkreny/.claude/skills/`) or per-repo (`.agents/skills/`)?
+
+## Settled
+
+- Passwordless email login (#139) is mandatory for beta; it joined the gates and the temporary password login left the definition.
+- `addresses` gets created now, with the other six epics; executing this plan creates no leaf issues and finishes no drafts.
+- Dropping lobsters and we-promise/sure in favour of the real-world-rails corpus: agreed.
+- The adopted 37signals skills install globally, via the skills.sh installer; their distillation into a rails skill happens in a parallel session, outside this spike.
+- Parallel work is two streams for now: the main worktree plus a sibling `second` folder, each able to host a stack; `third` comes when two feel comfortable.
+- Reference clones are named `{repo-owner}_{repo-name}`, basecamp_* solutions get preference, exploration of the examples is always a cheap subagent's job, and git-lfs is installed before cloning.
