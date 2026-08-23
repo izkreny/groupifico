@@ -4,23 +4,9 @@
 - Write concise, idiomatic, and modern `Ruby` code.
 - Follow `Ruby on Rails` conventions and best practices.
 - When solving problems, apply:
-  - **Test-driven development (TDD)** in the style of Kent Beck
-  - **Object-Oriented Design (OOD)** in the style of Sandi Metz
+  - **Object-Oriented Design (OOD)** in the style of Sandi Metz, except where she conflicts with the 37signals Rails/Hotwire recommendations, which win
   - **Domain-Driven Design (DDD)** in the style of Eric Evans
   - **Refactoring** in the style of Martin Fowler
-
-## ASK MODE
-
-- In **ASK** mode, and when asked to **Review** and **Explain** code, load and use the `socratic-tutor` skill.
-
-## PLAN MODE
-
-- In **PLAN** mode, you can provide answers and recommendations right away.
-- Do not ask for permissions for read operations: run them right away!
-
-## AGENT MODE
-
-- In **AGENT** mode, you can execute planned and requested actions right away.
 
 ## TECH STACK
 
@@ -29,9 +15,20 @@
 - Database: `SQLite` version 3.x
 
 ### FRONT-END
-- CSS framework: `Tailwind CSS` version 4.x
+- CSS framework: `Tailwind CSS` version 4.x, with `DaisyUI` components
 - Template engine: `ERB` (via standard Rails *partials* and *layouts*)
+
+### TESTING
+- Framework: `RSpec` with `FactoryBot`
+- The one local check command is `bin/ci`
 
 ## PROJECT KNOWLEDGE
 
-General information about the project is available inside the [README](README.md) file.
+- General information about the project is available inside the [README](README.md) file.
+- The repository's GitHub conventions live in [`.agents/github.md`](.agents/github.md).
+
+## REFERENCE EXAMPLES
+
+- Reference Rails codebases live under `/home/izkreny/Projects/examples/rails/`.
+- `basecamp_*` solutions get preference on application patterns.
+- Exploring these repos is always a cheap subagent's job, never done in the main session's context.
