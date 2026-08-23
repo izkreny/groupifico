@@ -48,19 +48,20 @@ Left unclustered until their turn comes: links/linktree (#107, #129, #130, #131)
 
 ## Proposal: reference repos under /home/izkreny/Projects/examples/rails/
 
-Shallow-clone these five and stop:
+Shallow-clone these six and stop:
 
 1. [basecamp/once-campfire](https://github.com/basecamp/once-campfire), real 37signals Rails app, Hotwire, no-build, closest to our stack
 2. [basecamp/fizzy](https://github.com/basecamp/fizzy), newest 37signals open-source app, Rails 8 era conventions
 3. [basecamp/writebook](https://github.com/basecamp/writebook), small and readable 37signals app
 4. [hitobito/hitobito](https://github.com/hitobito/hitobito), group hierarchies with members and events, the same domain as Groupifico
 5. [steveclarke/real-world-rails](https://github.com/steveclarke/real-world-rails), 200+ production open-source Rails apps in one repo, built for AI agents to search architectural patterns
+6. [rails/rails](https://github.com/rails/rails) at its `main` branch, edge Rails, the next version: the authority on what the framework already ships or is about to
 
 Ground rules for the folder:
 
-- Clone folder names follow `{repo-owner}_{repo-name}`: basecamp_once-campfire, basecamp_fizzy, basecamp_writebook, hitobito_hitobito, steveclarke_real-world-rails.
+- Clone folder names follow `{repo-owner}_{repo-name}`: basecamp_once-campfire, basecamp_fizzy, basecamp_writebook, hitobito_hitobito, steveclarke_real-world-rails, rails_rails.
 - git-lfs is installed before any clone, through the package-management skill.
-- When the examples disagree, the basecamp_* solutions get preference.
+- Preference order: rails_rails outranks everything on framework capability questions, so what edge Rails already ships gets used, or locally backported, before anything is hand-built; when #139 is picked up, edge Rails is checked for built-in passwordless support first. On application patterns, the basecamp_* solutions get preference.
 - Exploration inside the examples, above all inside steveclarke_real-world-rails, is always delegated to a cheap subagent (sonnet, or haiku for pure lookup), never done in the main session's context. This stands in until the rails-explorer skill the owner plans separately lands.
 
 The corpus in row 5 is why lobsters/lobsters and we-promise/sure from the first candidate round are dropped: it covers the "idiomatic long-lived Rails" role on its own. The full survey of the owner's starred Rails list, including the larger apps deliberately skipped, is in the comments on #150.
@@ -76,7 +77,7 @@ Adopt [marckohlbrugge/37signals-skills](https://github.com/marckohlbrugge/37sign
 - Record the examples-folder rules: basecamp_* solutions get preference, and exploration of the examples is always delegated to a cheap subagent.
 - Point at `.agents/github.md` for the repository's GitHub conventions, so a plain coding session sees they exist.
 - Drop the TDD mandate, per the owner's decision.
-- Revisit the Sandi Metz OOD framing; the replacement wording is an open question below.
+- Reword the Sandi Metz OOD framing: keep everything of hers that does not conflict with the 37signals recommendations, and 37signals wins on conflict. The exact wording is folded into the parallel style-distillation session.
 - Retire the ASK/PLAN/AGENT mode sections, which are Cursor-era terminology that only half maps onto Claude Code.
 
 ## Steps
@@ -100,10 +101,12 @@ What these gates cannot see: whether the beta cut is actually the smallest shipp
 
 ## Open questions
 
-- What replaces the Sandi Metz OOD framing in `AGENTS.md`: softened wording, a different reference, or removal?
+None.
 
 ## Settled
 
+- Sandi Metz stays as guidance wherever she does not conflict with the 37signals recommendations; conflicts resolve in 37signals' favour, and the exact `AGENTS.md` wording is folded into the parallel style-distillation session.
+- rails/rails at its `main` branch (edge Rails) joins the reference clones, with top preference on framework capability questions.
 - Passwordless email login (#139) is mandatory for beta; it joined the gates and the temporary password login left the definition.
 - `addresses` gets created now, with the other six epics; executing this plan creates no leaf issues and finishes no drafts.
 - Dropping lobsters and we-promise/sure in favour of the real-world-rails corpus: agreed.
