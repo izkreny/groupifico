@@ -10,6 +10,10 @@ The first push of a branch is:
 
     git push -u upstream <branch>
 
+## Worktree folders
+
+For development, clone the repository into a folder named `main` inside a dedicated project folder, for example `~/Projects/groupifico/main`, so the worktrees for the parallel streams land beside it as siblings: `second`, with `third` to come when two streams feel comfortable. Each folder hosts one issue's branch, or a `gh stack` of dependent branches, at a time, and is reused across issues; never create a folder per branch. The decision record is the beta-scope spike plan, `docs/plans/2026-08-23_GHI-150_beta-scope-ai-harness.md`.
+
 ## Commit and branch types
 
 `build`, `docs`, `feat`, `fix`, `refactor`, `test`. Six, against the skills' default five.
