@@ -5,4 +5,10 @@ require "bundler/setup"
 # Explicit RuboCop config increases performance slightly while avoiding config confusion.
 ARGV.unshift("--config", File.expand_path("../.rubocop.yml", __dir__))
 
+# `Style/DisableCopsWithinSourceCodeDirective` only catches a directive that
+# leaves it unnamed; naming it, its department, or `all` disables it too.
+# This flag reports the cop's own offense in those cases as well, so the
+# disable gate has no exception left to it - #165.
+ARGV.unshift("--ignore-disable-comments")
+
 load Gem.bin_path("rubocop", "rubocop")

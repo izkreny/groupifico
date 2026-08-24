@@ -14,8 +14,12 @@ AllCops:
 #   Enabled: false
 
 # An inline `rubocop:disable` is itself an offense, with no exceptions:
-# the cop's own `AllowedCops` default is already `[]`, so enabling it is
-# the whole gate. A cop that is wrong for this repository is reconfigured
-# here instead, once, with a comment saying why.
+# the cop's own `AllowedCops` default is already `[]`, so enabling it
+# catches every directive that leaves this cop unnamed. A directive that
+# names this cop, its department, or `all` disables it along with
+# whatever it was hiding, which is why `bin/rubocop` also passes
+# `--ignore-disable-comments` - that flag, together with this cop, is
+# the whole gate. A cop that is wrong for this repository is
+# reconfigured here instead, once, with a comment saying why.
 Style/DisableCopsWithinSourceCodeDirective:
   Enabled: true
