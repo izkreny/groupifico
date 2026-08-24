@@ -28,13 +28,13 @@ RuboCop's verdicts are not always right, and what happens next is governed. An i
 Both live in the `## Style` section of `.agents/testing.md` and both currently promise the escape hatch this gate removes, so this change is what makes them false and this change fixes them:
 
 - The `RSpec/NestedGroups` bullet says a genuinely necessary fourth nesting level "carries an inline `rubocop:disable` with a one-line reason". It becomes: a fourth level is a conversation with the owner. The cop keeps its default `Max: 3` - a one-off fourth level is not evidence the cop is generally wrong here, so it is the stop-and-ask case rather than a reconfiguration.
-- The `RSpec/MultipleExpectations` bullet says an example needing a fourth facet "either splits or carries a justified inline `rubocop:disable` through the #165 gate". It becomes: it splits, or the ceiling itself is a conversation. The same sentence names the future `Max:` that #149 lands, which is now `5` rather than `3`, so it is corrected here too.
+- The `RSpec/MultipleExpectations` bullet says an example needing a fourth facet "either splits or carries a justified inline `rubocop:disable` through the #165 gate". It becomes: it splits, or the ceiling itself is a conversation. The same sentence names the future `Max:` that #149 lands, which is `4` rather than the `3` it currently names, so it is corrected here too.
 
 ## Steps
 
 - Enable `Style/DisableCopsWithinSourceCodeDirective` in `.rubocop.yml`, commented as proposed above, with no `AllowedCops` key
 - Add the `### LINTING` subsection to `AGENTS.md` with the policy paragraph (`CLAUDE.md` and `GEMINI.md` are symlinks, so one edit covers all three)
-- Rewrite the two `.agents/testing.md` bullets named above, dropping both escape hatches and correcting the future `Max:` to `5`
+- Rewrite the two `.agents/testing.md` bullets named above, dropping both escape hatches and correcting the future `Max:` to `4`
 
 ## Verification
 
@@ -53,4 +53,4 @@ None open.
 
 - Where should the policy paragraph live in `AGENTS.md`? A `### LINTING` subsection under `## TECH STACK`, beside `### TESTING` - same altitude as the testing pointer, loaded into every session. The alternative (inside `### TESTING`) would hide a repo-wide code rule in a spec-specific section. Settled by the owner in review: "subsection is fine."
 - Which cops may an inline `rubocop:disable` still name? None. The plan first sanctioned `RSpec/NestedGroups` and `RSpec/MultipleExpectations` via `AllowedCops`, mirroring the two escape hatches in `.agents/testing.md`. Settled by the owner in review: "agent should NEVER use `rubocop:disable`" - an entry pre-authorises unlimited disables that nobody counts, so it never forces the conversation this gate exists to force. Consequences carried above: no `AllowedCops` key, both convention escape hatches rewritten, and the ceiling raised in config rather than waived per site.
-- What is `RSpec/MultipleExpectations` raised to? `Max: 5`, not the `Max: 3` first proposed, since the ceiling is now the only relief available. The value is set by #149, which owns that acceptance criterion; this plan only corrects the number where `.agents/testing.md` names it in advance.
+- What is `RSpec/MultipleExpectations` raised to? `Max: 4`. The number moved twice: `3` was the original figure in #149, raised to `5` in review once the ceiling became the only relief available, then settled at `4` by the owner reconsidering - "I changed my mind and decided to go with 4". The value is set by #149, which owns that acceptance criterion and now reads `4`; this plan only corrects the number where `.agents/testing.md` names it in advance. The commit that carried the `5` is on the branch and keeps it, which is what this entry is for.
