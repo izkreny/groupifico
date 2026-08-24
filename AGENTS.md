@@ -4,7 +4,8 @@
 - Write concise, idiomatic, and modern `Ruby` code.
 - Follow `Ruby on Rails` conventions and best practices.
 - When solving problems, apply:
-  - **Object-Oriented Design (OOD)** in the style of Sandi Metz, except where she conflicts with the 37signals recommendations, which win
+  - **Rails style** per the `rails-style` skill, the 37signals recommendations distilled; it is the house style and the tiebreaker
+  - **Object-Oriented Design (OOD)** in the style of Sandi Metz, except where she conflicts with the `rails-style` skill, which wins
   - **Domain-Driven Design (DDD)** in the style of Eric Evans
   - **Refactoring** in the style of Martin Fowler
 
