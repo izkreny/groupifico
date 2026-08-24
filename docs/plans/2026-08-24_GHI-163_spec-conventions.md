@@ -14,6 +14,8 @@ The file sits beside `.agents/github.md` and follows its shape: per-repo facts a
 - **Factories.** One factory per model in `spec/factories/`, used through `FactoryBot::Syntax::Methods`, so `create(:user)` and never `FactoryBot.create(:user)`.
 - **The local gate.** `bin/ci`, named here and owned in detail by `.agents/github.md`: a pointer, not a second copy.
 
+**Research pass, 2026-08-24.** Beyond the sections above, the file records a testing philosophy section (Kent Beck's, explicitly without the test-first ordering), what to assert, mocking discipline, factory discipline, RSpec style and determinism rules. Distilled from public testing skills read in full: the 37signals `rails-testing` skill (minus its Minitest/fixtures parts), thoughtbot's `testing-patterns` and code-audit testing guidelines, Jason Swett's `test-design-review` and `tdd` skills, obra/superpowers' `writing-good-tests`, the BetterSpecs-based `ruby-rails-rspec-skill`, and the layered-rails testing anti-patterns. The detailed research record, sources and quotes included, lives in the owner's knowledge base.
+
 ## Proposal: the pointer from the agent instructions
 
 `AGENTS.md`'s `### TESTING` section keeps its one-line framework summary and gains a line pointing at `.agents/testing.md` for the conventions, mirroring how the section already points at `.agents/github.md` for the gate. `CLAUDE.md` and `GEMINI.md` are symlinks to `AGENTS.md`, so one edit covers all three.
@@ -34,3 +36,5 @@ What the gate cannot see: whether these are the conventions the owner wants #149
 
 - Should `.agents/testing.md` quote the `AuthenticationHelper` code, or only name the pattern and point at #149? Recommendation: prose only. The code is already preserved in #149's body, and a quoted copy here starts drifting the day the helper changes shape during the salvage.
 - Should the "no controller or view specs" line be an explicit ban or just an omission? Recommendation: an explicit line. The point of the file is that a future spec author does not pick a layer nobody agreed on, and silence does not carry that.
+- Inline setup or `let`/`before`? The sources genuinely conflict: thoughtbot wants every precondition visible in the example body and calls heavy `let`/`subject`/`before` DRY taken too far, while Jason Swett maps Arrange onto `let!`/`before`. Recommendation, applied provisionally in the file: inline-first, `let` only when three or more examples share the exact same object.
+- Keep `described_class`? Swett bans it as obscuring; the wider ecosystem and the `rubocop-rspec` defaults favor it. Recommendation, applied provisionally in the file: keep it, fighting the linter costs more than it buys.
