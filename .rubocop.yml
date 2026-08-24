@@ -12,3 +12,10 @@ AllCops:
 # # Use `[a, [b, c]]` not `[ a, [ b, c ] ]`
 # Layout/SpaceInsideArrayLiteralBrackets:
 #   Enabled: false
+
+# An inline `rubocop:disable` is itself an offense, with no exceptions:
+# the cop's own `AllowedCops` default is already `[]`, so enabling it is
+# the whole gate. A cop that is wrong for this repository is reconfigured
+# here instead, once, with a comment saying why.
+Style/DisableCopsWithinSourceCodeDirective:
+  Enabled: true
