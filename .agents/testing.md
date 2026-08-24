@@ -21,7 +21,7 @@ Kent Beck's, without the test-first ordering. Tests ship in the same commit or P
 - **Model specs** for validations, associations and domain logic. This is where business outcomes are asserted. Validations and associations use the installed `shoulda-matchers` one-liners; hand-rolled checks are for behavior the matchers cannot express.
 - **Request specs** for controller behavior: one file per controller, every action covered, over real HTTP. No controller specs, ever: request specs are the one layer that covers controllers.
 - **Helper specs** for helpers that carry logic.
-- **System specs**: a few critical happy paths only; one smoke test can cover a whole flow. The system layer, its CI job and its first specs belong to #79; this file defines no system-spec conventions until that lands.
+- **System specs**: a few critical happy paths only; one smoke test can cover a whole flow. The system layer, its CI job and its first specs belong to #79; this file defines no further system-spec conventions until that lands - only the Determinism section's Capybara seed rules below.
 - **View specs**: banned by default. The one carve-out, judged case by case on the PR, is a partial carrying conditional or permission logic that request specs cannot easily reach - the pattern the few real-world heavy users of the layer (gitlabhq, identity-idp, alaveteli) reserve it for. Routine views are covered by request specs asserting the key HTML, and by system specs.
 
 **Never duplicate the same behavior assertion at multiple layers.** A request spec asserts "creates the record and redirects"; asserting the created record's computed total is the model spec's job.
@@ -70,7 +70,7 @@ Authorization tests assert the negative space: forbidden access returns the redi
 
 ## Determinism
 
-- **No `sleep`, ever.** Explicit waits; in Capybara, semantic selectors first (`:label`, `:button`, `:link`, `:field`) and never OR-chained `has_css?` calls.
+- **No `sleep`, ever.** Explicit waits. In Capybara: semantic selectors first (`:label`, `:button`, `:link`, `:field`) and never OR-chained `has_css?` calls - seed rules for #79's system specs, recorded early so that work is reviewed against them, the same reason this file predates #149.
 - **No test interdependencies**: the suite passes under any order.
 - Cover the edges deliberately: nil, empty collections, boundaries.
 - Keep the output clean: a suite where anything new is immediately visible. When silencing noise, the fix may change how a test runs, never what it covers.
