@@ -4,33 +4,45 @@
 
 ## Approach
 
-Of the issue's three options, this plan recommends option 2, refined so the nil handling lives in exactly one place instead of spreading to callers: the display-name decision moves to `User`, which owns both inputs (the email and the profile), and `Member` delegates to it.
+Every `User` must have a `UserProfile`; that is the design, settled in the plan discussion on the PR, so the fix makes the invariant true at creation instead of tolerating the hole at read time.
 
-- `User#full_name`: `profile&.full_name || email.split("@").first`. When a profile exists, `UserProfile#full_name` already answers everything, including the blank-names fallback; the `||` branch fires only when the profile is missing, whatever removed it.
-- `Member`: `delegate :full_name, to: :user`. `belongs_to :user` is required, so the delegation target can never be nil. `UserProfile#full_name` and every view caller stay untouched.
+`User` gains the whole guarantee, on the model so every creation path is covered (signup, console, seeds, specs, and any future controller):
 
-Why not option 1 (create the profile with the User, make it required): it needs a signup-path callback, a backfill migration, a rethink of `UserProfilesController#destroy` (which can legally remove a profile today and would recreate the hole), and it couples to #139's pending signup rework, all to guarantee an invariant that read-time handling makes unnecessary. The issue's own anonymisation note wants "profile missing" and "profile blank" to give the same answer, and this shape gives both the email local-part through the same path. Option 3 (profile as a signup step) adds friction and waits on #139 regardless.
+```ruby
+before_validation -> { build_profile unless profile }, on: :create
+validates :profile, presence: true, on: :create
+```
 
-The ERD in `README.md` currently says `USER 1 to zero or one USER_PROFILE`; under this decision that stays true and needs no edit, only confirmation.
+`has_one` autosaves a newly built profile in the same transaction as the user. `on: :create` keeps the rule off later saves of existing rows.
+
+Around it: the profile destroy action goes away entirely, button and route included, because a resource that must always exist has nothing to delete; the later anonymisation work owns reset semantics. `Member` keeps `delegate :full_name, to: :profile`, which now never sees nil, and `UserProfile#full_name` keeps its email local-part fallback, which is exactly what a fresh blank profile should display. No backfill migration: there are no real users yet, and development databases get their profiles from reseeding.
+
+The `README.md` ERD moves from `USER 1 to zero or one USER_PROFILE` to 1 to 1.
 
 ## Steps
 
-- Move the display-name fallback to `User#full_name` and switch `Member` to `delegate :full_name, to: :user`
-- Update the `Member` delegation spec to the new target, add `User#full_name` specs (with profile, with blank-name profile, without profile), and add the acceptance-criterion spec: a `Member` whose `User` has no profile answers `full_name` with the email local part
-- Confirm the `README.md` ERD needs no change and tick the issue criterion that asks for it
+- Add the creation invariant to `User`: `before_validation` profile build plus presence validation, both `on: :create`
+- Remove the profile destroy: the controller action, its route, and the view button
+- Adapt the `user_profile` factory and the seeds to the auto-created profile (a created user already owns one, and the unique index on `user_id` forbids a second)
+- Specs: creating a `User` through any path yields a profile; a `User` cannot be created without one; `Member#full_name` answers the email local part for a fresh blank-profile signup; the existing `UserProfile` specs keep passing
+- Update the `README.md` ERD to 1 to 1 and tick the issue criteria as they land
 
 ## Verification
 
-- The new no-profile specs fail against the current code before the fix lands (red seen before green)
+- The new invariant specs fail against the current code before the fix lands (red seen before green)
 - `bin/ci` passes on this branch
-- The docs check on this plan file passes
+- The docs check on this plan file and the README passes
 
-What these gates cannot see: whether the email local part is the display name the owner actually wants in member lists; the specs pin the behaviour, not its desirability.
+What these gates cannot see: whether removing the profile delete button reads as a regression to a user of the profile page; the owner sees that on the diff, not a spec.
 
 ## Open questions
 
-- Option 2 as refined here (read-time fallback on `User`, no schema or signup change) over option 1 (profile always exists): does the owner agree with the recommendation and its reasons above?
+None.
 
 ## Settled
 
-None yet.
+- Option 2 (read-time fallback) or option 1 (profile always exists)? The owner chose the invariant: every User must have a UserProfile, by design.
+- Fold `UserProfile` into `users`? Withdrawn after verifying fizzy in the reference clones: fizzy has no profile model because its per-account Users are silos, while this app's groups share one user base, so member-level person data would duplicate. The split stays.
+- Guarantee mechanism: model-level build-plus-validation on create, covering every path, rather than a controller-called method that guards only its own path; fizzy itself pairs its controller-called methods with exactly such a validation backstop.
+- Profile destroy: removed rather than turned into a field reset; anonymisation work later reintroduces reset semantics deliberately.
+- No backfill migration: no real users exist yet, development databases reseed.
