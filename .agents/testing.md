@@ -28,7 +28,7 @@ Kent Beck's, without the test-first ordering. Tests ship in the same commit or P
 
 ## The signed-in/signed-out pairing pattern
 
-Every controller action is asserted in two contexts, signed in and not signed in. The signed-out surface is deliberately tiny: the login page and the create-group-user page are the only pages a signed-out visitor sees, so those two assert their signed-out rendering and every other action's signed-out context asserts the redirect to the login page. When authorization lands this rule gets revisited.
+Every controller action is asserted in two contexts, signed in and not signed in. The signed-out surface is whatever declares `allow_unauthenticated_access` - today the login page (`sessions#new`/`#create`) and the password-recovery flow (all of `PasswordsController`). Those actions assert their signed-out rendering; every other action's signed-out context asserts the redirect to the login page. When an action's access changes, its paired contexts change with it.
 
 Signing in is `sign_in_as(user)` from `AuthenticationHelper` in `spec/support/`, auto-loaded by the support glob in `spec/rails_helper.rb`. The helper and the seed example land via #149, whose issue body quotes the helper.
 
