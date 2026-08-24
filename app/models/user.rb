@@ -26,4 +26,7 @@ class User < ApplicationRecord
 
   normalizes :email, with: ->(email) { email.strip.downcase }
   validates :email, presence: true, uniqueness: { case_sensitive: false }, length: { maximum: 250 }, format: { with: URI::MailTo::EMAIL_REGEXP }
+
+  before_validation -> { build_profile unless profile }, on: :create
+  validates :profile, presence: true, on: :create
 end

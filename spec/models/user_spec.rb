@@ -22,4 +22,20 @@ RSpec.describe User, type: :model do
       it { is_expected.to validate_uniqueness_of(:email).case_insensitive }
     end
   end
+
+  describe "(profile creation invariant)" do
+    it "builds and persists a profile automatically when created" do
+      user = create(:user)
+
+      expect(user.profile).to be_a(UserProfile).and be_persisted
+    end
+
+    it "cannot be created without a profile" do
+      user = build(:user)
+      allow(user).to receive(:build_profile)
+
+      expect(user).not_to be_valid
+      expect(user.errors[:profile]).to be_present
+    end
+  end
 end
