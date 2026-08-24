@@ -4,7 +4,7 @@ Rails.application.routes.draw do
   resources :addresses
 
   resource :user do
-    resource :profile, controller: "user_profiles"
+    resource :profile, controller: "user_profiles", except: :destroy
   end
   resolve("User")        { [ :user         ] }
   resolve("UserProfile") { [ :user_profile ] }

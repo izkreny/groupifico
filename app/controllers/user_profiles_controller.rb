@@ -1,5 +1,5 @@
 class UserProfilesController < ApplicationController
-  before_action :set_user_profile, only: %i[ show edit update destroy ]
+  before_action :set_user_profile, only: %i[ show edit update ]
 
   def show
   end
@@ -30,14 +30,6 @@ class UserProfilesController < ApplicationController
     else
       render :edit, status: :unprocessable_entity
     end
-  end
-
-  def destroy
-    @user_profile.destroy!
-
-    redirect_to user_profile_path,
-      notice: "User profile was successfully destroyed.",
-      status: :see_other
   end
 
   private
