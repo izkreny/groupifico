@@ -20,6 +20,7 @@
 
 ### TESTING
 - Framework: `RSpec` with `FactoryBot`
+- The spec conventions live in [`.agents/testing.md`](.agents/testing.md)
 - The one local check command is `bin/ci`, owned and detailed by [`.agents/github.md`](.agents/github.md)
 
 ## PROJECT KNOWLEDGE
