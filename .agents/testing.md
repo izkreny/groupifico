@@ -22,7 +22,7 @@ Kent Beck's, without the test-first ordering. Tests ship in the same commit or P
 - **Request specs** for controller behavior: one file per controller, every action covered, over real HTTP. No controller specs, ever: request specs are the one layer that covers controllers.
 - **Helper specs** for helpers that carry logic.
 - **System specs**: a few critical happy paths only; one smoke test can cover a whole flow. The system layer, its CI job and its first specs belong to #79; this file defines no system-spec conventions until that lands.
-- **View specs**: decision pending on PR #164 (leaning explicit ban with a narrow complex-partial exception; research ongoing).
+- **View specs**: banned by default. The one carve-out, judged case by case on the PR, is a partial carrying conditional or permission logic that request specs cannot easily reach - the pattern the few real-world heavy users of the layer (gitlabhq, identity-idp, alaveteli) reserve it for. Routine views are covered by request specs asserting the key HTML, and by system specs.
 
 **Never duplicate the same behavior assertion at multiple layers.** A request spec asserts "creates the record and redirects"; `expect(Order.last.total).to eq(90)` belongs in a model spec.
 
