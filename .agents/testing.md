@@ -79,6 +79,3 @@ Authorization tests assert the negative space: forbidden access returns the redi
 
 Over-mocking internal code; duplicate assertions across layers; unit tests for one-line delegations; mock setup longer than the test; setup hidden away from the example that depends on it (Mystery Guest); a test that fails on every intentional change but never on breakage; hand-rolled HTML strings where production renderers would stay in sync automatically.
 
-## The local gate
-
-`bin/ci`, named here and owned in detail by [`.agents/github.md`](github.md). Never invent another check command.
