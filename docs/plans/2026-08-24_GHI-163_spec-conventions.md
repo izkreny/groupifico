@@ -34,7 +34,11 @@ What the gate cannot see: whether these are the conventions the owner wants #149
 
 ## Open questions
 
-- Should `.agents/testing.md` quote the `AuthenticationHelper` code, or only name the pattern and point at #149? Recommendation: prose only. The code is already preserved in #149's body, and a quoted copy here starts drifting the day the helper changes shape during the salvage.
-- Should the "no controller or view specs" line be an explicit ban or just an omission? Recommendation: an explicit line. The point of the file is that a future spec author does not pick a layer nobody agreed on, and silence does not carry that.
-- Inline setup or `let`/`before`? The sources genuinely conflict: thoughtbot wants every precondition visible in the example body and calls heavy `let`/`subject`/`before` DRY taken too far, while Jason Swett maps Arrange onto `let!`/`before`. Recommendation, applied provisionally in the file: inline-first, `let` only when three or more examples share the exact same object.
-- Keep `described_class`? Swett bans it as obscuring; the wider ecosystem and the `rubocop-rspec` defaults favor it. Recommendation, applied provisionally in the file: keep it, fighting the linter costs more than it buys.
+None - all four settled during this PR's review.
+
+## Settled
+
+- Quote the `AuthenticationHelper` code or prose only? **Prose only**; #149's body preserves the code.
+- Explicit ban on controller and view specs? **Explicit ban for both, with view specs allowed narrowly**: a case-by-case carve-out for partials carrying conditional or permission logic that request specs cannot easily reach.
+- Inline setup or `let`/`before`? **Inline-first**: `let` only when three or more examples share the exact same object, `let!` avoided.
+- Keep `described_class`? **Kept**, aligned with the `RSpec/DescribedClass` cop the repository loads.
