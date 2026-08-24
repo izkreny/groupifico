@@ -2,7 +2,7 @@
 
 # Plan: gate inline rubocop disables (#165)
 
-Make the inline-disable policy structural: a `rubocop:disable` anywhere in the tree becomes a lint offense that `bin/ci` and the `lint` job refuse, so a cop that bites forces a conversation instead of a silent disable. There is no allowlist. One cop enables the whole gate, and the two convention files that currently hand out an escape hatch lose it in the same change.
+Make the inline-disable policy structural: a `rubocop:disable` anywhere in the tree becomes a lint offense that `bin/ci` and the `lint` job refuse, so a cop that bites forces a conversation instead of a silent disable. There is no allowlist. The gate is two pieces - the cop, plus `--ignore-disable-comments` from `bin/rubocop` so a directive cannot name the cop and disable it along with what it hides - and the two convention files that currently hand out an escape hatch lose it in the same change.
 
 ## Proposal: the `.rubocop.yml` change
 
@@ -10,18 +10,28 @@ Append to the existing config (omakase inherit plus the `rubocop-rspec` plugin; 
 
 ```yaml
 # An inline `rubocop:disable` is itself an offense, with no exceptions:
-# the cop's own `AllowedCops` default is already `[]`, so enabling it is
-# the whole gate. A cop that is wrong for this repository is reconfigured
-# here instead, once, with a comment saying why.
+# the cop's own `AllowedCops` default is already `[]`, so enabling it
+# catches every directive that leaves this cop unnamed. A directive that
+# names this cop, its department, or `all` disables it along with
+# whatever it was hiding, which is why `bin/rubocop` also passes
+# `--ignore-disable-comments` - that flag, together with this cop, is
+# the whole gate. A cop that is wrong for this repository is
+# reconfigured here instead, once, with a comment saying why.
 Style/DisableCopsWithinSourceCodeDirective:
   Enabled: true
 ```
+
+## Proposal: the `--ignore-disable-comments` flag in `bin/rubocop`
+
+The cop alone is bypassable, which the review caught: a directive naming the cop, its department (`Style`), or `all` suppresses the cop's own offense together with everything else it hides, and all three shapes passed clean. `--ignore-disable-comments` makes every cop treat every line as enabled - `enabled_line?` in RuboCop's `Cop::Base` short-circuits before the per-line comment lookup - so no directive suppresses anything, and the cop's offense is reported in all three shapes.
+
+There is no `.rubocop.yml` key for it; the option exists only on the command line. So it goes in `bin/rubocop`, which is what `bin/ci` and the CI `lint` job both call, with a comment saying why. The cost of that placement, accepted rather than solved: an invocation that bypasses `bin/rubocop` - a bare `bundle exec rubocop`, an editor integration - does not get the flag, so the gate is exactly as strong as its entry point. `bin/ci` and CI are the entry points that refuse a merge, which is what the policy needs.
 
 ## Proposal: the policy paragraph in `AGENTS.md`
 
 A new `### LINTING` subsection under `## TECH STACK`, beside `### TESTING`, so every agent session loads it. The wording to land:
 
-RuboCop's verdicts are not always right, and what happens next is governed. An inline `rubocop:disable` is never allowed: `Style/DisableCopsWithinSourceCodeDirective` makes the directive itself an offense, so a cop that bites means stop and ask the owner - never silently disable, and never contort code just to appease a cop. A cop that is wrong for this repository generally gets reconfigured once in `.rubocop.yml`, with a comment saying why; a one-off case that a generally-right cop judges wrongly is a conversation, not a config change.
+RuboCop's verdicts are not always right, and what happens next is governed. An inline `rubocop:disable` is never allowed: `Style/DisableCopsWithinSourceCodeDirective` makes the directive itself an offense, and `bin/rubocop` runs with `--ignore-disable-comments` so that holds even for a directive that names this cop, its department, or `all` - a cop that bites means stop and ask the owner, never silently disable, and never contort code just to appease a cop. A cop that is wrong for this repository generally gets reconfigured once in `.rubocop.yml`, with a comment saying why; a one-off case that a generally-right cop judges wrongly is a conversation, not a config change.
 
 ## Proposal: the two convention sentences that stop being true
 
@@ -33,6 +43,7 @@ Both live in the `## Style` section of `.agents/testing.md` and both currently p
 ## Steps
 
 - Enable `Style/DisableCopsWithinSourceCodeDirective` in `.rubocop.yml`, commented as proposed above, with no `AllowedCops` key
+- Pass `--ignore-disable-comments` from `bin/rubocop`, commented, so the cop cannot be disabled by a directive that names it
 - Add the `### LINTING` subsection to `AGENTS.md` with the policy paragraph (`CLAUDE.md` and `GEMINI.md` are symlinks, so one edit covers all three)
 - Rewrite the two `.agents/testing.md` bullets named above, dropping both escape hatches and correcting the future `Max:` to `4`
 
@@ -40,6 +51,7 @@ Both live in the `## Style` section of `.agents/testing.md` and both currently p
 
 - The gate is watched to fail once: a scratch change carrying an inline disable (for example `# rubocop:disable Style/StringLiterals`) makes `bin/rubocop` report the directive as an offense, then the scratch change is removed - a check never seen to fail is not evidence
 - The two formerly sanctioned cops are watched to fail the same way: a scratch `# rubocop:disable RSpec/NestedGroups` and a scratch `# rubocop:disable RSpec/MultipleExpectations` are each reported as offenses, proving there is no residual allowlist
+- The three self-naming bypass shapes are watched to fail: a directive naming the cop itself, its department (`# rubocop:disable Style`), and `# rubocop:disable all`. Each passed clean before `--ignore-disable-comments` and is reported after it - the case the first bullet's check cannot reach, and the one the review found
 - `bin/ci` passes on the final tree
 - [owner] Read the `### LINTING` paragraph and the two rewritten `.agents/testing.md` bullets: this is the policy that decides when agents interrupt you, so its wording is judgement
 
