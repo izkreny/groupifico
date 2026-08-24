@@ -35,6 +35,13 @@ RSpec.describe User, type: :model do
       allow(user).to receive(:build_profile)
 
       expect(user).not_to be_valid
+    end
+
+    it "reports the missing profile on the profile attribute" do
+      user = build(:user)
+      allow(user).to receive(:build_profile)
+      user.valid?
+
       expect(user.errors[:profile]).to be_present
     end
   end
