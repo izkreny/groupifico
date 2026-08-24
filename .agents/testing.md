@@ -1,6 +1,6 @@
 # Testing conventions for this repository
 
-The rules specs are written and reviewed against. This file wins on any conflict about testing; the spec suite it governs arrives with #149, and the file exists first so that suite is reviewed against agreed rules instead of establishing them mid-diff. The local gate and CI facts live in [`.agents/github.md`](github.md).
+The rules specs are written and reviewed against. This file wins on any conflict about testing. The suite's model layer already exists on `main` - model specs and factories - and the layers above it arrive with #149; this file exists before them so that work is reviewed against agreed rules instead of establishing them mid-diff. A spec that predates a rule here gets aligned when next touched, never in bulk. The local gate and CI facts live in [`.agents/github.md`](github.md).
 
 ## Framework choices
 
