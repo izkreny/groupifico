@@ -18,7 +18,7 @@ Kent Beck's, without the test-first ordering. Tests ship in the same commit or P
 
 ## Spec layers and what each covers
 
-- **Model specs** for validations, associations and domain logic. This is where business outcomes are asserted.
+- **Model specs** for validations, associations and domain logic. This is where business outcomes are asserted. Validations and associations use the installed `shoulda-matchers` one-liners; hand-rolled checks are for behavior the matchers cannot express.
 - **Request specs** for controller behavior: one file per controller, every action covered, over real HTTP. No controller specs, ever: request specs are the one layer that covers controllers.
 - **Helper specs** for helpers that carry logic.
 - **System specs**: a few critical happy paths only; one smoke test can cover a whole flow. The system layer, its CI job and its first specs belong to #79; this file defines no system-spec conventions until that lands.
