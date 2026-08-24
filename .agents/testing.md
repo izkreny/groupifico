@@ -24,7 +24,7 @@ Kent Beck's, without the test-first ordering. Tests ship in the same commit or P
 - **System specs**: a few critical happy paths only; one smoke test can cover a whole flow. The system layer, its CI job and its first specs belong to #79; this file defines no further system-spec conventions until that lands - only the Determinism section's Capybara seed rules below.
 - **View specs**: banned by default. The one carve-out, judged case by case on the PR, is a partial carrying conditional or permission logic that request specs cannot easily reach - the pattern the few real-world heavy users of the layer (gitlabhq, identity-idp, alaveteli) reserve it for. Routine views are covered by request specs asserting the key HTML, and by system specs.
 
-**Never duplicate the same behavior assertion at multiple layers.** A request spec asserts "creates the record and redirects"; asserting the created record's computed total is the model spec's job.
+**Never duplicate the same behavior assertion at multiple layers.** A request spec asserts the visible outcome: `expect(response).to redirect_to(order_path(Order.sole))` at most. The business outcome belongs in a model spec that builds its own record: `order = create(:order, items: two_items); expect(order.total).to eq(90)`.
 
 ## The signed-in/signed-out pairing pattern
 
