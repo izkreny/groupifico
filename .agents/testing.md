@@ -30,7 +30,7 @@ Kent Beck's, without the test-first ordering. Tests ship in the same commit or P
 
 Every controller action is asserted in two contexts, signed in and not signed in. The signed-out surface is whatever declares `allow_unauthenticated_access` - today the login page (`sessions#new`/`#create`) and the password-recovery flow (all of `PasswordsController`). Those actions assert their signed-out rendering; every other action's signed-out context asserts the redirect to the login page. When an action's access changes, its paired contexts change with it.
 
-Signing in is `sign_in_as(user)` from `AuthenticationHelper` in `spec/support/`, loaded by the support glob in `spec/rails_helper.rb`.
+Signing in is `sign_in_as(user)` from `AuthenticationHelper` in `spec/support/`, loaded by the support glob in `spec/rails_helper.rb`. It signs in over real HTTP, posting the user's credentials to `sessions#create`, so the session cookie the rest of the example relies on is the one production issues. It stubs nothing: `Current` is domain, and the Mocking discipline section below forbids stubbing it.
 
 Authorization tests assert the negative space: forbidden access returns the redirect or 403/404, not just that allowed access works.
 

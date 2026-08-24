@@ -62,11 +62,9 @@ RSpec.describe "User", type: :request do
   end
 
   describe "POST /user" do
-    let (:user_attributes) { attributes_for(:user) }
-
     context "when not signed in" do
       it "redirects to the login page" do
-        post user_path params: { user: user_attributes }
+        post user_path, params: { user: { email: "new@example.com", password: "0000" } }
 
         expect(response).to redirect_to new_session_path
       end
@@ -76,7 +74,7 @@ RSpec.describe "User", type: :request do
       it "creates new user" do
         sign_in_as(create(:user))
 
-        expect { post user_path params: { user: user_attributes } }
+        expect { post user_path, params: { user: { email: "new@example.com", password: "0000" } } }
           .to change(User, :count).by(1)
 
         expect(response).to redirect_to user_path
@@ -85,34 +83,32 @@ RSpec.describe "User", type: :request do
   end
 
   describe "PATCH /user" do
-    let! (:user)                { create(:user) }
-    let  (:new_user_attributes) { attributes_for(:user) }
-
     context "when not signed in" do
       it "redirects to the login page" do
-        patch user_path params: { user: new_user_attributes }
+        patch user_path, params: { user: { email: "changed@example.com", password: "0000" } }
 
         expect(response).to redirect_to new_session_path
       end
     end
 
     context "when successfully signed in" do
-      it "update user" do
+      it "updates the user" do
+        user = create(:user)
         sign_in_as(user)
 
-        patch user_path params: { user: new_user_attributes }
+        patch user_path, params: { user: { email: "changed@example.com", password: "0000" } }
 
         expect(response).to redirect_to user_path
-        expect(user.reload.email).to eq new_user_attributes[:email]
+        expect(user.reload.email).to eq "changed@example.com"
       end
     end
   end
 
   describe "DELETE /user" do
-    let! (:user) { create(:user) }
-
     context "when not signed in" do
       it "redirects to the login page" do
+        create(:user)
+
         expect { delete user_path }
           .not_to change(User, :count)
 
@@ -121,8 +117,8 @@ RSpec.describe "User", type: :request do
     end
 
     context "when successfully signed in" do
-      it "creates new user" do
-        sign_in_as(user)
+      it "destroys the user" do
+        sign_in_as(create(:user))
 
         expect { delete user_path }
           .to change(User, :count).by(-1)
