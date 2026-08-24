@@ -30,7 +30,7 @@ Kent Beck's, without the test-first ordering. Tests ship in the same commit or P
 
 Every controller action is asserted in two contexts, signed in and not signed in. The signed-out surface is whatever declares `allow_unauthenticated_access` - today the login page (`sessions#new`/`#create`) and the password-recovery flow (all of `PasswordsController`). Those actions assert their signed-out rendering; every other action's signed-out context asserts the redirect to the login page. When an action's access changes, its paired contexts change with it.
 
-Signing in is `sign_in_as(user)` from `AuthenticationHelper` in `spec/support/` - the helper, the seed example, and the support-glob line in `spec/rails_helper.rb` that loads it (commented out today) all land via #149, whose issue body quotes the helper.
+Signing in is `sign_in_as(user)` from `AuthenticationHelper` in `spec/support/`, loaded by the support glob in `spec/rails_helper.rb`.
 
 Authorization tests assert the negative space: forbidden access returns the redirect or 403/404, not just that allowed access works.
 
@@ -66,7 +66,7 @@ Authorization tests assert the negative space: forbidden access returns the redi
 - `described_class` stays: it is the `rubocop-rspec` default and fighting the linter costs more than it buys.
 - Arrange-Act-Assert visible in every example; specs are flat and static, no loops or clever helpers; concrete examples over abstractions.
 - Nested contexts at most three deep, matching the `RSpec/NestedGroups` default; a genuinely necessary fourth level is a conversation with the owner, never an inline `rubocop:disable`. Never test private methods; test through the public one or make it public.
-- One *behavior* per example. Several expectations are fine when they assert facets of that one behavior - a request spec checking the response and its side effect - and a second behavior gets its own example. `RSpec/MultipleExpectations` stands at its default `Max: 1` until #149 raises it to `4` alongside the first request specs; until then a spec answers to the cop as it is. An example that genuinely needs a fifth facet either splits, or the ceiling itself is a conversation with the owner.
+- One *behavior* per example. Several expectations are fine when they assert facets of that one behavior - a request spec checking the response and its side effect - and a second behavior gets its own example. `RSpec/MultipleExpectations` stands at `Max: 4` in `.rubocop.yml`, raised from the default `Max: 1` because a request spec asserting a redirect and the side effect that earned it is one behavior in two expectations. An example that genuinely needs a fifth facet either splits, or the ceiling itself is a conversation with the owner.
 
 ## Determinism
 
