@@ -49,7 +49,7 @@ Authorization tests assert the negative space: forbidden access returns the redi
 - **Never stub the system under test.**
 - **Verified doubles only**: `instance_double`/`class_double`, so a typo fails the spec.
 - **`travel_to`/`freeze_time`** for anything time-dependent; a time assertion without them is a red flag.
-- External HTTP is blocked in specs: WebMock's `disable_net_connect!` is standing suite setup, and the gem lands with the first suite work (#149).
+- External HTTP gets blocked suite-wide the day #149 lands: the `webmock` gem and `disable_net_connect!` are #149 manifest work, and from then on the closed net is standing setup, not need-driven.
 
 ## Factories
 
