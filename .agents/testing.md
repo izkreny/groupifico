@@ -55,6 +55,7 @@ Authorization tests assert the negative space: forbidden access returns the redi
 
 - **Minimal factories**: only required fields with sensible defaults. No "just in case" attributes, no factories-as-fixtures like `create(:admin_user_with_premium_subscription)`; variation comes from traits, uniqueness from sequences, and associations are declared sparingly because they cascade record creation.
 - **`build`/`build_stubbed` over `create`** when the database is not the point.
+- **Faker fills descriptive, unconstrained fields and the seeds**; anything a validation constrains or an assertion reads gets a sequence or a literal, because random data deciding a test's outcome makes failures unreproducible.
 - Use the bare `FactoryBot::Syntax::Methods` forms: `create(:user)`, never `FactoryBot.create(:user)`.
 - One factory per model, in `spec/factories/`.
 
