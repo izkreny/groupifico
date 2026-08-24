@@ -38,3 +38,4 @@ None.
 - Testing conventions stay wholly in the repository testing conventions file that #164 introduces; nothing testing-related moves into the skill, avoiding a second copy that would drift.
 - Authorization on Pundit is this repository's recorded deviation from the skill's no-Pundit default, living in `.agents/rails-style.md` rather than softening the skill itself.
 - The Sandi Metz rule wording: she stays as secondary guidance (small single-purpose classes, depend on things that change less often, isolate what varies, duck types), and conflicts resolve in the skill's favour.
+- The Metz rule is stated once, in the skill, which owns her guidance and its precedence; the `AGENTS.md` OOD bullet was dropped as a second drifting copy, and the Evans and Fowler bullets gained the same short parentheticals the skill gives Metz.
