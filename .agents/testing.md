@@ -64,7 +64,7 @@ Authorization tests assert the negative space: forbidden access returns the redi
 - **Inline setup over `let`/`before`**: the preconditions of an example are visible in its body. Reach for `let` only when three or more examples share the exact same object; over-use of `let`/`subject`/`before` is DRY taken too far in tests.
 - `described_class` stays: it is the `rubocop-rspec` default and fighting the linter costs more than it buys.
 - Arrange-Act-Assert visible in every example; specs are flat and static, no loops or clever helpers; concrete examples over abstractions.
-- Nested contexts at most two deep. Never test private methods; test through the public one or make it public.
+- Nested contexts at most three deep, matching the `RSpec/NestedGroups` default; a genuinely necessary fourth level carries an inline `rubocop:disable` with a one-line reason. Never test private methods; test through the public one or make it public.
 - One expectation per unit example as the default; `aggregate_failures` is fine in request and system examples.
 
 ## Determinism
