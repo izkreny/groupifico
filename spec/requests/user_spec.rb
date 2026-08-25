@@ -133,6 +133,11 @@ RSpec.describe "User", type: :request do
         expect { delete user_path }
           .to change(User, :count).by(-1)
 
+        # Known-wrong redirect target: destroying the user also destroys their
+        # session (`dependent: :destroy`), so `user_path` can never actually
+        # render for them. Tracked as a follow-up to point the controller at
+        # `new_session_path` instead; this assertion documents the current
+        # behaviour, not the intended one.
         expect(response).to redirect_to user_path
       end
     end
