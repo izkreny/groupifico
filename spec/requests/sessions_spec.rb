@@ -33,8 +33,9 @@ RSpec.describe "Sessions", type: :request do
 
       it "redirects back to sign-in for an unknown email address" do
         create(:user, password: "0000")
+        potential_user = build(:user)
 
-        post session_path, params: { email: "wrong@example.com", password: "0000" }
+        post session_path, params: { email: potential_user.email, password: "0000" }
 
         expect(response).to redirect_to new_session_path
       end

@@ -33,7 +33,10 @@ RSpec.describe "Passwords", type: :request do
       end
 
       it "redirects to sign-in without emailing anyone for an unknown address" do
-        expect { post passwords_path, params: { email: "unknown@example.com" } }
+        create(:user)
+        potential_user = build(:user)
+
+        expect { post passwords_path, params: { email: potential_user.email } }
           .not_to have_enqueued_mail(PasswordsMailer, :reset)
 
         expect(response).to redirect_to new_session_path
