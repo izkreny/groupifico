@@ -1,5 +1,9 @@
 # Omakase Ruby styling for Rails
-inherit_gem: { rubocop-rails-omakase: rubocop.yml }
+inherit_gem:
+  rubocop-rails-omakase: rubocop.yml
+  # Teaches RSpec/EmptyExampleGroup and friends about the action_policy RSpec
+  # DSL (describe_rule/succeed/failed), so a policy spec is not flagged as empty.
+  action_policy: config/rubocop-rspec.yml
 
 plugins:
   - rubocop-rspec
