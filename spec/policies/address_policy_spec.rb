@@ -30,8 +30,8 @@ RSpec.describe AddressPolicy, type: :policy do
   describe "rule aliases" do
     subject(:policy) { described_class.new(record, **context) }
 
-    it { expect(policy.resolve_rule(:edit?)).to eq :show? }
-    it { expect(policy.resolve_rule(:update?)).to eq :show? }
-    it { expect(policy.resolve_rule(:destroy?)).to eq :show? }
+    it { expect(:edit?).to be_an_alias_of(policy, :show?) }
+    it { expect(:update?).to be_an_alias_of(policy, :show?) }
+    it { expect(:destroy?).to be_an_alias_of(policy, :show?) }
   end
 end

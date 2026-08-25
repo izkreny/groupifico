@@ -27,3 +27,12 @@ AllCops:
 # reconfigured here instead, once, with a comment saying why.
 Style/DisableCopsWithinSourceCodeDirective:
   Enabled: true
+
+# Action Policy's own alias matcher takes the rule name as the subject:
+# `expect(:edit?).to be_an_alias_of(policy, :show?)`, per its testing guide. The
+# cop reads that bare symbol as the expected value put in the wrong place, which
+# is right in general and wrong for this matcher, whose signature has no other
+# form. Scoped to policy specs so the cop keeps working everywhere else.
+RSpec/ExpectActual:
+  Exclude:
+    - "spec/policies/**/*_spec.rb"
