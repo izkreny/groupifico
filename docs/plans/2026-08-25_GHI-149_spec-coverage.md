@@ -28,6 +28,10 @@ The signed-out surface is `sessions#new`, `sessions#create` and all four of `Pas
 
 The nested resources need a group for `members` and `events`, and a group plus an event for `registrations`. `events#duplicate` is a `GET` on a member route and gets the same pair as the rest.
 
+**No HTML assertions anywhere in this suite.** The front end is due a large change, so any assertion against rendered markup would be written to be deleted. Each example asserts the response status, the redirect, or the record and count the action changed, and never the page. This matches what the Basecamp apps do in the reference clones: `boards_controller_test.rb` checks `assert_difference` and the created record's own attribute rather than scraping the page for it, and reaches for `assert_select` only where a view branches on permission. Ours are scaffold views with no conditionals, so nothing here earns it.
+
+**No system specs either.** The system layer, its CI job and its first specs belong to #79, and `.agents/testing.md` defines no system-spec conventions until that lands. This issue is the suite half: model, request and helper specs.
+
 ## Helper specs: two files, not eight
 
 `.agents/testing.md` wants specs for helpers that carry logic and calls one-line delegations a red flag, which splits the eight helpers three ways.
@@ -69,10 +73,11 @@ What the gates cannot see: `bin/ci` proves the specs pass, never that they would
 
 ## Open questions
 
-- **How much HTML should a request spec assert?** `.agents/testing.md` says routine views are covered by request specs asserting the key HTML, but the seed `users` spec asserts status alone. Every `show` and `index` action is affected, and the answer sets the shape of roughly 40 examples.
-- **Does this land as one PR or several?** 46 actions is on the order of 92 examples across eight files. One PR keeps the pairing pattern consistent; a stack split by resource group is far easier to review.
-- **The `profile` presence validation can only fail if the model is stubbed.** `before_validation -> { build_profile unless profile }, on: :create` runs before `validates :profile, presence: true, on: :create`, so both surviving examples reach it only via `allow(user).to receive(:build_profile)` - stubbing the system under test, which `.agents/testing.md` forbids outright. Recombining preserves that. Is the validation reachable by any honest path, and if not, is it dead code?
+None - all four settled during this PR's plan review.
 
 ## Settled
 
-None yet.
+- Does the `profile` presence backstop keep its two stub-based examples? **Yes, folded into one example.** #168 settled the validation itself as a deliberate backstop, so it stays, and `allow(user).to receive(:build_profile)` is the only way to make a backstop fire. The example is named so the stub reads as deliberate rather than as an oversight.
+- How much HTML should a request spec assert? **None at all.** The front end is due a large change, so markup assertions would be written to be deleted; examples assert status, redirect, and the record or count that changed.
+- Does this land as one PR or several? **One PR.** Several PRs for one issue also fights the one-issue-per-branch convention, and `Closes #149` can sit on only one of them.
+- Does this ticket cover system specs? **No.** They belong to #79 along with the `system-test` CI job.
