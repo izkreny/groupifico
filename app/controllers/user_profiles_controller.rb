@@ -23,6 +23,6 @@ class UserProfilesController < ApplicationController
     end
 
     def user_profile_params
-      params.expect(user_profile: [ :first_name, :last_name, :mobile_phone, :user_id ])
+      params.expect(user_profile: [ :first_name, :last_name, :mobile_phone ])
     end
 end
