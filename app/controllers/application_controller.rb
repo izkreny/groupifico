@@ -19,11 +19,14 @@ class ApplicationController < ActionController::Base
   verify_authorized
 
   rescue_from ActionPolicy::Unauthorized, with: :deny_access
+  # AuthorizationContextMissing is a sibling of Unauthorized rather than a descendant, so the line
+  # above cannot catch it. It is raised when a policy is built with no Current.user, which reads as
+  # a refusal rather than a fault, so it lands on the same handler. #172 gives it its own response.
+  rescue_from ActionPolicy::AuthorizationContextMissing, with: :deny_access
 
   private
-    # Shaped so a future rescue can branch on ex.result.all_details, e.g. to return 404 for a
-    # non-member and 403 for a member with the wrong role, decided by the policy that denied.
-    def deny_access(ex)
+    # TODO(#172): replace with a redirect carrying an alert, and branch on the denial's reason.
+    def deny_access
       head :forbidden
     end
 end
