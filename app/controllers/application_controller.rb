@@ -9,8 +9,13 @@ class ApplicationController < ActionController::Base
   # This application has no `current_user`; the acting user is reached through `Current.session`.
   authorize :user, through: -> { Current.user }
 
-  # Raises ActionPolicy::UnauthorizedAction when an action completes without an authorize! or
-  # authorized_scope call, so a forgotten check fails loudly instead of silently permitting.
+  # Raises ActionPolicy::UnauthorizedAction when an action completes without an authorize! call.
+  # It counts authorize! only: authorized_scope bumps a separate counter and does not satisfy this
+  # guard, which is why #172 enables verify_authorized_scoped only: :index alongside it.
+  #
+  # This is an after_action, so it reports a forgotten check rather than preventing one: the action
+  # has already run and its writes have committed by the time it raises. It is a tripwire for the
+  # window in which controllers still carry skips, not a substitute for authorizing before acting.
   verify_authorized
 
   rescue_from ActionPolicy::Unauthorized, with: :deny_access
