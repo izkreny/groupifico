@@ -46,7 +46,7 @@ RSpec.describe "Sessions", type: :request do
         other_user = create(:user)
 
         expect { post session_path, params: { email: other_user.email, password: other_user.password } }
-          .to change(Session, :count).by(1)
+          .to change { other_user.sessions.count }.by(1)
 
         expect(response).to redirect_to root_path
       end
