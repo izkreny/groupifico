@@ -76,7 +76,7 @@ RSpec.describe "Events", type: :request do
     end
 
     context "when successfully signed in" do
-      it "shows the new event page pre-filled from the duplicated event" do
+      it "renders the new event page" do
         event = create(:event)
         sign_in_as(create(:user))
 
