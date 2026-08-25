@@ -93,7 +93,7 @@ RSpec.describe "Passwords", type: :request do
         expect(user.reload.authenticate("1234")).to eq user
       end
 
-      it "re-renders the reset-password page when the confirmation does not match" do
+      it "redirects back to the reset-password page when the confirmation does not match" do
         token = user.password_reset_token
 
         patch password_path(token), params: { password: "1234", password_confirmation: "0000" }
