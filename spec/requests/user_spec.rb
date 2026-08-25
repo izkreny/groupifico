@@ -79,6 +79,16 @@ RSpec.describe "User", type: :request do
 
         expect(response).to redirect_to user_path
       end
+
+      it "re-renders the new page when the user is invalid" do
+        signed_in = create(:user)
+        sign_in_as(signed_in)
+
+        expect { post user_path, params: { user: { email: signed_in.email, password: "0000" } } }
+          .not_to change(User, :count)
+
+        expect(response).to have_http_status :unprocessable_entity
+      end
     end
   end
 
