@@ -94,9 +94,10 @@ RSpec.describe "Registrations", type: :request do
   end
 
   describe "POST /groups/:group_id/events/:event_id/registrations" do
+    let(:event) { create(:event) }
+
     context "when not signed in" do
       it "redirects to the sign-in page" do
-        event  = create(:event)
         member = create(:member, group: event.group)
 
         post group_event_registrations_path(event.group, event), params: { registration: { member_id: member.id } }
@@ -107,7 +108,6 @@ RSpec.describe "Registrations", type: :request do
 
     context "when successfully signed in" do
       it "creates the registration" do
-        event  = create(:event)
         member = create(:member, group: event.group)
         sign_in_as(member.user)
 
@@ -116,7 +116,6 @@ RSpec.describe "Registrations", type: :request do
       end
 
       it "re-renders the new page when the registration is invalid" do
-        event = create(:event)
         sign_in_as(create(:user))
 
         expect { post group_event_registrations_path(event.group, event), params: { registration: { member_id: "" } } }

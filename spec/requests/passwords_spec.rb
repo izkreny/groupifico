@@ -84,9 +84,9 @@ RSpec.describe "Passwords", type: :request do
 
   describe "PATCH /passwords/:token" do
     context "when not signed in" do
-      it "resets the password and redirects to sign-in" do
-        user = create(:user)
+      let(:user) { create(:user) }
 
+      it "resets the password and redirects to sign-in" do
         patch password_path(user.password_reset_token), params: { password: "1234", password_confirmation: "1234" }
 
         expect(response).to redirect_to new_session_path
@@ -94,7 +94,6 @@ RSpec.describe "Passwords", type: :request do
       end
 
       it "re-renders the reset-password page when the confirmation does not match" do
-        user  = create(:user)
         token = user.password_reset_token
 
         patch password_path(token), params: { password: "1234", password_confirmation: "0000" }
@@ -104,7 +103,6 @@ RSpec.describe "Passwords", type: :request do
       end
 
       it "destroys the user's existing sessions once the password resets" do
-        user = create(:user)
         sign_in_as(user)
 
         expect { patch password_path(user.password_reset_token), params: { password: "1234", password_confirmation: "1234" } }

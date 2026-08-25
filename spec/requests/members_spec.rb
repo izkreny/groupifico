@@ -88,10 +88,10 @@ RSpec.describe "Members", type: :request do
   end
 
   describe "POST /groups/:group_id/members" do
+    let(:group) { create(:group) }
+
     context "when not signed in" do
       it "redirects to the sign-in page" do
-        group = create(:group)
-
         post group_members_path(group), params: { member: { user_id: create(:user).id } }
 
         expect(response).to redirect_to new_session_path
@@ -100,8 +100,7 @@ RSpec.describe "Members", type: :request do
 
     context "when successfully signed in" do
       it "creates the member" do
-        group = create(:group)
-        user  = create(:user)
+        user = create(:user)
         sign_in_as(user)
 
         expect { post group_members_path(group), params: { member: { user_id: user.id } } }.to change(Member, :count).by(1)
@@ -110,7 +109,6 @@ RSpec.describe "Members", type: :request do
       end
 
       it "re-renders the new page when the member is invalid" do
-        group = create(:group)
         sign_in_as(create(:user))
 
         expect { post group_members_path(group), params: { member: { user_id: "" } } }
