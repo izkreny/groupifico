@@ -1,6 +1,7 @@
 class AddressesController < ApplicationController
-  # TODO(#172): remove this skip when AddressPolicy lands.
-  skip_verify_authorized
+  # TODO(#172): remove this skip when index is scoped and creation is role-gated. The record-bearing
+  # actions below are authorized already; these three have no record to authorize against yet.
+  skip_verify_authorized only: %i[ index new create ]
 
   before_action :set_address, only: %i[ show edit update destroy ]
 
@@ -9,6 +10,7 @@ class AddressesController < ApplicationController
   end
 
   def show
+    authorize! @address
   end
 
   def new
@@ -16,6 +18,7 @@ class AddressesController < ApplicationController
   end
 
   def edit
+    authorize! @address
   end
 
   def create
@@ -30,6 +33,8 @@ class AddressesController < ApplicationController
   end
 
   def update
+    authorize! @address
+
     if @address.update(address_params)
       redirect_to address_path(@address),
         notice: "Address was successfully updated.",
@@ -40,6 +45,8 @@ class AddressesController < ApplicationController
   end
 
   def destroy
+    authorize! @address
+
     @address.destroy!
 
     redirect_to addresses_path,
