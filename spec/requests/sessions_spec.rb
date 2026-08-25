@@ -31,10 +31,18 @@ RSpec.describe "Sessions", type: :request do
         expect(response).to redirect_to root_path
       end
 
-      it "redirects back to sign-in with invalid credentials" do
+      it "redirects back to sign-in for an unknown email address" do
         create(:user, password: "0000")
 
         post session_path, params: { email: "wrong@example.com", password: "0000" }
+
+        expect(response).to redirect_to new_session_path
+      end
+
+      it "redirects back to sign-in for a wrong password" do
+        user = create(:user, password: "0000")
+
+        post session_path, params: { email: user.email, password: "9999" }
 
         expect(response).to redirect_to new_session_path
       end
