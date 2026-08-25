@@ -1,25 +1,10 @@
 class UserProfilesController < ApplicationController
-  before_action :set_user_profile, only: %i[ show edit update ]
+  before_action :set_user_profile
 
   def show
   end
 
-  def new
-    @user_profile = UserProfile.new
-  end
-
   def edit
-  end
-
-  def create
-    @user_profile = UserProfile.new(user_profile_params)
-
-    if @user_profile.save
-      redirect_to user_profile_path,
-        notice: "User profile was successfully created."
-    else
-      render :new, status: :unprocessable_entity
-    end
   end
 
   def update
