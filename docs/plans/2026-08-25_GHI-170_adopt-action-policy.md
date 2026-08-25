@@ -156,10 +156,9 @@ What these gates cannot see: whether the skip list actually shrinks. Every gate 
 
 ## Open questions
 
-- **Does this branch wait for #171 (#149, spec coverage) to merge?** That branch adds `spec/support/authentication_helper.rb`, `sign_in_as`, and request specs for all five group-scoped controllers, and it edits `spec/rails_helper.rb`, which this branch also edits. Writing a second request-spec harness here would duplicate it and then have to be reconciled. The plan above assumes #171 lands first and this branch uses `sign_in_as`. If that assumption is wrong, the request-spec step needs its own harness and this plan grows.
 - **Should `verify_authorized_scoped` be enabled too?** Action Policy ships a second guard, raising `ActionPolicy::UnscopedAction` when an action completes without `authorized_scope`. It is the guard that would catch an `index` leaking another group's records, which is a real criterion on #172. It is left off here because nothing scopes yet and it would need its own skip list, but it may belong in #172 rather than never.
 - **Does the pilot belong on this branch at all?** The alternative is a mechanism-only branch whose verification is a policy spec with no controller behind it. That keeps #170 to its stated scope but leaves the guard unproven against a real request until #172.
 
 ## Settled
 
-None yet.
+- **Does this branch wait for #171 (#149, spec coverage) to merge?** Yes. Settled by the owner in the terminal: "yes, wait for #171 to merge first". #171 adds `spec/support/authentication_helper.rb` and `sign_in_as`, and edits `spec/rails_helper.rb`, which this branch also edits, so a second request-spec harness here would be duplicated work and a conflict in the same file. This branch's request-spec step uses `sign_in_as` and this branch does not merge before #171. Recorded on the tracker as #170 blocked by #149 rather than left in prose.
