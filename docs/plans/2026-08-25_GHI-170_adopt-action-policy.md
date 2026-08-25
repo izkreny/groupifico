@@ -118,7 +118,9 @@ require "action_policy/rspec"
 require "action_policy/rspec/dsl"
 ```
 
-The first supplies `be_authorized_to`, `have_authorized_scope` and `be_an_alias_of`. The second supplies the `describe_rule` / `succeed` / `failed` DSL, which is auto-included only for examples tagged `type: :policy` or living in `spec/policies`, so policy specs go in `spec/policies/` and need no tag.
+The first supplies `be_authorized_to`, `have_authorized_scope` and `be_an_alias_of`. The second supplies the `describe_rule` / `succeed` / `failed` DSL, which Action Policy auto-includes for examples tagged `type: :policy` **or** living in `spec/policies`.
+
+Policy specs take both: they go in `spec/policies/` and they carry `type: :policy`. The tag is not redundant here even though the directory alone would satisfy Action Policy. Every spec in this suite declares its type explicitly, and `config.infer_spec_type_from_file_location!` is commented out in `spec/rails_helper.rb`, so location carries no meaning to RSpec itself; a policy spec that relied on it would be the only spec in the repository whose type came from where it sits rather than from what it says.
 
 The conventions in `.agents/testing.md` govern how those specs are written; nothing here overrides them.
 
