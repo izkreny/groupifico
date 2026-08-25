@@ -29,6 +29,8 @@
 class UserProfile < ApplicationRecord
   belongs_to :user
 
+  validates :user_id, uniqueness: true
+
   validates :first_name, :last_name, length: { maximum: 250 }
   # TODO: Add as well a proper mobile phone format normalization/validation, mabye via special gem
   validates :mobile_phone, uniqueness: { case_sensitive: false }, length: { maximum: 50 }, allow_nil: true

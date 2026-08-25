@@ -98,14 +98,14 @@ erDiagram
   }
 
   %% RELATIONSHIPS
-  USER    1   to  0+           MEMBER        :  "↓ become … belong ↑"
-  USER    1   to  zero or one  USER_PROFILE  :  "↓ has    … belong ↑"
-  MEMBER  0+  to  1            GROUP         :  "↓ belong … has ↑"
-  GROUP   1   to  0+           EVENT         :  "↓ has    … belong ↑"
-  EVENT   1   to  0+           REGISTRATION  :  "↓ has    … belong ↑"
-  MEMBER  1   to  0+           REGISTRATION  :  "↓ has    … belong ↑"
-  GROUP   0+  to  1            ADDRESS       :  "↓ has    … belong ↑"
-  EVENT   0+  to  1            ADDRESS       :  "↓ has    … belong ↑"
+  USER    1   to  0+  MEMBER        :  "↓ become … belong ↑"
+  USER    1   to  1   USER_PROFILE  :  "↓ has    … belong ↑"
+  MEMBER  0+  to  1   GROUP         :  "↓ belong … has ↑"
+  GROUP   1   to  0+  EVENT         :  "↓ has    … belong ↑"
+  EVENT   1   to  0+  REGISTRATION  :  "↓ has    … belong ↑"
+  MEMBER  1   to  0+  REGISTRATION  :  "↓ has    … belong ↑"
+  GROUP   0+  to  1   ADDRESS       :  "↓ has    … belong ↑"
+  EVENT   0+  to  1   ADDRESS       :  "↓ has    … belong ↑"
 
   %% ENTITIES
 

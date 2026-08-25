@@ -15,6 +15,7 @@ RSpec.describe UserProfile, type: :model do
       subject { create(:user_profile) }
 
       it { is_expected.to validate_uniqueness_of(:mobile_phone).case_insensitive.allow_nil }
+      it { is_expected.to validate_uniqueness_of(:user_id) }
     end
   end
 

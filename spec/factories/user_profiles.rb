@@ -30,6 +30,12 @@ FactoryBot.define do
   factory :user_profile do
     user
 
+    # `User` auto-builds a profile on creation, so a created `user` already owns one and the unique
+    # index on `user_id` forbids a second row. Reuse that profile instead of building a fresh one; a
+    # `build`-strategy `user` that has not gone through validation has none yet, so build it through
+    # the association, which sets the inverse and stops the user's callback building a second.
+    initialize_with { user.profile || user.build_profile }
+
     trait :with_all_attributes do
       first_name   { Faker::Name.first_name }
       last_name    { Faker::Name.last_name }
