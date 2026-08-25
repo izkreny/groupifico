@@ -1,4 +1,7 @@
 class PasswordsController < ApplicationController
+  # Unauthenticated by design: resetting a forgotten password has no signed-in user to authorize against.
+  skip_verify_authorized
+
   allow_unauthenticated_access
   before_action :set_user_by_token, only: %i[ edit update ]
   rate_limit to: 10, within: 3.minutes, only: :create, with: -> { redirect_to new_password_path, alert: "Try again later." }

@@ -1,4 +1,7 @@
 class RegistrationsController < ApplicationController
+  # TODO(#172): remove this skip when RegistrationPolicy lands.
+  skip_verify_authorized
+
   before_action :set_group
   before_action :set_event
   before_action :set_registration, only: %i[ show edit update destroy ]

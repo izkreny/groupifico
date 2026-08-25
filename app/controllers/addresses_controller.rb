@@ -1,4 +1,7 @@
 class AddressesController < ApplicationController
+  # TODO(#172): remove this skip when AddressPolicy lands.
+  skip_verify_authorized
+
   before_action :set_address, only: %i[ show edit update destroy ]
 
   def index

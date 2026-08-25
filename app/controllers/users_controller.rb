@@ -1,4 +1,7 @@
 class UsersController < ApplicationController
+  # TODO(#172): remove this skip when UserPolicy lands.
+  skip_verify_authorized
+
   before_action :set_user, only: %i[ show edit update destroy ]
 
   def show

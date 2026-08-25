@@ -1,4 +1,7 @@
 class MembersController < ApplicationController
+  # TODO(#172): remove this skip when MemberPolicy lands.
+  skip_verify_authorized
+
   before_action :set_group
   before_action :set_member, only: %i[ show edit update destroy ]
 
