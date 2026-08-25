@@ -104,8 +104,7 @@ RSpec.describe "Members", type: :request do
         user  = create(:user)
         sign_in_as(create(:user))
 
-        expect { post group_members_path(group), params: { member: { user_id: user.id } } }
-          .to change(Member, :count).by(1)
+        expect { post group_members_path(group), params: { member: { user_id: user.id } } }.to change(Member, :count).by(1)
 
         expect(response).to redirect_to group_member_path(group, Member.find_by!(user:, group:))
       end

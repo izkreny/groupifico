@@ -123,17 +123,12 @@ RSpec.describe "Events", type: :request do
 
     context "when successfully signed in" do
       it "creates the event" do
-        group   = create(:group)
-        creator = create(:member, group:)
+        creator = create(:member)
         sign_in_as(create(:user))
+        params  = { name: "Rehearsal", starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour, creator_id: creator.id }
 
-        expect {
-          post group_events_path(group), params: {
-            event: { name: "Rehearsal", starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour, creator_id: creator.id }
-          }
-        }.to change(Event, :count).by(1)
-
-        expect(response).to redirect_to group_event_path(group, Event.sole)
+        expect { post group_events_path(creator.group), params: { event: params } }.to change(Event, :count).by(1)
+        expect(response).to redirect_to group_event_path(creator.group, Event.sole)
       end
 
       it "re-renders the new page when the event is invalid" do
