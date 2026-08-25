@@ -27,7 +27,7 @@ RSpec.describe "Passwords", type: :request do
         user = create(:user)
 
         expect { post passwords_path, params: { email: user.email } }
-          .to have_enqueued_mail(PasswordsMailer, :reset)
+          .to have_enqueued_mail(PasswordsMailer, :reset).with(user)
 
         expect(response).to redirect_to new_session_path
       end
@@ -46,7 +46,7 @@ RSpec.describe "Passwords", type: :request do
         other_user = create(:user)
 
         expect { post passwords_path, params: { email: other_user.email } }
-          .to have_enqueued_mail(PasswordsMailer, :reset)
+          .to have_enqueued_mail(PasswordsMailer, :reset).with(other_user)
 
         expect(response).to redirect_to new_session_path
       end
