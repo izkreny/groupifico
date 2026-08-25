@@ -159,8 +159,8 @@ What these gates cannot see: whether the skip list actually shrinks. Every gate 
 ## Open questions
 
 - **Should `verify_authorized_scoped` be enabled too?** Action Policy ships a second guard, raising `ActionPolicy::UnscopedAction` when an action completes without `authorized_scope`. It is the guard that would catch an `index` leaking another group's records, which is a real criterion on #172. It is left off here because nothing scopes yet and it would need its own skip list, but it may belong in #172 rather than never.
-- **Does the pilot belong on this branch at all?** The alternative is a mechanism-only branch whose verification is a policy spec with no controller behind it. That keeps #170 to its stated scope but leaves the guard unproven against a real request until #172.
 
 ## Settled
 
+- **Does the pilot belong on this branch at all?** Yes. Settled by the owner in review: "Yup, do the pilot here as mentioned in the plan." `UserProfilesController` is converted on this branch, so the guard is proven against a real request rather than only against a policy spec. This is the branch's one deliberate widening beyond mechanism-only, and it is now a decision rather than an assumption.
 - **Does this branch wait for #171 (#149, spec coverage) to merge?** Yes. Settled by the owner in the terminal: "yes, wait for #171 to merge first". #171 adds `spec/support/authentication_helper.rb` and `sign_in_as`, and edits `spec/rails_helper.rb`, which this branch also edits, so a second request-spec harness here would be duplicated work and a conflict in the same file. This branch's request-spec step uses `sign_in_as` and this branch does not merge before #171. Recorded on the tracker as #170 blocked by #149 rather than left in prose.
