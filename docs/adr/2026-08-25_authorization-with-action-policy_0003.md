@@ -40,7 +40,9 @@ That cost is accepted because the property being bought is the one Pundit does n
 
 **`app/policies/` is now the intended location for authorization logic**, overriding the house model-predicate default recorded in the `rails-style` skill; `.agents/rails-style.md` carries the override so neither this repository's own conventions nor a future agent session reads a policy class as a violation.
 
-**Every controller not yet converted carries a `skip_verify_authorized` naming #172**, rather than the guard being deferred until #172 lands. That skip list is the visible measure of how much of the sweep remains: it starts at six controllers on this branch and should reach zero when #172 is done. A gate that stays green with the list unchanged is not evidence the sweep happened; only a diff review across #172 catches that.
+**Every controller that authorizes nothing yet carries a `skip_verify_authorized`**, rather than the guard being deferred until #172 lands. Two of those skips are permanent, on `SessionsController` and `PasswordsController`, which are unauthenticated by design; every other one names #172 and comes off as that controller gains a policy. `grep -rl skip_verify_authorized app/controllers/` is the measure of how much of the sweep remains, and the sweep is done when only the permanent two are left. A gate that stays green with that list unchanged is not evidence the sweep happened; only a diff review across #172 catches that.
+
+The count is deliberately not written down here. A number beside a list is a copy of the list, and the person who adds the next controller edits the list and never thinks to edit an ADR.
 
 **The Rails 8.1 initialization-order issue in `palkan/action_policy#312`** affects only an application that sets `config.action_policy.auto_inject_into_controller = false` from `config/initializers/`. This application takes the default injection, so the issue does not reach it; noted here so a future reader upgrading Rails does not rediscover the same search.
 
