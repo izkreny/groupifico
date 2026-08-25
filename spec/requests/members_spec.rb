@@ -102,7 +102,7 @@ RSpec.describe "Members", type: :request do
       it "creates the member" do
         group = create(:group)
         user  = create(:user)
-        sign_in_as(create(:user))
+        sign_in_as(user)
 
         expect { post group_members_path(group), params: { member: { user_id: user.id } } }.to change(Member, :count).by(1)
 

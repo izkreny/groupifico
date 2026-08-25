@@ -124,7 +124,7 @@ RSpec.describe "Events", type: :request do
     context "when successfully signed in" do
       it "creates the event" do
         creator = create(:member)
-        sign_in_as(create(:user))
+        sign_in_as(creator.user)
         params  = { name: "Rehearsal", starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour, creator_id: creator.id }
 
         expect { post group_events_path(creator.group), params: { event: params } }.to change(Event, :count).by(1)

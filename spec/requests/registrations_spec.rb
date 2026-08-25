@@ -109,7 +109,7 @@ RSpec.describe "Registrations", type: :request do
       it "creates the registration" do
         event  = create(:event)
         member = create(:member, group: event.group)
-        sign_in_as(create(:user))
+        sign_in_as(member.user)
 
         expect { post group_event_registrations_path(event.group, event), params: { registration: { member_id: member.id } } }.to change(Registration, :count).by(1)
         expect(response).to redirect_to group_event_registration_path(event.group, event, Registration.sole)
