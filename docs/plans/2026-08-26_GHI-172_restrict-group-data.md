@@ -18,7 +18,9 @@ Four controllers root at the same unscoped lookup, and the nesting means the roo
 
 Both are strong-parameter holes rather than lookup holes, so scoping the lookup does not close either. Raised here rather than fixed silently; see `## Open questions`.
 
-**Every nested controller permits `group_id` in its own params.** `member_params`, `event_params` and `registration_params` all accept the foreign key that decides which group the record belongs to. A legitimate member of group A can therefore move a record into group B by posting `group_id`, which is the same data-crossing-a-boundary defect this issue exists to close, arriving through the body instead of the URL.
+**Every nested controller permits the foreign key that decides where its record lives.** `member_params` and `event_params` permit `:group_id` outright. `registration_params` permits `:event_id` and `:member_id` instead, which is the same defect one level down, since the event is what carries the group. A legitimate member of group A can therefore move a record into group B by posting that key, which is the boundary-crossing this issue exists to close, arriving through the body instead of the URL.
+
+The key is redundant as well as dangerous. `create` already derives it from the association - `@group.members.new(member_params)`, `@group.events.new(event_params)`, `@event.registrations.new(registration_params)` - so on create the permitted key can only ever contradict the URL, and on `update` it is the only thing that can move the record at all.
 
 **`MembersController` permits `:role` and `:user_id`.** The issue's criterion covers the stranger case - *"refused for a user who does not already belong to the group"* - and stops there. It does not cover a user who does belong: today an ordinary member can `PATCH` their own membership to `role: :owner`, or create a membership for somebody else. Half of that is genuinely #93 and #96, which decide what a role is. The other half, `user_id`, is not about roles at all.
 
@@ -69,7 +71,7 @@ What these gates cannot see: whether the policies say anything worth saying. Eve
 
 ## Open questions
 
-- **Does `group_id` come out of `member_params`, `event_params` and `registration_params` on this branch?** It is the same defect as the unscoped lookup, arriving through the request body, and none of the issue's criteria mention it. Leaving it means the branch closes the URL hole and ships with the body hole open. Taking it is scope the issue did not ask for.
+- **Do the location keys come out of the three nested param lists on this branch?** `:group_id` from `member_params` and `event_params`, `:event_id` from `registration_params`. It is the same defect as the unscoped lookup, arriving through the request body, and none of the issue's criteria mention it. Leaving it means the branch closes the URL hole and ships with the body hole open. Taking it is scope the issue did not ask for, though the fix is deletion rather than new code, since the association already supplies the value.
 - **Does `user_id` come out of `member_params` on this branch?** The issue's criterion closes the stranger path into `MembersController` and says nothing about a member creating or reassigning a membership for another user. Role escalation is genuinely #93 and #96 territory; `user_id` is not, and it is the half that lets a member act as somebody else.
 
 ## Settled
