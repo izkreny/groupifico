@@ -42,7 +42,7 @@ The nested resources need a group for `members` and `events`, and a group plus a
 
 ## `Session`, WebMock, and the recombine
 
-`Session` is the one model with neither spec nor factory, and every signed-in request spec now creates one by posting to `sessions#create`. It gets `spec/factories/sessions.rb` and `spec/models/session_spec.rb`; the model declares only `belongs_to :user`, so the spec is a `shoulda-matchers` one-liner.
+`Session` is the one model with neither spec nor factory, and every signed-in request spec creates one by posting to `sessions#create`. It gets `spec/models/session_spec.rb`; the model declares only `belongs_to :user`, so the spec is a `shoulda-matchers` one-liner. It gets **no factory**: because every signed-in example creates its session through the controller, nothing ever needed to build one directly, and the factory written here was deleted again during review.
 
 `webmock` is not in the Gemfile. It joins the `:test` group with `WebMock.disable_net_connect!` in the suite setup, so the closed net becomes standing setup rather than need-driven. **This step needs the owner's live approval of the `bundle add` prompt**; naming it here does not authorise it.
 
@@ -53,7 +53,7 @@ The two `User` profile-invariant examples that #168 split to satisfy `Max: 1` re
 ## Steps
 
 - Add `webmock` to the Gemfile `:test` group and wire `WebMock.disable_net_connect!` into `spec/rails_helper.rb`
-- Add `spec/factories/sessions.rb` and `spec/models/session_spec.rb`
+- Add `spec/models/session_spec.rb`
 - Recombine the two `User` profile-invariant examples in `spec/models/user_spec.rb` into one
 - Write request specs for the unauthenticated surface: `sessions` and `passwords`
 - Write the request spec for `user_profiles`
