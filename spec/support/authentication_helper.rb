@@ -1,7 +1,10 @@
 module AuthenticationHelper
   def sign_in_as(user)
-    post session_path, params: { email: user.email, password: user.password }
+    Current.session = user.sessions.create!
 
-    expect(response).to redirect_to root_path
+    ActionDispatch::TestRequest.create.cookie_jar.tap do |cookie_jar|
+      cookie_jar.signed[:session_id] = Current.session.id
+      cookies["session_id"] = cookie_jar[:session_id]
+    end
   end
 end
