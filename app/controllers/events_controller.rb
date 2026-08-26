@@ -1,23 +1,27 @@
 class EventsController < ApplicationController
-  # TODO(#172): remove this skip when EventPolicy lands.
-  skip_verify_authorized
-
   before_action :set_group
   before_action :set_event, only: %i[ show duplicate edit update destroy ]
 
   def index
-    @events = @group.events # TODO: upcoming, past, ongoing, with filters
+    authorize! @group, to: :show?
+
+    @events = authorized_scope(@group.events) # TODO: upcoming, past, ongoing, with filters
   end
 
   def show
+    authorize! @event
   end
 
   def new
     @event = @group.events.new
     @event.build_address
+
+    authorize! @event
   end
 
   def duplicate
+    authorize! @event, to: :show?
+
     @event = @event.duplicate.shift_by(7.days)
     @event.build_address unless @event.address
 
@@ -26,10 +30,14 @@ class EventsController < ApplicationController
 
   def edit
     @event.build_address unless @event.address
+
+    authorize! @event
   end
 
   def create
     @event = @group.events.new(event_params)
+
+    authorize! @event
 
     if @event.save
       redirect_to group_event_path(@group, @event),
@@ -40,6 +48,8 @@ class EventsController < ApplicationController
   end
 
   def update
+    authorize! @event
+
     if @event.update(event_params)
       redirect_to group_event_path(@group, @event),
         notice: "Event was successfully updated.",
@@ -50,6 +60,8 @@ class EventsController < ApplicationController
   end
 
   def destroy
+    authorize! @event
+
     @event.destroy!
 
     redirect_to group_events_path(@group),
@@ -68,7 +80,7 @@ class EventsController < ApplicationController
 
     def event_params
       params.expect(
-        event: [ :name, :description, :starts_at, :ends_at, :status, :category, :group_id, :creator_id, :manager_id, :address_id,
+        event: [ :name, :description, :starts_at, :ends_at, :status, :category, :creator_id, :manager_id, :address_id,
           address_attributes: [
             :id, :name, :street_name, :building_number, :city, :postal_code, :state_code, :country_code, :latitude, :longitude
           ]

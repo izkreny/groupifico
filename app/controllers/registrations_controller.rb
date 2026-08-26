@@ -1,27 +1,32 @@
 class RegistrationsController < ApplicationController
-  # TODO(#172): remove this skip when RegistrationPolicy lands.
-  skip_verify_authorized
-
   before_action :set_group
   before_action :set_event
   before_action :set_registration, only: %i[ show edit update destroy ]
 
   def index
-    @registrations = @event.registrations
+    authorize! @group, to: :show?
+
+    @registrations = authorized_scope(@event.registrations)
   end
 
   def show
+    authorize! @registration
   end
 
   def new
     @registration = @event.registrations.new
+
+    authorize! @registration
   end
 
   def edit
+    authorize! @registration
   end
 
   def create
     @registration = @event.registrations.new(registration_params)
+
+    authorize! @registration
 
     if @registration.save
       redirect_to group_event_registration_path(@group, @event, @registration),
@@ -32,6 +37,8 @@ class RegistrationsController < ApplicationController
   end
 
   def update
+    authorize! @registration
+
     if @registration.update(registration_params)
       redirect_to group_event_registration_path(@group, @event, @registration),
         notice: "Registration was successfully updated.",
@@ -42,6 +49,8 @@ class RegistrationsController < ApplicationController
   end
 
   def destroy
+    authorize! @registration
+
     @registration.destroy!
 
     redirect_to group_event_registrations_path(@group, @event),
@@ -63,6 +72,6 @@ class RegistrationsController < ApplicationController
     end
 
     def registration_params
-      params.expect(registration: [ :status, :event_id, :member_id ])
+      params.expect(registration: [ :status, :member_id ])
     end
 end

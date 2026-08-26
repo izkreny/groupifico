@@ -1,12 +1,14 @@
 class AddressesController < ApplicationController
-  # TODO(#172): remove this skip when index is scoped and creation is role-gated. The record-bearing
-  # actions below are authorized already; these three have no record to authorize against yet.
-  skip_verify_authorized only: %i[ index new create ]
+  # An address created stand-alone has no group or event pointing at it yet to be reachable
+  # through, so there is nothing for AddressPolicy to check membership against at creation time.
+  skip_verify_authorized only: %i[ new create ]
 
   before_action :set_address, only: %i[ show edit update destroy ]
 
   def index
-    @addresses = Address.all
+    authorize! Address, to: :index?
+
+    @addresses = authorized_scope(Address.all)
   end
 
   def show
