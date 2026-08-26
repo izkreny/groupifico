@@ -139,7 +139,7 @@ The conventions in `.agents/testing.md` govern how those specs are written; noth
 - Convert `UserProfilesController` as the pilot: `UserProfilePolicy`, `authorize!` in the actions, and no skip
 - Require `action_policy/rspec` and `action_policy/rspec/dsl` in `spec/rails_helper.rb`
 - Add `spec/policies/user_profile_policy_spec.rb` covering a permitted and a denied rule
-- Add a request spec proving `verify_authorized` raises for an action that authorizes nothing
+- Watch the guard fail, per the Verification section below, and record the output in the PR. There is deliberately no durable spec for it: every controller either carries a skip or authorizes, so an action that authorizes nothing exists only for as long as a skip is lifted by hand. Manufacturing one permanently would mean a spec-only controller with a route drawn at runtime, and mutating the global route set breaks the any-order rule in `.agents/testing.md`
 - Rewrite the authorization entry in `.agents/rails-style.md`
 - Write `docs/adr/2026-08-25_authorization-with-action-policy_0003.md`
 
