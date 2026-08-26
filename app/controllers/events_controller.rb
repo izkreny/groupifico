@@ -1,4 +1,7 @@
 class EventsController < ApplicationController
+  # TODO(#172): remove this skip when EventPolicy lands.
+  skip_verify_authorized
+
   before_action :set_group
   before_action :set_event, only: %i[ show duplicate edit update destroy ]
 

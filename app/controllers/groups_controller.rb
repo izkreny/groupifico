@@ -1,4 +1,7 @@
 class GroupsController < ApplicationController
+  # TODO(#172): remove this skip when GroupPolicy lands.
+  skip_verify_authorized
+
   before_action :set_group, only: %i[ show edit update destroy ]
 
   def index

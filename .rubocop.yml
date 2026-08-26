@@ -1,5 +1,9 @@
 # Omakase Ruby styling for Rails
-inherit_gem: { rubocop-rails-omakase: rubocop.yml }
+inherit_gem:
+  rubocop-rails-omakase: rubocop.yml
+  # Teaches RSpec/EmptyExampleGroup and friends about the action_policy RSpec
+  # DSL (describe_rule/succeed/failed), so a policy spec is not flagged as empty.
+  action_policy: config/rubocop-rspec.yml
 
 plugins:
   - rubocop-rspec
@@ -24,11 +28,26 @@ AllCops:
 Style/DisableCopsWithinSourceCodeDirective:
   Enabled: true
 
+# Inline setup is the rule in `.agents/testing.md`, so an example carries its
+# own preconditions rather than hiding them in a `let`. Ten is the ceiling; an
+# example longer than that is unacceptable.
+RSpec/ExampleLength:
+  Max: 10
+
+# Action Policy's own alias matcher takes the rule name as the subject:
+# `expect(:edit?).to be_an_alias_of(policy, :show?)`, per its testing guide. The
+# cop reads that bare symbol as the expected value put in the wrong place, which
+# is right in general and wrong for this matcher, whose signature has no other
+# form. Scoped to policy specs so the cop keeps working everywhere else.
+RSpec/ExpectActual:
+  Exclude:
+    - "spec/policies/**/*_spec.rb"
+
 # One behavior per example still holds; the default `Max: 1` mistakes
 # facets of one behavior for several behaviors. A request spec asserting
 # a redirect and the side effect that earned it is one behavior in two
 # expectations, and `.agents/testing.md` allows that explicitly. Four is
-# the ceiling: an example needing a fifth facet either splits, or is a
-# conversation with the owner.
+# the ceiling: an example needing a fifth facet either splits, or is
+# unacceptable.
 RSpec/MultipleExpectations:
   Max: 4
