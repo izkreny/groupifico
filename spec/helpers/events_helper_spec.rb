@@ -20,10 +20,10 @@ RSpec.describe EventsHelper, type: :helper do
   end
 
   describe "#event_statuses" do
-    it "pairs each enum status with its upcased label" do
+    it "pairs each enum status with its upcased label, in enum order" do
       pairs = [ %w[ UNCONFIRMED unconfirmed ], %w[ CONFIRMED confirmed ], %w[ CONCLUDED concluded ], %w[ CANCELED canceled ] ]
 
-      expect(helper.event_statuses).to match_array(pairs)
+      expect(helper.event_statuses).to eq(pairs)
     end
   end
 end
