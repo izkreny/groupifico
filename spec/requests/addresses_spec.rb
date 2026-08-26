@@ -33,7 +33,10 @@ RSpec.describe "Addresses", type: :request do
     context "when signed in and the address is reachable" do
       it "shows the address page" do
         address = create(:address)
-        sign_in_as(create(:member, group: create(:group, address: address)).user)
+        group = create(:group, address: address)
+        member = create(:member, group: group)
+
+        sign_in_as(member.user)
 
         get address_path(address)
 
@@ -45,7 +48,10 @@ RSpec.describe "Addresses", type: :request do
       # bar at all would pass.
       it "does not offer the destroy button" do
         address = create(:address)
-        sign_in_as(create(:member, group: create(:group, address: address)).user)
+        group = create(:group, address: address)
+        member = create(:member, group: group)
+
+        sign_in_as(member.user)
 
         get address_path(address)
 
@@ -97,7 +103,10 @@ RSpec.describe "Addresses", type: :request do
     context "when signed in and the address is reachable" do
       it "shows the edit address page" do
         address = create(:address)
-        sign_in_as(create(:member, group: create(:group, address: address)).user)
+        group = create(:group, address: address)
+        member = create(:member, group: group)
+
+        sign_in_as(member.user)
 
         get edit_address_path(address)
 
@@ -148,7 +157,10 @@ RSpec.describe "Addresses", type: :request do
     context "when successfully signed in" do
       it "updates the address" do
         address = create(:address)
-        sign_in_as(create(:member, group: create(:group, address: address)).user)
+        group = create(:group, address: address)
+        member = create(:member, group: group)
+
+        sign_in_as(member.user)
 
         patch address_path(address), params: { address: { name: "Renamed" } }
 
@@ -158,7 +170,10 @@ RSpec.describe "Addresses", type: :request do
 
       it "re-renders the edit page when the address is invalid" do
         address = create(:address)
-        sign_in_as(create(:member, group: create(:group, address: address)).user)
+        group = create(:group, address: address)
+        member = create(:member, group: group)
+
+        sign_in_as(member.user)
 
         patch address_path(address), params: { address: { name: "" } }
 
@@ -187,7 +202,10 @@ RSpec.describe "Addresses", type: :request do
       # aliasing show?.
       it "refuses to destroy an address the user can otherwise reach" do
         address = create(:address)
-        sign_in_as(create(:member, group: create(:group, address: address)).user)
+        group = create(:group, address: address)
+        member = create(:member, group: group)
+
+        sign_in_as(member.user)
 
         expect { delete address_path(address) }
           .not_to change(Address, :count)

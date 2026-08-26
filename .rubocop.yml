@@ -28,18 +28,15 @@ AllCops:
 Style/DisableCopsWithinSourceCodeDirective:
   Enabled: true
 
-# Headroom, deliberately taken before it is needed. Inline setup is the rule
-# in `.agents/testing.md`, so an example carries its own preconditions rather
-# than hiding them in a `let`, and authorization makes those preconditions
-# plural: reaching a record means creating the record, the group that points
-# at it and the membership that reaches the group. Add the request and the
-# two expectations `RSpec/MultipleExpectations: Max: 4` already allows, and
-# the default `Max: 5` is spent exactly, with nothing left for the next
-# precondition any of these specs grows.
+# Inline setup is the rule in `.agents/testing.md`, so an example carries its
+# own preconditions rather than hiding them in a `let`. Authorization makes
+# those preconditions plural, and they are spelled one per line so the chain
+# reads without decoding: the record, the group that points at it, the
+# membership that reaches the group, then the sign-in. Add the request and
+# the two expectations `RSpec/MultipleExpectations: Max: 4` already allows,
+# and every such example lands at 6 or 7 against a default of 5.
 #
-# So this is not fixing an offense: the suite sits inside the default today.
-# It is refusing to spend the next spec's inline setup on a `let`. Ten is the
-# ceiling; an example longer than that is a conversation with the owner.
+# Ten is the ceiling; an example longer than that is unacceptable.
 RSpec/ExampleLength:
   Max: 10
 
@@ -56,7 +53,7 @@ RSpec/ExpectActual:
 # facets of one behavior for several behaviors. A request spec asserting
 # a redirect and the side effect that earned it is one behavior in two
 # expectations, and `.agents/testing.md` allows that explicitly. Four is
-# the ceiling: an example needing a fifth facet either splits, or is a
-# conversation with the owner.
+# the ceiling: an example needing a fifth facet either splits, or is
+# unacceptable.
 RSpec/MultipleExpectations:
   Max: 4
