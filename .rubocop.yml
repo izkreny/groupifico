@@ -28,6 +28,21 @@ AllCops:
 Style/DisableCopsWithinSourceCodeDirective:
   Enabled: true
 
+# Headroom, deliberately taken before it is needed. Inline setup is the rule
+# in `.agents/testing.md`, so an example carries its own preconditions rather
+# than hiding them in a `let`, and authorization makes those preconditions
+# plural: reaching a record means creating the record, the group that points
+# at it and the membership that reaches the group. Add the request and the
+# two expectations `RSpec/MultipleExpectations: Max: 4` already allows, and
+# the default `Max: 5` is spent exactly, with nothing left for the next
+# precondition any of these specs grows.
+#
+# So this is not fixing an offense: the suite sits inside the default today.
+# It is refusing to spend the next spec's inline setup on a `let`. Ten is the
+# ceiling; an example longer than that is a conversation with the owner.
+RSpec/ExampleLength:
+  Max: 10
+
 # Action Policy's own alias matcher takes the rule name as the subject:
 # `expect(:edit?).to be_an_alias_of(policy, :show?)`, per its testing guide. The
 # cop reads that bare symbol as the expected value put in the wrong place, which
