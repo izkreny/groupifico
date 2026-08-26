@@ -231,6 +231,34 @@ RSpec.describe "Groups", type: :request do
         expect(flash[:alert]).to be_present
         expect(member.group.reload.name).to eq "Original"
       end
+
+      # The submit arrives from the page that refuses it, which is what a browser actually sends and
+      # what an earlier redirect_back_or_to got wrong: the referer is the edit form, so the refused
+      # member landed back on it and the button looked dead. Setting HTTP_REFERER is the only way a
+      # request spec sees that at all.
+      it "does not send the refused member back to the page that refused them" do
+        member = create(:member, :paused)
+        sign_in_as(member.user)
+
+        patch group_path(member.group),
+          params: { group: { name: "Renamed" } },
+          headers: { "HTTP_REFERER" => edit_group_url(member.group) }
+
+        expect(response).to redirect_to root_path
+      end
+
+      # Asserting the rendered page, not flash[:alert]. The value was present in the hash for months
+      # while layouts/_flash rendered only `notice`, so every alert in this application was set and
+      # silently dropped - the refusal, and the sign-in rate limiter alongside it.
+      it "shows the refusal to the member after the redirect" do
+        member = create(:member, :paused)
+        sign_in_as(member.user)
+
+        patch group_path(member.group), params: { group: { name: "Renamed" } }
+        follow_redirect!
+
+        expect(response.body).to include "You are not allowed to do that."
+      end
     end
   end
 

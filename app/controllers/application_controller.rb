@@ -42,6 +42,12 @@ class ApplicationController < ActionController::Base
     # the id exists. Everything else - a paused member attempting to write - belongs and is refused
     # with a redirect carrying an alert, so a denied link or Turbo submission does not look broken.
     #
+    # root_path rather than redirect_back_or_to, deliberately. The refusing page is almost always
+    # the referer - a paused member submits the edit form they were allowed to read - so redirecting
+    # back lands them on the form that just refused them, which is indistinguishable from the button
+    # doing nothing. Caught in a browser, not by a spec: a request spec sends no Referer, so
+    # redirect_back_or_to fell through to root_path there and looked correct.
+    #
     # ActionPolicy::AuthorizationContextMissing carries no result at all; in practice it never
     # reaches here, since require_authentication redirects before any policy runs, but it is routed
     # through the same handler and falls to the redirect branch rather than raising a second time.
@@ -49,8 +55,7 @@ class ApplicationController < ActionController::Base
       if exception.respond_to?(:result) && exception.result.all_details[:not_found]
         head :not_found
       else
-        redirect_back_or_to root_path, allow_other_host: false,
-          alert: "You are not allowed to do that.", status: :see_other
+        redirect_to root_path, alert: "You are not allowed to do that.", status: :see_other
       end
     end
 end
