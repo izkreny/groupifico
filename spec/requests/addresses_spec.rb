@@ -18,6 +18,19 @@ RSpec.describe "Addresses", type: :request do
 
         expect(response).to have_http_status :ok
       end
+
+      it "lists only addresses reachable through the acting user's groups and events" do
+        reachable = create(:address)
+        group     = create(:group, address: reachable)
+        member    = create(:member, group: group)
+        unreachable = create(:address)
+        sign_in_as(member.user)
+
+        get addresses_path
+
+        expect(response.body).to include(ActionView::RecordIdentifier.dom_id(reachable))
+        expect(response.body).not_to include(ActionView::RecordIdentifier.dom_id(unreachable))
+      end
     end
   end
 
@@ -61,12 +74,13 @@ RSpec.describe "Addresses", type: :request do
     end
 
     context "when signed in and the address is unreachable" do
-      it "refuses the request" do
+      it "refuses the request with a redirect carrying an alert" do
         sign_in_as(create(:user))
 
         get address_path(create(:address))
 
-        expect(response).to have_http_status :forbidden
+        expect(response).to redirect_to root_path
+        expect(flash[:alert]).to be_present
       end
     end
   end
@@ -210,7 +224,8 @@ RSpec.describe "Addresses", type: :request do
         expect { delete address_path(address) }
           .not_to change(Address, :count)
 
-        expect(response).to have_http_status :forbidden
+        expect(response).to redirect_to root_path
+        expect(flash[:alert]).to be_present
       end
     end
   end

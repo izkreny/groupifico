@@ -18,6 +18,17 @@ RSpec.describe "Groups", type: :request do
 
         expect(response).to have_http_status :ok
       end
+
+      it "lists only the groups the acting user belongs to" do
+        member = create(:member)
+        other_group = create(:group) # the acting user does not belong to this one
+        sign_in_as(member.user)
+
+        get groups_path
+
+        expect(response.body).to include(ActionView::RecordIdentifier.dom_id(member.group))
+        expect(response.body).not_to include(ActionView::RecordIdentifier.dom_id(other_group))
+      end
     end
   end
 
@@ -30,13 +41,58 @@ RSpec.describe "Groups", type: :request do
       end
     end
 
-    context "when successfully signed in" do
-      it "shows the group page" do
+    context "when signed in as a stranger" do
+      it "returns 404" do
         sign_in_as(create(:user))
 
         get group_path(create(:group))
 
+        expect(response).to have_http_status :not_found
+      end
+    end
+
+    context "when signed in as an active member" do
+      it "shows the group page" do
+        member = create(:member, status: :active)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
         expect(response).to have_http_status :ok
+      end
+    end
+
+    context "when signed in as a paused member" do
+      it "shows the group page" do
+        member = create(:member, :paused)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(response).to have_http_status :ok
+      end
+
+      it "reads successfully and writes unsuccessfully for the same member" do
+        member = create(:member, :paused, group: create(:group, name: "Original"))
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+        expect(response).to have_http_status :ok
+
+        patch group_path(member.group), params: { group: { name: "Renamed" } }
+        expect(response).to redirect_to root_path
+        expect(member.group.reload.name).to eq "Original"
+      end
+    end
+
+    context "when signed in as an inactive member" do
+      it "returns 404, exactly like a stranger" do
+        member = create(:member, :inactive)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(response).to have_http_status :not_found
       end
     end
   end
@@ -70,11 +126,22 @@ RSpec.describe "Groups", type: :request do
       end
     end
 
-    context "when successfully signed in" do
-      it "shows the edit group page" do
+    context "when signed in as a stranger" do
+      it "returns 404" do
         sign_in_as(create(:user))
 
         get edit_group_path(create(:group))
+
+        expect(response).to have_http_status :not_found
+      end
+    end
+
+    context "when signed in as an active member" do
+      it "shows the edit group page" do
+        member = create(:member, status: :active)
+        sign_in_as(member.user)
+
+        get edit_group_path(member.group)
 
         expect(response).to have_http_status :ok
       end
@@ -120,24 +187,49 @@ RSpec.describe "Groups", type: :request do
       end
     end
 
-    context "when successfully signed in" do
-      it "updates the group" do
-        group = create(:group)
+    context "when signed in as a stranger" do
+      it "returns 404 and leaves the group unchanged" do
+        group = create(:group, name: "Original")
         sign_in_as(create(:user))
 
         patch group_path(group), params: { group: { name: "Renamed" } }
 
-        expect(response).to redirect_to group_path(group)
-        expect(group.reload.name).to eq "Renamed"
+        expect(response).to have_http_status :not_found
+        expect(group.reload.name).to eq "Original"
+      end
+    end
+
+    context "when signed in as an active member" do
+      it "updates the group" do
+        member = create(:member, status: :active)
+        sign_in_as(member.user)
+
+        patch group_path(member.group), params: { group: { name: "Renamed" } }
+
+        expect(response).to redirect_to group_path(member.group)
+        expect(member.group.reload.name).to eq "Renamed"
       end
 
       it "re-renders the edit page when the group is invalid" do
-        group = create(:group)
-        sign_in_as(create(:user))
+        member = create(:member, status: :active)
+        sign_in_as(member.user)
 
-        patch group_path(group), params: { group: { name: "" } }
+        patch group_path(member.group), params: { group: { name: "" } }
 
         expect(response).to have_http_status :unprocessable_entity
+      end
+    end
+
+    context "when signed in as a paused member" do
+      it "refuses with a redirect carrying an alert, and leaves the group unchanged" do
+        member = create(:member, :paused, group: create(:group, name: "Original"))
+        sign_in_as(member.user)
+
+        patch group_path(member.group), params: { group: { name: "Renamed" } }
+
+        expect(response).to redirect_to root_path
+        expect(flash[:alert]).to be_present
+        expect(member.group.reload.name).to eq "Original"
       end
     end
   end
@@ -154,15 +246,40 @@ RSpec.describe "Groups", type: :request do
       end
     end
 
-    context "when successfully signed in" do
-      it "destroys the group" do
+    context "when signed in as a stranger" do
+      it "returns 404 and does not destroy the group" do
         group = create(:group)
         sign_in_as(create(:user))
 
         expect { delete group_path(group) }
+          .not_to change(Group, :count)
+
+        expect(response).to have_http_status :not_found
+      end
+    end
+
+    context "when signed in as an active member" do
+      it "destroys the group" do
+        member = create(:member, status: :active)
+        sign_in_as(member.user)
+
+        expect { delete group_path(member.group) }
           .to change(Group, :count).by(-1)
 
         expect(response).to redirect_to groups_path
+      end
+    end
+
+    context "when signed in as a paused member" do
+      it "refuses with a redirect carrying an alert, and does not destroy the group" do
+        member = create(:member, :paused)
+        sign_in_as(member.user)
+
+        expect { delete group_path(member.group) }
+          .not_to change(Group, :count)
+
+        expect(response).to redirect_to root_path
+        expect(flash[:alert]).to be_present
       end
     end
   end
