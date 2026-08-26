@@ -1,5 +1,18 @@
 class AddressPolicy < ApplicationPolicy
+  # An address has no group of its own - it is reachable through whichever group or event points
+  # at it, which `reachable?` already answers directly. The shared membership pre-checks ask a
+  # single `group_for`, and forcing one here would mean inventing a group for a record that can
+  # belong to several, so this policy answers reachability itself instead of joining them.
+  skip_pre_check :verify_membership!, :verify_active_membership!
+
   alias_rule :edit?, :update?, to: :show?
+
+  relation_scope do |relation|
+    relation.where(id: user.groups.where.not(address_id: nil).select(:address_id))
+      .or(relation.where(id: Event.where(group: user.groups).where.not(address_id: nil).select(:address_id)))
+  end
+
+  def index? = true
 
   def show? = reachable?
 
