@@ -50,7 +50,10 @@ The key is redundant as well as dangerous. `create` already derives it from the 
 - Enable `verify_authorized_scoped only: :index` in `ApplicationController`
 - Remove the `skip_verify_authorized` from all four controllers and narrow the one on `AddressesController` to `new` and `create` once its `index` is scoped
 - Add a `relation_scope` to `AddressPolicy` returning the addresses reachable through the acting user's groups and their events, and use it from `AddressesController#index`
+- Drop `:group_id` from `member_params` and `event_params`, and `:event_id` from `registration_params`. Each is supplied by the association from the URL, so on `create` the key can only contradict the URL and on `update` it is the only thing that can move the record
+- Split `MembersController`'s params in two: `new_member_params` keeps `:user_id` for `create`, `member_params` drops it for `update`, so an existing membership cannot be handed to a different user. `:role` and `:status` stay in both, untouched, since who may set a role is #93 and #96's question
 - Cover each controller with request specs asserting the stranger case, the `active` member, the `paused` member and the `inactive` member, per the acceptance criteria on the issue
+- Cover the two params holes with their own request specs: an update posting a foreign `group_id` leaves the record where it was, and an update posting `user_id` leaves the membership with the user it had
 
 ## Verification
 
@@ -60,20 +63,24 @@ Gates with an exit code, which the implementing agent runs and ticks:
 - `verify_authorized_scoped` is watched failing: an `index` is temporarily returned unscoped, the request raises `ActionPolicy::UnscopedAction`, and the scope is put back
 - The `404` and the redirect are watched as two distinct outcomes for two distinct causes, not one handler that happens to fire twice
 - A `paused` member is watched reading successfully and writing unsuccessfully in the same spec, so the status split is proven to be a split rather than a blanket
+- Each params spec is watched failing against the permit list as it stands today, before the key is dropped, so it is known to catch the hole rather than to pass on a technicality
 - `bin/ci` is green
 
 Judgement, which only the owner can close:
 
-- [owner] Decide the two `## Open questions` below before the params work is written; both change what the diff contains
 - [owner] Read the refusal in a browser once, since "a denied link does not produce a blank page" is a claim about what a human sees and no exit code covers it
 
 What these gates cannot see: whether the policies say anything worth saying. Every rule this issue writes is empty of role logic by design, so a spec suite that passes here proves only that the right records are reachable by the right people, never that the right people may do the right things. That is #93 and #96, and no gate on this branch can tell the difference between "role rules deliberately absent" and "role rules forgotten".
 
 ## Open questions
 
-- **Do the location keys come out of the three nested param lists on this branch?** `:group_id` from `member_params` and `event_params`, `:event_id` from `registration_params`. It is the same defect as the unscoped lookup, arriving through the request body, and none of the issue's criteria mention it. Leaving it means the branch closes the URL hole and ships with the body hole open. Taking it is scope the issue did not ask for, though the fix is deletion rather than new code, since the association already supplies the value.
-- **Does `user_id` come out of `member_params` on this branch?** The issue's criterion closes the stranger path into `MembersController` and says nothing about a member creating or reassigning a membership for another user. Role escalation is genuinely #93 and #96 territory; `user_id` is not, and it is the half that lets a member act as somebody else.
+None.
 
 ## Settled
 
-None yet.
+- **Do the location keys come out of the three nested param lists on this branch?** Yes. Settled by the owner in review: *"OK, I agree then with your reccommendations, lets secure it even more!"* `:group_id` leaves `member_params` and `event_params`, `:event_id` leaves `registration_params`. Proven harmless before the decision rather than after: the key was removed from `registration_params` and the whole suite run, 243 examples and 0 failures, then restored. The association supplies each value from the URL, no form in the application sends any of them, and `action_on_unpermitted_parameters` is `nil` in development and test, so an unpermitted key is dropped rather than raised.
+- **Does `user_id` come out of `member_params` on this branch?** On `update` only. Settled by the owner in review: *"OK, lets do it that way then."* `create` keeps it through a separate `new_member_params`, since deciding which person a membership is for is what creating one means; `update` drops it, so an existing membership cannot be handed to a different user with its role and status attached. `:role` stays in both and is deliberately untouched, because who may set a role is #93 and #96's question and this branch must not answer it by accident.
+
+## Noted, not fixed here
+
+`app/views/members/_form.html.erb` has no user field at all, only `status` and `role`, so `user_id` is never sent by the application and only `spec/requests/members_spec.rb` supplies it. Creating a member through the interface therefore cannot work today: `belongs_to :user` has nothing to bind to. That is a separate defect from this branch's and is recorded here rather than folded in.
