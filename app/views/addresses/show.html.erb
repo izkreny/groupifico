@@ -8,6 +8,8 @@
   <div class="flex flex-wrap gap-2">
     <%= link_to "Edit this address", edit_address_path(@address), class: "btn btn-ghost" %>
     <%= link_to "Back to addresses", addresses_path, class: "btn btn-ghost" %>
-    <%= button_to "Destroy this address", address_path(@address), method: :delete, class: "btn btn-error", data: { turbo_confirm: "Are you sure?" } %>
+    <% if allowed_to?(:destroy?, @address) %>
+      <%= button_to "Destroy this address", address_path(@address), method: :delete, class: "btn btn-error", data: { turbo_confirm: "Are you sure?" } %>
+    <% end %>
   </div>
 </div>

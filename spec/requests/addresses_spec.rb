@@ -30,13 +30,35 @@ RSpec.describe "Addresses", type: :request do
       end
     end
 
-    context "when successfully signed in" do
+    context "when signed in and the address is reachable" do
+      let(:address) { create(:address) }
+
+      before { sign_in_as(create(:member, group: create(:group, address: address)).user) }
+
       it "shows the address page" do
+        get address_path(address)
+
+        expect(response).to have_http_status :ok
+      end
+
+      # Destroying is denied for everyone until #172, so the button must not be offered. Asserting
+      # the edit button too keeps this honest: without it a page that failed to render its action
+      # bar at all would pass.
+      it "does not offer the destroy button" do
+        get address_path(address)
+
+        expect(response.body).to include "Edit this address"
+        expect(response.body).not_to include "Destroy this address"
+      end
+    end
+
+    context "when signed in and the address is unreachable" do
+      it "refuses the request" do
         sign_in_as(create(:user))
 
         get address_path(create(:address))
 
-        expect(response).to have_http_status :ok
+        expect(response).to have_http_status :forbidden
       end
     end
   end
@@ -70,11 +92,13 @@ RSpec.describe "Addresses", type: :request do
       end
     end
 
-    context "when successfully signed in" do
-      it "shows the edit address page" do
-        sign_in_as(create(:user))
+    context "when signed in and the address is reachable" do
+      let(:address) { create(:address) }
 
-        get edit_address_path(create(:address))
+      before { sign_in_as(create(:member, group: create(:group, address: address)).user) }
+
+      it "shows the edit address page" do
+        get edit_address_path(address)
 
         expect(response).to have_http_status :ok
       end
@@ -121,10 +145,11 @@ RSpec.describe "Addresses", type: :request do
     end
 
     context "when successfully signed in" do
-      it "updates the address" do
-        address = create(:address)
-        sign_in_as(create(:user))
+      let(:address) { create(:address) }
 
+      before { sign_in_as(create(:member, group: create(:group, address: address)).user) }
+
+      it "updates the address" do
         patch address_path(address), params: { address: { name: "Renamed" } }
 
         expect(response).to redirect_to address_path(address)
@@ -132,9 +157,6 @@ RSpec.describe "Addresses", type: :request do
       end
 
       it "re-renders the edit page when the address is invalid" do
-        address = create(:address)
-        sign_in_as(create(:user))
-
         patch address_path(address), params: { address: { name: "" } }
 
         expect(response).to have_http_status :unprocessable_entity
@@ -154,15 +176,21 @@ RSpec.describe "Addresses", type: :request do
       end
     end
 
-    context "when successfully signed in" do
-      it "destroys the address" do
-        address = create(:address)
-        sign_in_as(create(:user))
+    context "when signed in" do
+      let(:address) { create(:address) }
 
+      before { sign_in_as(create(:member, group: create(:group, address: address)).user) }
+
+      # Destroying is denied for everyone until #172, reachable addresses included: the group or
+      # event that makes an address reachable also holds an ON DELETE RESTRICT reference to it,
+      # so permitting this would trade a 403 for a foreign key violation. Reaching the address is
+      # the point of the setup below - it is the case that breaks if destroy? goes back to
+      # aliasing show?.
+      it "refuses to destroy an address the user can otherwise reach" do
         expect { delete address_path(address) }
-          .to change(Address, :count).by(-1)
+          .not_to change(Address, :count)
 
-        expect(response).to redirect_to addresses_path
+        expect(response).to have_http_status :forbidden
       end
     end
   end
