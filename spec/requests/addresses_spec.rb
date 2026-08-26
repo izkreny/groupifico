@@ -71,6 +71,33 @@ RSpec.describe "Addresses", type: :request do
         expect(response.body).to include "Edit this address"
         expect(response.body).not_to include "Destroy this address"
       end
+
+      it "shows an address reached through one of the group's own events" do
+        event   = create(:event)
+        address = create(:address)
+        event.update!(address: address)
+        member  = create(:member, group: event.group)
+
+        sign_in_as(member.user)
+
+        get address_path(address)
+
+        expect(response).to have_http_status :ok
+      end
+    end
+
+    context "when the address belongs to another group's event" do
+      it "refuses the request with a redirect carrying an alert" do
+        other_event = create(:event)
+        address = create(:address)
+        other_event.update!(address: address)
+        sign_in_as(create(:member).user)
+
+        get address_path(address)
+
+        expect(response).to redirect_to root_path
+        expect(flash[:alert]).to be_present
+      end
     end
 
     context "when signed in and the address is unreachable" do
