@@ -1,11 +1,18 @@
 class SessionsController < ApplicationController
-  # Signing in has no user to authorize against, so this skip is permanent. It names its actions for
-  # the same reason allow_unauthenticated_access does: an action added here later must not inherit
-  # an exemption nobody chose for it.
-  skip_verify_authorized only: %i[ new create ]
-  # TODO(#172): remove when SessionPolicy lands. `destroy` runs with a session and a Current.user,
-  # so it has something to authorize against and is only exempt until it has a policy.
-  skip_verify_authorized only: :destroy
+  # Permanent, all three, and for two different reasons.
+  #
+  # Signing in has no user to authorize against yet. Signing out has one, and still nothing to
+  # decide: `resource :session` is singular, so the route is DELETE /session with no id in it, and
+  # `terminate_session` destroys `Current.session` - the record named by the caller's own signed
+  # cookie, never by the request. There is no way to point this action at somebody else's session,
+  # so a policy here would have one possible input and one possible answer. Having something to
+  # authorize against is not the same as having a decision to make.
+  #
+  # A session-management screen would change that - revoking another device is DELETE /sessions/:id,
+  # the user names the record, and a policy becomes necessary immediately. That is a different route
+  # and a different action, and this skip names its actions precisely so the new one cannot inherit
+  # an exemption nobody chose for it. Same reason `allow_unauthenticated_access` names its own.
+  skip_verify_authorized only: %i[ new create destroy ]
 
   allow_unauthenticated_access only: %i[ new create ]
   rate_limit to: 10, within: 3.minutes, only: :create, with: -> { redirect_to new_session_path, alert: "Try again later." }

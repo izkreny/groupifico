@@ -112,23 +112,27 @@ RSpec.describe "Addresses", type: :request do
     end
   end
 
-  describe "GET /addresses/new" do
-    context "when not signed in" do
-      it "redirects to the sign-in page" do
-        get new_address_path
-
-        expect(response).to redirect_to new_session_path
-      end
+  # There is no GET /addresses/new and no POST /addresses. An address exists as a detail of the
+  # group or event that points at it, both of which build one through nested attributes, so an
+  # address created standalone appears in no picker and is reachable by nobody - its own author
+  # included. Settled on #172; whether a reusable venue catalogue should exist is #187.
+  #
+  # Asked of the router itself rather than of a response. Asserting a 404 proves nothing here: the
+  # actions and their views are gone too, so the request fails whether the route exists or not, and
+  # the example passes with `resources :addresses` fully restored - watched doing exactly that.
+  # `recognize_path` fails the moment `only:` is widened, which is the thing worth catching.
+  describe "the routes that no longer exist" do
+    # Not a RoutingError: with `new` gone from the resource, the `:id` segment of `GET
+    # /addresses/:id` swallows the word, so the path resolves to `show` with `id: "new"` and
+    # `Address.find("new")` answers 404. What matters is that it no longer reaches a `new` action.
+    it "does not route GET /addresses/new to a new action" do
+      expect(Rails.application.routes.recognize_path("/addresses/new", method: :get))
+        .to include(controller: "addresses", action: "show")
     end
 
-    context "when successfully signed in" do
-      it "shows the new address page" do
-        sign_in_as(create(:user))
-
-        get new_address_path
-
-        expect(response).to have_http_status :ok
-      end
+    it "does not route POST /addresses" do
+      expect { Rails.application.routes.recognize_path("/addresses", method: :post) }
+        .to raise_error(ActionController::RoutingError)
     end
   end
 
@@ -152,36 +156,6 @@ RSpec.describe "Addresses", type: :request do
         get edit_address_path(address)
 
         expect(response).to have_http_status :ok
-      end
-    end
-  end
-
-  describe "POST /addresses" do
-    context "when not signed in" do
-      it "redirects to the sign-in page" do
-        post addresses_path, params: { address: { name: "HQ" } }
-
-        expect(response).to redirect_to new_session_path
-      end
-    end
-
-    context "when successfully signed in" do
-      it "creates the address" do
-        sign_in_as(create(:user))
-
-        expect { post addresses_path, params: { address: { name: "HQ" } } }
-          .to change(Address, :count).by(1)
-
-        expect(response).to redirect_to address_path(Address.sole)
-      end
-
-      it "re-renders the new page when the address is invalid" do
-        sign_in_as(create(:user))
-
-        expect { post addresses_path, params: { address: { name: "" } } }
-          .not_to change(Address, :count)
-
-        expect(response).to have_http_status :unprocessable_entity
       end
     end
   end
@@ -227,18 +201,10 @@ RSpec.describe "Addresses", type: :request do
   # ON DELETE RESTRICT reference from the group or event that makes it reachable, so the action
   # could never succeed for anybody; correcting an address is what `edit` is for. Settled on #172.
   #
-  # Asserted through the router rather than the controller, because the route itself is the
-  # decision: a controller action added back later would still be unroutable, and this fails the
-  # moment `except: :destroy` is dropped from `config/routes.rb`. An unrouted path answers 404
-  # here rather than raising, since the test environment rescues routing errors into a response.
   describe "DELETE /addresses/:id" do
     it "is not routable" do
-      address = create(:address)
-
-      expect { delete "/addresses/#{address.id}" }
-        .not_to change(Address, :count)
-
-      expect(response).to have_http_status :not_found
+      expect { Rails.application.routes.recognize_path("/addresses/1", method: :delete) }
+        .to raise_error(ActionController::RoutingError)
     end
   end
 end
