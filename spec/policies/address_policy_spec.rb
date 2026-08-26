@@ -24,12 +24,10 @@ RSpec.describe AddressPolicy, type: :policy do
     end
   end
 
+  # No destroy? rule, and none needed: the route is gone, so there is no action to authorize.
+  # Deny-by-default still covers it - ApplicationPolicy inherits `manage?` returning false - which
+  # `describe_rule :destroy?` below proves rather than assumes.
   describe_rule :destroy? do
-    failed "when no group or event of the user's points at the address"
-
-    # The case worth having. Reaching the address is what show? grants, and destroy? deliberately
-    # does not follow it: the group below holds an ON DELETE RESTRICT reference, so allowing this
-    # would replace a refusal with a foreign key violation. Denied until #172.
     failed "when a group the user belongs to has the address" do
       before { create(:member, user: user, group: create(:group, address: record)) }
     end

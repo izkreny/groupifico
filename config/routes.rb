@@ -1,7 +1,11 @@
 Rails.application.routes.draw do
   resource :session
   resources :passwords, param: :token
-  resources :addresses
+  # No destroy: an address is only reachable because a group or an event points at it, and
+  # both of those references are ON DELETE RESTRICT, so every address a member can reach is
+  # one the database refuses to delete. Deleting is not a thing users do here - correcting an
+  # address is what `edit` is for. Settled on #172.
+  resources :addresses, except: :destroy
 
   resource :user do
     resource :profile, controller: "user_profiles", only: %i[ show edit update ]

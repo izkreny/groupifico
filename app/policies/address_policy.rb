@@ -16,13 +16,6 @@ class AddressPolicy < ApplicationPolicy
 
   def show? = reachable?
 
-  # Disabled until #172. Reachability is what grants access to an address, and an address is
-  # reachable only because a group or an event points at it - both of those references are
-  # ON DELETE RESTRICT, so a destroy this rule permitted would fail at the foreign key instead.
-  # The addresses that can actually be deleted are exactly the orphans nobody may reach, which
-  # leaves no case for this rule to allow. #172 decides what deleting an address should mean.
-  def destroy? = false
-
   private
     # An address has no owner of its own. It is reached through the group that has it, or through an
     # event that has it, so the question is whether the acting user belongs to either. An orphan

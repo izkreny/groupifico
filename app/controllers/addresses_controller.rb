@@ -3,7 +3,7 @@ class AddressesController < ApplicationController
   # through, so there is nothing for AddressPolicy to check membership against at creation time.
   skip_verify_authorized only: %i[ new create ]
 
-  before_action :set_address, only: %i[ show edit update destroy ]
+  before_action :set_address, only: %i[ show edit update ]
 
   def index
     authorize! Address, to: :index?
@@ -44,16 +44,6 @@ class AddressesController < ApplicationController
     else
       render :edit, status: :unprocessable_entity
     end
-  end
-
-  def destroy
-    authorize! @address
-
-    @address.destroy!
-
-    redirect_to addresses_path,
-      notice: "Address was successfully destroyed.",
-      status: :see_other
   end
 
   private

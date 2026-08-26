@@ -16,14 +16,20 @@ class ApplicationPolicy < ActionPolicy::Base
   # `authorize!` resolves its `to:` rule against the policy *before* the pre-checks below ever run,
   # so a rule nobody defines here does not reach `verify_active_membership!` as itself - it falls
   # through Action Policy's own default chain to `manage?` first, and `write_rule?` can no longer
-  # tell it apart from `show?`. These four exist only to stop that fall-through: the pre-checks
-  # intercept every one of them with allow!/deny! before dispatch ever reaches the body, so what the
-  # body returns never matters. `new?`, `create?` and `index?` need no such stub - Action Policy's
-  # own base class already defines `create?`/`index?` and aliases `new?` to `create?`.
-  def show?    = true
-  def edit?    = true
-  def update?  = true
-  def destroy? = true
+  # tell it apart from `show?`. These four exist to stop that fall-through. `new?`, `create?` and
+  # `index?` need no such stub - Action Policy's own base class already defines `create?`/`index?`
+  # and aliases `new?` to `create?`.
+  #
+  # They return false, and that is load-bearing rather than tidy. For a policy that keeps the
+  # pre-checks the body is unreachable - allow!/deny! settles the rule first - but AddressPolicy
+  # and UserProfilePolicy both `skip_pre_check` and answer reachability themselves, so for those
+  # two the body is the whole rule. Returning true here handed every skipping policy a granted
+  # `destroy?` it never wrote: caught when AddressPolicy's own `destroy?` was removed and its
+  # policy spec reported `Expected to fail but succeed: <AddressPolicy#destroy?: true>`.
+  def show?    = false
+  def edit?    = false
+  def update?  = false
+  def destroy? = false
 
   pre_check :verify_membership!
   pre_check :verify_active_membership!

@@ -223,37 +223,22 @@ RSpec.describe "Addresses", type: :request do
     end
   end
 
+  # There is no DELETE /addresses/:id. Every address a member can reach is held by an
+  # ON DELETE RESTRICT reference from the group or event that makes it reachable, so the action
+  # could never succeed for anybody; correcting an address is what `edit` is for. Settled on #172.
+  #
+  # Asserted through the router rather than the controller, because the route itself is the
+  # decision: a controller action added back later would still be unroutable, and this fails the
+  # moment `except: :destroy` is dropped from `config/routes.rb`. An unrouted path answers 404
+  # here rather than raising, since the test environment rescues routing errors into a response.
   describe "DELETE /addresses/:id" do
-    context "when not signed in" do
-      it "redirects to the sign-in page" do
-        create(:address)
+    it "is not routable" do
+      address = create(:address)
 
-        expect { delete address_path(Address.sole) }
-          .not_to change(Address, :count)
+      expect { delete "/addresses/#{address.id}" }
+        .not_to change(Address, :count)
 
-        expect(response).to redirect_to new_session_path
-      end
-    end
-
-    context "when signed in" do
-      # Destroying is denied for everyone until #172, reachable addresses included: the group or
-      # event that makes an address reachable also holds an ON DELETE RESTRICT reference to it,
-      # so permitting this would trade a 403 for a foreign key violation. Reaching the address is
-      # the point of the setup below - it is the case that breaks if destroy? goes back to
-      # aliasing show?.
-      it "refuses to destroy an address the user can otherwise reach" do
-        address = create(:address)
-        group   = create(:group, address: address)
-        member  = create(:member, group: group)
-
-        sign_in_as(member.user)
-
-        expect { delete address_path(address) }
-          .not_to change(Address, :count)
-
-        expect(response).to redirect_to root_path
-        expect(flash[:alert]).to be_present
-      end
+      expect(response).to have_http_status :not_found
     end
   end
 end
