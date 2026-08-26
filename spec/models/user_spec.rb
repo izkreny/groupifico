@@ -30,18 +30,11 @@ RSpec.describe User, type: :model do
       expect(user.profile).to be_a(UserProfile).and be_persisted
     end
 
-    it "cannot be created without a profile" do
+    it "is invalid, with the error on :profile, when build_profile is stubbed out as the presence backstop" do
       user = build(:user)
       allow(user).to receive(:build_profile)
 
       expect(user).not_to be_valid
-    end
-
-    it "reports the missing profile on the profile attribute" do
-      user = build(:user)
-      allow(user).to receive(:build_profile)
-      user.valid?
-
       expect(user.errors[:profile]).to be_present
     end
   end
