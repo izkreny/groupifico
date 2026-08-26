@@ -1,6 +1,6 @@
 # Testing conventions for this repository
 
-The rules specs are written and reviewed against. This file wins on any conflict about testing. The suite's model layer already exists on `main` - model specs and factories - and the layers above it arrive with #149; this file exists before them so that work is reviewed against agreed rules instead of establishing them mid-diff. A spec that predates a rule here gets aligned when next touched, never in bulk. The local gate and CI facts live in [`.agents/github.md`](github.md).
+The rules specs are written and reviewed against. This file wins on any conflict about testing. The suite's model layer already exists on `main` - model specs and factories - and the layers above it have arrived with #149; this file predates them so that work is reviewed against agreed rules instead of establishing them mid-diff. A spec that predates a rule here gets aligned when next touched, never in bulk. The local gate and CI facts live in [`.agents/github.md`](github.md).
 
 ## Framework choices
 
@@ -30,7 +30,7 @@ Kent Beck's, without the test-first ordering. Tests ship in the same commit or P
 
 Every controller action is asserted in two contexts, signed in and not signed in. The signed-out surface is whatever declares `allow_unauthenticated_access` - today the login page (`sessions#new`/`#create`) and the password-recovery flow (all of `PasswordsController`). Those actions assert their signed-out rendering; every other action's signed-out context asserts the redirect to the login page. When an action's access changes, its paired contexts change with it.
 
-Signing in is `sign_in_as(user)` from `AuthenticationHelper` in `spec/support/` - the helper, the seed example, and the support-glob line in `spec/rails_helper.rb` that loads it (commented out today) all land via #149, whose issue body quotes the helper.
+Signing in is `sign_in_as(user)` from `AuthenticationHelper` in `spec/support/`, loaded by the support glob in `spec/rails_helper.rb`. It is Rails' own generated helper, copied from the `authentication` generator's `session_test_helper.rb.tt`, because `app/controllers/concerns/authentication.rb` is that generator's concern: it creates the `Session` row and sets the signed `session_id` cookie, so `resume_session` reads the cookie and finds the row on every request exactly as in production. It stubs nothing: assigning `Current.session` a real `Session` is what `start_new_session_for` itself does, and `Current` is domain, which the Mocking discipline section below forbids stubbing. Because it names no credential, it survives #139 replacing passwords with email links.
 
 Authorization tests assert the negative space: forbidden access returns the redirect or 403/404, not just that allowed access works.
 
@@ -49,7 +49,7 @@ Authorization tests assert the negative space: forbidden access returns the redi
 - **Never stub the system under test.**
 - **Verified doubles only**: `instance_double`/`class_double`, so a typo fails the spec.
 - **`travel_to`/`freeze_time`** for anything time-dependent; a time assertion without them is a red flag.
-- External HTTP gets blocked suite-wide the day #149 lands: the `webmock` gem and `disable_net_connect!` are #149 manifest work, and from then on the closed net is standing setup, not need-driven.
+- External HTTP is blocked suite-wide: the `webmock` gem and `WebMock.disable_net_connect!` in `spec/rails_helper.rb` close the net as standing setup, not need-driven.
 
 ## Factories
 
@@ -66,7 +66,7 @@ Authorization tests assert the negative space: forbidden access returns the redi
 - `described_class` stays: it is the `rubocop-rspec` default and fighting the linter costs more than it buys.
 - Arrange-Act-Assert visible in every example; specs are flat and static, no loops or clever helpers; concrete examples over abstractions.
 - Nested contexts at most three deep, matching the `RSpec/NestedGroups` default; a genuinely necessary fourth level is a conversation with the owner, never an inline `rubocop:disable`. Never test private methods; test through the public one or make it public.
-- One *behavior* per example. Several expectations are fine when they assert facets of that one behavior - a request spec checking the response and its side effect - and a second behavior gets its own example. `RSpec/MultipleExpectations` stands at its default `Max: 1` until #149 raises it to `4` alongside the first request specs; until then a spec answers to the cop as it is. An example that genuinely needs a fifth facet either splits, or the ceiling itself is a conversation with the owner.
+- One *behavior* per example. Several expectations are fine when they assert facets of that one behavior - a request spec checking the response and its side effect - and a second behavior gets its own example. `RSpec/MultipleExpectations` stands at `Max: 4` in `.rubocop.yml`, raised from the default `Max: 1` because a request spec asserting a redirect and the side effect that earned it is one behavior in two expectations. An example that genuinely needs a fifth facet either splits, or the ceiling itself is a conversation with the owner.
 
 ## Determinism
 

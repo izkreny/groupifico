@@ -1,0 +1,169 @@
+require 'rails_helper'
+
+RSpec.describe "Addresses", type: :request do
+  describe "GET /addresses" do
+    context "when not signed in" do
+      it "redirects to the sign-in page" do
+        get addresses_path
+
+        expect(response).to redirect_to new_session_path
+      end
+    end
+
+    context "when successfully signed in" do
+      it "shows the addresses page" do
+        sign_in_as(create(:user))
+
+        get addresses_path
+
+        expect(response).to have_http_status :ok
+      end
+    end
+  end
+
+  describe "GET /addresses/:id" do
+    context "when not signed in" do
+      it "redirects to the sign-in page" do
+        get address_path(create(:address))
+
+        expect(response).to redirect_to new_session_path
+      end
+    end
+
+    context "when successfully signed in" do
+      it "shows the address page" do
+        sign_in_as(create(:user))
+
+        get address_path(create(:address))
+
+        expect(response).to have_http_status :ok
+      end
+    end
+  end
+
+  describe "GET /addresses/new" do
+    context "when not signed in" do
+      it "redirects to the sign-in page" do
+        get new_address_path
+
+        expect(response).to redirect_to new_session_path
+      end
+    end
+
+    context "when successfully signed in" do
+      it "shows the new address page" do
+        sign_in_as(create(:user))
+
+        get new_address_path
+
+        expect(response).to have_http_status :ok
+      end
+    end
+  end
+
+  describe "GET /addresses/:id/edit" do
+    context "when not signed in" do
+      it "redirects to the sign-in page" do
+        get edit_address_path(create(:address))
+
+        expect(response).to redirect_to new_session_path
+      end
+    end
+
+    context "when successfully signed in" do
+      it "shows the edit address page" do
+        sign_in_as(create(:user))
+
+        get edit_address_path(create(:address))
+
+        expect(response).to have_http_status :ok
+      end
+    end
+  end
+
+  describe "POST /addresses" do
+    context "when not signed in" do
+      it "redirects to the sign-in page" do
+        post addresses_path, params: { address: { name: "HQ" } }
+
+        expect(response).to redirect_to new_session_path
+      end
+    end
+
+    context "when successfully signed in" do
+      it "creates the address" do
+        sign_in_as(create(:user))
+
+        expect { post addresses_path, params: { address: { name: "HQ" } } }
+          .to change(Address, :count).by(1)
+
+        expect(response).to redirect_to address_path(Address.sole)
+      end
+
+      it "re-renders the new page when the address is invalid" do
+        sign_in_as(create(:user))
+
+        expect { post addresses_path, params: { address: { name: "" } } }
+          .not_to change(Address, :count)
+
+        expect(response).to have_http_status :unprocessable_entity
+      end
+    end
+  end
+
+  describe "PATCH /addresses/:id" do
+    context "when not signed in" do
+      it "redirects to the sign-in page" do
+        patch address_path(create(:address)), params: { address: { name: "Renamed" } }
+
+        expect(response).to redirect_to new_session_path
+      end
+    end
+
+    context "when successfully signed in" do
+      it "updates the address" do
+        address = create(:address)
+        sign_in_as(create(:user))
+
+        patch address_path(address), params: { address: { name: "Renamed" } }
+
+        expect(response).to redirect_to address_path(address)
+        expect(address.reload.name).to eq "Renamed"
+      end
+
+      it "re-renders the edit page when the address is invalid" do
+        address = create(:address)
+        sign_in_as(create(:user))
+
+        patch address_path(address), params: { address: { name: "" } }
+
+        expect(response).to have_http_status :unprocessable_entity
+      end
+    end
+  end
+
+  describe "DELETE /addresses/:id" do
+    context "when not signed in" do
+      it "redirects to the sign-in page" do
+        create(:address)
+
+        expect { delete address_path(Address.sole) }
+          .not_to change(Address, :count)
+
+        expect(response).to redirect_to new_session_path
+      end
+    end
+
+    context "when successfully signed in" do
+      it "destroys the address" do
+        address = create(:address)
+        sign_in_as(create(:user))
+
+        expect { delete address_path(address) }
+          .to change(Address, :count).by(-1)
+
+        expect(response).to redirect_to addresses_path
+      end
+    end
+  end
+end

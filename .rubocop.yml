@@ -23,3 +23,12 @@ AllCops:
 # reconfigured here instead, once, with a comment saying why.
 Style/DisableCopsWithinSourceCodeDirective:
   Enabled: true
+
+# One behavior per example still holds; the default `Max: 1` mistakes
+# facets of one behavior for several behaviors. A request spec asserting
+# a redirect and the side effect that earned it is one behavior in two
+# expectations, and `.agents/testing.md` allows that explicitly. Four is
+# the ceiling: an example needing a fifth facet either splits, or is a
+# conversation with the owner.
+RSpec/MultipleExpectations:
+  Max: 4
