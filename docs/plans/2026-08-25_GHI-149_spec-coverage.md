@@ -42,7 +42,7 @@ The nested resources need a group for `members` and `events`, and a group plus a
 
 ## `Session`, WebMock, and the recombine
 
-`Session` is the one model with neither spec nor factory, and every signed-in request spec creates one by posting to `sessions#create`. It gets `spec/models/session_spec.rb`; the model declares only `belongs_to :user`, so the spec is a `shoulda-matchers` one-liner. It gets **no factory**: because every signed-in example creates its session through the controller, nothing ever needed to build one directly, and the factory written here was deleted again during review.
+`Session` is the one model with neither spec nor factory. It gets `spec/models/session_spec.rb`; the model declares only `belongs_to :user`, so the spec is a `shoulda-matchers` one-liner. It gets **no factory**: `sign_in_as` creates the session itself, so no example ever builds one through FactoryBot, and the factory written here was deleted again during review.
 
 `webmock` is not in the Gemfile. It joins the `:test` group with `WebMock.disable_net_connect!` in the suite setup, so the closed net becomes standing setup rather than need-driven. **This step needs the owner's live approval of the `bundle add` prompt**; naming it here does not authorise it.
 
