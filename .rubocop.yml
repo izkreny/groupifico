@@ -29,14 +29,8 @@ Style/DisableCopsWithinSourceCodeDirective:
   Enabled: true
 
 # Inline setup is the rule in `.agents/testing.md`, so an example carries its
-# own preconditions rather than hiding them in a `let`. Authorization makes
-# those preconditions plural, and they are spelled one per line so the chain
-# reads without decoding: the record, the group that points at it, the
-# membership that reaches the group, then the sign-in. Add the request and
-# the two expectations `RSpec/MultipleExpectations: Max: 4` already allows,
-# and every such example lands at 6 or 7 against a default of 5.
-#
-# Ten is the ceiling; an example longer than that is unacceptable.
+# own preconditions rather than hiding them in a `let`. Ten is the ceiling; an
+# example longer than that is unacceptable.
 RSpec/ExampleLength:
   Max: 10
 
