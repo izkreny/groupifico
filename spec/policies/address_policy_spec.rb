@@ -33,14 +33,27 @@ RSpec.describe AddressPolicy, type: :policy do
     end
   end
 
-  # Declared aliases rather than rules that repeat show?. Action Policy drops an alias the moment a
-  # real method of that name is defined, which is how destroy? leaving this list was caught rather
-  # than noticed: its example here failed the moment the rule grew a body of its own.
+  # Only `edit?` is an alias now. Opening a form is a read, so it follows show?; submitting is a
+  # write, so update? has a body of its own and asks the owners for `update?` rather than `show?`.
+  # Action Policy drops an alias the moment a real method of that name is defined - this list has
+  # now caught that twice, destroy? and update?, each time the rule stopped delegating.
   describe "rule aliases" do
     subject(:policy) { described_class.new(record, **context) }
 
     it { expect(:edit?).to be_an_alias_of(policy, :show?) }
-    it { expect(:update?).to be_an_alias_of(policy, :show?) }
+  end
+
+  # Inherited from the owner, so the read/write split arrives without this policy asking about
+  # membership at all: GroupPolicy refuses a paused member `update?` through the pre-checks, and
+  # that refusal is what this rule reads.
+  describe_rule :update? do
+    failed "when the member of the owning group is paused" do
+      before { create(:member, user: user, status: :paused, group: create(:group, address: record)) }
+    end
+
+    succeed "when the member of the owning group is active" do
+      before { create(:member, user: user, status: :active, group: create(:group, address: record)) }
+    end
   end
 
   # A relation_scope is not a rule, so the pre-checks never run for it - and this policy skips them

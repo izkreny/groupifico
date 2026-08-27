@@ -1,11 +1,21 @@
+# An address never lives on its own. It is always a detail of whichever record points at it - a
+# group's home venue, an event's location - and the schema says so from the pointing side only:
+# `groups.address_id` and `events.address_id` exist, while `Address` has no association back.
+#
+# So "may I touch this address" is not a question of its own. It is the same question asked of the
+# records that own it, and the answer is inherited: read an address you may read the owner of,
+# change one you may change the owner of. That is why this policy skips the membership pre-checks
+# rather than answering `group_for` - it has no group of its own to name, and does not need one,
+# because `GroupPolicy` and `EventPolicy` already carry every rule that applies.
+#
+# The inheritance is what makes the status split free: a `paused` member is refused `update?` on a
+# group by the pre-checks, so they are refused it on that group's address without this file saying
+# anything about membership at all. A new kind of owner arrives the same way - add it to `owners`
+# and its own policy decides.
 class AddressPolicy < ApplicationPolicy
-  # An address has no group of its own - it is reachable through whichever group or event points
-  # at it, which `reachable?` already answers directly. The shared membership pre-checks ask a
-  # single `group_for`, and forcing one here would mean inventing a group for a record that can
-  # belong to several, so this policy answers reachability itself instead of joining them.
   skip_pre_check :verify_membership!, :verify_active_membership!
 
-  alias_rule :edit?, :update?, to: :show?
+  alias_rule :edit?, to: :show?
 
   relation_scope do |relation|
     relation.where(id: user.current_groups.where.not(address_id: nil).select(:address_id))
@@ -14,17 +24,22 @@ class AddressPolicy < ApplicationPolicy
 
   def index? = true
 
-  def show? = reachable?
+  def show? = owners.any? { |owner| allowed_to?(:show?, owner) }
+
+  # Not aliased to show?: `write_rule?` matches the rule that actually runs, so an aliased update?
+  # arrives as show? and the read/write split never sees it. `edit?` stays aliased, because opening
+  # a form is a read - a paused member is stopped at submission, the same place `duplicate` stops
+  # them.
+  def update? = owners.any? { |owner| allowed_to?(:update?, owner) }
 
   private
-    # An address has no owner of its own. It is reached through the group that has it, or through an
-    # event that has it, so the question is whether the acting user belongs to either. An orphan
-    # address, pointed at by no group and no event, is reachable by nobody, which is the safe answer
-    # while nothing in the app can create one deliberately.
+    # Every record pointing at this address. `any?` rather than `all?`: rights on one owner are
+    # enough, which is the only sensible reading while nothing in the application can point two
+    # groups at one address. If that ever becomes reachable, this is the line to revisit - #187.
     #
-    # Role is not consulted here: belonging is the whole rule until #93 lands and #172 adds the rest.
-    def reachable?
-      user.current_groups.exists?(address_id: record.id) ||
-        user.current_groups.joins(:events).exists?(events: { address_id: record.id })
+    # An orphan has no owners, so `any?` answers false and the address is refused to everybody -
+    # which is the same conclusion the old reachability rule reached, by a shorter route.
+    def owners
+      Group.where(address_id: record.id) + Event.where(address_id: record.id)
     end
 end
