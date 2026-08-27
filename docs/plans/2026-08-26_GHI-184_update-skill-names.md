@@ -32,7 +32,7 @@ One consequence of that window is worth knowing rather than fixing: between the 
 ## Verification
 
 - `bin/ci` passes on this branch
-- The suite's docs check passes over `AGENTS.md`, `.agents/`, `docs/adr/` and this plan file, run with `--root .` and `--ignore '.agents/github.md'`, which covers the historical records and this plan's own account of the old name
+- The suite's docs check passes over `AGENTS.md`, `.agents/`, `docs/adr/` and this plan file, run with `--root .`, `--ignore '.agents/github.md'` and `--ignore '~/Projects/examples/rails/'`, which covers the historical records, this plan's own account of the old name, and one pre-existing unresolvable span in `AGENTS.md` that predates this branch
 - `grep -rIn 'github\.md' --exclude-dir=.git .` returns hits only under `docs/plans/` and `docs/adr/`
 - [owner] `gh-solo` 2.0.0 is installed and enabled and the pre-plugin suite is gone, before this merges
 
