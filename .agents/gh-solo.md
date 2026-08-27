@@ -1,6 +1,6 @@
 # GitHub conventions for this repository
 
-Per-repo facts for the `github-solo-dev-repo` and `github-pr-flow` skills: the values they tell you to look up here rather than assume, and the places this repository differs from their defaults. This file wins on any conflict. Anything not listed here follows the skills' own standards.
+Per-repo facts for the `gh-solo` skills that read this file: the values they tell you to look up here rather than assume, and the places this repository differs from their defaults. This file wins on any conflict. Anything not listed here follows the skills' own standards.
 
 ## The only remote is named `upstream`
 
