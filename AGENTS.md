@@ -21,7 +21,7 @@
 ### TESTING
 - Framework: `RSpec` with `FactoryBot`
 - The spec conventions live in [`.agents/testing.md`](.agents/testing.md)
-- The one local check command is `bin/ci`, owned and detailed by [`.agents/github.md`](.agents/github.md)
+- The one local check command is `bin/ci`, owned and detailed by [`.agents/gh-solo.md`](.agents/gh-solo.md)
 
 ### LINTING
 - RuboCop's verdicts are not always right, and what happens next is governed. An inline `rubocop:disable` is never allowed: `Style/DisableCopsWithinSourceCodeDirective` makes the directive itself an offense, and `bin/rubocop` runs with `--ignore-disable-comments` so that holds even for a directive that names this cop, its department, or `all` - a cop that bites means stop and ask the owner, never silently disable, and never contort code just to appease a cop. A cop that is wrong for this repository generally gets reconfigured once in `.rubocop.yml`, with a comment saying why; a one-off case that a generally-right cop judges wrongly is a conversation, not a config change.
@@ -29,7 +29,7 @@
 ## PROJECT KNOWLEDGE
 
 - General information about the project is available inside the [README](README.md) file.
-- The repository's GitHub conventions live in [`.agents/github.md`](.agents/github.md).
+- The repository's GitHub conventions live in [`.agents/gh-solo.md`](.agents/gh-solo.md).
 
 ## REFERENCE EXAMPLES
 
