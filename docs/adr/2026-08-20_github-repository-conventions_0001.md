@@ -22,7 +22,7 @@ One person commits to this repository, and that same person is its only reviewer
 
 A branch's history is a working record: a plan commit first, then however many commits the work actually took, in the order it took them. `main` is a reading surface. Squashing is what converts the first into the second, and it is why `git log --oneline` on `main` is one line per delivered change rather than one line per keystroke.
 
-The consequence worth stating out loud: **the pull request title is load-bearing**, because it becomes the subject line on `main` with `(#{pr-number})` appended. That is why it carries the conventional type and the layer scope while branch commits carry only the type, and why the type vocabulary recorded in `.agents/github.md` is enforced at the pull request rather than at the commit.
+The consequence worth stating out loud: **the pull request title is load-bearing**, because it becomes the subject line on `main` with `(#{pr-number})` appended. That is why it carries the conventional type and the layer scope while branch commits carry only the type, and why the type vocabulary recorded in `.agents/gh-solo.md` is enforced at the pull request rather than at the commit.
 
 `delete_branch_on_merge` being true is why a plan file is linked from a pull request body at its path on `main` rather than on the branch: the branch link would rot the moment the thing it documents lands.
 
@@ -91,4 +91,4 @@ gh label list
 
 **A second committer invalidates the review decision.** The zero-approval argument holds only because the author and the reviewer are the same person. Add a committer and `required_approving_review_count` should become one that same day, at which point the convention half of the gate can be retired.
 
-**The type vocabulary is held by nothing but this record and `.agents/github.md`.** `build` absorbed `chore` and `ci`, there is no commitlint here and no Node toolchain to host one, and the pull request title is the only place the vocabulary is checked, by a reader. Dependabot's inferred prefix is the one subject nobody writes by hand, and it is inference rather than configuration.
+**The type vocabulary is held by nothing but this record and `.agents/gh-solo.md`.** `build` absorbed `chore` and `ci`, there is no commitlint here and no Node toolchain to host one, and the pull request title is the only place the vocabulary is checked, by a reader. Dependabot's inferred prefix is the one subject nobody writes by hand, and it is inference rather than configuration.

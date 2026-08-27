@@ -8,7 +8,7 @@
 
 The rename is the deliverable. The stale opening line this issue started as rides along in the same edit, because it is the same sentence a reader reaches first. Every other fact in the file stays true and stays where it is, and `.claude/gh-solo.md` resolves for free through the existing symlink.
 
-Two things follow from the move rather than from the edit. Inbound links have to move with it, in `AGENTS.md` twice and in `.agents/testing.md` once, where the link text and the target differ and both are wrong after the move. And the docs check needs `--ignore '.agents/github.md'` from here on, because `docs/plans/` and `docs/adr/` name the old path in several places and every one of them is a record of what was true when it was written. That is the allowance #81 and #124 each took for a file they were deleting.
+Two things follow from the move rather than from the edit. Inbound links have to move with it, in `AGENTS.md` twice and in `.agents/testing.md` once, where the link text and the target differ and both are wrong after the move. And the docs check needs `--ignore '.agents/github.md'` from here on, because older files under `docs/plans/` name the old path in several places and each of those is a record of what was true when it was written, as is this plan's own account of it. That is the allowance #81 and #124 each took for a file they were deleting. The decision record `docs/adr/2026-08-20_github-repository-conventions_0001.md` is the exception and is corrected rather than ignored: its two references are present-tense claims about where the type vocabulary is held now, so ignoring them would leave a live record pointing at a path that does not exist.
 
 ## Sequence outside this repository
 
@@ -33,7 +33,7 @@ One consequence of that window is worth knowing rather than fixing: between the 
 
 - `bin/ci` passes on this branch
 - The suite's docs check passes over `AGENTS.md`, `.agents/`, `docs/adr/` and this plan file, run with `--root .`, `--ignore '.agents/github.md'` and `--ignore '~/Projects/examples/rails/'`, which covers the historical records, this plan's own account of the old name, and one pre-existing unresolvable span in `AGENTS.md` that predates this branch
-- `grep -rIn 'github\.md' --exclude-dir=.git .` returns hits only under `docs/plans/` and `docs/adr/`
+- `grep -rIn 'github\.md' --exclude-dir=.git .` returns hits only under `docs/plans/`
 - [owner] `gh-solo` 2.0.0 is installed and enabled and the pre-plugin suite is gone, before this merges
 
 A docs-only diff gives `bin/ci` almost nothing to catch, and the grep proves only that a string is absent from the live files. What none of these gates can see is whether the renamed file is actually the one 2.0.0 picks up in this repository; the first tracker or PR command that quotes this repo's own check command back is what answers that, which is why the last box is the owner's.
