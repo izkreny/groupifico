@@ -4,13 +4,13 @@ Per-repo facts for the `gh-solo` skills that read this file: the values they tel
 
 ## Pushing to `main`
 
-Three things carry the standing rule that nothing pushes directly to `main`, and they are worth telling apart, because only one of them actually holds.
+Nothing pushes directly to `main`. What carries that rule is worth telling apart from what merely looks like it does.
 
 `main`'s **branch protection** is the enforcement. It is a server-side rule on the ref, so it does not care how a push is spelled: a pull request is required, `enforce_admins` is on, and the four checks below must pass. A repository without this has no enforcement of the rule, only a convention.
 
-`gh-solo` ships a **`PreToolUse` hook** of its own, which parses the command and resolves the destination properly rather than matching text, so it catches spellings no literal rule here covers. It decides *ask* rather than *deny*, on purpose, since it fires in every repository and plenty are legitimately trunk-only. It was watched firing on `git push origin refs/heads/main`, which the deny rule below does not match, and the confirmation reached a human who refused it. Its one limit worth knowing is that it fails open on a destination it cannot resolve statically, such as a variable or an `eval`.
+`gh-solo` ships a **`PreToolUse` hook** of its own, which parses the command and resolves the destination properly rather than matching text. It decides *ask* rather than *deny*, on purpose, since it fires in every repository and plenty are legitimately trunk-only. It was watched firing on `git push origin refs/heads/main` and the confirmation reached a human, who refused it. Its one limit worth knowing is that it fails open on a destination it cannot resolve statically, such as a variable or an `eval`.
 
-The single **deny rule** in `.agents/settings.json` is neither of those. It is a local convenience that stops an agent attempting the obvious spelling, and it names the remote literally, so **renaming the remote is a change to that rule, in the same commit**: a rule naming a remote that no longer exists does not fail loudly, it stops existing. It is deliberately one rule rather than a list of spellings, because a longer list of literal strings reads as more protective without being so, and the hook already covers the shapes such a list would chase.
+**This repository deliberately carries no `permissions.deny` push rule of its own.** That is a decision, not an omission, so do not add one back. Such a rule matches command text and names the remote as a literal string, which means it goes stale in silence: rename the remote and it stops matching anything while still reading as protection. That is exactly what happened here, and #181 was opened to fix it. The hook asks `git remote` at push time instead, so it cannot go stale that way, and it was measured catching every spelling a hand-written list would have chased. Re-adding one would buy a keystroke and bring the failure mode back with it.
 
 ## Worktree folders
 
