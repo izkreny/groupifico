@@ -41,10 +41,10 @@ Gates with an exit code, which the implementing agent runs and ticks:
 - The invalid-create example is watched failing against a deliberately broken version that saves the membership outside the parent's save, so it is known to catch a non-atomic write rather than to pass on a technicality
 - `bin/ci` is green
 
-Judgement, which only the owner can close:
+Two further gates, run by the implementing agent rather than left to the owner - see `## Settled`:
 
-- [owner] Create a group in a browser and land on its page rather than a `404`, since the flow this fixes is one a human walks
-- [owner] Read the ERD on GitHub once after the change, because nothing in `bin/ci` renders mermaid and a diagram that fails to parse fails silently in the README
+- The create flow walked in headless Chromium over the DevTools Protocol, asserting the creator lands on the group page rather than a `404`, with the membership deleted as the control
+- The README's own mermaid block rendered with `mmdc`, asserting the `MEMBER`-`GROUP` edge carries the one-or-more marker, with an invalid cardinality as the control
 
 What these gates cannot see: whether a group can still end up with zero members by another route. This branch closes the create path only. Removing the last member through `MembersController#destroy` is not guarded, and who may remove whom is a role question that belongs to #93 and #96, so a green suite here says nothing about whether the `1+` in the ERD is an invariant or an intention.
 
@@ -55,3 +55,4 @@ None.
 ## Settled
 
 - **Should the ERD's corrected `1+` come with a note saying nothing yet stops the last member being removed?** Yes. Settled by the owner in the session: *"Aha, yes, open question, well, OK, note that somewher, can be also a comment inside ERD graph?"* The note goes in the `IMPORTANT` blockquote above the mermaid block rather than as a `%%` comment inside the diagram: a `%%` comment does not render, so the caveat would be invisible exactly where the `1+` claim is visible, and that block already carries a bullet of the same species, the one saying column limits are Rails-level facts SQLite does not enforce.
+- **Who closes the browser walk and the ERD render?** The implementing agent, not the owner. Settled by the owner in the session: *"You can do both, headless chrome and installed mermaid!!!"* Both are reachable by tooling here - headless Chromium over the DevTools Protocol, and the mise-installed `mmdc` pointed at `/usr/bin/chromium` - so labelling them judgement was a plan-time misclassification. `[owner]` is for judgement no tool can reach.
