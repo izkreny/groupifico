@@ -26,6 +26,7 @@ class GroupsController < ApplicationController
 
   def create
     @group = Group.new(group_params)
+    @group.members.build(user: Current.user, role: :owner)
 
     authorize! @group
 
