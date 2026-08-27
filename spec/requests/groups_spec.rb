@@ -189,7 +189,7 @@ RSpec.describe "Groups", type: :request do
         expect(response).to have_http_status :ok
       end
 
-      it "re-renders the new page when the group is invalid, leaving neither record behind" do
+      it "responds :unprocessable_entity and creates no records when the group is invalid" do
         sign_in_as(create(:user))
 
         group_count  = Group.count

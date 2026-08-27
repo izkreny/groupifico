@@ -39,6 +39,20 @@ RSpec.describe Group, type: :model do
     it { is_expected.to validate_length_of(:description).is_at_most(25_000) }
   end
 
+  describe "#save" do
+    it "persists neither the group nor a member it carries that cannot be saved" do
+      group_count  = described_class.count
+      member_count = Member.count
+
+      group = build(:group)
+      group.members.build(role: :owner)
+      group.save
+
+      expect(described_class.count).to eq group_count
+      expect(Member.count).to eq member_count
+    end
+  end
+
   describe "#events_addresses" do
     let(:group) { build(:group) }
 
