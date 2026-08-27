@@ -2,13 +2,19 @@
 
 Per-repo facts for the `gh-solo` skills that read this file: the values they tell you to look up here rather than assume, and the places this repository differs from their defaults. This file wins on any conflict. Anything not listed here follows the skills' own standards.
 
-## The only remote is named `upstream`
+## The remote is named `origin`
 
-`git remote` prints exactly one name and it is `upstream`, never `origin`. The skills already treat the remote's name as a per-repo fact and give a recipe for resolving it, so this section overrides nothing; it is the answer that recipe is looking for, recorded once so nothing has to run `git remote` to find it.
+`git remote` prints exactly one name and it is `origin`. Nothing forks from anywhere, so that is the name every tool, snippet and default already assumes and this section overrides nothing. It is recorded because the rename is **per clone rather than per repository**: the committed files changed once, and every machine already holding a clone runs the command itself.
 
-The first push of a branch is:
+    git remote rename upstream origin
 
-    git push -u upstream <branch>
+Remotes live in the shared config, so one run covers a clone's worktrees together. A clone made after that change needs nothing.
+
+## Pushing to `main`
+
+`.agents/settings.json` denies the push shapes that reach `main` directly, carrying the standing rule that nothing pushes there. The rules name the remote literally, so **renaming the remote is a change to those rules, in the same commit**: a rule naming a remote that no longer exists does not fail loudly, it stops existing.
+
+They enumerate command shapes, and an enumeration has a floor no amount of widening lifts. The enforcement that does not depend on matching a string is `main`'s branch protection, which requires a pull request and the four checks below. Treat the deny rules as the fast local guard and the protection as the one that actually holds.
 
 ## Worktree folders
 
