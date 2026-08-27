@@ -311,4 +311,57 @@ RSpec.describe "Groups", type: :request do
       end
     end
   end
+
+  # The refusal and a genuinely missing record must be the same response, not merely the same
+  # status. `head :not_found` sent zero bytes while an absent id renders the 404 page, so the two
+  # were trivially distinguishable by body length and the existence oracle ADR 0003 chose 404 over
+  # 403 to close stayed open.
+  describe "a refused group and a missing one" do
+    # Rendered the way production renders, because the test environment does not: it answers both
+    # with its debug page, and two different exceptions produce two different debug pages, so the
+    # comparison would fail for a reason that has nothing to do with the oracle. Production renders
+    # public/404.html for both, which is the whole point of raising rather than `head`. Restored in
+    # an ensure so the suite still passes in any order.
+    around do |example|
+      original = Rails.application.env_config.slice(
+        "action_dispatch.show_exceptions", "action_dispatch.show_detailed_exceptions"
+      )
+      Rails.application.env_config["action_dispatch.show_exceptions"] = :all
+      Rails.application.env_config["action_dispatch.show_detailed_exceptions"] = false
+
+      example.run
+    ensure
+      Rails.application.env_config.merge!(original)
+    end
+
+    it "answer identically" do
+      stranger = create(:member)
+      sign_in_as(stranger.user)
+
+      get group_path(create(:group))
+      refused = [ response.status, response.body.bytesize ]
+
+      get "/groups/#{Group.maximum(:id) + 1}"
+      missing = [ response.status, response.body.bytesize ]
+
+      expect(refused).to eq missing
+    end
+  end
+
+
+  # A relation_scope is not a rule, so the pre-checks never run for it: every scope asked
+  # `user.groups`, which is every group ever joined. The list leaked what the detail page refused.
+  describe "an inactive member's group list" do
+    it "does not include the group they left" do
+      actor = create(:member, status: :inactive, group: create(:group, name: "Left Behind"))
+      sign_in_as(actor.user)
+
+      get groups_path
+
+      # dom_id rather than the name: `_group.html.erb` renders `group.name.upcase`, so asserting
+      # the name passes against a page that lists the group in capitals. Watched doing exactly
+      # that, with the defect fully restored.
+      expect(response.body).not_to include "group_#{actor.group_id}"
+    end
+  end
 end

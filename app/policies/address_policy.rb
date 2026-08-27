@@ -8,8 +8,8 @@ class AddressPolicy < ApplicationPolicy
   alias_rule :edit?, :update?, to: :show?
 
   relation_scope do |relation|
-    relation.where(id: user.groups.where.not(address_id: nil).select(:address_id))
-      .or(relation.where(id: Event.where(group: user.groups).where.not(address_id: nil).select(:address_id)))
+    relation.where(id: user.current_groups.where.not(address_id: nil).select(:address_id))
+      .or(relation.where(id: Event.where(group: user.current_groups).where.not(address_id: nil).select(:address_id)))
   end
 
   def index? = true
@@ -24,7 +24,7 @@ class AddressPolicy < ApplicationPolicy
     #
     # Role is not consulted here: belonging is the whole rule until #93 lands and #172 adds the rest.
     def reachable?
-      user.groups.exists?(address_id: record.id) ||
-        user.groups.joins(:events).exists?(events: { address_id: record.id })
+      user.current_groups.exists?(address_id: record.id) ||
+        user.current_groups.joins(:events).exists?(events: { address_id: record.id })
     end
 end

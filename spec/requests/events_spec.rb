@@ -134,6 +134,20 @@ RSpec.describe "Events", type: :request do
   end
 
   describe "GET /groups/:group_id/events/:id/duplicate" do
+    # `duplicate` renders the `new` form, and `new` resolves new? through create?, so a rule that
+    # let a paused member through here contradicted the one guarding the other door onto it.
+    context "when signed in as a paused member" do
+      it "refuses, exactly as new does" do
+        event = create(:event)
+        actor = create(:member, status: :paused, group: event.group)
+        sign_in_as(actor.user)
+
+        get duplicate_group_event_path(event.group, event)
+
+        expect(response).to redirect_to root_path
+      end
+    end
+
     context "when not signed in" do
       it "redirects to the sign-in page" do
         event = create(:event)
@@ -379,6 +393,45 @@ RSpec.describe "Events", type: :request do
         expect(response).to redirect_to root_path
         expect(flash[:alert]).to be_present
       end
+    end
+  end
+
+  describe "foreign keys posted in the body" do
+    # Pointing an event at another group's address is what makes that address reachable? - and so
+    # editable - by somebody with no claim on it. The picker is scoped; the parameter was not.
+    it "ignores an address_id belonging to another group" do
+      event = create(:event, address: create(:address))
+      actor = create(:member, status: :active, group: event.group)
+      elsewhere = create(:address, name: "Someone Else's Venue")
+      create(:group, address: elsewhere)
+      sign_in_as(actor.user)
+
+      patch group_event_path(event.group, event), params: { event: { address_id: elsewhere.id } }
+
+      expect(event.reload.address).not_to eq elsewhere
+    end
+
+    it "ignores a creator_id belonging to another group" do
+      event = create(:event)
+      actor = create(:member, status: :active, group: event.group)
+      outsider = create(:member)
+      sign_in_as(actor.user)
+
+      patch group_event_path(event.group, event), params: { event: { creator_id: outsider.id } }
+
+      expect(event.reload.creator).not_to eq outsider
+    end
+  end
+
+  describe "an inactive member's event list" do
+    it "does not include the former group's events" do
+      event = create(:event, name: "Rehearsal")
+      actor = create(:member, status: :inactive, group: event.group)
+      sign_in_as(actor.user)
+
+      get group_events_path(event.group)
+
+      expect(response).to have_http_status :not_found
     end
   end
 end

@@ -374,4 +374,22 @@ RSpec.describe "Registrations", type: :request do
       end
     end
   end
+
+  # Registering somebody from another group publishes their name through Event#attendees to people
+  # with no claim on it. The picker offers members_available; the parameter was unscoped.
+  describe "a member_id belonging to another group" do
+    it "is ignored, so the registration is not created" do
+      event = create(:event)
+      actor = create(:member, status: :active, group: event.group)
+      outsider = create(:member)
+      sign_in_as(actor.user)
+
+      expect {
+        post group_event_registrations_path(event.group, event),
+          params: { registration: { member_id: outsider.id, status: :yes } }
+      }.not_to change(Registration, :count)
+
+      expect(event.reload.attendees).not_to include outsider
+    end
+  end
 end

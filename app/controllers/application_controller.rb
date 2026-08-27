@@ -38,8 +38,14 @@ class ApplicationController < ActionController::Base
   private
     # Branches on the denial's own reason rather than on the controller. A policy that denies for
     # non-membership sets details[:not_found] before calling deny!, per ApplicationPolicy - that is
-    # the record does not exist for this user, so it gets 404 rather than a 403 that would confirm
-    # the id exists. Everything else - a paused member attempting to write - belongs and is refused
+    # the record does not exist for this user, so it answers exactly as a missing record does.
+    #
+    # Raising what a missing record raises, rather than `head :not_found`, because the status alone
+    # is not the answer: `head` sends a zero-length body while a genuinely absent id renders
+    # public/404.html, so the two 404s were trivially distinguishable and the existence oracle
+    # ADR 0003 chose 404 over 403 to close stayed open. Measured before the change - refused: 0
+    # bytes, missing: 233346 bytes. Raising makes it the same code path rather than an imitation
+    # of it, and closes the blank page on this branch of the handler too. Everything else - a paused member attempting to write - belongs and is refused
     # with a redirect carrying an alert, so a denied link or Turbo submission does not look broken.
     #
     # root_path rather than redirect_back_or_to, deliberately. The refusing page is almost always
@@ -53,7 +59,7 @@ class ApplicationController < ActionController::Base
     # through the same handler and falls to the redirect branch rather than raising a second time.
     def deny_access(exception)
       if exception.respond_to?(:result) && exception.result.all_details[:not_found]
-        head :not_found
+        raise ActiveRecord::RecordNotFound
       else
         redirect_to root_path, alert: "You are not allowed to do that.", status: :see_other
       end

@@ -24,6 +24,14 @@ class User < ApplicationRecord
   has_many :members, dependent: :destroy
   has_many :groups, through: :members
 
+  # `groups` is every group ever joined. A member whose status is `inactive` has left and is
+  # refused exactly like a stranger, so the set anything may be authorized against is this one -
+  # `active` and `paused` both still belong, and the read/write split between them is a rule
+  # rather than a set. Every policy scope asks for this; none should ask for `groups`.
+  has_many :current_memberships, -> { where.not(status: :inactive) },
+    class_name: "Member", inverse_of: :user, dependent: nil
+  has_many :current_groups, through: :current_memberships, source: :group
+
   normalizes :email, with: ->(email) { email.strip.downcase }
   validates :email, presence: true, uniqueness: { case_sensitive: false }, length: { maximum: 250 }, format: { with: URI::MailTo::EMAIL_REGEXP }
 

@@ -71,7 +71,17 @@ class RegistrationsController < ApplicationController
       @registration = @event.registrations.find(params.expect(:id))
     end
 
+    # :member_id is checked, not trusted. The form's picker offers members_available(group, event),
+    # which is this group's, but the parameter is unscoped: registering somebody from another group
+    # publishes their name through Event#attendees to people with no claim on it.
     def registration_params
       params.expect(registration: [ :status, :member_id ])
+        .tap { |permitted| permitted.delete(:member_id) if foreign_member?(permitted[:member_id]) }
+    end
+
+    # Present and not ours. A blank passes through so the model refuses it, rather than being
+    # dropped here and turning an invalid submission into a silent no-change.
+    def foreign_member?(id)
+      id.present? && !@group.members.exists?(id)
     end
 end

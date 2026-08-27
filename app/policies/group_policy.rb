@@ -7,7 +7,7 @@
 class GroupPolicy < ApplicationPolicy
   skip_pre_check :verify_membership!, :verify_active_membership!, only: %i[ index? new? create? ]
 
-  relation_scope { |relation| relation.merge(user.groups) }
+  relation_scope { |relation| relation.merge(user.current_groups) }
 
   def index?  = true
   def new?    = true

@@ -9,8 +9,11 @@
 # rejoin the set of unprotected ones. A subclass that has no group at all (`AddressPolicy`) skips
 # both pre-checks explicitly rather than answering `group_for` with a guess.
 class ApplicationPolicy < ActionPolicy::Base
-  # Rules whose whole point is changing the record. Everything else - `show?`, `edit?`, `new?`,
-  # `index?` where it reaches this far - is read, and a `paused` member keeps read.
+  # Rules whose whole point is changing the record. `new?` counts as one of them and is absent
+  # only because Action Policy already aliases it to `create?`: offering somebody a creation form
+  # they will be refused at submission is worse than refusing them at the link. What is left -
+  # `show?`, `edit?`, and `index?` where it reaches this far - is read, and a `paused` member
+  # keeps read.
   WRITE_RULES = %i[ create? update? destroy? ].freeze
 
   # `authorize!` resolves its `to:` rule against the policy *before* the pre-checks below ever run,

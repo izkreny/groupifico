@@ -42,4 +42,22 @@ RSpec.describe AddressPolicy, type: :policy do
     it { expect(:edit?).to be_an_alias_of(policy, :show?) }
     it { expect(:update?).to be_an_alias_of(policy, :show?) }
   end
+
+  # A relation_scope is not a rule, so the pre-checks never run for it - and this policy skips them
+  # anyway. `user.groups` is every group ever joined, so an address reachable only through a group
+  # the user has left stayed listed.
+  describe "the relation scope" do
+    it "excludes an address reachable only through a group the user has left" do
+      gone = create(:address)
+      create(:member, user: user, status: :inactive, group: create(:group, address: gone))
+
+      kept = create(:address)
+      create(:member, user: user, status: :active, group: create(:group, address: kept))
+
+      scoped = described_class.new(nil, user: user).apply_scope(Address.all, type: :active_record_relation)
+
+      expect(scoped).to include kept
+      expect(scoped).not_to include gone
+    end
+  end
 end
