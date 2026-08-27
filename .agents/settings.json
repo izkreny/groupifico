@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "deny": [
-      "Bash(git push upstream main)",
-      "Bash(git push upstream HEAD:main)"
-    ]
-  }
-}

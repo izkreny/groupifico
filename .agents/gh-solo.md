@@ -2,14 +2,6 @@
 
 Per-repo facts for the `gh-solo` skills that read this file: the values they tell you to look up here rather than assume, and the places this repository differs from their defaults. This file wins on any conflict. Anything not listed here follows the skills' own standards.
 
-## The only remote is named `upstream`
-
-`git remote` prints exactly one name and it is `upstream`, never `origin`. The skills already treat the remote's name as a per-repo fact and give a recipe for resolving it, so this section overrides nothing; it is the answer that recipe is looking for, recorded once so nothing has to run `git remote` to find it.
-
-The first push of a branch is:
-
-    git push -u upstream <branch>
-
 ## Worktree folders
 
 For development, clone the repository into a folder named `main` inside a dedicated project folder, for example `~/Projects/groupifico/main`, so the worktrees for the parallel streams land beside it as siblings: `second`, with `third` to come when two streams feel comfortable. Each folder hosts one issue's branch, or a `gh stack` of dependent branches, at a time, and is reused across issues; never create a folder per branch. The decision record is the beta-scope spike plan, `docs/plans/2026-08-23_GHI-150_beta-scope-ai-harness.md`.
