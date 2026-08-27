@@ -41,8 +41,6 @@
     <% if event.address&.persisted? %>
       <div class="mt-2">
         <%= link_to "Edit '#{event.address.name}' address", edit_address_path(event.address), target: "_blank", class: "link link-hover" %>
-        |
-        <%= link_to "Create new address", new_address_path, target: "_blank", class: "link link-hover" %>
       </div>
     <% else %>
       <div class="divider"></div>

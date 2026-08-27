@@ -10,13 +10,36 @@ RSpec.describe "Events", type: :request do
       end
     end
 
-    context "when successfully signed in" do
-      it "shows the events page" do
+    context "when signed in as a non-member" do
+      it "returns 404" do
         sign_in_as(create(:user))
 
         get group_events_path(create(:group))
 
+        expect(response).to have_http_status :not_found
+      end
+    end
+
+    context "when signed in as an active member" do
+      it "shows the events page" do
+        member = create(:member, :active)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group)
+
         expect(response).to have_http_status :ok
+      end
+
+      it "lists only events from groups the acting user belongs to" do
+        member = create(:member, :active)
+        own_event = create(:event, group: member.group, creator: member)
+        other_event = create(:event)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group)
+
+        expect(response.body).to include(ActionView::RecordIdentifier.dom_id(own_event))
+        expect(response.body).not_to include(ActionView::RecordIdentifier.dom_id(other_event))
       end
     end
   end
@@ -32,14 +55,49 @@ RSpec.describe "Events", type: :request do
       end
     end
 
-    context "when successfully signed in" do
-      it "shows the event page" do
+    context "when signed in as a non-member" do
+      it "returns 404" do
         event = create(:event)
         sign_in_as(create(:user))
 
         get group_event_path(event.group, event)
 
+        expect(response).to have_http_status :not_found
+      end
+    end
+
+    context "when signed in as an active member" do
+      it "shows the event page" do
+        event = create(:event)
+        sign_in_as(event.creator.user)
+
+        get group_event_path(event.group, event)
+
         expect(response).to have_http_status :ok
+      end
+    end
+
+    context "when signed in as a paused member" do
+      it "shows the event page" do
+        event = create(:event)
+        member = create(:member, :paused, group: event.group)
+        sign_in_as(member.user)
+
+        get group_event_path(event.group, event)
+
+        expect(response).to have_http_status :ok
+      end
+    end
+
+    context "when signed in as an inactive member" do
+      it "returns 404, exactly like a non-member" do
+        event = create(:event)
+        member = create(:member, :inactive, group: event.group)
+        sign_in_as(member.user)
+
+        get group_event_path(event.group, event)
+
+        expect(response).to have_http_status :not_found
       end
     end
   end
@@ -53,11 +111,22 @@ RSpec.describe "Events", type: :request do
       end
     end
 
-    context "when successfully signed in" do
-      it "shows the new event page" do
+    context "when signed in as a non-member" do
+      it "returns 404" do
         sign_in_as(create(:user))
 
         get new_group_event_path(create(:group))
+
+        expect(response).to have_http_status :not_found
+      end
+    end
+
+    context "when signed in as an active member" do
+      it "shows the new event page" do
+        member = create(:member, :active)
+        sign_in_as(member.user)
+
+        get new_group_event_path(member.group)
 
         expect(response).to have_http_status :ok
       end
@@ -65,6 +134,20 @@ RSpec.describe "Events", type: :request do
   end
 
   describe "GET /groups/:group_id/events/:id/duplicate" do
+    # `duplicate` renders the `new` form, and `new` resolves new? through create?, so a rule that
+    # let a paused member through here contradicted the one guarding the other door onto it.
+    context "when signed in as a paused member" do
+      it "refuses, exactly as new does" do
+        event = create(:event)
+        actor = create(:member, :paused, group: event.group)
+        sign_in_as(actor.user)
+
+        get duplicate_group_event_path(event.group, event)
+
+        expect(response).to redirect_to root_path
+      end
+    end
+
     context "when not signed in" do
       it "redirects to the sign-in page" do
         event = create(:event)
@@ -75,10 +158,21 @@ RSpec.describe "Events", type: :request do
       end
     end
 
-    context "when successfully signed in" do
-      it "renders the new event page" do
+    context "when signed in as a non-member" do
+      it "returns 404" do
         event = create(:event)
         sign_in_as(create(:user))
+
+        get duplicate_group_event_path(event.group, event)
+
+        expect(response).to have_http_status :not_found
+      end
+    end
+
+    context "when signed in as an active member" do
+      it "renders the new event page" do
+        event = create(:event)
+        sign_in_as(event.creator.user)
 
         get duplicate_group_event_path(event.group, event)
 
@@ -98,10 +192,21 @@ RSpec.describe "Events", type: :request do
       end
     end
 
-    context "when successfully signed in" do
-      it "shows the edit event page" do
+    context "when signed in as a non-member" do
+      it "returns 404" do
         event = create(:event)
         sign_in_as(create(:user))
+
+        get edit_group_event_path(event.group, event)
+
+        expect(response).to have_http_status :not_found
+      end
+    end
+
+    context "when signed in as an active member" do
+      it "shows the edit event page" do
+        event = create(:event)
+        sign_in_as(event.creator.user)
 
         get edit_group_event_path(event.group, event)
 
@@ -121,9 +226,22 @@ RSpec.describe "Events", type: :request do
       end
     end
 
-    context "when successfully signed in" do
+    context "when signed in as a non-member" do
+      it "returns 404 and does not create the event" do
+        group  = create(:group)
+        params = { name: "Rehearsal", starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour, creator_id: create(:member, group:).id }
+        sign_in_as(create(:user))
+
+        expect { post group_events_path(group), params: { event: params } }
+          .not_to change(Event, :count)
+
+        expect(response).to have_http_status :not_found
+      end
+    end
+
+    context "when signed in as an active member" do
       it "creates the event" do
-        creator = create(:member)
+        creator = create(:member, :active)
         sign_in_as(creator.user)
         params  = { name: "Rehearsal", starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour, creator_id: creator.id }
 
@@ -132,13 +250,27 @@ RSpec.describe "Events", type: :request do
       end
 
       it "re-renders the new page when the event is invalid" do
-        group = create(:group)
-        sign_in_as(create(:user))
+        member = create(:member, :active)
+        sign_in_as(member.user)
 
-        expect { post group_events_path(group), params: { event: { name: "" } } }
+        expect { post group_events_path(member.group), params: { event: { name: "" } } }
           .not_to change(Event, :count)
 
         expect(response).to have_http_status :unprocessable_entity
+      end
+    end
+
+    context "when signed in as a paused member" do
+      it "refuses with a redirect carrying an alert, and does not create the event" do
+        member = create(:member, :paused)
+        params = { name: "Rehearsal", starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour, creator_id: member.id }
+        sign_in_as(member.user)
+
+        expect { post group_events_path(member.group), params: { event: params } }
+          .not_to change(Event, :count)
+
+        expect(response).to redirect_to root_path
+        expect(flash[:alert]).to be_present
       end
     end
   end
@@ -154,10 +286,22 @@ RSpec.describe "Events", type: :request do
       end
     end
 
-    context "when successfully signed in" do
+    context "when signed in as a non-member" do
+      it "returns 404 and leaves the event unchanged" do
+        event = create(:event, name: "Original")
+        sign_in_as(create(:user))
+
+        patch group_event_path(event.group, event), params: { event: { name: "Renamed" } }
+
+        expect(response).to have_http_status :not_found
+        expect(event.reload.name).to eq "Original"
+      end
+    end
+
+    context "when signed in as an active member" do
       it "updates the event" do
         event = create(:event)
-        sign_in_as(create(:user))
+        sign_in_as(event.creator.user)
 
         patch group_event_path(event.group, event), params: { event: { name: "Renamed" } }
 
@@ -167,11 +311,36 @@ RSpec.describe "Events", type: :request do
 
       it "re-renders the edit page when the event is invalid" do
         event = create(:event)
-        sign_in_as(create(:user))
+        sign_in_as(event.creator.user)
 
         patch group_event_path(event.group, event), params: { event: { name: "" } }
 
         expect(response).to have_http_status :unprocessable_entity
+      end
+
+      it "ignores a posted group_id, leaving the event in its own group" do
+        event = create(:event)
+        original_group = event.group
+        other_group = create(:group)
+        sign_in_as(event.creator.user)
+
+        patch group_event_path(event.group, event), params: { event: { group_id: other_group.id } }
+
+        expect(event.reload.group).to eq original_group
+      end
+    end
+
+    context "when signed in as a paused member" do
+      it "refuses with a redirect carrying an alert, and leaves the event unchanged" do
+        event = create(:event, name: "Original")
+        member = create(:member, :paused, group: event.group)
+        sign_in_as(member.user)
+
+        patch group_event_path(event.group, event), params: { event: { name: "Renamed" } }
+
+        expect(response).to redirect_to root_path
+        expect(flash[:alert]).to be_present
+        expect(event.reload.name).to eq "Original"
       end
     end
   end
@@ -188,16 +357,81 @@ RSpec.describe "Events", type: :request do
       end
     end
 
-    context "when successfully signed in" do
-      it "destroys the event" do
+    context "when signed in as a non-member" do
+      it "returns 404 and does not destroy the event" do
         event = create(:event)
         sign_in_as(create(:user))
+
+        expect { delete group_event_path(event.group, event) }
+          .not_to change(Event, :count)
+
+        expect(response).to have_http_status :not_found
+      end
+    end
+
+    context "when signed in as an active member" do
+      it "destroys the event" do
+        event = create(:event)
+        sign_in_as(event.creator.user)
 
         expect { delete group_event_path(event.group, event) }
           .to change(Event, :count).by(-1)
 
         expect(response).to redirect_to group_events_path(event.group)
       end
+    end
+
+    context "when signed in as a paused member" do
+      it "refuses with a redirect carrying an alert, and does not destroy the event" do
+        event = create(:event)
+        member = create(:member, :paused, group: event.group)
+        sign_in_as(member.user)
+
+        expect { delete group_event_path(event.group, event) }
+          .not_to change(Event, :count)
+
+        expect(response).to redirect_to root_path
+        expect(flash[:alert]).to be_present
+      end
+    end
+  end
+
+  describe "foreign keys posted in the body" do
+    # Pointing an event at another group's address is what makes that address reachable? - and so
+    # editable - by somebody with no claim on it. The picker is scoped; the parameter was not.
+    it "ignores an address_id belonging to another group" do
+      event = create(:event, address: create(:address))
+      actor = create(:member, :active, group: event.group)
+      elsewhere = create(:address, name: "Someone Else's Venue")
+      create(:group, address: elsewhere)
+      sign_in_as(actor.user)
+
+      patch group_event_path(event.group, event), params: { event: { address_id: elsewhere.id } }
+
+      expect(event.reload.address).not_to eq elsewhere
+    end
+
+    it "ignores a creator_id belonging to another group" do
+      event = create(:event)
+      actor = create(:member, :active, group: event.group)
+      outsider = create(:member)
+      sign_in_as(actor.user)
+
+      patch group_event_path(event.group, event), params: { event: { creator_id: outsider.id } }
+
+      expect(event.reload.creator).not_to eq outsider
+    end
+  end
+
+  describe "an inactive member's event list" do
+    it "does not include the former group's events" do
+      event = create(:event, name: "Rehearsal")
+      actor = create(:member, :inactive, group: event.group)
+      sign_in_as(actor.user)
+
+      get group_events_path(event.group)
+
+      expect(response).to have_http_status :not_found
     end
   end
 end

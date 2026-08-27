@@ -1,7 +1,14 @@
 Rails.application.routes.draw do
   resource :session
   resources :passwords, param: :token
-  resources :addresses
+  # An address exists only as a detail of the group or event that points at it: both build one
+  # through `accepts_nested_attributes_for :address`, and `EventsController` picks an existing one
+  # out of `group.addresses`. So there is nothing to create standalone - an address pointed at by
+  # nothing appears in no picker and is reachable by nobody, its own author included - and nothing
+  # to destroy, since every address a member can reach is held by an ON DELETE RESTRICT reference.
+  # What is left is reading them and correcting them. Settled on #172; the reuse flow the event
+  # form gestures at is #187.
+  resources :addresses, only: %i[ index show edit update ]
 
   resource :user do
     resource :profile, controller: "user_profiles", only: %i[ show edit update ]

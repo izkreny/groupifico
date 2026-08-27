@@ -34,10 +34,6 @@ class Group < ApplicationRecord
   validates :description, length: { maximum: 25_000 }
 
   def addresses
-    if address
-      events_addresses | [ address ]
-    else
-      events_addresses
-    end
+    Address.where(id: events.select(:address_id)).or(Address.where(id: address_id))
   end
 end

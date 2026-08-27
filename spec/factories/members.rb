@@ -40,5 +40,17 @@ FactoryBot.define do
       association :user,  :with_full_profile
       association :group, :with_all_attributes
     end
+
+    trait :active do
+      status { :active }
+    end
+
+    trait :paused do
+      status { :paused }
+    end
+
+    trait :inactive do
+      status { :inactive }
+    end
   end
 end

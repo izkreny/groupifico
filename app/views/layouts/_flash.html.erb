@@ -1,3 +1,7 @@
 <% if notice.present? %>
   <div role="alert" class="alert alert-success mb-5" id="notice"><%= notice %></div>
 <% end %>
+
+<% if alert.present? %>
+  <div role="alert" class="alert alert-error mb-5" id="alert"><%= alert %></div>
+<% end %>

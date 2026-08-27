@@ -1,35 +1,18 @@
 class AddressesController < ApplicationController
-  # TODO(#172): remove this skip when index is scoped and creation is role-gated. The record-bearing
-  # actions below are authorized already; these three have no record to authorize against yet.
-  skip_verify_authorized only: %i[ index new create ]
-
-  before_action :set_address, only: %i[ show edit update destroy ]
+  before_action :set_address, only: %i[ show edit update ]
 
   def index
-    @addresses = Address.all
+    authorize! Address, to: :index?
+
+    @addresses = authorized_scope(Address.all)
   end
 
   def show
     authorize! @address
   end
 
-  def new
-    @address = Address.new
-  end
-
   def edit
     authorize! @address
-  end
-
-  def create
-    @address = Address.new(address_params)
-
-    if @address.save
-      redirect_to address_path(@address),
-        notice: "Address was successfully created."
-    else
-      render :new, status: :unprocessable_entity
-    end
   end
 
   def update
@@ -42,16 +25,6 @@ class AddressesController < ApplicationController
     else
       render :edit, status: :unprocessable_entity
     end
-  end
-
-  def destroy
-    authorize! @address
-
-    @address.destroy!
-
-    redirect_to addresses_path,
-      notice: "Address was successfully destroyed.",
-      status: :see_other
   end
 
   private

@@ -1,27 +1,32 @@
 class RegistrationsController < ApplicationController
-  # TODO(#172): remove this skip when RegistrationPolicy lands.
-  skip_verify_authorized
-
   before_action :set_group
   before_action :set_event
   before_action :set_registration, only: %i[ show edit update destroy ]
 
   def index
-    @registrations = @event.registrations
+    authorize! @group, to: :show?
+
+    @registrations = authorized_scope(@event.registrations)
   end
 
   def show
+    authorize! @registration
   end
 
   def new
     @registration = @event.registrations.new
+
+    authorize! @registration
   end
 
   def edit
+    authorize! @registration
   end
 
   def create
     @registration = @event.registrations.new(registration_params)
+
+    authorize! @registration
 
     if @registration.save
       redirect_to group_event_registration_path(@group, @event, @registration),
@@ -32,6 +37,8 @@ class RegistrationsController < ApplicationController
   end
 
   def update
+    authorize! @registration
+
     if @registration.update(registration_params)
       redirect_to group_event_registration_path(@group, @event, @registration),
         notice: "Registration was successfully updated.",
@@ -42,6 +49,8 @@ class RegistrationsController < ApplicationController
   end
 
   def destroy
+    authorize! @registration
+
     @registration.destroy!
 
     redirect_to group_event_registrations_path(@group, @event),
@@ -62,7 +71,17 @@ class RegistrationsController < ApplicationController
       @registration = @event.registrations.find(params.expect(:id))
     end
 
+    # :member_id is checked, not trusted. The form's picker offers members_available(group, event),
+    # which is this group's, but the parameter is unscoped: registering somebody from another group
+    # publishes their name through Event#attendees to people with no claim on it.
     def registration_params
-      params.expect(registration: [ :status, :event_id, :member_id ])
+      params.expect(registration: [ :status, :member_id ])
+        .tap { |permitted| permitted.delete(:member_id) if foreign_member?(permitted[:member_id]) }
+    end
+
+    # Present and not ours. A blank passes through so the model refuses it, rather than being
+    # dropped here and turning an invalid submission into a silent no-change.
+    def foreign_member?(id)
+      id.present? && !@group.members.exists?(id)
     end
 end

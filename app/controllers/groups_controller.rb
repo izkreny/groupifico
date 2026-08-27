@@ -1,27 +1,33 @@
 class GroupsController < ApplicationController
-  # TODO(#172): remove this skip when GroupPolicy lands.
-  skip_verify_authorized
-
   before_action :set_group, only: %i[ show edit update destroy ]
 
   def index
-    @groups = Group.all
+    authorize! Group, to: :index?
+
+    @groups = authorized_scope(Group.all)
   end
 
   def show
+    authorize! @group
   end
 
   def new
     @group         = Group.new
     @group.address = Address.new
+
+    authorize! @group
   end
 
   def edit
     @group.address = Address.new unless @group.address
+
+    authorize! @group
   end
 
   def create
     @group = Group.new(group_params)
+
+    authorize! @group
 
     if @group.save
       redirect_to group_path(@group),
@@ -32,6 +38,8 @@ class GroupsController < ApplicationController
   end
 
   def update
+    authorize! @group
+
     if @group.update(group_params)
       redirect_to group_path(@group),
         notice: "Group was successfully updated.",
@@ -42,6 +50,8 @@ class GroupsController < ApplicationController
   end
 
   def destroy
+    authorize! @group
+
     @group.destroy!
 
     redirect_to groups_path,
