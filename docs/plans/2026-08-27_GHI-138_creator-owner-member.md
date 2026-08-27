@@ -50,8 +50,8 @@ What these gates cannot see: whether a group can still end up with zero members 
 
 ## Open questions
 
-- Should the ERD's `1+` come with a note saying nothing yet stops the last member being removed? The relationship line will claim an invariant the database does not enforce and no code outside `create` upholds. Correcting the cardinality is what the issue asks for; whether the README should also say how far the guarantee reaches is the owner's call, and adding the note is one bullet in the diagram's `IMPORTANT` block.
+None.
 
 ## Settled
 
-None yet.
+- **Should the ERD's corrected `1+` come with a note saying nothing yet stops the last member being removed?** Yes. Settled by the owner in the session: *"Aha, yes, open question, well, OK, note that somewher, can be also a comment inside ERD graph?"* The note goes in the `IMPORTANT` blockquote above the mermaid block rather than as a `%%` comment inside the diagram: a `%%` comment does not render, so the caveat would be invisible exactly where the `1+` claim is visible, and that block already carries a bullet of the same species, the one saying column limits are Rails-level facts SQLite does not enforce.
