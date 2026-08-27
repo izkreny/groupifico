@@ -41,7 +41,7 @@ RSpec.describe "Groups", type: :request do
       end
     end
 
-    context "when signed in as a stranger" do
+    context "when signed in as a non-member" do
       it "returns 404" do
         sign_in_as(create(:user))
 
@@ -53,7 +53,7 @@ RSpec.describe "Groups", type: :request do
 
     context "when signed in as an active member" do
       it "shows the group page" do
-        member = create(:member, status: :active)
+        member = create(:member, :active)
         sign_in_as(member.user)
 
         get group_path(member.group)
@@ -86,7 +86,7 @@ RSpec.describe "Groups", type: :request do
     end
 
     context "when signed in as an inactive member" do
-      it "returns 404, exactly like a stranger" do
+      it "returns 404, exactly like a non-member" do
         member = create(:member, :inactive)
         sign_in_as(member.user)
 
@@ -126,7 +126,7 @@ RSpec.describe "Groups", type: :request do
       end
     end
 
-    context "when signed in as a stranger" do
+    context "when signed in as a non-member" do
       it "returns 404" do
         sign_in_as(create(:user))
 
@@ -138,7 +138,7 @@ RSpec.describe "Groups", type: :request do
 
     context "when signed in as an active member" do
       it "shows the edit group page" do
-        member = create(:member, status: :active)
+        member = create(:member, :active)
         sign_in_as(member.user)
 
         get edit_group_path(member.group)
@@ -187,7 +187,7 @@ RSpec.describe "Groups", type: :request do
       end
     end
 
-    context "when signed in as a stranger" do
+    context "when signed in as a non-member" do
       it "returns 404 and leaves the group unchanged" do
         group = create(:group, name: "Original")
         sign_in_as(create(:user))
@@ -201,7 +201,7 @@ RSpec.describe "Groups", type: :request do
 
     context "when signed in as an active member" do
       it "updates the group" do
-        member = create(:member, status: :active)
+        member = create(:member, :active)
         sign_in_as(member.user)
 
         patch group_path(member.group), params: { group: { name: "Renamed" } }
@@ -211,7 +211,7 @@ RSpec.describe "Groups", type: :request do
       end
 
       it "re-renders the edit page when the group is invalid" do
-        member = create(:member, status: :active)
+        member = create(:member, :active)
         sign_in_as(member.user)
 
         patch group_path(member.group), params: { group: { name: "" } }
@@ -274,7 +274,7 @@ RSpec.describe "Groups", type: :request do
       end
     end
 
-    context "when signed in as a stranger" do
+    context "when signed in as a non-member" do
       it "returns 404 and does not destroy the group" do
         group = create(:group)
         sign_in_as(create(:user))
@@ -288,7 +288,7 @@ RSpec.describe "Groups", type: :request do
 
     context "when signed in as an active member" do
       it "destroys the group" do
-        member = create(:member, status: :active)
+        member = create(:member, :active)
         sign_in_as(member.user)
 
         expect { delete group_path(member.group) }
@@ -335,8 +335,8 @@ RSpec.describe "Groups", type: :request do
     end
 
     it "answer identically" do
-      stranger = create(:member)
-      sign_in_as(stranger.user)
+      non_member = create(:member)
+      sign_in_as(non_member.user)
 
       get group_path(create(:group))
       refused = [ response.status, response.body.bytesize ]
@@ -353,7 +353,7 @@ RSpec.describe "Groups", type: :request do
   # `user.groups`, which is every group ever joined. The list leaked what the detail page refused.
   describe "an inactive member's group list" do
     it "does not include the group they left" do
-      actor = create(:member, status: :inactive, group: create(:group, name: "Left Behind"))
+      actor = create(:member, :inactive, group: create(:group, name: "Left Behind"))
       sign_in_as(actor.user)
 
       get groups_path

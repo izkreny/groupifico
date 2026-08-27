@@ -13,8 +13,8 @@ RSpec.describe GroupPolicy, type: :policy do
   describe "the relation scope" do
     it "excludes a group the user has left" do
       user = create(:user)
-      left = create(:member, user: user, status: :inactive).group
-      kept = create(:member, user: user, status: :active).group
+      left = create(:member, :inactive, user: user).group
+      kept = create(:member, :active, user: user).group
 
       scoped = described_class.new(nil, user: user).apply_scope(Group.all, type: :active_record_relation)
 

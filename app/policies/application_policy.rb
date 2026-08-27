@@ -59,7 +59,7 @@ class ApplicationPolicy < ActionPolicy::Base
     end
 
     # A member belongs; whether they may currently act is a status question, not a role one.
-    # `inactive` has left and is refused exactly like a stranger. `paused` still belongs and keeps
+    # `inactive` has left and is refused exactly like a non-member. `paused` still belongs and keeps
     # read, but not write, until #93 and #96 give write its own rule to consult.
     def verify_active_membership!
       return allow! if membership.active?

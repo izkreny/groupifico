@@ -89,7 +89,7 @@ RSpec.describe "Addresses", type: :request do
     context "when the address belongs to another group's event" do
       # 404 rather than the redirect, and that is the inheritance paying off. The rule now asks
       # EventPolicy, whose membership pre-check denies with a `not_found` detail, and the detail
-      # travels back through `allowed_to?` into this policy's own result - so a stranger is told the
+      # travels back through `allowed_to?` into this policy's own result - so a non-member is told the
       # address does not exist rather than that they may not have it, which is the whole reason
       # ADR 0003 chose 404 over 403. The old rule answered plain false and leaked the difference.
       it "answers as if the address did not exist" do

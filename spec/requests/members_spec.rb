@@ -10,7 +10,7 @@ RSpec.describe "Members", type: :request do
       end
     end
 
-    context "when signed in as a stranger" do
+    context "when signed in as a non-member" do
       it "returns 404" do
         sign_in_as(create(:user))
 
@@ -22,7 +22,7 @@ RSpec.describe "Members", type: :request do
 
     context "when signed in as an active member" do
       it "shows the members page" do
-        member = create(:member, status: :active)
+        member = create(:member, :active)
         sign_in_as(member.user)
 
         get group_members_path(member.group)
@@ -31,7 +31,7 @@ RSpec.describe "Members", type: :request do
       end
 
       it "lists only members from groups the acting user belongs to" do
-        member = create(:member, status: :active)
+        member = create(:member, :active)
         other_member = create(:member)
         sign_in_as(member.user)
 
@@ -54,7 +54,7 @@ RSpec.describe "Members", type: :request do
       end
     end
 
-    context "when signed in as a stranger" do
+    context "when signed in as a non-member" do
       it "returns 404" do
         member = create(:member)
         sign_in_as(create(:user))
@@ -67,7 +67,7 @@ RSpec.describe "Members", type: :request do
 
     context "when signed in as an active member" do
       it "shows the member page" do
-        member = create(:member, status: :active)
+        member = create(:member, :active)
         sign_in_as(member.user)
 
         get group_member_path(member.group, member)
@@ -89,7 +89,7 @@ RSpec.describe "Members", type: :request do
     end
 
     context "when signed in as an inactive member" do
-      it "returns 404, exactly like a stranger" do
+      it "returns 404, exactly like a non-member" do
         target = create(:member)
         viewer = create(:member, :inactive, group: target.group)
         sign_in_as(viewer.user)
@@ -110,7 +110,7 @@ RSpec.describe "Members", type: :request do
       end
     end
 
-    context "when signed in as a stranger" do
+    context "when signed in as a non-member" do
       it "returns 404" do
         sign_in_as(create(:user))
 
@@ -122,7 +122,7 @@ RSpec.describe "Members", type: :request do
 
     context "when signed in as an active member" do
       it "shows the new member page" do
-        member = create(:member, status: :active)
+        member = create(:member, :active)
         sign_in_as(member.user)
 
         get new_group_member_path(member.group)
@@ -143,7 +143,7 @@ RSpec.describe "Members", type: :request do
       end
     end
 
-    context "when signed in as a stranger" do
+    context "when signed in as a non-member" do
       it "returns 404" do
         member = create(:member)
         sign_in_as(create(:user))
@@ -156,7 +156,7 @@ RSpec.describe "Members", type: :request do
 
     context "when signed in as an active member" do
       it "shows the edit member page" do
-        member = create(:member, status: :active)
+        member = create(:member, :active)
         sign_in_as(member.user)
 
         get edit_group_member_path(member.group, member)
@@ -177,7 +177,7 @@ RSpec.describe "Members", type: :request do
       end
     end
 
-    context "when signed in as a stranger" do
+    context "when signed in as a non-member" do
       it "returns 404 and does not create the membership - closing the self-promotion path" do
         group = create(:group)
         user  = create(:user)
@@ -192,7 +192,7 @@ RSpec.describe "Members", type: :request do
 
     context "when signed in as an active member" do
       it "creates the member" do
-        actor  = create(:member, status: :active)
+        actor  = create(:member, :active)
         invitee = create(:user)
         sign_in_as(actor.user)
 
@@ -203,7 +203,7 @@ RSpec.describe "Members", type: :request do
       end
 
       it "re-renders the new page when the member is invalid" do
-        actor = create(:member, status: :active)
+        actor = create(:member, :active)
         sign_in_as(actor.user)
 
         expect { post group_members_path(actor.group), params: { member: { user_id: "" } } }
@@ -239,7 +239,7 @@ RSpec.describe "Members", type: :request do
       end
     end
 
-    context "when signed in as a stranger" do
+    context "when signed in as a non-member" do
       it "returns 404 and leaves the member unchanged" do
         member = create(:member, role: "member")
         sign_in_as(create(:user))
@@ -253,7 +253,7 @@ RSpec.describe "Members", type: :request do
 
     context "when signed in as an active member" do
       it "updates the member" do
-        member = create(:member, status: :active)
+        member = create(:member, :active)
         sign_in_as(member.user)
 
         patch group_member_path(member.group, member), params: { member: { role: "admin" } }
@@ -263,7 +263,7 @@ RSpec.describe "Members", type: :request do
       end
 
       it "re-renders the edit page when the member is invalid" do
-        member = create(:member, status: :active)
+        member = create(:member, :active)
         sign_in_as(member.user)
 
         patch group_member_path(member.group, member), params: { member: { status: "" } }
@@ -272,7 +272,7 @@ RSpec.describe "Members", type: :request do
       end
 
       it "ignores a posted group_id, leaving the membership in its own group" do
-        member = create(:member, status: :active)
+        member = create(:member, :active)
         original_group = member.group
         other_group = create(:group)
         sign_in_as(member.user)
@@ -283,7 +283,7 @@ RSpec.describe "Members", type: :request do
       end
 
       it "ignores a posted user_id, leaving the membership with the user it had" do
-        member = create(:member, status: :active)
+        member = create(:member, :active)
         original_user = member.user
         other_user = create(:user)
         sign_in_as(member.user)
@@ -321,7 +321,7 @@ RSpec.describe "Members", type: :request do
       end
     end
 
-    context "when signed in as a stranger" do
+    context "when signed in as a non-member" do
       it "returns 404 and does not destroy the member" do
         member = create(:member)
         sign_in_as(create(:user))
@@ -336,7 +336,7 @@ RSpec.describe "Members", type: :request do
     context "when signed in as an active member" do
       it "destroys the member" do
         target = create(:member)
-        actor = create(:member, status: :active, group: target.group)
+        actor = create(:member, :active, group: target.group)
         sign_in_as(actor.user)
 
         expect { delete group_member_path(target.group, target) }

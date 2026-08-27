@@ -22,7 +22,7 @@ Both are strong-parameter holes rather than lookup holes, so scoping the lookup 
 
 The key is redundant as well as dangerous. `create` already derives it from the association - `@group.members.new(member_params)`, `@group.events.new(event_params)`, `@event.registrations.new(registration_params)` - so on create the permitted key can only ever contradict the URL, and on `update` it is the only thing that can move the record at all.
 
-**`MembersController` permits `:role` and `:user_id`.** The issue's criterion covers the stranger case - *"refused for a user who does not already belong to the group"* - and stops there. It does not cover a user who does belong: today an ordinary member can `PATCH` their own membership to `role: :owner`, or create a membership for somebody else. Half of that is genuinely #93 and #96, which decide what a role is. The other half, `user_id`, is not about roles at all.
+**`MembersController` permits `:role` and `:user_id`.** The issue's criterion covers the non-member case - *"refused for a user who does not already belong to the group"* - and stops there. It does not cover a user who does belong: today an ordinary member can `PATCH` their own membership to `role: :owner`, or create a membership for somebody else. Half of that is genuinely #93 and #96, which decide what a role is. The other half, `user_id`, is not about roles at all.
 
 ## Approach
 
@@ -34,7 +34,7 @@ The key is redundant as well as dangerous. `create` already derives it from the 
 
 **The refusal is one handler that branches on the denial's reason, never a conditional per controller.** A policy that denies for non-membership calls `deny!(:not_found)`; `ApplicationController#deny_access` reads `ex.result.all_details` and renders `404` for that detail and a redirect carrying an alert for everything else. Two answers to two different questions: the record does not exist for you, versus you may not do this to it.
 
-**`404` for a non-member is deliberate**, per ADR 0003 and the Basecamp idiom: a `403` confirms that a given id exists, which is precisely what a stranger should not learn.
+**`404` for a non-member is deliberate**, per ADR 0003 and the Basecamp idiom: a `403` confirms that a given id exists, which is precisely what a non-member should not learn.
 
 **`index` is scoped with `authorized_scope`, and `verify_authorized_scoped only: :index` is what makes forgetting it fail.** Enabled bare it fires on `show`, `edit`, `update` and `destroy`, which scope nothing, so it is constrained to the one action where returning a collection unscoped is the leak.
 
@@ -52,7 +52,7 @@ The key is redundant as well as dangerous. `create` already derives it from the 
 - Add a `relation_scope` to `AddressPolicy` returning the addresses reachable through the acting user's groups and their events, and use it from `AddressesController#index`
 - Drop `:group_id` from `member_params` and `event_params`, and `:event_id` from `registration_params`. Each is supplied by the association from the URL, so on `create` the key can only contradict the URL and on `update` it is the only thing that can move the record
 - Split `MembersController`'s params in two: `new_member_params` keeps `:user_id` for `create`, `member_params` drops it for `update`, so an existing membership cannot be handed to a different user. `:role` and `:status` stay in both, untouched, since who may set a role is #93 and #96's question
-- Cover each controller with request specs asserting the stranger case, the `active` member, the `paused` member and the `inactive` member, per the acceptance criteria on the issue
+- Cover each controller with request specs asserting the non-member case, the `active` member, the `paused` member and the `inactive` member, per the acceptance criteria on the issue
 - Cover the two params holes with their own request specs: an update posting a foreign `group_id` leaves the record where it was, and an update posting `user_id` leaves the membership with the user it had
 
 ## Verification

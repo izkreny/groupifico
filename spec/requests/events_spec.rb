@@ -10,7 +10,7 @@ RSpec.describe "Events", type: :request do
       end
     end
 
-    context "when signed in as a stranger" do
+    context "when signed in as a non-member" do
       it "returns 404" do
         sign_in_as(create(:user))
 
@@ -22,7 +22,7 @@ RSpec.describe "Events", type: :request do
 
     context "when signed in as an active member" do
       it "shows the events page" do
-        member = create(:member, status: :active)
+        member = create(:member, :active)
         sign_in_as(member.user)
 
         get group_events_path(member.group)
@@ -31,7 +31,7 @@ RSpec.describe "Events", type: :request do
       end
 
       it "lists only events from groups the acting user belongs to" do
-        member = create(:member, status: :active)
+        member = create(:member, :active)
         own_event = create(:event, group: member.group, creator: member)
         other_event = create(:event)
         sign_in_as(member.user)
@@ -55,7 +55,7 @@ RSpec.describe "Events", type: :request do
       end
     end
 
-    context "when signed in as a stranger" do
+    context "when signed in as a non-member" do
       it "returns 404" do
         event = create(:event)
         sign_in_as(create(:user))
@@ -90,7 +90,7 @@ RSpec.describe "Events", type: :request do
     end
 
     context "when signed in as an inactive member" do
-      it "returns 404, exactly like a stranger" do
+      it "returns 404, exactly like a non-member" do
         event = create(:event)
         member = create(:member, :inactive, group: event.group)
         sign_in_as(member.user)
@@ -111,7 +111,7 @@ RSpec.describe "Events", type: :request do
       end
     end
 
-    context "when signed in as a stranger" do
+    context "when signed in as a non-member" do
       it "returns 404" do
         sign_in_as(create(:user))
 
@@ -123,7 +123,7 @@ RSpec.describe "Events", type: :request do
 
     context "when signed in as an active member" do
       it "shows the new event page" do
-        member = create(:member, status: :active)
+        member = create(:member, :active)
         sign_in_as(member.user)
 
         get new_group_event_path(member.group)
@@ -139,7 +139,7 @@ RSpec.describe "Events", type: :request do
     context "when signed in as a paused member" do
       it "refuses, exactly as new does" do
         event = create(:event)
-        actor = create(:member, status: :paused, group: event.group)
+        actor = create(:member, :paused, group: event.group)
         sign_in_as(actor.user)
 
         get duplicate_group_event_path(event.group, event)
@@ -158,7 +158,7 @@ RSpec.describe "Events", type: :request do
       end
     end
 
-    context "when signed in as a stranger" do
+    context "when signed in as a non-member" do
       it "returns 404" do
         event = create(:event)
         sign_in_as(create(:user))
@@ -192,7 +192,7 @@ RSpec.describe "Events", type: :request do
       end
     end
 
-    context "when signed in as a stranger" do
+    context "when signed in as a non-member" do
       it "returns 404" do
         event = create(:event)
         sign_in_as(create(:user))
@@ -226,7 +226,7 @@ RSpec.describe "Events", type: :request do
       end
     end
 
-    context "when signed in as a stranger" do
+    context "when signed in as a non-member" do
       it "returns 404 and does not create the event" do
         group  = create(:group)
         params = { name: "Rehearsal", starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour, creator_id: create(:member, group:).id }
@@ -241,7 +241,7 @@ RSpec.describe "Events", type: :request do
 
     context "when signed in as an active member" do
       it "creates the event" do
-        creator = create(:member, status: :active)
+        creator = create(:member, :active)
         sign_in_as(creator.user)
         params  = { name: "Rehearsal", starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour, creator_id: creator.id }
 
@@ -250,7 +250,7 @@ RSpec.describe "Events", type: :request do
       end
 
       it "re-renders the new page when the event is invalid" do
-        member = create(:member, status: :active)
+        member = create(:member, :active)
         sign_in_as(member.user)
 
         expect { post group_events_path(member.group), params: { event: { name: "" } } }
@@ -286,7 +286,7 @@ RSpec.describe "Events", type: :request do
       end
     end
 
-    context "when signed in as a stranger" do
+    context "when signed in as a non-member" do
       it "returns 404 and leaves the event unchanged" do
         event = create(:event, name: "Original")
         sign_in_as(create(:user))
@@ -357,7 +357,7 @@ RSpec.describe "Events", type: :request do
       end
     end
 
-    context "when signed in as a stranger" do
+    context "when signed in as a non-member" do
       it "returns 404 and does not destroy the event" do
         event = create(:event)
         sign_in_as(create(:user))
@@ -401,7 +401,7 @@ RSpec.describe "Events", type: :request do
     # editable - by somebody with no claim on it. The picker is scoped; the parameter was not.
     it "ignores an address_id belonging to another group" do
       event = create(:event, address: create(:address))
-      actor = create(:member, status: :active, group: event.group)
+      actor = create(:member, :active, group: event.group)
       elsewhere = create(:address, name: "Someone Else's Venue")
       create(:group, address: elsewhere)
       sign_in_as(actor.user)
@@ -413,7 +413,7 @@ RSpec.describe "Events", type: :request do
 
     it "ignores a creator_id belonging to another group" do
       event = create(:event)
-      actor = create(:member, status: :active, group: event.group)
+      actor = create(:member, :active, group: event.group)
       outsider = create(:member)
       sign_in_as(actor.user)
 
@@ -426,7 +426,7 @@ RSpec.describe "Events", type: :request do
   describe "an inactive member's event list" do
     it "does not include the former group's events" do
       event = create(:event, name: "Rehearsal")
-      actor = create(:member, status: :inactive, group: event.group)
+      actor = create(:member, :inactive, group: event.group)
       sign_in_as(actor.user)
 
       get group_events_path(event.group)

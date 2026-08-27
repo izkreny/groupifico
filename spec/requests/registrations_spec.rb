@@ -12,7 +12,7 @@ RSpec.describe "Registrations", type: :request do
       end
     end
 
-    context "when signed in as a stranger" do
+    context "when signed in as a non-member" do
       it "returns 404" do
         event = create(:event)
         sign_in_as(create(:user))
@@ -26,7 +26,7 @@ RSpec.describe "Registrations", type: :request do
     context "when signed in as an active member" do
       it "shows the registrations page" do
         event = create(:event)
-        member = create(:member, status: :active, group: event.group)
+        member = create(:member, :active, group: event.group)
         sign_in_as(member.user)
 
         get group_event_registrations_path(event.group, event)
@@ -36,7 +36,7 @@ RSpec.describe "Registrations", type: :request do
 
       it "lists only registrations from groups the acting user belongs to" do
         event = create(:event)
-        member = create(:member, status: :active, group: event.group)
+        member = create(:member, :active, group: event.group)
         own_registration = create(:registration, event:, member:)
         other_registration = create(:registration)
         sign_in_as(member.user)
@@ -60,7 +60,7 @@ RSpec.describe "Registrations", type: :request do
       end
     end
 
-    context "when signed in as a stranger" do
+    context "when signed in as a non-member" do
       it "returns 404" do
         registration = create(:registration)
         sign_in_as(create(:user))
@@ -75,7 +75,7 @@ RSpec.describe "Registrations", type: :request do
       it "shows the registration page" do
         event = create(:event)
         registration = create(:registration, event:, member: create(:member, group: event.group))
-        viewer = create(:member, status: :active, group: event.group)
+        viewer = create(:member, :active, group: event.group)
         sign_in_as(viewer.user)
 
         get group_event_registration_path(event.group, event, registration)
@@ -98,7 +98,7 @@ RSpec.describe "Registrations", type: :request do
     end
 
     context "when signed in as an inactive member" do
-      it "returns 404, exactly like a stranger" do
+      it "returns 404, exactly like a non-member" do
         event = create(:event)
         registration = create(:registration, event:, member: create(:member, group: event.group))
         viewer = create(:member, :inactive, group: event.group)
@@ -122,7 +122,7 @@ RSpec.describe "Registrations", type: :request do
       end
     end
 
-    context "when signed in as a stranger" do
+    context "when signed in as a non-member" do
       it "returns 404" do
         event = create(:event)
         sign_in_as(create(:user))
@@ -136,7 +136,7 @@ RSpec.describe "Registrations", type: :request do
     context "when signed in as an active member" do
       it "shows the new registration page" do
         event = create(:event)
-        member = create(:member, status: :active, group: event.group)
+        member = create(:member, :active, group: event.group)
         sign_in_as(member.user)
 
         get new_group_event_registration_path(event.group, event)
@@ -157,7 +157,7 @@ RSpec.describe "Registrations", type: :request do
       end
     end
 
-    context "when signed in as a stranger" do
+    context "when signed in as a non-member" do
       it "returns 404" do
         registration = create(:registration)
         sign_in_as(create(:user))
@@ -172,7 +172,7 @@ RSpec.describe "Registrations", type: :request do
       it "shows the edit registration page" do
         event = create(:event)
         registration = create(:registration, event:, member: create(:member, group: event.group))
-        viewer = create(:member, status: :active, group: event.group)
+        viewer = create(:member, :active, group: event.group)
         sign_in_as(viewer.user)
 
         get edit_group_event_registration_path(event.group, event, registration)
@@ -194,7 +194,7 @@ RSpec.describe "Registrations", type: :request do
       end
     end
 
-    context "when signed in as a stranger" do
+    context "when signed in as a non-member" do
       it "returns 404 and does not create the registration" do
         event = create(:event)
         member = create(:member, group: event.group)
@@ -210,7 +210,7 @@ RSpec.describe "Registrations", type: :request do
     context "when signed in as an active member" do
       it "creates the registration" do
         event = create(:event)
-        member = create(:member, status: :active, group: event.group)
+        member = create(:member, :active, group: event.group)
         sign_in_as(member.user)
 
         expect { post group_event_registrations_path(event.group, event), params: { registration: { member_id: member.id } } }.to change(Registration, :count).by(1)
@@ -219,7 +219,7 @@ RSpec.describe "Registrations", type: :request do
 
       it "re-renders the new page when the registration is invalid" do
         event = create(:event)
-        member = create(:member, status: :active, group: event.group)
+        member = create(:member, :active, group: event.group)
         sign_in_as(member.user)
 
         expect { post group_event_registrations_path(event.group, event), params: { registration: { member_id: "" } } }
@@ -255,7 +255,7 @@ RSpec.describe "Registrations", type: :request do
       end
     end
 
-    context "when signed in as a stranger" do
+    context "when signed in as a non-member" do
       it "returns 404 and leaves the registration unchanged" do
         registration = create(:registration, status: "reserved")
         sign_in_as(create(:user))
@@ -271,7 +271,7 @@ RSpec.describe "Registrations", type: :request do
       it "updates the registration" do
         event = create(:event)
         registration = create(:registration, event:, member: create(:member, group: event.group))
-        actor = create(:member, status: :active, group: event.group)
+        actor = create(:member, :active, group: event.group)
         sign_in_as(actor.user)
 
         patch group_event_registration_path(event.group, event, registration), params: { registration: { status: "yes" } }
@@ -283,7 +283,7 @@ RSpec.describe "Registrations", type: :request do
       it "re-renders the edit page when the registration is invalid" do
         event = create(:event)
         registration = create(:registration, event:, member: create(:member, group: event.group))
-        actor = create(:member, status: :active, group: event.group)
+        actor = create(:member, :active, group: event.group)
         sign_in_as(actor.user)
 
         patch group_event_registration_path(event.group, event, registration), params: { registration: { member_id: "" } }
@@ -296,7 +296,7 @@ RSpec.describe "Registrations", type: :request do
         registration = create(:registration, event:, member: create(:member, group: event.group))
         original_event = registration.event
         other_event = create(:event)
-        actor = create(:member, status: :active, group: event.group)
+        actor = create(:member, :active, group: event.group)
         sign_in_as(actor.user)
 
         patch group_event_registration_path(event.group, event, registration), params: { registration: { event_id: other_event.id } }
@@ -333,7 +333,7 @@ RSpec.describe "Registrations", type: :request do
       end
     end
 
-    context "when signed in as a stranger" do
+    context "when signed in as a non-member" do
       it "returns 404 and does not destroy the registration" do
         registration = create(:registration)
         sign_in_as(create(:user))
@@ -349,7 +349,7 @@ RSpec.describe "Registrations", type: :request do
       it "destroys the registration" do
         event = create(:event)
         registration = create(:registration, event:, member: create(:member, group: event.group))
-        actor = create(:member, status: :active, group: event.group)
+        actor = create(:member, :active, group: event.group)
         sign_in_as(actor.user)
 
         expect { delete group_event_registration_path(event.group, event, registration) }
@@ -380,7 +380,7 @@ RSpec.describe "Registrations", type: :request do
   describe "a member_id belonging to another group" do
     it "is ignored, so the registration is not created" do
       event = create(:event)
-      actor = create(:member, status: :active, group: event.group)
+      actor = create(:member, :active, group: event.group)
       outsider = create(:member)
       sign_in_as(actor.user)
 

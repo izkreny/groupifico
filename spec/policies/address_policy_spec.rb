@@ -48,11 +48,11 @@ RSpec.describe AddressPolicy, type: :policy do
   # that refusal is what this rule reads.
   describe_rule :update? do
     failed "when the member of the owning group is paused" do
-      before { create(:member, user: user, status: :paused, group: create(:group, address: record)) }
+      before { create(:member, :paused, user: user, group: create(:group, address: record)) }
     end
 
     succeed "when the member of the owning group is active" do
-      before { create(:member, user: user, status: :active, group: create(:group, address: record)) }
+      before { create(:member, :active, user: user, group: create(:group, address: record)) }
     end
   end
 
@@ -62,10 +62,10 @@ RSpec.describe AddressPolicy, type: :policy do
   describe "the relation scope" do
     it "excludes an address reachable only through a group the user has left" do
       gone = create(:address)
-      create(:member, user: user, status: :inactive, group: create(:group, address: gone))
+      create(:member, :inactive, user: user, group: create(:group, address: gone))
 
       kept = create(:address)
-      create(:member, user: user, status: :active, group: create(:group, address: kept))
+      create(:member, :active, user: user, group: create(:group, address: kept))
 
       scoped = described_class.new(nil, user: user).apply_scope(Address.all, type: :active_record_relation)
 

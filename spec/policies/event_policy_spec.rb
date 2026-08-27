@@ -13,8 +13,8 @@ RSpec.describe EventPolicy, type: :policy do
   describe "the relation scope" do
     it "excludes events of a group the user has left" do
       user = create(:user)
-      gone = create(:event, group: create(:member, user: user, status: :inactive).group)
-      kept = create(:event, group: create(:member, user: user, status: :active).group)
+      gone = create(:event, group: create(:member, :inactive, user: user).group)
+      kept = create(:event, group: create(:member, :active, user: user).group)
 
       scoped = described_class.new(nil, user: user).apply_scope(Event.all, type: :active_record_relation)
 

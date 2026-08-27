@@ -13,8 +13,8 @@ RSpec.describe RegistrationPolicy, type: :policy do
   describe "the relation scope" do
     it "excludes registrations on events of a group the user has left" do
       user = create(:user)
-      left = create(:member, user: user, status: :inactive).group
-      kept_group = create(:member, user: user, status: :active).group
+      left = create(:member, :inactive, user: user).group
+      kept_group = create(:member, :active, user: user).group
 
       gone = create(:registration, event: create(:event, group: left), member: create(:member, group: left))
       kept = create(:registration, event: create(:event, group: kept_group), member: create(:member, group: kept_group))
