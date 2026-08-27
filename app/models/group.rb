@@ -33,13 +33,6 @@ class Group < ApplicationRecord
   validates :name, presence: true, length: { maximum: 250 }
   validates :description, length: { maximum: 25_000 }
 
-  # Every address this group can reach: its own, plus its events'. A relation rather than the
-  # array a union produced, so callers can ask the database instead of loading every row and
-  # filtering in Ruby - `event_params` checks a submitted address_id against this set on every
-  # write, and `where id IN` is the query for that. Duplicates cannot arise, so the `distinct`
-  # that `events_addresses` carries is not needed here.
-  #
-  # `where(id: nil)` matches nothing, so a group with no address of its own needs no branch.
   def addresses
     Address.where(id: events.select(:address_id)).or(Address.where(id: address_id))
   end
