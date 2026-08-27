@@ -26,7 +26,7 @@ One consequence of that window is worth knowing rather than fixing: between the 
 ## Steps
 
 - `git mv .agents/github.md .agents/gh-solo.md`, so history follows the file
-- Rewrite the opening line to name `gh-solo:tracker` and `gh-solo:pr-flow`, leaving the rest of the sentence and every other section untouched
+- Rewrite the opening line to name the `gh-solo` skills collectively, naming no individual skill, and leave the rest of the sentence and every other section untouched
 - Repoint the inbound links: `AGENTS.md` twice, `.agents/testing.md` once, link text and target both
 
 ## Verification
@@ -40,11 +40,11 @@ A docs-only diff gives `bin/ci` almost nothing to catch, and the grep proves onl
 
 ## Open questions
 
-- Should this file name the skills at all? Naming them buys precision and costs a line that goes stale on every rename, which is half of why this issue exists. Wording it as "the GitHub workflow skills that read this file" cannot go stale, and matches the rule against copies that nothing invalidates. My recommendation is still to keep the identifiers: the file is the per-repo half of a two-file contract, and a reader who cannot tell which skills it binds cannot tell whether it still binds anything. If the answer is the generic wording instead, the issue's acceptance criteria change with it.
 - The branch and this plan file both carry the slug `update-skill-names`, which the rewritten scope has outgrown. They still match each other, which is the constraint that matters, so my recommendation is to leave both alone rather than rename a branch with an open PR for cosmetics. Say if you would rather they read true.
 
 ## Settled
 
+- Should this file name the skills at all? No individual skill is named. The opening line becomes `Per-repo facts for the `gh-solo` skills that read this file: the values they tell you to look up here rather than assume, and the places this repository differs from their defaults.` The argument for keeping the identifiers was precision, and checking the plugin killed it: all four of its skills read this file, the line it carried named two, so the enumeration was already understating by half before either rename made it stale. After the move the filename carries the binding, and a divergence between filename and plugin fails loudly where a stale enumeration inside the file does not.
 - Rewritten on 2026-08-27, after `gh-solo` 2.0.0 landed. The original plan covered one stale line, on the premise that the plugin had only renamed its skills. 2.0.0 also renamed the per-repo config file it reads, which turns a cosmetic edit into a silent loss of every convention this repository records, so the file rename became the deliverable and the line became part of it.
 - The sequence step that waited on unfinished plugin changes is gone: 2.0.0 has landed and is tagged.
 - No `Reviewer agent:` line is added. 2.0.0 lets a repository appoint its own reviewer in this file, and this one wants the reviewer the plugin ships, which is what an absent line already means.
