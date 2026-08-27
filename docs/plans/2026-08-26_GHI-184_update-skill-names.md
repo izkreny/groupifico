@@ -40,10 +40,11 @@ A docs-only diff gives `bin/ci` almost nothing to catch, and the grep proves onl
 
 ## Open questions
 
-- The branch and this plan file both carry the slug `update-skill-names`, which the rewritten scope has outgrown. They still match each other, which is the constraint that matters, so my recommendation is to leave both alone rather than rename a branch with an open PR for cosmetics. Say if you would rather they read true.
+None.
 
 ## Settled
 
+- Should the branch and this plan file lose the `update-skill-names` slug the scope outgrew? No. They match each other, which is the only constraint the format imposes, and renaming a branch under an open pull request trades a live PR association for cosmetics. Settled in the terminal, 2026-08-27.
 - Should this file name the skills at all? No individual skill is named. The opening line becomes `Per-repo facts for the `gh-solo` skills that read this file: the values they tell you to look up here rather than assume, and the places this repository differs from their defaults.` The argument for keeping the identifiers was precision, and checking the plugin killed it: all four of its skills read this file, the line it carried named two, so the enumeration was already understating by half before either rename made it stale. After the move the filename carries the binding, and a divergence between filename and plugin fails loudly where a stale enumeration inside the file does not.
 - Rewritten on 2026-08-27, after `gh-solo` 2.0.0 landed. The original plan covered one stale line, on the premise that the plugin had only renamed its skills. 2.0.0 also renamed the per-repo config file it reads, which turns a cosmetic edit into a silent loss of every convention this repository records, so the file rename became the deliverable and the line became part of it.
 - The sequence step that waited on unfinished plugin changes is gone: 2.0.0 has landed and is tagged.
