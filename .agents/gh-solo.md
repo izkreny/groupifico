@@ -2,16 +2,6 @@
 
 Per-repo facts for the `gh-solo` skills that read this file: the values they tell you to look up here rather than assume, and the places this repository differs from their defaults. This file wins on any conflict. Anything not listed here follows the skills' own standards.
 
-## Pushing to `main`
-
-Nothing pushes directly to `main`. What carries that rule is worth telling apart from what merely looks like it does.
-
-`main`'s **branch protection** is the enforcement. It is a server-side rule on the ref, so it does not care how a push is spelled: a pull request is required, `enforce_admins` is on, and the four checks below must pass. A repository without this has no enforcement of the rule, only a convention.
-
-`gh-solo` ships a **`PreToolUse` hook** of its own, which parses the command and resolves the destination properly rather than matching text. It decides *ask* rather than *deny*, on purpose, since it fires in every repository and plenty are legitimately trunk-only. It was watched firing on `git push origin refs/heads/main` and the confirmation reached a human, who refused it. Its one limit worth knowing is that it fails open on a destination it cannot resolve statically, such as a variable or an `eval`.
-
-**This repository deliberately carries no `permissions.deny` push rule of its own.** That is a decision, not an omission, so do not add one back. Such a rule matches command text and names the remote as a literal string, which means it goes stale in silence: rename the remote and it stops matching anything while still reading as protection. That is exactly what happened here, and #181 was opened to fix it. The hook asks `git remote` at push time instead, so it cannot go stale that way, and it was measured catching every spelling a hand-written list would have chased. Re-adding one would buy a keystroke and bring the failure mode back with it.
-
 ## Worktree folders
 
 For development, clone the repository into a folder named `main` inside a dedicated project folder, for example `~/Projects/groupifico/main`, so the worktrees for the parallel streams land beside it as siblings: `second`, with `third` to come when two streams feel comfortable. Each folder hosts one issue's branch, or a `gh stack` of dependent branches, at a time, and is reused across issues; never create a folder per branch. The decision record is the beta-scope spike plan, `docs/plans/2026-08-23_GHI-150_beta-scope-ai-harness.md`.
