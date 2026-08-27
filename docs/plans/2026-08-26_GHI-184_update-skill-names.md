@@ -28,6 +28,7 @@ One consequence of that window is worth knowing rather than fixing: between the 
 - `git mv .agents/github.md .agents/gh-solo.md`, so history follows the file
 - Rewrite the opening line to name the `gh-solo` skills collectively, naming no individual skill, and leave the rest of the sentence and every other section untouched
 - Repoint the inbound links: `AGENTS.md` twice, `.agents/testing.md` once, link text and target both
+- Correct the two present-tense references in `docs/adr/2026-08-20_github-repository-conventions_0001.md` to the new filename, and drop `docs/adr/` from the grep gate with them
 
 ## Verification
 
