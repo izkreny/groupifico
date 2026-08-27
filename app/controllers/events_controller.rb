@@ -111,9 +111,7 @@ class EventsController < ApplicationController
       id.present? && !@group.members.exists?(id)
     end
 
-    # `Group#addresses` unions the group's own address with its events', so it answers an Array as
-    # often as a relation - `exists?` is not available on it, and `none?` with a block works for both.
     def foreign_address?(id)
-      id.present? && @group.addresses.none? { |address| address.id == id.to_i }
+      id.present? && !@group.addresses.exists?(id)
     end
 end
