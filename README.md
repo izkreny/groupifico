@@ -78,6 +78,7 @@ Attributes read `type name "key, comment"`: type before name, which is mermaid's
 > - Foreign key attributes are omitted where a relationship line already shows the link. `creator_id` and `manager_id` are the exception, because both point at `MEMBER` so their names cannot say where they point, and neither has a database constraint behind it.
 > - The `sessions` table is not drawn. Authentication gets its own diagram once passwordless login lands, rather than crowding this one.
 > - Column limits are Rails-level facts. SQLite does not enforce a declared length, so a limit is what the model validations are set from and what a move to another database engine would need, not a constraint the database applies.
+> - `MEMBER 1+ to 1 GROUP` is what the create path guarantees, not what the database enforces. A group is created with its creator as an `owner` member, so it never starts empty; nothing stops the last member being removed afterwards, and no constraint or validation upholds the `1+`.
 
 ```mermaid
 ---
@@ -100,7 +101,7 @@ erDiagram
   %% RELATIONSHIPS
   USER    1   to  0+  MEMBER        :  "↓ become … belong ↑"
   USER    1   to  1   USER_PROFILE  :  "↓ has    … belong ↑"
-  MEMBER  0+  to  1   GROUP         :  "↓ belong … has ↑"
+  MEMBER  1+  to  1   GROUP         :  "↓ belong … has ↑"
   GROUP   1   to  0+  EVENT         :  "↓ has    … belong ↑"
   EVENT   1   to  0+  REGISTRATION  :  "↓ has    … belong ↑"
   MEMBER  1   to  0+  REGISTRATION  :  "↓ has    … belong ↑"

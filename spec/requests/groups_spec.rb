@@ -167,12 +167,38 @@ RSpec.describe "Groups", type: :request do
         expect(response).to redirect_to group_path(Group.sole)
       end
 
-      it "re-renders the new page when the group is invalid" do
+      it "creates a Member joining the acting user to the group with the owner role" do
+        user = create(:user)
+        sign_in_as(user)
+
+        expect { post groups_path, params: { group: { name: "Choraliers" } } }
+          .to change(Member, :count).by(1)
+
+        member = Member.sole
+        expect(member.user).to eq user
+        expect(member.group).to eq Group.sole
+        expect(member.role).to eq "owner"
+      end
+
+      it "lands the creator on the group page instead of a 404" do
         sign_in_as(create(:user))
 
-        expect { post groups_path, params: { group: { name: "" } } }
-          .not_to change(Group, :count)
+        post groups_path, params: { group: { name: "Choraliers" } }
+        follow_redirect!
 
+        expect(response).to have_http_status :ok
+      end
+
+      it "responds :unprocessable_entity and creates no records when the group is invalid" do
+        sign_in_as(create(:user))
+
+        group_count  = Group.count
+        member_count = Member.count
+
+        post groups_path, params: { group: { name: "" } }
+
+        expect(Group.count).to eq group_count
+        expect(Member.count).to eq member_count
         expect(response).to have_http_status :unprocessable_entity
       end
     end
