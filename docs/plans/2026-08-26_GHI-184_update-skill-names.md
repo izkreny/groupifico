@@ -1,43 +1,50 @@
 > 🤖 Written by AI --- read/modified by izkreny! 🤓
 
-# Plan: update the skill names in .agents/github.md (#184)
+# Plan: rename .agents/github.md to .agents/gh-solo.md (#184)
 
 ## Approach
 
-One line changes. `.agents/github.md` opens by naming the two skills it serves, and both were renamed when the GitHub suite moved into the `gh-solo` plugin: they are `gh-solo:tracker` and `gh-solo:pr-flow` now. Nothing else about the contract moved, so nothing else in the file is false: the skills still look for this file at this path, `.claude/github.md` still resolves here through the symlink, and the sections that say "the skills" generically stay correct as written.
+`gh-solo` 2.0.0 reads its per-repo config from `.agents/gh-solo.md`, falling back to `.claude/gh-solo.md`, and contains no reference to `.agents/github.md` anywhere. So the file this repository keeps its GitHub conventions in is invisible to the flow that reads them: the remote's name, the CI check-run names, the commit and branch type vocabulary, and `bin/ci` as the one local gate. Nothing errors, which is what makes it worth a branch. The skills find no file and start asking for facts that are already written down, and a flow that refuses to invent check commands has nothing to refuse from.
 
-The interesting part of this branch is not the edit, it is the ordering. The file describes the owner's agent space, and the sentence this branch writes is only true once the renamed skills are the ones actually in use there. Merging first would swap one false line for another, so the sequence below gates the merge rather than the branch.
+The rename is the deliverable. The stale opening line this issue started as rides along in the same edit, because it is the same sentence a reader reaches first. Every other fact in the file stays true and stays where it is, and `.claude/gh-solo.md` resolves for free through the existing symlink.
 
-Old references elsewhere in the tree are deliberately left alone. `docs/plans/` and `docs/adr/` name the predecessors too, four of the plan files through an absolute path to the earlier copy of the suite's docs check, and every one of those is a record of what was true when it was written. None of them breaks either: that check skips any backticked span beginning with `/`, so a path that stops resolving is a path it never resolved in the first place.
+Two things follow from the move rather than from the edit. Inbound links have to move with it, in `AGENTS.md` twice and in `.agents/testing.md` once, where the link text and the target differ and both are wrong after the move. And the docs check needs `--ignore '.agents/github.md'` from here on, because `docs/plans/` and `docs/adr/` name the old path in several places and every one of them is a record of what was true when it was written. That is the allowance #81 and #124 each took for a file they were deleting.
 
 ## Sequence outside this repository
 
-None of this is repository work, none of it is an agent's to do, and an install is owner-gated in any case. The branch waits on it rather than driving it, in this order:
+None of this is repository work and none of it is an agent's to do, an install being owner-gated in any case. The branch waits on it rather than driving it, in this order:
 
-1. Finish the outstanding changes to the `gh-solo` plugin, so the names this branch records are the ones the plugin ships.
-2. Install and enable the plugin, then confirm the three skills resolve under their new names: `gh-solo:tracker`, `gh-solo:pr-flow`, `gh-solo:implement`.
-3. Remove the standalone predecessors the plugin replaces, the retired agent definition included, so no name resolves to two definitions.
+1. Install and enable `gh-solo` 2.0.0.
+2. Confirm the owner-facing skills resolve under their new names: `gh-solo:tracker`, `gh-solo:pr-flow`, `gh-solo:implement`. The `reviewer` skill is loaded by the agent a review round spawns, never typed.
+3. Remove the pre-plugin standalone skills the plugin replaces, and the retired implementer agent definition with them. 2.0.0 deleted that agent on purpose: review is the subagent now, because it needs a context that has not already reasoned its way to why the code looks the way it does, and implementation is the opposite case and runs in session.
 4. Say so on this PR, and the merge follows.
 
-Step 2 before step 3 is the part worth stating: while both exist the old names still work, and there is no window where the flow this repository depends on is unavailable.
+Install before remove is the part worth stating. The two name sets do not collide, so while both exist the old names keep working and there is no window where the flow this repository depends on is unavailable.
+
+One consequence of that window is worth knowing rather than fixing: between the install and this merge, 2.0.0 cannot see this repository's conventions, because the file it looks for does not exist yet. Expect the flow to ask for the remote's name and the check command during exactly the branch that makes them readable again. This PR closes that gap; nothing else needs to.
 
 ## Steps
 
-- Rewrite the opening line of `.agents/github.md` to name `gh-solo:tracker` and `gh-solo:pr-flow`, leaving the rest of the sentence and every other section untouched
+- `git mv .agents/github.md .agents/gh-solo.md`, so history follows the file
+- Rewrite the opening line to name `gh-solo:tracker` and `gh-solo:pr-flow`, leaving the rest of the sentence and every other section untouched
+- Repoint the inbound links: `AGENTS.md` twice, `.agents/testing.md` once, link text and target both
 
 ## Verification
 
 - `bin/ci` passes on this branch
-- The suite's docs check passes on this plan file and on `.agents/github.md`
-- `grep -rn 'github-solo-dev-repo\|github-pr-flow' .agents/` returns nothing
-- [owner] The renamed skills are installed and enabled, and the standalone predecessors are gone, before this merges
+- The suite's docs check passes over `AGENTS.md`, `.agents/`, `docs/adr/` and this plan file, run with `--root .` and `--ignore '.agents/github.md'`, which covers the historical records and this plan's own account of the old name
+- `grep -rIn 'github\.md' --exclude-dir=.git .` returns hits only under `docs/plans/` and `docs/adr/`
+- [owner] `gh-solo` 2.0.0 is installed and enabled and the pre-plugin suite is gone, before this merges
 
-A docs-only diff gives `bin/ci` almost nothing to catch, and the grep proves only that two strings are absent. What none of these gates can see is whether the names now in the file are the names that actually resolve in the owner's agent space; invoking the skills is what answers that, which is why the last box is the owner's.
+A docs-only diff gives `bin/ci` almost nothing to catch, and the grep proves only that a string is absent from the live files. What none of these gates can see is whether the renamed file is actually the one 2.0.0 picks up in this repository; the first tracker or PR command that quotes this repo's own check command back is what answers that, which is why the last box is the owner's.
 
 ## Open questions
 
-- Should this file name the skills at all? Naming them buys precision and costs a line that goes stale on every rename, which is what produced this issue. Wording it as "the GitHub workflow skills that read this file" cannot go stale, and matches the rule against copies that nothing invalidates. My recommendation is to keep the identifiers: the file is the per-repo half of a two-file contract, and a reader who cannot tell which skills it binds cannot tell whether it still binds anything. A rename is cheap and rare; ambiguity about the contract is neither. If the answer is the generic wording instead, the issue's acceptance criteria change with it.
+- Should this file name the skills at all? Naming them buys precision and costs a line that goes stale on every rename, which is half of why this issue exists. Wording it as "the GitHub workflow skills that read this file" cannot go stale, and matches the rule against copies that nothing invalidates. My recommendation is still to keep the identifiers: the file is the per-repo half of a two-file contract, and a reader who cannot tell which skills it binds cannot tell whether it still binds anything. If the answer is the generic wording instead, the issue's acceptance criteria change with it.
+- The branch and this plan file both carry the slug `update-skill-names`, which the rewritten scope has outgrown. They still match each other, which is the constraint that matters, so my recommendation is to leave both alone rather than rename a branch with an open PR for cosmetics. Say if you would rather they read true.
 
 ## Settled
 
-None yet.
+- Rewritten on 2026-08-27, after `gh-solo` 2.0.0 landed. The original plan covered one stale line, on the premise that the plugin had only renamed its skills. 2.0.0 also renamed the per-repo config file it reads, which turns a cosmetic edit into a silent loss of every convention this repository records, so the file rename became the deliverable and the line became part of it.
+- The sequence step that waited on unfinished plugin changes is gone: 2.0.0 has landed and is tagged.
+- No `Reviewer agent:` line is added. 2.0.0 lets a repository appoint its own reviewer in this file, and this one wants the reviewer the plugin ships, which is what an absent line already means.
