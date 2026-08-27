@@ -2,19 +2,15 @@
 
 Per-repo facts for the `gh-solo` skills that read this file: the values they tell you to look up here rather than assume, and the places this repository differs from their defaults. This file wins on any conflict. Anything not listed here follows the skills' own standards.
 
-## The remote is named `origin`
-
-`git remote` prints exactly one name and it is `origin`. Nothing forks from anywhere, so that is the name every tool, snippet and default already assumes and this section overrides nothing. It is recorded because the rename is **per clone rather than per repository**: the committed files changed once, and every machine already holding a clone runs the command itself.
-
-    git remote rename upstream origin
-
-Remotes live in the shared config, so one run covers a clone's worktrees together. A clone made after that change needs nothing.
-
 ## Pushing to `main`
 
-`.agents/settings.json` denies the push shapes that reach `main` directly, carrying the standing rule that nothing pushes there. The rules name the remote literally, so **renaming the remote is a change to those rules, in the same commit**: a rule naming a remote that no longer exists does not fail loudly, it stops existing.
+Three things carry the standing rule that nothing pushes directly to `main`, and they are worth telling apart, because only one of them actually holds.
 
-They enumerate command shapes, and an enumeration has a floor no amount of widening lifts. The enforcement that does not depend on matching a string is `main`'s branch protection, which requires a pull request and the four checks below. Treat the deny rules as the fast local guard and the protection as the one that actually holds.
+`main`'s **branch protection** is the enforcement. It is a server-side rule on the ref, so it does not care how a push is spelled: a pull request is required, `enforce_admins` is on, and the four checks below must pass. A repository without this has no enforcement of the rule, only a convention.
+
+`gh-solo` ships a **`PreToolUse` hook** of its own, which parses the command and resolves the destination properly rather than matching text. It decides *ask* rather than *deny*, on purpose, since it fires in every repository and plenty are legitimately trunk-only. Two consequences: an unattended session can answer that ask without a human, and the hook fails open on a destination it cannot resolve statically, such as a variable or an `eval`.
+
+The single **deny rule** in `.agents/settings.json` is neither of those. It is a local convenience that stops an agent attempting the obvious spelling, and it names the remote literally, so **renaming the remote is a change to that rule, in the same commit**: a rule naming a remote that no longer exists does not fail loudly, it stops existing. It is deliberately one rule rather than a list of spellings, because a longer list of literal strings reads as more protective without being so, and the hook already covers the shapes such a list would chase.
 
 ## Worktree folders
 
