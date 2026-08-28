@@ -24,16 +24,17 @@ class CreateRoles < ActiveRecord::Migration[8.1]
     raise ActiveRecord::IrreversibleMigration
   end
 
-  # Public, and written in SQL rather than through the models, so the parity spec can run the code
-  # that ships against rows it inserts itself.
-  def backfill_roles
-    now = connection.quote(Time.current)
+  private
+    # Written in SQL rather than through the models, so a later change to `Role` cannot rewrite
+    # what this migration did to rows that already exist.
+    def backfill_roles
+      now = connection.quote(Time.current)
 
-    BACKFILL.each do |value, name|
-      execute <<~SQL.squish
-        INSERT INTO roles (member_id, name, created_at, updated_at)
-        SELECT id, #{connection.quote(name)}, #{now}, #{now} FROM members WHERE role = #{value}
-      SQL
+      BACKFILL.each do |value, name|
+        execute <<~SQL.squish
+          INSERT INTO roles (member_id, name, created_at, updated_at)
+          SELECT id, #{connection.quote(name)}, #{now}, #{now} FROM members WHERE role = #{value}
+        SQL
+      end
     end
-  end
 end
