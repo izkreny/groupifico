@@ -1,4 +1,12 @@
 class MembersController < ApplicationController
+  # A posted role name outside `Role::NAMES` cannot come from the form, whose checkboxes are
+  # rendered from that list, so it is a stale page or a hand-made request. It is refused rather
+  # than dropped: an all-unknown list would filter to nothing, and `roles=` reads nothing as
+  # "hold no roles", which would revoke every role the member has and answer with a success.
+  UnknownRole = Class.new(StandardError)
+
+  rescue_from UnknownRole, with: :refuse_unknown_role
+
   before_action :set_group
   before_action :set_member, only: %i[ show edit update destroy ]
 
@@ -78,14 +86,18 @@ class MembersController < ApplicationController
     end
 
     # Roles arrive as names and the association writer wants records, so the swap happens here
-    # rather than as a second writer on the model that accepts both. `&` keeps the vocabulary and
-    # drops repeats in one step: a name that reached `roles=` unsavable would raise on an existing
-    # member, where the writer saves at assignment time, rather than answering with a form error.
+    # rather than as a second writer on the model that accepts both. Repeats collapse, and an empty
+    # list stays an instruction: it is what an unticked form posts, and it means "hold no roles".
     def role_records(permitted)
       return permitted unless permitted.key?(:roles)
 
-      role_names = permitted[:roles] & Role::NAMES
+      role_names = permitted[:roles].compact_blank.uniq
+      raise UnknownRole if role_names.difference(Role::NAMES).any?
 
       permitted.merge(roles: role_names.map { Role.new(name: it) })
+    end
+
+    def refuse_unknown_role
+      head :unprocessable_entity
     end
 end

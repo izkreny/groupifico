@@ -191,14 +191,15 @@ RSpec.describe "Members", type: :request do
     end
 
     context "when signed in as an active member" do
-      it "ignores a posted role name outside the vocabulary" do
+      it "refuses a posted role name outside the vocabulary, creating nobody" do
         actor   = create(:member, :active)
         invitee = create(:user)
         sign_in_as(actor.user)
 
-        post group_members_path(actor.group), params: { member: { user_id: invitee.id, roles: [ "events_administrator", "bogus" ] } }
+        expect { post group_members_path(actor.group), params: { member: { user_id: invitee.id, roles: [ "events_administrator", "bogus" ] } } }
+          .not_to change(Member, :count)
 
-        expect(Member.find_by(user: invitee).roles.map(&:name)).to eq [ "events_administrator" ]
+        expect(response).to have_http_status :unprocessable_entity
       end
 
       it "creates the member with the roles posted for them" do
@@ -282,14 +283,24 @@ RSpec.describe "Members", type: :request do
         expect(member.reload.roles.map(&:name)).to contain_exactly("administrator", "events_administrator")
       end
 
-      it "ignores a posted role name outside the vocabulary" do
-        member = create(:member, :active)
+      it "refuses a posted role name outside the vocabulary, leaving the roles alone" do
+        member = create(:member, :active, roles: [ build(:role, name: "owner") ])
         sign_in_as(member.user)
 
-        patch group_member_path(member.group, member), params: { member: { roles: [ "administrator", "bogus" ] } }
+        patch group_member_path(member.group, member), params: { member: { roles: [ "bogus" ] } }
+
+        expect(response).to have_http_status :unprocessable_entity
+        expect(member.reload.roles.map(&:name)).to eq [ "owner" ]
+      end
+
+      it "clears the roles when the form posts none" do
+        member = create(:member, :active, roles: [ build(:role, name: "owner") ])
+        sign_in_as(member.user)
+
+        patch group_member_path(member.group, member), params: { member: { status: "active", roles: [ "" ] } }
 
         expect(response).to redirect_to group_member_path(member.group, member)
-        expect(member.reload.roles.map(&:name)).to eq [ "administrator" ]
+        expect(member.reload.roles).to be_empty
       end
 
       it "grants a role posted twice exactly once" do
