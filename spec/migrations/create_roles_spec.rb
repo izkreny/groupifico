@@ -16,21 +16,23 @@ RSpec.describe CreateRoles do
   end
 
   describe "#backfill_roles" do
-    it "leaves a member who was an owner administering everything" do
+    it "leaves a member who was an owner holding the owner role" do
       member = create(:member)
       connection.execute("UPDATE members SET role = 0 WHERE id = #{member.id}")
 
       described_class.new.backfill_roles
 
+      expect(member.roles.map(&:name)).to eq [ "owner" ]
       expect(member.can_manage?(:members)).to be true
     end
 
-    it "leaves a member who was an admin administering everything but ownership" do
+    it "leaves a member who was an admin holding the administrator role" do
       member = create(:member)
       connection.execute("UPDATE members SET role = 2 WHERE id = #{member.id}")
 
       described_class.new.backfill_roles
 
+      expect(member.roles.map(&:name)).to eq [ "administrator" ]
       expect(member.can_manage?(:members)).to be true
     end
 
