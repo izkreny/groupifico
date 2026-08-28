@@ -74,6 +74,13 @@ RSpec.describe Member, type: :model do
       expect(member.can_manage?(:songs)).to be true
     end
 
+    it "answers every module for a member holding owner alongside a module role" do
+      member = create(:member, roles: [ build(:role, name: "owner"), build(:role, name: "events_administrator") ])
+
+      expect(member.can_manage?(:events)).to be true
+      expect(member.can_manage?(:songs)).to be true
+    end
+
     it "answers an administrator-only question for an owner holding no administrator role" do
       member = create(:member, roles: [ build(:role, name: "owner") ])
 
