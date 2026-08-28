@@ -78,10 +78,14 @@ class MembersController < ApplicationController
     end
 
     # Roles arrive as names and the association writer wants records, so the swap happens here
-    # rather than as a second writer on the model that accepts both.
+    # rather than as a second writer on the model that accepts both. `&` keeps the vocabulary and
+    # drops repeats in one step: a name that reached `roles=` unsavable would raise on an existing
+    # member, where the writer saves at assignment time, rather than answering with a form error.
     def role_records(permitted)
       return permitted unless permitted.key?(:roles)
 
-      permitted.merge(roles: permitted[:roles].compact_blank.map { Role.new(name: it) })
+      role_names = permitted[:roles] & Role::NAMES
+
+      permitted.merge(roles: role_names.map { Role.new(name: it) })
     end
 end

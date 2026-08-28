@@ -191,6 +191,16 @@ RSpec.describe "Members", type: :request do
     end
 
     context "when signed in as an active member" do
+      it "ignores a posted role name outside the vocabulary" do
+        actor   = create(:member, :active)
+        invitee = create(:user)
+        sign_in_as(actor.user)
+
+        post group_members_path(actor.group), params: { member: { user_id: invitee.id, roles: [ "events_administrator", "bogus" ] } }
+
+        expect(Member.find_by(user: invitee).roles.map(&:name)).to eq [ "events_administrator" ]
+      end
+
       it "creates the member with the roles posted for them" do
         actor   = create(:member, :active)
         invitee = create(:user)
@@ -270,6 +280,26 @@ RSpec.describe "Members", type: :request do
 
         expect(response).to redirect_to group_member_path(member.group, member)
         expect(member.reload.roles.map(&:name)).to contain_exactly("administrator", "events_administrator")
+      end
+
+      it "ignores a posted role name outside the vocabulary" do
+        member = create(:member, :active)
+        sign_in_as(member.user)
+
+        patch group_member_path(member.group, member), params: { member: { roles: [ "administrator", "bogus" ] } }
+
+        expect(response).to redirect_to group_member_path(member.group, member)
+        expect(member.reload.roles.map(&:name)).to eq [ "administrator" ]
+      end
+
+      it "grants a role posted twice exactly once" do
+        member = create(:member, :active)
+        sign_in_as(member.user)
+
+        patch group_member_path(member.group, member), params: { member: { roles: [ "owner", "owner" ] } }
+
+        expect(response).to redirect_to group_member_path(member.group, member)
+        expect(member.reload.roles.map(&:name)).to eq [ "owner" ]
       end
 
       it "re-renders the edit page when the member is invalid" do
