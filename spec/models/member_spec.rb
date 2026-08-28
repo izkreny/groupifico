@@ -38,7 +38,7 @@ RSpec.describe Member, type: :model do
     it { is_expected.to belong_to(:group) }
     it { is_expected.to have_one(:profile).through(:user) }
     it { is_expected.to have_many(:registrations).dependent(:destroy) }
-    it { is_expected.to have_many(:roles).dependent(:destroy) }
+    it { is_expected.to have_many(:roles).dependent(:delete_all) }
     it { is_expected.to have_many(:events).through(:registrations) }
     it { is_expected.to have_many(:created_events).class_name("Event").with_foreign_key("creator_id").inverse_of(:creator) }
     it { is_expected.to have_many(:managed_events).class_name("Event").with_foreign_key("manager_id").inverse_of(:manager) }
@@ -88,9 +88,9 @@ RSpec.describe Member, type: :model do
       expect(member.can_manage?(:members)).to be false
     end
 
-    it "answers a module role added to the vocabulary without a migration" do
-      stub_const("Role::NAMES", Role::NAMES + [ "polls_administrator" ])
-      member = create(:member, roles: [ build(:role, name: "polls_administrator") ])
+    it "answers a module role the vocabulary has never heard of, so a new one needs no migration" do
+      member = create(:member)
+      member.roles.build(name: "polls_administrator")
 
       expect(member.can_manage?(:polls)).to be true
     end

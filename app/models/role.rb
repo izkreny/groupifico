@@ -38,9 +38,7 @@ class Role < ApplicationRecord
 
   belongs_to :member
 
-  # The list is read through a lambda rather than passed by value, so a spec that extends the
-  # vocabulary is validated against the extension rather than against the value frozen at load.
-  validates :name, inclusion: { in: ->(_role) { NAMES } }, uniqueness: { scope: :member_id }
+  validates :name, inclusion: { in: NAMES }, uniqueness: { scope: :member_id }
 
   # Where `owner` implies `administrator`, and both imply every module role. One row per role a
   # member actually holds, and the implication lives here instead.

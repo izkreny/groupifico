@@ -35,7 +35,7 @@ class Member < ApplicationRecord
   belongs_to :group
   has_one :profile, through: :user
   has_many :registrations, dependent: :destroy
-  has_many :roles, dependent: :destroy
+  has_many :roles, dependent: :delete_all
   has_many :events, through: :registrations
   has_many :created_events, class_name: "Event", foreign_key: "creator_id", inverse_of: :creator
   has_many :managed_events, class_name: "Event", foreign_key: "manager_id", inverse_of: :manager
