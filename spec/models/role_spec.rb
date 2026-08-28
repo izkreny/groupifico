@@ -46,7 +46,7 @@ RSpec.describe Role, type: :model do
       expect(role.grants?(:events)).to be true
     end
 
-    it "answers false for a module another role administers" do
+    it "answers false for a module it does not administer" do
       role = build(:role, name: "events_administrator")
 
       expect(role.grants?(:polls)).to be false
