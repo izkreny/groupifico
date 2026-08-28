@@ -7,7 +7,6 @@
 # Name              | Type               | Attributes
 # ----------------- | ------------------ | ---------------------------
 # **`id`**          | `integer`          | `not null, primary key`
-# **`role`**        | `integer`          | `not null`
 # **`status`**      | `integer`          | `not null`
 # **`created_at`**  | `datetime`         | `not null`
 # **`updated_at`**  | `datetime`         | `not null`
@@ -36,12 +35,20 @@ class Member < ApplicationRecord
   belongs_to :group
   has_one :profile, through: :user
   has_many :registrations, dependent: :destroy
+  has_many :roles, dependent: :delete_all
   has_many :events, through: :registrations
   has_many :created_events, class_name: "Event", foreign_key: "creator_id", inverse_of: :creator
   has_many :managed_events, class_name: "Event", foreign_key: "manager_id", inverse_of: :manager
 
   enum :status, %i[ active paused inactive ], default: :active, validate: true
-  enum :role, %i[ owner member admin manager ], default: :member, validate: true
 
   delegate :full_name, to: :profile
+
+  # The one question a policy asks. It learns nothing about how the answer is stored, which is what
+  # lets a role arrive as a row rather than as a migration. `module_name` rather than `module`
+  # because the latter is a keyword; a module with no role of its own, such as `:members`, asks an
+  # administrator-only question.
+  def can_manage?(module_name)
+    roles.any? { it.grants?(module_name) }
+  end
 end

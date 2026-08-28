@@ -177,7 +177,7 @@ RSpec.describe "Groups", type: :request do
         member = Member.sole
         expect(member.user).to eq user
         expect(member.group).to eq Group.sole
-        expect(member.role).to eq "owner"
+        expect(member.roles.map(&:name)).to eq [ "owner" ]
       end
 
       it "lands the creator on the group page instead of a 404" do

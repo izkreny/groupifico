@@ -38,7 +38,7 @@ RSpec.describe Event, type: :model do
     end
 
     it "is invalid if the manager is not valid" do
-      valid_event_with_invalid_manager = build(:event, manager: build(:member, role: nil))
+      valid_event_with_invalid_manager = build(:event, manager: build(:member, user: nil))
 
       expect(valid_event_with_invalid_manager).to be_invalid
     end

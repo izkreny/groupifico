@@ -191,6 +191,27 @@ RSpec.describe "Members", type: :request do
     end
 
     context "when signed in as an active member" do
+      it "refuses a posted role name outside the vocabulary, creating nobody" do
+        actor   = create(:member, :active)
+        invitee = create(:user)
+        sign_in_as(actor.user)
+
+        expect { post group_members_path(actor.group), params: { member: { user_id: invitee.id, roles: [ "events_administrator", "bogus" ] } } }
+          .not_to change(Member, :count)
+
+        expect(response).to have_http_status :unprocessable_entity
+      end
+
+      it "creates the member with the roles posted for them" do
+        actor   = create(:member, :active)
+        invitee = create(:user)
+        sign_in_as(actor.user)
+
+        post group_members_path(actor.group), params: { member: { user_id: invitee.id, roles: [ "events_administrator" ] } }
+
+        expect(Member.find_by(user: invitee).roles.map(&:name)).to eq [ "events_administrator" ]
+      end
+
       it "creates the member" do
         actor  = create(:member, :active)
         invitee = create(:user)
@@ -233,7 +254,7 @@ RSpec.describe "Members", type: :request do
       it "redirects to the sign-in page" do
         member = create(:member)
 
-        patch group_member_path(member.group, member), params: { member: { role: "admin" } }
+        patch group_member_path(member.group, member), params: { member: { roles: [ "administrator" ] } }
 
         expect(response).to redirect_to new_session_path
       end
@@ -241,13 +262,13 @@ RSpec.describe "Members", type: :request do
 
     context "when signed in as a non-member" do
       it "returns 404 and leaves the member unchanged" do
-        member = create(:member, role: "member")
+        member = create(:member)
         sign_in_as(create(:user))
 
-        patch group_member_path(member.group, member), params: { member: { role: "admin" } }
+        patch group_member_path(member.group, member), params: { member: { roles: [ "administrator" ] } }
 
         expect(response).to have_http_status :not_found
-        expect(member.reload.role).to eq "member"
+        expect(member.reload.roles).to be_empty
       end
     end
 
@@ -256,10 +277,40 @@ RSpec.describe "Members", type: :request do
         member = create(:member, :active)
         sign_in_as(member.user)
 
-        patch group_member_path(member.group, member), params: { member: { role: "admin" } }
+        patch group_member_path(member.group, member), params: { member: { roles: [ "administrator", "events_administrator" ] } }
 
         expect(response).to redirect_to group_member_path(member.group, member)
-        expect(member.reload.role).to eq "admin"
+        expect(member.reload.roles.map(&:name)).to contain_exactly("administrator", "events_administrator")
+      end
+
+      it "refuses a posted role name outside the vocabulary, leaving the roles alone" do
+        member = create(:member, :active, roles: [ build(:role, name: "owner") ])
+        sign_in_as(member.user)
+
+        patch group_member_path(member.group, member), params: { member: { roles: [ "bogus" ] } }
+
+        expect(response).to have_http_status :unprocessable_entity
+        expect(member.reload.roles.map(&:name)).to eq [ "owner" ]
+      end
+
+      it "clears the roles when the form posts none" do
+        member = create(:member, :active, roles: [ build(:role, name: "owner") ])
+        sign_in_as(member.user)
+
+        patch group_member_path(member.group, member), params: { member: { status: "active", roles: [ "" ] } }
+
+        expect(response).to redirect_to group_member_path(member.group, member)
+        expect(member.reload.roles).to be_empty
+      end
+
+      it "grants a role posted twice exactly once" do
+        member = create(:member, :active)
+        sign_in_as(member.user)
+
+        patch group_member_path(member.group, member), params: { member: { roles: [ "owner", "owner" ] } }
+
+        expect(response).to redirect_to group_member_path(member.group, member)
+        expect(member.reload.roles.map(&:name)).to eq [ "owner" ]
       end
 
       it "re-renders the edit page when the member is invalid" do
@@ -296,15 +347,15 @@ RSpec.describe "Members", type: :request do
 
     context "when signed in as a paused member" do
       it "refuses with a redirect carrying an alert, and leaves the member unchanged" do
-        member = create(:member, role: "member")
+        member = create(:member)
         actor = create(:member, :paused, group: member.group)
         sign_in_as(actor.user)
 
-        patch group_member_path(member.group, member), params: { member: { role: "admin" } }
+        patch group_member_path(member.group, member), params: { member: { roles: [ "administrator" ] } }
 
         expect(response).to redirect_to root_path
         expect(flash[:alert]).to be_present
-        expect(member.reload.role).to eq "member"
+        expect(member.reload.roles).to be_empty
       end
     end
   end

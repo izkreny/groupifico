@@ -38,7 +38,7 @@ def populate_empty_database
   end
 
   # Assign owner role to the first member of each group
-  groups.each { it.members.first.owner! }
+  groups.each { it.members.first.roles.create!(name: "owner") }
 
   # Create past concluded events for groups and add registrations
   groups.each do |group|

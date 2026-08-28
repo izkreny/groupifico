@@ -1,4 +1,10 @@
 class MembersController < ApplicationController
+  # A posted role name outside `Role::NAMES` cannot come from the form, whose checkboxes are
+  # rendered from that list, so it is a stale page or a hand-made request. It is refused rather
+  # than dropped: an all-unknown list would filter to nothing, and `roles=` reads nothing as
+  # "hold no roles", which would revoke every role the member has and answer with a success.
+  rescue_from Role::UnknownName, with: :refuse_unknown_role
+
   before_action :set_group
   before_action :set_member, only: %i[ show edit update destroy ]
 
@@ -68,12 +74,28 @@ class MembersController < ApplicationController
 
     # Used on create: deciding which person a membership is for is what creating one means.
     def new_member_params
-      params.expect(member: [ :role, :status, :user_id ])
+      role_records params.expect(member: [ :status, :user_id, roles: [] ])
     end
 
     # Used on update: user_id stays out, so an existing membership cannot be handed to a
-    # different user. :role stays untouched here too - who may set it is #93 and #96's question.
+    # different user. Who may set a role is still #96's and #173's question.
     def member_params
-      params.expect(member: [ :role, :status ])
+      role_records params.expect(member: [ :status, roles: [] ])
+    end
+
+    # Roles arrive as names and the association writer wants records, so the swap happens here
+    # rather than as a second writer on the model that accepts both. Repeats collapse, and an empty
+    # list stays an instruction: it is what an unticked form posts, and it means "hold no roles".
+    def role_records(permitted)
+      return permitted unless permitted.key?(:roles)
+
+      role_names = permitted[:roles].compact_blank.uniq
+      raise Role::UnknownName if role_names.difference(Role::NAMES).any?
+
+      permitted.merge(roles: role_names.map { Role.new(name: it) })
+    end
+
+    def refuse_unknown_role
+      head :unprocessable_entity
     end
 end
