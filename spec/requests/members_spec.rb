@@ -191,6 +191,16 @@ RSpec.describe "Members", type: :request do
     end
 
     context "when signed in as an active member" do
+      it "creates the member with the roles posted for them" do
+        actor   = create(:member, :active)
+        invitee = create(:user)
+        sign_in_as(actor.user)
+
+        post group_members_path(actor.group), params: { member: { user_id: invitee.id, roles: [ "events_administrator" ] } }
+
+        expect(Member.find_by(user: invitee).roles.map(&:name)).to eq [ "events_administrator" ]
+      end
+
       it "creates the member" do
         actor  = create(:member, :active)
         invitee = create(:user)
