@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_12_074637) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_28_093000) do
   create_table "addresses", force: :cascade do |t|
     t.string "building_number", limit: 250
     t.string "city", limit: 250
@@ -53,7 +53,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_12_074637) do
   create_table "members", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "group_id", null: false
-    t.integer "role", null: false
     t.integer "status", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
@@ -71,6 +70,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_12_074637) do
     t.index ["event_id"], name: "index_registrations_on_event_id"
     t.index ["member_id", "event_id"], name: "index_registrations_on_member_id_and_event_id", unique: true
     t.index ["member_id"], name: "index_registrations_on_member_id"
+  end
+
+  create_table "roles", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "member_id", null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.index ["member_id", "name"], name: "index_roles_on_member_id_and_name", unique: true
+    t.index ["member_id"], name: "index_roles_on_member_id"
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -108,6 +116,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_12_074637) do
   add_foreign_key "members", "users", on_update: :cascade, on_delete: :cascade
   add_foreign_key "registrations", "events", on_update: :cascade, on_delete: :cascade
   add_foreign_key "registrations", "members", on_update: :cascade, on_delete: :cascade
+  add_foreign_key "roles", "members", on_update: :cascade, on_delete: :cascade
   add_foreign_key "sessions", "users"
   add_foreign_key "user_profiles", "users", on_update: :cascade, on_delete: :cascade
 end
