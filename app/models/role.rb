@@ -31,6 +31,11 @@ class Role < ApplicationRecord
   # module gets its role when its model does, so `songs_administrator` waits for #108.
   NAMES = %w[ owner administrator events_administrator ].freeze
 
+  # Raised where a name outside the vocabulary has to stop the work rather than fail a validation:
+  # `MembersController` refuses the request with it, because dropping the name instead would read
+  # as "hold no roles" and revoke the ones the member has.
+  UnknownName = Class.new(StandardError)
+
   belongs_to :member
 
   # The list is read through a lambda rather than passed by value, so a spec that extends the

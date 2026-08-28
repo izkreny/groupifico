@@ -3,9 +3,7 @@ class MembersController < ApplicationController
   # rendered from that list, so it is a stale page or a hand-made request. It is refused rather
   # than dropped: an all-unknown list would filter to nothing, and `roles=` reads nothing as
   # "hold no roles", which would revoke every role the member has and answer with a success.
-  UnknownRole = Class.new(StandardError)
-
-  rescue_from UnknownRole, with: :refuse_unknown_role
+  rescue_from Role::UnknownName, with: :refuse_unknown_role
 
   before_action :set_group
   before_action :set_member, only: %i[ show edit update destroy ]
@@ -92,7 +90,7 @@ class MembersController < ApplicationController
       return permitted unless permitted.key?(:roles)
 
       role_names = permitted[:roles].compact_blank.uniq
-      raise UnknownRole if role_names.difference(Role::NAMES).any?
+      raise Role::UnknownName if role_names.difference(Role::NAMES).any?
 
       permitted.merge(roles: role_names.map { Role.new(name: it) })
     end
