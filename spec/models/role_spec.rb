@@ -49,19 +49,19 @@ RSpec.describe Role, type: :model do
     it "answers false for a module another role administers" do
       role = build(:role, name: "events_administrator")
 
-      expect(role.grants?(:songs)).to be false
+      expect(role.grants?(:polls)).to be false
     end
 
     it "answers true for every module when the role is administrator" do
       role = build(:role, name: "administrator")
 
-      expect(role.grants?(:songs)).to be true
+      expect(role.grants?(:polls)).to be true
     end
 
     it "answers true for every module when the role is owner" do
       role = build(:role, name: "owner")
 
-      expect(role.grants?(:songs)).to be true
+      expect(role.grants?(:polls)).to be true
     end
   end
 end

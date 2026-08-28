@@ -152,7 +152,7 @@ erDiagram
   %% UNIQUE INDEX (member_id, name): a Member cannot hold the same Role twice
   %% FK: member_id references members, ON DELETE CASCADE, ON UPDATE CASCADE
   ROLE {
-    %% name has no limit declared. Validated for inclusion in Role::NAMES: owner | administrator | events_administrator | songs_administrator
+    %% name has no limit declared. Validated for inclusion in Role::NAMES: owner | administrator | events_administrator
     STRING name "NN"
   }
 
