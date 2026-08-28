@@ -1,6 +1,9 @@
 require 'rails_helper'
 require Rails.root.join("db/migrate/20260828093000_create_roles.rb")
 
+# TODO: remove this file together with db/migrate/20260828093000_create_roles.rb, whenever old
+# migrations are squashed away. It has nothing left to guard once that migration is gone.
+#
 # The backfill runs against the column it exists to drain, so these examples put that column back
 # for their own duration and insert a member carrying one legacy enum value each.
 RSpec.describe CreateRoles do
