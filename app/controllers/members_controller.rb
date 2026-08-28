@@ -68,12 +68,20 @@ class MembersController < ApplicationController
 
     # Used on create: deciding which person a membership is for is what creating one means.
     def new_member_params
-      params.expect(member: [ :role, :status, :user_id ])
+      role_records params.expect(member: [ :status, :user_id, roles: [] ])
     end
 
     # Used on update: user_id stays out, so an existing membership cannot be handed to a
-    # different user. :role stays untouched here too - who may set it is #93 and #96's question.
+    # different user. Who may set a role is still #96's and #173's question.
     def member_params
-      params.expect(member: [ :role, :status ])
+      role_records params.expect(member: [ :status, roles: [] ])
+    end
+
+    # Roles arrive as names and the association writer wants records, so the swap happens here
+    # rather than as a second writer on the model that accepts both.
+    def role_records(permitted)
+      return permitted unless permitted.key?(:roles)
+
+      permitted.merge(roles: permitted[:roles].compact_blank.map { Role.new(name: it) })
     end
 end

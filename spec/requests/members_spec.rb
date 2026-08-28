@@ -233,7 +233,7 @@ RSpec.describe "Members", type: :request do
       it "redirects to the sign-in page" do
         member = create(:member)
 
-        patch group_member_path(member.group, member), params: { member: { role: "admin" } }
+        patch group_member_path(member.group, member), params: { member: { roles: [ "administrator" ] } }
 
         expect(response).to redirect_to new_session_path
       end
@@ -241,13 +241,13 @@ RSpec.describe "Members", type: :request do
 
     context "when signed in as a non-member" do
       it "returns 404 and leaves the member unchanged" do
-        member = create(:member, role: "member")
+        member = create(:member)
         sign_in_as(create(:user))
 
-        patch group_member_path(member.group, member), params: { member: { role: "admin" } }
+        patch group_member_path(member.group, member), params: { member: { roles: [ "administrator" ] } }
 
         expect(response).to have_http_status :not_found
-        expect(member.reload.role).to eq "member"
+        expect(member.reload.roles).to be_empty
       end
     end
 
@@ -256,10 +256,10 @@ RSpec.describe "Members", type: :request do
         member = create(:member, :active)
         sign_in_as(member.user)
 
-        patch group_member_path(member.group, member), params: { member: { role: "admin" } }
+        patch group_member_path(member.group, member), params: { member: { roles: [ "administrator", "events_administrator" ] } }
 
         expect(response).to redirect_to group_member_path(member.group, member)
-        expect(member.reload.role).to eq "admin"
+        expect(member.reload.roles.map(&:name)).to contain_exactly("administrator", "events_administrator")
       end
 
       it "re-renders the edit page when the member is invalid" do
@@ -296,15 +296,15 @@ RSpec.describe "Members", type: :request do
 
     context "when signed in as a paused member" do
       it "refuses with a redirect carrying an alert, and leaves the member unchanged" do
-        member = create(:member, role: "member")
+        member = create(:member)
         actor = create(:member, :paused, group: member.group)
         sign_in_as(actor.user)
 
-        patch group_member_path(member.group, member), params: { member: { role: "admin" } }
+        patch group_member_path(member.group, member), params: { member: { roles: [ "administrator" ] } }
 
         expect(response).to redirect_to root_path
         expect(flash[:alert]).to be_present
-        expect(member.reload.role).to eq "member"
+        expect(member.reload.roles).to be_empty
       end
     end
   end

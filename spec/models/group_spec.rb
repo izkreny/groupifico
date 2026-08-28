@@ -45,7 +45,7 @@ RSpec.describe Group, type: :model do
       member_count = Member.count
 
       group = build(:group)
-      group.members.build(role: :owner)
+      group.members.build
       group.save
 
       expect(described_class.count).to eq group_count
