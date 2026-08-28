@@ -42,7 +42,7 @@ For more information, check out the [backlog](https://github.com/izkreny/groupif
 - User can become a Member of one or more Groups
 
 #### Member aka _Group membership_
-- Members belong to the Group and have status and role
+- Members belong to the Group, have a status, and hold any number of roles
 - They can create/interact with Events, Polls, etc.
 
 #### Event
@@ -102,6 +102,7 @@ erDiagram
   USER    1   to  0+  MEMBER        :  "↓ become … belong ↑"
   USER    1   to  1   USER_PROFILE  :  "↓ has    … belong ↑"
   MEMBER  1+  to  1   GROUP         :  "↓ belong … has ↑"
+  MEMBER  1   to  0+  ROLE          :  "↓ has    … belong ↑"
   GROUP   1   to  0+  EVENT         :  "↓ has    … belong ↑"
   EVENT   1   to  0+  REGISTRATION  :  "↓ has    … belong ↑"
   MEMBER  1   to  0+  REGISTRATION  :  "↓ has    … belong ↑"
@@ -146,8 +147,13 @@ erDiagram
   MEMBER {
     %% ENUM status options: active | paused | inactive. Default: active
     INTEGER status "ENUM, NN"
-    %% ENUM role options: owner | member | admin | manager. Default: member
-    INTEGER role   "ENUM, NN"
+  }
+
+  %% UNIQUE INDEX (member_id, name): a Member cannot hold the same Role twice
+  %% FK: member_id references members, ON DELETE CASCADE, ON UPDATE CASCADE
+  ROLE {
+    %% name has no limit declared. Validated for inclusion in Role::NAMES: owner | administrator | events_administrator | songs_administrator
+    STRING name "NN"
   }
 
   %% FK: group_id ON DELETE CASCADE, address_id ON DELETE RESTRICT, both ON UPDATE CASCADE
