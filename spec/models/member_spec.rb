@@ -61,7 +61,7 @@ RSpec.describe Member, type: :model do
       expect(member.can_manage?(:polls)).to be false
     end
 
-    it "answers false for a module with no role of its own when the member is not an administrator" do
+    it "answers false for the members module when the member administers a different one" do
       member = create(:member, roles: [ build(:role, name: "events_administrator") ])
 
       expect(member.can_manage?(:members)).to be false
@@ -74,11 +74,18 @@ RSpec.describe Member, type: :model do
       expect(member.can_manage?(:polls)).to be true
     end
 
-    it "answers an administrator-only question for an owner holding no administrator role" do
+    it "answers the members module for an owner holding neither administrator role" do
       member = create(:member, roles: [ build(:role, name: "owner") ])
 
       expect(member.roles.map(&:name)).to eq [ "owner" ]
       expect(member.can_manage?(:members)).to be true
+    end
+
+    it "answers the members module for a members_administrator, and nothing else" do
+      member = create(:member, roles: [ build(:role, name: "members_administrator") ])
+
+      expect(member.can_manage?(:members)).to be true
+      expect(member.can_manage?(:events)).to be false
     end
 
     it "answers nothing for a member holding no role at all" do

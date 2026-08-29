@@ -1,8 +1,7 @@
 class MembersController < ApplicationController
-  # A posted role name outside `Role::NAMES` cannot come from the form, whose checkboxes are
-  # rendered from that list, so it is a stale page or a hand-made request. It is refused rather
-  # than dropped: an all-unknown list would filter to nothing, and `roles=` reads nothing as
-  # "hold no roles", which would revoke every role the member has and answer with a success.
+  # A posted role name outside `Role::NAMES` is refused rather than dropped: an all-unknown list
+  # would filter to nothing, and `roles=` reads nothing as "hold no roles", which would revoke
+  # every role the member has and answer with a success.
   rescue_from Role::UnknownName, with: :refuse_unknown_role
 
   before_action :set_group
@@ -85,7 +84,7 @@ class MembersController < ApplicationController
 
     # Roles arrive as names and the association writer wants records, so the swap happens here
     # rather than as a second writer on the model that accepts both. Repeats collapse, and an empty
-    # list stays an instruction: it is what an unticked form posts, and it means "hold no roles".
+    # list stays an instruction rather than an omission, and it means "hold no roles".
     def role_records(permitted)
       return permitted unless permitted.key?(:roles)
 

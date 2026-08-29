@@ -46,8 +46,8 @@ class Member < ApplicationRecord
 
   # The one question a policy asks. It learns nothing about how the answer is stored, which is what
   # lets a role arrive as a row rather than as a migration. `module_name` rather than `module`
-  # because the latter is a keyword; a module with no role of its own, such as `:members`, asks an
-  # administrator-only question.
+  # because the latter is a keyword; a module the vocabulary carries no role for yet is answered by
+  # `owner` and `administrator` alone, which is how it is governed until it gets one.
   def can_manage?(module_name)
     roles.any? { it.grants?(module_name) }
   end
