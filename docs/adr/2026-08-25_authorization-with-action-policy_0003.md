@@ -36,6 +36,16 @@ Three candidates were measured against each other on 2026-08-25, each fact taken
 
 That cost is accepted because the property being bought is the one Pundit does not give for free: a controller that authorizes nothing fails the request rather than passing it through, the moment the controller is written, not the moment someone remembers to add the `after_action`. Given the five holes this issue exists to close were created by exactly that kind of omission, the stronger, harder-to-reverse guarantee is worth more here than the cheaper exit would have been.
 
+### `404` over `403` for a non-member
+
+Added by amendment; see `## Amendments`. It is not part of the 2026-08-25 decision above, and it is recorded here because this is the record three other places already cite for it.
+
+**A user with no `Member` row for a group gets `404`, never `403`.** A `403` says the thing exists and is withheld, which hands somebody guessing at ids exactly the fact they were fishing for. A scoped lookup means the record genuinely does not exist for that user, so `404` is the honest answer as well as the concealing one. `ApplicationPolicy#verify_membership!` sets `details[:not_found]` and denies; `ApplicationController#deny_access` reads that detail and raises what a genuinely absent record raises, so a refusal and a missing id travel the same code path rather than one imitating the other.
+
+**A member who belongs but lacks the role gets `403`.** Concealment from somebody who can already see the group in the interface is noise rather than security. Where that refusal is written is #173's and #96's question, not this record's.
+
+The decision's own account is #172's acceptance criteria, which state both halves in plain words. This section is the copy the citations point at, and #172 wins on any disagreement between them.
+
 ## Consequences
 
 **`app/policies/` is now the intended location for authorization logic**, overriding the house model-predicate default recorded in the `rails-style` skill; `.agents/rails-style.md` carries the override so neither this repository's own conventions nor a future agent session reads a policy class as a violation.
@@ -47,3 +57,11 @@ The count is deliberately not written down here. A number beside a list is a cop
 **The Rails 8.1 initialization-order issue in `palkan/action_policy#312`** affects only an application that sets `config.action_policy.auto_inject_into_controller = false` from `config/initializers/`. This application takes the default injection, so the issue does not reach it; noted here so a future reader upgrading Rails does not rediscover the same search.
 
 **Reversing this decision costs more than reversing a Pundit adoption would have**, per the trade-off above. Anyone revisiting this ADR to argue for a different gem should read that section first: the case against Pundit was never "Action Policy is unconditionally better", it was that the fail-loud guarantee this issue was opened for is closer to Action Policy's default behavior than to Pundit's.
+
+## Amendments
+
+**2026-08-29, #188.** Added `### 404 over 403 for a non-member` under `## Decision`.
+
+That choice was made in #172 on 2026-08-26, the day after this record was accepted, and three places already cited this record as holding it: #172's own body, calling it "the Basecamp idiom recorded in ADR 0003"; the comment at `app/controllers/application_controller.rb:46`, calling it "the existence oracle ADR 0003 chose 404 over 403 to close"; and #188's acceptance criteria, asking for "a pointer to ADR 0003 rather than a second copy of its reasoning". The citation was false in all three, and nobody had followed it until a review round on #192 did.
+
+Amending was chosen over editing the three pointers, because a citation three independent places arrived at is the one a reader will keep making, and over a new ADR recording what this one lacks, which would be a record about a record with the same reader still landing here first.
