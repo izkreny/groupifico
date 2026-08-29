@@ -44,6 +44,7 @@ For more information, check out the [backlog](https://github.com/izkreny/groupif
 #### Member aka _Group membership_
 - Members belong to the Group, have a status, and hold any number of roles
 - They can create/interact with Events, Polls, etc.
+- What a status and a role each permit is [the authorization model](./docs/AUTHORIZATION.md), which holds the capability tables and the two questions every request asks
 
 #### Event
 - Main organizational group entity
