@@ -72,6 +72,8 @@ A cell marked `x` means the column grants the capability. A blank means it does 
 
 **Where each column's authority lives.** For the role columns it is `Role::NAMES`, which holds the vocabulary, and `Role#grants?`, which decides how a role name answers a module question; a role column that is not in `Role::NAMES` is a bug in these tables. For `member` it is `ApplicationPolicy`'s two pre-checks, and for `manager` it is `events.manager_id`, neither of which consults a role row at all.
 
+**The predicate cannot produce these tables yet.** `Role#grants?` answers true for every module question on both `owner` and `administrator`, so `Member#can_manage?` cannot tell the two apart, and every row given to `owner` alone above would be granted to `administrator` by the authority this section names. #173 adds the predicate that can, and until it lands the split marked here is a specification the mechanism cannot yet express.
+
 Nothing enforces the cells yet. #96 and #173 write one example per marked cell, named after the capability rather than the controller action, which is what stops the tables and the code drifting apart. Until they land, every mark is a specification and none of it is enforced.
 
 **A member who belongs but lacks the role will get `403` rather than `404`, and does not today.** `verify_active_membership!` answers `allow!` for every active member, so a member holding no role at all can still rename their group, which `spec/requests/groups_spec.rb` asserts. The refusal arrives with the rules, and it is a `403` rather than a `404` because concealment from somebody who can already see the group in the interface is noise rather than security. The split is the one ADR 0003 records.
