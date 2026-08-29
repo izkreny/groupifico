@@ -24,6 +24,7 @@ Nothing in this branch enforces a single cell. That is the point of the split, a
 - Add `members_administrator` to `Role::NAMES`, after `events_administrator`, keeping the array's shape of `owner`, `administrator`, then module roles.
 - Correct the comment above `Member#can_manage?` and the description of the `member_spec` example that repeats it, so neither still calls `:members` a module with no role of its own.
 - Add one `member_spec` example proving a `members_administrator` answers `can_manage?(:members)` and does not answer `can_manage?(:events)`, watched failing before `Role::NAMES` changes.
+- Rewrite the comment above `rescue_from Role::UnknownName` in `MembersController`, dropping the false premise that the form renders role checkboxes and keeping the reason the rescue refuses rather than drops.
 - Run `bin/ci`.
 - Tick the issue's acceptance criteria as each verifiably lands.
 
@@ -48,8 +49,10 @@ What these gates cannot see:
 
 **The issue says the member form grows a `members_administrator` checkbox the moment the name lands. It does not, because the form has no role checkboxes at all.** `app/views/members/_form.html.erb` renders a status select and nothing else, so no role of any name is grantable through the interface today, and `MembersController`'s own comment about "the form, whose checkboxes are rendered from that list" describes a form that was never built. Adding the name therefore changes no UI, which makes this branch smaller rather than larger. The gap predates this issue and is not about the new role, so it stays out; see `## Open questions`.
 
+**Should the member form get its role checkboxes, and where?** A new issue, decided on the PR. Not this branch: no role of any name is grantable through the UI, which is a gap in #93's delivery rather than something the new name introduces, and who may grant a role is #173's decision, so a form built before it would be built against no rule. The other candidate was folding it into #173, which already owns the create-time roles criterion; an issue of its own keeps the form work visible instead of buried in a criterion about parameters.
+
+**Does `MembersController`'s stale comment get corrected here?** Yes, and by rewriting rather than deleting, decided on the PR. Deletion would take the reason with it: the comment's second half says the rescue refuses an unknown name rather than dropping it, because `roles=` reads an empty list as "hold no roles" and would revoke every role the member holds while answering with a success. That reason is not recoverable from the code and stays. Only the first clause goes, which claims the form renders its checkboxes from `Role::NAMES`, describing a form nobody built.
+
 ## Open questions
 
-**Should the member form get its role checkboxes, and where?** Not in this branch, on the argument above: no role is grantable through the UI, which is a gap in #93's delivery rather than something the new name introduces, and who may grant a role is #173's decision, so a form built before it would be built against no rule. The candidates are a new issue blocked by #173, or folding it into #173 itself, which already owns the create-time roles criterion. Recommending the second.
-
-**Does `MembersController`'s stale comment get corrected here?** It sits one line from `Role::NAMES` and is wrong on a different axis than the comments this branch fixes. Correcting it is one line and the alternative is leaving a comment that describes a form nobody wrote. Recommending it lands with whichever change builds the form, so the comment and the thing it describes are true in the same commit.
+None.
