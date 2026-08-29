@@ -35,7 +35,7 @@ Gates, each with an exit code:
 - **The new `members_administrator` example is watched failing before the vocabulary changes.** It fails on the `inclusion` validation, which is the precise reason the name has to be in the array, so the failure is the check doing its job rather than an incidental red.
 - `bin/ci` passes. It is the one local gate for this repository, a superset of `lint`, `scan_js`, `scan_ruby` and `test`.
 - The plugin's `scripts/docs-check.py` over the plan and the new document: every backticked path resolves and every code fence closes. `docs/AUTHORIZATION.md` does not exist while the plan is being checked, so that one path is ignored on the first run and checked for real once the file lands.
-- `grep -rn songs_administrator` over the files this branch touches returns nothing.
+- `grep -rn songs_administrator` over the application, spec and document files this branch touches returns nothing. This plan is outside the sweep because this very line names the string it searches for, which no edit to the application can clear.
 
 What these gates cannot see:
 
