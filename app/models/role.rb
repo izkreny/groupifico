@@ -28,7 +28,8 @@
 class Role < ApplicationRecord
   # The vocabulary. A further module role is an entry here and nothing else: no migration, and no
   # policy change, because `Member#can_manage?` derives the name it looks for from the module. A
-  # module gets its role when its model does, so `songs_administrator` waits for #108.
+  # module gets its role when its model does, which is what admitted `members_administrator` and
+  # what keeps a module whose model is still unwritten out of the list.
   NAMES = %w[ owner administrator events_administrator members_administrator ].freeze
 
   # Raised where a name outside the vocabulary has to stop the work rather than fail a validation:
