@@ -74,7 +74,7 @@ RSpec.describe Member, type: :model do
       expect(member.can_manage?(:polls)).to be true
     end
 
-    it "answers the members module for an owner holding neither administrator role" do
+    it "answers the members module for an owner holding no other role" do
       member = create(:member, roles: [ build(:role, name: "owner") ])
 
       expect(member.roles.map(&:name)).to eq [ "owner" ]
