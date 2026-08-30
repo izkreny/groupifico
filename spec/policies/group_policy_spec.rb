@@ -10,7 +10,7 @@ require 'rails_helper'
 # was watched happening. That shielding is a property of the callers, not of the scopes, and it
 # disappears the moment a second caller arrives.
 RSpec.describe GroupPolicy, type: :policy do
-  let(:context) { { user: create(:user) } }
+  let(:context) { { user: build_stubbed(:user) } }
 
   # The two rules that skip the membership pre-checks, so the permitted case is a signed-in user
   # who belongs to nothing - the state the skip exists for, and the one no other spec here reaches.
