@@ -31,7 +31,7 @@ Two things #195 asks the audit to record rather than refile, both confirmed on t
 - `ApplicationPolicy` has no policy spec of its own, and needs none. Its `paused` and `inactive` branches are exercised across the request specs, and `.agents/testing.md` forbids duplicating one behavior assertion at two layers.
 - `EventPolicy`, `MemberPolicy` and `RegistrationPolicy` define no rules at all, only `group_for` and a scope. Their verdicts are `ApplicationPolicy`'s, so the bullet above covers them and their scope specs are complete as they stand.
 
-One correction to the issue's own text, which the closing comment repeats. #195 says `UsersController` has no request spec, looking for one under a plural filename. There is one, `spec/requests/user_spec.rb`, named after the singular `resource :user` route, and it covers the controller action by action. The testing-conventions question dissolves into a naming observation and needs no separate decision.
+One correction to the issue's own text, which the closing comment repeats. #195 says `UsersController` has no request spec, looking for one under a plural filename. There is one, `spec/requests/user_spec.rb`, named after the singular `resource :user` route, and it covers the controller action by action. What that leaves open is the question #195 asked to be decided separately: whether `.agents/testing.md`'s "one file per controller" is satisfied by a file named for the route, or whether the file is misnamed. This audit records the observation and decides nothing.
 
 ## Steps
 
