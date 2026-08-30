@@ -5,6 +5,7 @@
 - Follow `Ruby on Rails` conventions and best practices.
 - Always apply:
   - **Rails style** per the `rails-style` skill, the 37signals recommendations distilled; it is the house style and the tiebreaker, it owns the Sandi Metz OOD guidance and her precedence, and this repository's deviations from it live in [`.agents/rails-style.md`](.agents/rails-style.md)
+  - **Authorization** per the `action-policy` skill, which covers how authorization is expressed and says nothing about who may do what; [`docs/AUTHORIZATION.md`](docs/AUTHORIZATION.md) decides what a rule should return and outranks it
   - **Domain-Driven Design (DDD)** in the style of Eric Evans (a ubiquitous language shared with the domain, the model mirrors it, bounded contexts keep meanings from bleeding)
   - **Refactoring** in the style of Martin Fowler (small behavior-preserving steps, guided by code smells, never mixed with behavior changes)
 
