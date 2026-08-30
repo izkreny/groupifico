@@ -54,7 +54,7 @@ The suite is the gate for the code and it cannot gate the audit. Nothing in `bin
 
 ## Open questions
 
-None.
+- **Does `.agents/testing.md`'s "one file per controller" accept a file named for the route?** `spec/requests/user_spec.rb` covers `UsersController` and is named after the singular `resource :user`. #195 asked for this to be decided separately, so this branch records it and decides nothing. Deferred beyond this branch: it blocks nothing here, and whether it earns an issue of its own is the owner's call.
 
 ## Settled
 
