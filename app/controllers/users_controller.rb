@@ -1,6 +1,20 @@
 class UsersController < ApplicationController
-  # TODO(#172): remove this skip when UserPolicy lands.
-  skip_verify_authorized
+  # Permanent, all six, and for two different reasons.
+  #
+  # `show`, `edit`, `update` and `destroy` reach their record through `set_user`, which answers
+  # `Current.user`. The record is named by the caller's own signed cookie and never by the request,
+  # so a policy here would have one possible input and one possible answer. That is the argument
+  # `SessionsController` makes for its own `destroy`, arriving by the same route: having something
+  # to authorize against is not the same as having a decision to make.
+  #
+  # `new` and `create` do raise a question, and it is not an authorization one. Whether a signed-in
+  # user may create a second user at all is a question about what the application offers, so no
+  # rule this file could write would answer it; a policy added here would be answering the wrong
+  # question in the right place.
+  #
+  # Named actions rather than a bare skip, so an action added later cannot inherit an exemption
+  # nobody chose for it - same reason `SessionsController` names its own.
+  skip_verify_authorized only: %i[ show new edit create update destroy ]
 
   before_action :set_user, only: %i[ show edit update destroy ]
 
