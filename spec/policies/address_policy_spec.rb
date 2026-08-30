@@ -5,6 +5,17 @@ RSpec.describe AddressPolicy, type: :policy do
   let(:record)  { create(:address) }
   let(:context) { { user: user } }
 
+  # Unconditionally true, so there is no denial case to pair this with: Action Policy's Defaults
+  # module answers `index?` false, and this rule exists only to override that. Asserted by name
+  # because deleting the override restores the false and the list refuses everybody, which reads
+  # as a decision rather than as the accident it would be.
+  describe_rule :index? do
+    # The class, because that is what `authorize! Address, to: :index?` passes.
+    let(:record) { Address }
+
+    succeed "when the user belongs to no group"
+  end
+
   describe_rule :show? do
     failed "when no group or event of the user's points at the address"
 

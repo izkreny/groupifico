@@ -10,6 +10,36 @@ require 'rails_helper'
 # was watched happening. That shielding is a property of the callers, not of the scopes, and it
 # disappears the moment a second caller arrives.
 RSpec.describe GroupPolicy, type: :policy do
+  let(:context) { { user: create(:user) } }
+
+  # The three rules that skip the membership pre-checks, so the permitted case is a signed-in user
+  # who belongs to nothing - the state the skip exists for, and the one no other spec here reaches.
+  # Action Policy's own Defaults module gives `index?` and `create?` a false body, so each rule
+  # below is an override that grants: delete it and the fall-through to `manage?` denies silently,
+  # which is a refusal indistinguishable from a considered one.
+  describe_rule :index? do
+    # The class, because that is what `authorize! Group, to: :index?` passes.
+    let(:record) { Group }
+
+    succeed "when the user belongs to no group"
+  end
+
+  describe_rule :create? do
+    let(:record) { Group.new }
+
+    succeed "when the user belongs to no group"
+  end
+
+  # `new?` has no rule of its own here, and that is the point: it resolves through Action Policy's
+  # inherited alias to `create?`, which is what keeps the form and the submission answering alike.
+  # ApplicationPolicy leaves `new?` out of WRITE_RULES on exactly that basis, so a real `new?`
+  # method would drop the alias and break the assumption without failing anything else.
+  describe "rule aliases" do
+    subject(:policy) { described_class.new(Group.new, **context) }
+
+    it { expect(:new?).to be_an_alias_of(policy, :create?) }
+  end
+
   describe "the relation scope" do
     it "excludes a group the user has left" do
       user = create(:user)
