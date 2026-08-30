@@ -1,6 +1,8 @@
 class PasswordsController < ApplicationController
-  # Unauthenticated by design: resetting a forgotten password has no signed-in user to authorize against.
-  skip_verify_authorized
+  # Unauthenticated by design: resetting a forgotten password has no signed-in user to authorize
+  # against. Named actions rather than a bare skip, so an action added later cannot inherit an
+  # exemption nobody chose for it - the reason `SessionsController` gives for naming its own.
+  skip_verify_authorized only: %i[ new create edit update ]
 
   allow_unauthenticated_access
   before_action :set_user_by_token, only: %i[ edit update ]
