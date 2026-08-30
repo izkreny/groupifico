@@ -12,11 +12,11 @@ require 'rails_helper'
 RSpec.describe GroupPolicy, type: :policy do
   let(:context) { { user: create(:user) } }
 
-  # The three rules that skip the membership pre-checks, so the permitted case is a signed-in user
+  # The two rules that skip the membership pre-checks, so the permitted case is a signed-in user
   # who belongs to nothing - the state the skip exists for, and the one no other spec here reaches.
-  # Action Policy's own Defaults module gives `index?` and `create?` a false body, so each rule
-  # below is an override that grants: delete it and the fall-through to `manage?` denies silently,
-  # which is a refusal indistinguishable from a considered one.
+  # Action Policy's own Defaults module answers `index?` and `create?` false, so each rule below is
+  # an override that grants: delete one and the call lands back on that false, which reads as a
+  # considered refusal and is not one.
   describe_rule :index? do
     # The class, because that is what `authorize! Group, to: :index?` passes.
     let(:record) { Group }
