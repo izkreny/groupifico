@@ -16,7 +16,7 @@ What the read found, criterion by criterion:
 
 So the diff is three defects, all in the same family: a rule or a skip that says something the mechanism no longer supports.
 
-**The stale skip.** `app/controllers/users_controller.rb` carries `# TODO(#172): remove this skip when UserPolicy lands.` #172 is closed and `UserPolicy` was never written, so the comment promises a policy nobody is writing. Which way it resolves is the one open question below.
+**The stale skip.** `app/controllers/users_controller.rb` carries `# TODO(#172): remove this skip when UserPolicy lands.` #172 is closed and `UserPolicy` was never written, so the comment promises a policy nobody is writing. Which way it resolves is recorded under `## Settled`.
 
 **The unproven rules.** `GroupPolicy` defines `index?`, `new?` and `create?` and `spec/policies/group_policy_spec.rb` has no `describe_rule` at all; `AddressPolicy#index?` returns true and `spec/policies/address_policy_spec.rb` never asks it. Action Policy's `Defaults` module gives `index?` and `create?` a false body, so each of these four is an override that grants access, and a rule that grants access with nothing asserting it is exactly the deny-by-default trap #195 names: delete the override and the fall-through to `manage?` denies silently.
 
@@ -35,7 +35,7 @@ One correction to the issue's own text, which the closing comment repeats. #195 
 
 ## Steps
 
-- Restate the skip in `app/controllers/users_controller.rb` per the answer to the open question below, and delete the `TODO(#172)` line either way
+- Restate the skip in `app/controllers/users_controller.rb` as permanent by design, naming its own actions, and delete the `TODO(#172)` line
 - Scope the skip in `app/controllers/passwords_controller.rb` with `only:` naming its own actions, for the reason `app/controllers/sessions_controller.rb` already states: an unscoped skip hands a future action an exemption nobody chose for it
 - Remove `def new? = true` from `app/policies/group_policy.rb` and drop `new?` from its `skip_pre_check` list, restoring the inherited `new? -> create?` alias
 - Add `describe_rule :index?` and `describe_rule :create?` to `spec/policies/group_policy_spec.rb`, each asserting the permitted case for a signed-in user with no membership, since that is the state the skipped pre-checks exist for
@@ -54,8 +54,8 @@ The suite is the gate for the code and it cannot gate the audit. Nothing in `bin
 
 ## Open questions
 
-- **How does the `UsersController` skip resolve?** Recommendation: permanent by design, restated as `skip_verify_authorized only: %i[ show new edit create update destroy ]` with a comment splitting the two reasons. `show`, `edit`, `update` and `destroy` all run through `set_user`, which returns `Current.user`, so the record is named by the caller's own signed cookie and never by the request: one possible input, one possible answer, which is the argument `app/controllers/sessions_controller.rb` already makes for `destroy`. `new` and `create` have a question, but it is whether a signed-in user should be able to create a second user at all, which is a product question and not this issue's. The alternative is a `UserPolicy` issue filed under #153, which would keep the skip temporary and pointed at something open; it costs a policy with one rule that nothing currently needs.
+None.
 
 ## Settled
 
-None yet.
+- **How does the `UsersController` skip resolve?** Permanent by design, restated as `skip_verify_authorized only: %i[ show new edit create update destroy ]` with a comment splitting the two reasons. `show`, `edit`, `update` and `destroy` all run through `set_user`, which returns `Current.user`, so the record is named by the caller's own signed cookie and never by the request: one possible input, one possible answer, which is the argument `app/controllers/sessions_controller.rb` already makes for its own `destroy`. `new` and `create` do carry a question, but it is whether a signed-in user may create a second user at all, which is a product question rather than an authorization one, so no rule this issue could write would answer it. The rejected alternative was a `UserPolicy` issue under #153, keeping the skip temporary and pointed at something open; it costs a policy with one rule that nothing currently needs. Settled in the terminal, 2026-08-30.
