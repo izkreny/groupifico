@@ -14,10 +14,14 @@ class ApplicationPolicy < ActionPolicy::Base
   # they will be refused at submission is worse than refusing them at the link. What is left -
   # `show?`, `edit?`, and `index?` where it reaches this far - is read, and a `paused` member
   # keeps read.
-  # `manage_roles?` is here because granting or revoking a role is a write like any other, and a
-  # rule absent from this list is read: a paused member would keep it while losing `update?`, which
-  # is the one combination the roles rule must never allow.
-  WRITE_RULES = %i[ create? update? destroy? manage_roles? ].freeze
+  #
+  # `manage_roles?` and `manage_answers?` are here because granting a role and writing a status
+  # nobody may say about themselves are writes like any other, and a rule absent from this list is
+  # read: a paused member would keep it while losing `update?`, which is the one combination either
+  # must never allow. Neither is reachable that way today, since the pre-check refuses the ordinary
+  # write first - the entries cost nothing now and the flow that needs them is one `allowed_to?` in
+  # a view away.
+  WRITE_RULES = %i[ create? update? destroy? manage_roles? manage_answers? ].freeze
 
   # `authorize!` resolves its `to:` rule against the policy *before* the pre-checks below ever run,
   # so a rule nobody defines here does not reach `verify_active_membership!` as itself - it falls
