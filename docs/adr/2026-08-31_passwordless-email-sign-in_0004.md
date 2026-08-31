@@ -19,7 +19,7 @@ The research behind it, each pass reading source rather than recalling it, per t
 - The framework itself, at `rails_rails`.
 - The `steveclarke_real-world-rails` corpus, which yielded eight passwordless email implementations across seven apps once 2FA-on-password, OAuth, device-pairing tokens and unimplemented planning documents were filtered out.
 - The Ruby Toolbox `rails_authentication` category, read for what a gem would buy.
-- The source, tests and changelogs of `mikker/passwordless`, `devise-passwordless` and `nopassword`, and then of `rodauth`, read for what each learned in production rather than for what each does.
+- The source, tests and changelogs of `mikker/passwordless`, `devise-passwordless` and `rubymonolith/nopassword`, and then of `rodauth`, read for what each learned in production rather than for what each does.
 
 This record exists because every decision below is invisible in the result. A reader of the finished code sees a confirmation page and cannot tell it is a security measure rather than a courtesy, sees a digest column and cannot tell that the most popular gem in this space stored raw tokens for its entire 0.x life, and sees fifteen minutes without knowing what else was on the table.
 
@@ -85,7 +85,7 @@ Rodauth arrived at the same shape from the other direction, hardening this hop i
 
 ### Identical answers, including the clock
 
-A response that matches in status and body is still distinguishable if one path waits on SMTP, so the mail is enqueued rather than delivered inside the request. `mikker/passwordless` defaults to `deliver_now` and has exactly this hole; `nopassword` uses `deliver_later`.
+A response that matches in status and body is still distinguishable if one path waits on SMTP, so the mail is enqueued rather than delivered inside the request. `mikker/passwordless` defaults to `deliver_now` and has exactly this hole; `rubymonolith/nopassword` uses `deliver_later`.
 
 The copy counts too, not only the redirect target. Rodauth's own default sends both cases to the same URL with the same status and then shows a different flash for an unknown address, which is a visible side channel shipped as a default.
 
@@ -143,4 +143,4 @@ Under any magic-link scheme, access to the inbox is already access to the accoun
 
 **A "sign out my other devices" screen has a precedent waiting.** Rodauth's `active_sessions` keeps one row per login holding an HMAC of a per-session id with `created_at` and `last_use`, checks it on every request, and lets logout drop one row or all of them. `SessionsController` already carries a comment anticipating such a screen, and its point is that revoking another device would be a different action, `DELETE /sessions/:id`, which needs a policy of its own: the skip names its actions precisely so that new action cannot inherit an exemption nobody chose for it. No issue exists for the screen.
 
-**#139, #207 and #208 cite this record instead of repeating it.** Their technical notes carry what an implementer needs at hand, and the reasoning behind it lives here alone. That is the property to check when any of the four is edited: a fact stated in two places has already begun to drift, and the first copy of the `rate_limit` signature to disagree with the other was caught in review on this very branch.
+**#139, #207 and #208 cite this record instead of repeating it.** Their technical notes carry what an implementer needs at hand, and the reasoning behind it lives here alone. That is the property to check when any of the four is edited, and it is the whole reason this record exists: a fact stated in two places has already begun to drift, whether or not anyone has noticed yet.
