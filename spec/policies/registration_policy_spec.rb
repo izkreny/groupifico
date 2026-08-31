@@ -35,6 +35,14 @@ RSpec.describe RegistrationPolicy, type: :policy do
       let(:record) { build(:registration, event: event, member: actor) }
     end
 
+    succeed "for an owner" do
+      let(:actor) { create(:member, :owner, group: group) }
+    end
+
+    succeed "for an administrator" do
+      let(:actor) { create(:member, :administrator, group: group) }
+    end
+
     succeed "for an events administrator" do
       let(:actor) { create(:member, :events_administrator, group: group) }
     end
@@ -57,6 +65,14 @@ RSpec.describe RegistrationPolicy, type: :policy do
       let(:record) { create(:registration, event: event, member: actor) }
     end
 
+    succeed "for an owner" do
+      let(:actor) { create(:member, :owner, group: group) }
+    end
+
+    succeed "for an administrator" do
+      let(:actor) { create(:member, :administrator, group: group) }
+    end
+
     succeed "for an events administrator" do
       let(:actor) { create(:member, :events_administrator, group: group) }
     end
@@ -74,6 +90,14 @@ RSpec.describe RegistrationPolicy, type: :policy do
     let(:context) { { user: actor.user } }
 
     failed "for a member holding no role"
+
+    succeed "for an owner" do
+      let(:actor) { create(:member, :owner, group: group) }
+    end
+
+    succeed "for an administrator" do
+      let(:actor) { create(:member, :administrator, group: group) }
+    end
 
     succeed "for an events administrator" do
       let(:actor) { create(:member, :events_administrator, group: group) }

@@ -180,6 +180,18 @@ RSpec.describe "Events", type: :request do
       end
     end
 
+    context "when signed in as the event's manager" do
+      it "cannot duplicate the event, which is creating one" do
+        actor = create(:member, :active)
+        event = create(:event, group: actor.group, manager: actor)
+        sign_in_as(actor.user)
+
+        get duplicate_group_event_path(event.group, event)
+
+        expect(response).to redirect_to root_path
+      end
+    end
+
     context "when signed in as an events administrator" do
       it "renders the new event page" do
         actor = create(:member, :active, :events_administrator)
