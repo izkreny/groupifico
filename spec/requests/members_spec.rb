@@ -120,14 +120,25 @@ RSpec.describe "Members", type: :request do
       end
     end
 
-    context "when signed in as an active member" do
+    context "when signed in as a members administrator" do
       it "shows the new member page" do
-        member = create(:member, :active)
+        member = create(:member, :active, :members_administrator)
         sign_in_as(member.user)
 
         get new_group_member_path(member.group)
 
         expect(response).to have_http_status :ok
+      end
+    end
+
+    context "when signed in as a member who cannot add anybody" do
+      it "refuses the form rather than offering one the submission would reject" do
+        member = create(:member, :active)
+        sign_in_as(member.user)
+
+        get new_group_member_path(member.group)
+
+        expect(response).to redirect_to root_path
       end
     end
   end
@@ -154,14 +165,25 @@ RSpec.describe "Members", type: :request do
       end
     end
 
-    context "when signed in as an active member" do
+    context "when signed in as a members administrator" do
       it "shows the edit member page" do
-        member = create(:member, :active)
+        member = create(:member, :active, :members_administrator)
         sign_in_as(member.user)
 
         get edit_group_member_path(member.group, member)
 
         expect(response).to have_http_status :ok
+      end
+    end
+
+    context "when signed in as a member who cannot change anybody" do
+      it "refuses the form" do
+        member = create(:member, :active)
+        sign_in_as(member.user)
+
+        get edit_group_member_path(member.group, member)
+
+        expect(response).to redirect_to root_path
       end
     end
   end
@@ -190,9 +212,9 @@ RSpec.describe "Members", type: :request do
       end
     end
 
-    context "when signed in as an active member" do
+    context "when signed in as an owner" do
       it "refuses a posted role name outside the vocabulary, creating nobody" do
-        actor   = create(:member, :active)
+        actor   = create(:member, :active, :owner)
         invitee = create(:user)
         sign_in_as(actor.user)
 
@@ -203,7 +225,7 @@ RSpec.describe "Members", type: :request do
       end
 
       it "creates the member with the roles posted for them" do
-        actor   = create(:member, :active)
+        actor   = create(:member, :active, :owner)
         invitee = create(:user)
         sign_in_as(actor.user)
 
@@ -211,9 +233,11 @@ RSpec.describe "Members", type: :request do
 
         expect(Member.find_by(user: invitee).roles.map(&:name)).to eq [ "events_administrator" ]
       end
+    end
 
+    context "when signed in as a members administrator" do
       it "creates the member" do
-        actor  = create(:member, :active)
+        actor   = create(:member, :active, :members_administrator)
         invitee = create(:user)
         sign_in_as(actor.user)
 
@@ -224,13 +248,51 @@ RSpec.describe "Members", type: :request do
       end
 
       it "re-renders the new page when the member is invalid" do
-        actor = create(:member, :active)
+        actor = create(:member, :active, :members_administrator)
         sign_in_as(actor.user)
 
         expect { post group_members_path(actor.group), params: { member: { user_id: "" } } }
           .not_to change(Member, :count)
 
         expect(response).to have_http_status :unprocessable_entity
+      end
+    end
+
+    # Adding a person and granting them a role are two decisions, and the second is the owner's.
+    # Granting a role while adding somebody is the same decision as granting it afterwards, so the
+    # controller asks `manage_roles?` on create as well.
+    context "when signed in as an administrator" do
+      it "adds a member" do
+        actor   = create(:member, :active, :administrator)
+        invitee = create(:user)
+        sign_in_as(actor.user)
+
+        expect { post group_members_path(actor.group), params: { member: { user_id: invitee.id } } }
+          .to change(Member, :count).by(1)
+      end
+
+      it "cannot add one carrying a role" do
+        actor   = create(:member, :active, :administrator)
+        invitee = create(:user)
+        sign_in_as(actor.user)
+
+        expect { post group_members_path(actor.group), params: { member: { user_id: invitee.id, roles: [ "events_administrator" ] } } }
+          .not_to change(Member, :count)
+
+        expect(response).to redirect_to root_path
+      end
+    end
+
+    context "when signed in as a member who cannot add anybody" do
+      it "refuses and creates nobody" do
+        actor   = create(:member, :active)
+        invitee = create(:user)
+        sign_in_as(actor.user)
+
+        expect { post group_members_path(actor.group), params: { member: { user_id: invitee.id } } }
+          .not_to change(Member, :count)
+
+        expect(response).to redirect_to root_path
       end
     end
 
@@ -272,10 +334,11 @@ RSpec.describe "Members", type: :request do
       end
     end
 
-    context "when signed in as an active member" do
-      it "updates the member" do
-        member = create(:member, :active)
-        sign_in_as(member.user)
+    context "when signed in as an owner" do
+      it "grants a member their roles" do
+        owner  = create(:member, :active, :owner)
+        member = create(:member, group: owner.group)
+        sign_in_as(owner.user)
 
         patch group_member_path(member.group, member), params: { member: { roles: [ "administrator", "events_administrator" ] } }
 
@@ -284,18 +347,20 @@ RSpec.describe "Members", type: :request do
       end
 
       it "refuses a posted role name outside the vocabulary, leaving the roles alone" do
-        member = create(:member, :active, roles: [ build(:role, name: "owner") ])
-        sign_in_as(member.user)
+        owner  = create(:member, :active, :owner)
+        member = create(:member, :administrator, group: owner.group)
+        sign_in_as(owner.user)
 
         patch group_member_path(member.group, member), params: { member: { roles: [ "bogus" ] } }
 
         expect(response).to have_http_status :unprocessable_entity
-        expect(member.reload.roles.map(&:name)).to eq [ "owner" ]
+        expect(member.reload.roles.map(&:name)).to eq [ "administrator" ]
       end
 
-      it "clears the roles when the form posts none" do
-        member = create(:member, :active, roles: [ build(:role, name: "owner") ])
-        sign_in_as(member.user)
+      it "revokes every role when the form posts none" do
+        owner  = create(:member, :active, :owner)
+        member = create(:member, :administrator, group: owner.group)
+        sign_in_as(owner.user)
 
         patch group_member_path(member.group, member), params: { member: { status: "active", roles: [ "" ] } }
 
@@ -304,18 +369,42 @@ RSpec.describe "Members", type: :request do
       end
 
       it "grants a role posted twice exactly once" do
-        member = create(:member, :active)
-        sign_in_as(member.user)
+        owner  = create(:member, :active, :owner)
+        member = create(:member, group: owner.group)
+        sign_in_as(owner.user)
 
-        patch group_member_path(member.group, member), params: { member: { roles: [ "owner", "owner" ] } }
+        patch group_member_path(member.group, member), params: { member: { roles: [ "administrator", "administrator" ] } }
 
         expect(response).to redirect_to group_member_path(member.group, member)
-        expect(member.reload.roles.map(&:name)).to eq [ "owner" ]
+        expect(member.reload.roles.map(&:name)).to eq [ "administrator" ]
+      end
+
+      it "makes another member an owner" do
+        owner  = create(:member, :active, :owner)
+        member = create(:member, group: owner.group)
+        sign_in_as(owner.user)
+
+        patch group_member_path(member.group, member), params: { member: { roles: [ "owner" ] } }
+
+        expect(member.reload).to be_owner
+      end
+    end
+
+    context "when signed in as a members administrator" do
+      it "changes a member's status" do
+        actor  = create(:member, :active, :members_administrator)
+        member = create(:member, :active, group: actor.group)
+        sign_in_as(actor.user)
+
+        patch group_member_path(member.group, member), params: { member: { status: "paused" } }
+
+        expect(member.reload).to be_paused
       end
 
       it "re-renders the edit page when the member is invalid" do
-        member = create(:member, :active)
-        sign_in_as(member.user)
+        actor  = create(:member, :active, :members_administrator)
+        member = create(:member, group: actor.group)
+        sign_in_as(actor.user)
 
         patch group_member_path(member.group, member), params: { member: { status: "" } }
 
@@ -323,25 +412,78 @@ RSpec.describe "Members", type: :request do
       end
 
       it "ignores a posted group_id, leaving the membership in its own group" do
-        member = create(:member, :active)
-        original_group = member.group
+        actor  = create(:member, :active, :members_administrator)
+        member = create(:member, group: actor.group)
         other_group = create(:group)
-        sign_in_as(member.user)
+        sign_in_as(actor.user)
 
         patch group_member_path(member.group, member), params: { member: { group_id: other_group.id } }
 
-        expect(member.reload.group).to eq original_group
+        expect(member.reload.group).to eq actor.group
       end
 
       it "ignores a posted user_id, leaving the membership with the user it had" do
-        member = create(:member, :active)
+        actor  = create(:member, :active, :members_administrator)
+        member = create(:member, group: actor.group)
         original_user = member.user
         other_user = create(:user)
-        sign_in_as(member.user)
+        sign_in_as(actor.user)
 
         patch group_member_path(member.group, member), params: { member: { user_id: other_user.id } }
 
         expect(member.reload.user).to eq original_user
+      end
+    end
+
+    # The roles check asks whether the posted set differs from the one the member holds, not whether
+    # a `roles` key arrived. #193 puts role checkboxes on this form, after which every status change
+    # carries the member's unchanged roles, and an administrator must keep their own row.
+    context "when signed in as an administrator" do
+      it "changes a status while posting the roles the member already holds" do
+        actor  = create(:member, :active, :administrator)
+        member = create(:member, :active, :events_administrator, group: actor.group)
+        sign_in_as(actor.user)
+
+        patch group_member_path(member.group, member),
+          params: { member: { status: "paused", roles: [ "events_administrator" ] } }
+
+        expect(member.reload).to be_paused
+        expect(member.roles.map(&:name)).to eq [ "events_administrator" ]
+      end
+
+      it "cannot grant a role" do
+        actor  = create(:member, :active, :administrator)
+        member = create(:member, group: actor.group)
+        sign_in_as(actor.user)
+
+        patch group_member_path(member.group, member), params: { member: { roles: [ "events_administrator" ] } }
+
+        expect(response).to redirect_to root_path
+        expect(member.reload.roles).to be_empty
+      end
+
+      it "cannot revoke a role" do
+        actor  = create(:member, :active, :administrator)
+        member = create(:member, :events_administrator, group: actor.group)
+        sign_in_as(actor.user)
+
+        patch group_member_path(member.group, member), params: { member: { roles: [ "" ] } }
+
+        expect(response).to redirect_to root_path
+        expect(member.reload.roles.map(&:name)).to eq [ "events_administrator" ]
+      end
+    end
+
+    context "when signed in as a member who cannot change anybody" do
+      it "refuses and leaves the member unchanged" do
+        actor  = create(:member, :active)
+        member = create(:member, :active, group: actor.group)
+        sign_in_as(actor.user)
+
+        patch group_member_path(member.group, member), params: { member: { status: "paused" } }
+
+        expect(response).to redirect_to root_path
+        expect(member.reload).to be_active
       end
     end
 
@@ -384,16 +526,29 @@ RSpec.describe "Members", type: :request do
       end
     end
 
-    context "when signed in as an active member" do
+    context "when signed in as a members administrator" do
       it "destroys the member" do
         target = create(:member)
-        actor = create(:member, :active, group: target.group)
+        actor = create(:member, :active, :members_administrator, group: target.group)
         sign_in_as(actor.user)
 
         expect { delete group_member_path(target.group, target) }
           .to change(Member, :count).by(-1)
 
         expect(response).to redirect_to group_members_path(target.group)
+      end
+    end
+
+    context "when signed in as a member who cannot remove anybody" do
+      it "refuses and removes nobody" do
+        target = create(:member)
+        actor = create(:member, :active, group: target.group)
+        sign_in_as(actor.user)
+
+        expect { delete group_member_path(target.group, target) }
+          .not_to change(Member, :count)
+
+        expect(response).to redirect_to root_path
       end
     end
 

@@ -31,6 +31,7 @@ class MembersController < ApplicationController
     @member = @group.members.new(new_member_params)
 
     authorize! @member
+    authorize! @member, to: :manage_roles? if @member.roles.any?
 
     if @member.save
       redirect_to group_member_path(@group, @member),
@@ -43,7 +44,10 @@ class MembersController < ApplicationController
   def update
     authorize! @member
 
-    if @member.update(member_params)
+    attributes = member_params
+    authorize! @member, to: :manage_roles? if granting_roles?(attributes)
+
+    if @member.update(attributes)
       redirect_to group_member_path(@group, @member),
         notice: "Member was successfully updated.",
         status: :see_other
@@ -80,6 +84,17 @@ class MembersController < ApplicationController
     # different user. Who may set a role is still #96's and #173's question.
     def member_params
       role_records params.expect(member: [ :status, roles: [] ])
+    end
+
+    # A posted `roles` key that changes nothing is not a grant. #193 puts role checkboxes on the
+    # member form, after which every status change posts the roles the member already holds, and
+    # refusing an administrator their own row over an unchanged list would be a defect in this
+    # check rather than a rule doing its job. Names are already unique here, so sorting compares
+    # the sets.
+    def granting_roles?(attributes)
+      return false unless attributes.key?(:roles)
+
+      attributes[:roles].map(&:name).sort != @member.roles.map(&:name).sort
     end
 
     # Roles arrive as names and the association writer wants records, so the swap happens here
