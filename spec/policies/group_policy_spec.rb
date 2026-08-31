@@ -60,6 +60,10 @@ RSpec.describe GroupPolicy, type: :policy do
     failed "for a members administrator" do
       let(:member) { create(:member, :members_administrator, group: group) }
     end
+
+    failed "for an events administrator" do
+      let(:member) { create(:member, :events_administrator, group: group) }
+    end
   end
 
   describe_rule :destroy? do
@@ -76,6 +80,14 @@ RSpec.describe GroupPolicy, type: :policy do
 
     failed "for an administrator, because the row is the owner's alone" do
       let(:member) { create(:member, :administrator, group: group) }
+    end
+
+    failed "for an events administrator" do
+      let(:member) { create(:member, :events_administrator, group: group) }
+    end
+
+    failed "for a members administrator" do
+      let(:member) { create(:member, :members_administrator, group: group) }
     end
   end
 

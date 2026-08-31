@@ -50,6 +50,10 @@ RSpec.describe RegistrationPolicy, type: :policy do
     succeed "for the event's manager, which is the invitation row" do
       let(:event) { create(:event, group: group, manager: actor) }
     end
+
+    failed "for a members administrator registering somebody else" do
+      let(:actor) { create(:member, :members_administrator, group: group) }
+    end
   end
 
   describe_rule :update? do
@@ -80,6 +84,10 @@ RSpec.describe RegistrationPolicy, type: :policy do
     failed "for the event's manager, who invites and does not overrule" do
       let(:event) { create(:event, group: group, manager: actor) }
     end
+
+    failed "for a members administrator" do
+      let(:actor) { create(:member, :members_administrator, group: group) }
+    end
   end
 
   describe_rule :destroy? do
@@ -109,6 +117,10 @@ RSpec.describe RegistrationPolicy, type: :policy do
 
     failed "for the event's manager" do
       let(:event) { create(:event, group: group, manager: actor) }
+    end
+
+    failed "for a members administrator" do
+      let(:actor) { create(:member, :members_administrator, group: group) }
     end
   end
 

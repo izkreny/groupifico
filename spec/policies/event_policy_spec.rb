@@ -45,6 +45,10 @@ RSpec.describe EventPolicy, type: :policy do
     failed "for a members administrator, whose column the row leaves blank" do
       let(:actor) { create(:member, :members_administrator, group: group) }
     end
+
+    failed "for the manager of another event, whose column the row leaves blank" do
+      before { create(:event, group: group, manager: actor) }
+    end
   end
 
   describe_rule :update? do
@@ -55,8 +59,20 @@ RSpec.describe EventPolicy, type: :policy do
 
     failed "for a member holding no role, who may not edit an event"
 
+    succeed "for an owner" do
+      let(:actor) { create(:member, :owner, group: group) }
+    end
+
+    succeed "for an administrator" do
+      let(:actor) { create(:member, :administrator, group: group) }
+    end
+
     succeed "for an events administrator" do
       let(:actor) { create(:member, :events_administrator, group: group) }
+    end
+
+    failed "for a members administrator" do
+      let(:actor) { create(:member, :members_administrator, group: group) }
     end
 
     succeed "for the event's own manager, who holds no role" do
@@ -82,8 +98,20 @@ RSpec.describe EventPolicy, type: :policy do
 
     failed "for a member holding no role, who may not delete an event"
 
+    succeed "for an owner" do
+      let(:actor) { create(:member, :owner, group: group) }
+    end
+
+    succeed "for an administrator" do
+      let(:actor) { create(:member, :administrator, group: group) }
+    end
+
     succeed "for an events administrator" do
       let(:actor) { create(:member, :events_administrator, group: group) }
+    end
+
+    failed "for a members administrator" do
+      let(:actor) { create(:member, :members_administrator, group: group) }
     end
 
     failed "for the event's own manager, because filling an event is not deleting it" do

@@ -91,6 +91,10 @@ RSpec.describe MemberPolicy, type: :policy do
     succeed "for a members administrator" do
       let(:actor) { create(:member, :members_administrator, group: group) }
     end
+
+    failed "for an events administrator" do
+      let(:actor) { create(:member, :events_administrator, group: group) }
+    end
   end
 
   # Two rows of the table, one rule: granting or revoking a role, and making another member an
@@ -114,6 +118,10 @@ RSpec.describe MemberPolicy, type: :policy do
 
     failed "for a members administrator" do
       let(:actor) { create(:member, :members_administrator, group: group) }
+    end
+
+    failed "for an events administrator" do
+      let(:actor) { create(:member, :events_administrator, group: group) }
     end
 
     # It is in WRITE_RULES, so the status pre-check refuses it before the rule is reached. Without
