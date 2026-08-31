@@ -8,12 +8,12 @@
 
 ## Steps
 
-- [x] Run `bundle update --all`
-- [x] Confirm which gems moved and why the remaining two did not
+- Run `bundle update --all`
+- Confirm which gems moved and why the remaining two did not
 
 ## Verification
 
-- [x] `bin/ci` passes
+- `bin/ci` passes
 
 Only `Gemfile.lock` changed; no application code was touched, so `bin/ci`'s test suite is the whole gate.
 
