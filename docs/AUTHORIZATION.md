@@ -4,11 +4,15 @@
 
 Who may do what inside a group, and why the code answers it the way it does. The mechanism is Action Policy, adopted in [ADR 0003](adr/2026-08-25_authorization-with-action-policy_0003.md); this document is the model that sits on top of it.
 
-## A record, not a specification
+## Specification, or record?
 
-Everything here describes code that exists. Where this document and the code disagree, the code is right and this document is a bug - including every mark in the capability tables, each of which is a rule with an example naming the capability it proves.
+Both, and which half you are reading decides who wins a disagreement.
 
-Two things are stated as facts about the mechanism rather than about who may do what, and both are worth knowing before reading a rule: `ApplicationPolicy`'s status pre-check refuses and never grants, so a policy's own rule is what decides; and `ActionPolicy::Base` denies any rule a policy does not define, so a capability nobody wrote is refused rather than raised.
+**The capability tables are a specification, and they are the authority.** They decide who may do what, and the code is obliged to implement them: where a rule and a cell disagree, the rule is the bug. What makes that more than a wish is that every rule carries an example per role column, so a verdict that moves without the table moving turns a spec red.
+
+**Everything else is a record of the code, and there the code wins.** The two questions below, the status filter that answers the second, and everything in `## Records that have no group at all` describe how the application behaves, so where they and the code disagree, this document is the bug.
+
+Two facts about the mechanism are worth knowing before reading any rule, and both belong to that second half: `ApplicationPolicy`'s status pre-check refuses and never grants, so a policy's own rule is what decides; and `ActionPolicy::Base` denies any rule a policy does not define, so a capability nobody wrote is refused rather than raised.
 
 ## Two questions, in order
 
