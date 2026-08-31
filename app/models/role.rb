@@ -26,15 +26,17 @@
 #     * **`member_id => members.id`**
 #
 class Role < ApplicationRecord
+  # The one role name the code says out loud. Every other name is derived - `Member#can_manage?`
+  # builds `"#{module_name}_administrator"` from the module it is asked about - but the group's own
+  # rows belong to this one alone, so `#owner?` below and `Group#owned_by_anyone_but?` both need it
+  # spelled out, and it belongs in one place.
+  OWNER = "owner".freeze
+
   # The vocabulary. A further module role is an entry here and nothing else: no migration, and no
   # policy change, because `Member#can_manage?` derives the name it looks for from the module. A
   # module gets its role when its model does, which is what admitted `members_administrator` and
   # what keeps a module whose model is still unwritten out of the list.
-  NAMES = %w[ owner administrator events_administrator members_administrator ].freeze
-
-  # Named because two questions ask for it and the name belongs in one place: `#owner?` below, and
-  # `Group#owned_by_anyone_but?`, which needs the string in a join condition rather than a record.
-  OWNER = "owner".freeze
+  NAMES = [ OWNER, "administrator", "events_administrator", "members_administrator" ].freeze
 
   # Raised where a name outside the vocabulary has to stop the work rather than fail a validation:
   # `MembersController` refuses the request with it, because dropping the name instead would read
