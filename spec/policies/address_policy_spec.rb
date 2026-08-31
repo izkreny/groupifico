@@ -59,10 +59,16 @@ RSpec.describe AddressPolicy, type: :policy do
   # that refusal is what this rule reads.
   describe_rule :update? do
     failed "when the member of the owning group is paused" do
-      before { create(:member, :paused, user: user, group: create(:group, address: record)) }
+      before { create(:member, :paused, :owner, user: user, group: create(:group, address: record)) }
     end
 
-    succeed "when the member of the owning group is active" do
+    succeed "when the member owns the group the address belongs to" do
+      before { create(:member, :active, :owner, user: user, group: create(:group, address: record)) }
+    end
+
+    # Correcting the group's home address is the same capability as editing the group, so it moved
+    # here the moment GroupPolicy#update? did, with nothing in this file changing.
+    failed "when the member belongs to the owning group but does not own it" do
       before { create(:member, :active, user: user, group: create(:group, address: record)) }
     end
   end

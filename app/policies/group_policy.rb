@@ -15,15 +15,24 @@ class GroupPolicy < ApplicationPolicy
 
   relation_scope { |relation| relation.merge(user.current_groups) }
 
-  # Every rule an active member reaches, answered exactly as the pre-check used to answer it. They
-  # are what keeps this commit behavior-preserving while the pre-check stops granting; the capability
-  # table in docs/AUTHORIZATION.md is applied to them next.
-  def index?   = true
-  def create?  = true
-  def show?    = true
-  def edit?    = true
-  def update?  = true
-  def destroy? = true
+  def index?  = true
+  def create? = true
+
+  # The group table in docs/AUTHORIZATION.md, one rule per row. Belonging is the whole of the read
+  # row, and the three write rows are the owner's alone - an administrator is refused all three,
+  # which is the split `can_manage?` cannot express and `Member#owner?` exists for.
+  def show? = true
+
+  # `edit?` spells the same question out rather than reaching `update?` through an alias or a
+  # `check?`, and both routes were tried. `write_rule?` matches whichever rule the running result
+  # names, and both routes rename it: an alias resolves `edit?` to `update?` before the pre-checks
+  # see it, and `check?` goes through `Reasons#allowed_to?`, which calls `apply_r` and pushes a
+  # fresh result of its own. Either way a paused owner is refused the form they are allowed to
+  # read - watched failing as `<GroupPolicy#edit?: false (reasons: {group: [:update?]})>`. Three
+  # words of repetition keep the read and the write answering under their own names.
+  def edit?    = membership.owner?
+  def update?  = membership.owner?
+  def destroy? = membership.owner?
 
   private
     def group_for(record) = record
