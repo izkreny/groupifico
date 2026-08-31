@@ -46,4 +46,9 @@ class Role < ApplicationRecord
   def grants?(module_name)
     name.in?([ "owner", "administrator", "#{module_name}_administrator" ])
   end
+
+  # The question above cannot ask this one. It admits `administrator` for every module, so no
+  # module name distinguishes the two, and several rows of the capability table are the owner's
+  # alone - editing the group, deleting it, and granting a role.
+  def owner? = name == "owner"
 end

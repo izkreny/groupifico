@@ -51,4 +51,10 @@ class Member < ApplicationRecord
   def can_manage?(module_name)
     roles.any? { it.grants?(module_name) }
   end
+
+  # The other question a policy asks, and the only one `can_manage?` cannot express: it admits an
+  # administrator for every module, while the group's own rows belong to the owner alone. Asked of
+  # the member rather than of `roles` for the same reason as above - where a role lives stays this
+  # model's business.
+  def owner? = roles.any?(&:owner?)
 end

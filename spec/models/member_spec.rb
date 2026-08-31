@@ -103,6 +103,27 @@ RSpec.describe Member, type: :model do
     end
   end
 
+  describe "#owner?" do
+    it "answers true for a member holding the owner role" do
+      member = create(:member, roles: [ build(:role, name: "owner") ])
+
+      expect(member.owner?).to be true
+    end
+
+    it "answers false for an administrator, who can manage every module and owns nothing" do
+      member = create(:member, roles: [ build(:role, name: "administrator") ])
+
+      expect(member.can_manage?(:members)).to be true
+      expect(member.owner?).to be false
+    end
+
+    it "answers false for a member holding no role at all" do
+      member = create(:member)
+
+      expect(member.owner?).to be false
+    end
+  end
+
   it { is_expected.to delegate_method(:full_name).to(:profile) }
 
   describe "#full_name" do
