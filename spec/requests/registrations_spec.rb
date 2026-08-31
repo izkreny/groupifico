@@ -334,9 +334,25 @@ RSpec.describe "Registrations", type: :request do
         actor = create(:member, :active, :events_administrator, group: event.group)
         sign_in_as(actor.user)
 
-        patch group_event_registration_path(event.group, event, registration), params: { registration: { member_id: "" } }
+        patch group_event_registration_path(event.group, event, registration), params: { registration: { status: "bogus" } }
 
         expect(response).to have_http_status :unprocessable_entity
+      end
+
+      # member_id is not permitted on update at all, so an events administrator cannot hand a
+      # registration on either. Correcting who a registration is for is deleting it and making
+      # another, which the events table already decides.
+      it "cannot move a registration onto another member" do
+        event = create(:event)
+        holder = create(:member, group: event.group)
+        registration = create(:registration, event:, member: holder)
+        other = create(:member, group: event.group)
+        actor = create(:member, :active, :events_administrator, group: event.group)
+        sign_in_as(actor.user)
+
+        patch group_event_registration_path(event.group, event, registration), params: { registration: { member_id: other.id, status: "yes" } }
+
+        expect(registration.reload.member).to eq holder
       end
 
       it "changes another member's answer, which the manager may not" do
@@ -445,6 +461,26 @@ RSpec.describe "Registrations", type: :request do
 
     # A registration is answered, never withdrawn: declining is the `no` answer, so nobody removes
     # their own and the manager does not remove anybody's.
+    # update? is decided against the record as loaded, so a member passes it on their own
+    # registration before any posted member_id is applied. Permitting member_id there let them
+    # answer for somebody else and lose their own registration in the same request - two capabilities
+    # the events table gives the three roles, and one it gives nobody.
+    context "when a member posts another member's id onto their own registration" do
+      it "leaves the registration where it was, and answers for nobody else" do
+        event = create(:event)
+        actor = create(:member, :active, group: event.group)
+        other = create(:member, group: event.group)
+        registration = create(:registration, status: "reserved", event:, member: actor)
+        sign_in_as(actor.user)
+
+        patch group_event_registration_path(event.group, event, registration),
+          params: { registration: { member_id: other.id, status: "yes" } }
+
+        expect(registration.reload.member).to eq actor
+        expect(other.registrations).to be_empty
+      end
+    end
+
     context "when signed in as the member the registration is for" do
       it "refuses, leaving them to answer no instead" do
         event = create(:event)
