@@ -3,6 +3,11 @@ class MembersController < ApplicationController
   # would filter to nothing, and `roles=` reads nothing as "hold no roles", which would revoke
   # every role the member has and answer with a success.
   rescue_from Role::UnknownName, with: :refuse_unknown_role
+  # A group must keep an owner, which Member and Role enforce with `throw :abort`. It surfaces here
+  # as RecordNotDestroyed from either end - removing the last owner, or revoking their role, which
+  # destroys the row without the member being touched - and it is a refusal the acting member can
+  # act on rather than a fault, so it gets a message instead of a 500.
+  rescue_from ActiveRecord::RecordNotDestroyed, with: :refuse_ownerless_group
 
   before_action :set_group
   before_action :set_member, only: %i[ show edit update destroy ]
@@ -111,5 +116,11 @@ class MembersController < ApplicationController
 
     def refuse_unknown_role
       head :unprocessable_entity
+    end
+
+    def refuse_ownerless_group
+      redirect_to group_member_path(@group, @member),
+        alert: "A group must always have an owner.",
+        status: :see_other
     end
 end

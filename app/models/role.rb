@@ -41,6 +41,11 @@ class Role < ApplicationRecord
 
   validates :name, inclusion: { in: NAMES }, uniqueness: { scope: :member_id }
 
+  # The other half of the invariant `Member` states: revoking the last owner's role would leave the
+  # group ownerless just as surely as removing them would. Both ends have to guard it, because
+  # `roles = [...]` destroys the rows it drops without the member ever being touched.
+  before_destroy :ensure_the_group_keeps_an_owner
+
   # Where `owner` implies `administrator`, and both imply every module role. One row per role a
   # member actually holds, and the implication lives here instead.
   def grants?(module_name)
@@ -51,4 +56,16 @@ class Role < ApplicationRecord
   # module name distinguishes the two, and several rows of the capability table are the owner's
   # alone - editing the group, deleting it, and granting a role.
   def owner? = name == "owner"
+
+  private
+    # A member on their way out takes their roles with them, and `Member`'s own guard has already
+    # decided whether that removal is allowed; asking again here would refuse the group's last
+    # owner being removed alongside the group itself.
+    def ensure_the_group_keeps_an_owner
+      return unless owner?
+      return if destroyed_by_association
+      return if member.group.owned_by_anyone_but?(member)
+
+      throw :abort
+    end
 end

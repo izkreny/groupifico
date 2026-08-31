@@ -38,7 +38,7 @@ RSpec.describe Member, type: :model do
     it { is_expected.to belong_to(:group) }
     it { is_expected.to have_one(:profile).through(:user) }
     it { is_expected.to have_many(:registrations).dependent(:destroy) }
-    it { is_expected.to have_many(:roles).dependent(:delete_all) }
+    it { is_expected.to have_many(:roles).dependent(:destroy) }
     it { is_expected.to have_many(:events).through(:registrations) }
     it { is_expected.to have_many(:created_events).class_name("Event").with_foreign_key("creator_id").inverse_of(:creator) }
     it { is_expected.to have_many(:managed_events).class_name("Event").with_foreign_key("manager_id").inverse_of(:manager) }
@@ -121,6 +121,55 @@ RSpec.describe Member, type: :model do
       member = create(:member)
 
       expect(member.owner?).to be false
+    end
+  end
+
+  # A domain invariant rather than an authorization rule: it holds whoever is asking, the last owner
+  # acting on themselves included, which is why no policy states it.
+  describe "the last owner" do
+    it "cannot be removed from the group" do
+      group = create(:group)
+      owner = create(:member, :owner, group: group)
+      create(:member, group: group)
+
+      expect(owner.destroy).to be false
+      expect(described_class.exists?(owner.id)).to be true
+    end
+
+    it "cannot be stripped of the owner role" do
+      group = create(:group)
+      owner = create(:member, :owner, group: group)
+
+      expect { owner.roles = [] }.to raise_error ActiveRecord::RecordNotDestroyed
+      expect(owner.reload).to be_owner
+    end
+
+    it "can be removed once another member owns the group too" do
+      group = create(:group)
+      owner = create(:member, :owner, group: group)
+      create(:member, :owner, group: group)
+
+      expect(owner.destroy).to be_truthy
+    end
+
+    # The guard runs before `has_many :roles, dependent: :destroy` gets to the roles, which is what
+    # `prepend: true` buys: without it the member is asked whether they own the group after their
+    # roles have already gone, and the answer is always no.
+    it "is asked before the member's roles are destroyed" do
+      group = create(:group)
+      owner = create(:member, :owner, group: group)
+
+      owner.destroy
+
+      expect(owner.reload.roles.map(&:name)).to eq [ "owner" ]
+    end
+
+    it "does not stop the group itself being destroyed" do
+      group = create(:group)
+      create(:member, :owner, group: group)
+
+      expect(group.destroy).to be_truthy
+      expect(described_class.where(group_id: group.id)).to be_empty
     end
   end
 

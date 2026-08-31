@@ -176,6 +176,19 @@ RSpec.describe "Members", type: :request do
       end
     end
 
+    context "when revoking the last owner's role" do
+      it "refuses and leaves the role in place" do
+        owner = create(:member, :active, :owner)
+        sign_in_as(owner.user)
+
+        patch group_member_path(owner.group, owner), params: { member: { roles: [ "" ] } }
+
+        expect(response).to redirect_to group_member_path(owner.group, owner)
+        expect(flash[:alert]).to be_present
+        expect(owner.reload).to be_owner
+      end
+    end
+
     context "when signed in as a member who cannot change anybody" do
       it "refuses the form" do
         member = create(:member, :active)
@@ -536,6 +549,32 @@ RSpec.describe "Members", type: :request do
           .to change(Member, :count).by(-1)
 
         expect(response).to redirect_to group_members_path(target.group)
+      end
+    end
+
+    # A group must keep an owner whoever is asking, so the last one is refused even to themselves.
+    # The refusal is a message rather than a 500: Member throws :abort, and the controller turns the
+    # RecordNotDestroyed that follows into something the acting member can act on.
+    context "when the removal would leave the group without an owner" do
+      it "refuses, says why, and keeps the member" do
+        owner = create(:member, :active, :owner)
+        create(:member, group: owner.group)
+        sign_in_as(owner.user)
+
+        expect { delete group_member_path(owner.group, owner) }
+          .not_to change(Member, :count)
+
+        expect(response).to redirect_to group_member_path(owner.group, owner)
+        expect(flash[:alert]).to be_present
+      end
+
+      it "allows it once a second owner exists" do
+        owner = create(:member, :active, :owner)
+        create(:member, :owner, group: owner.group)
+        sign_in_as(owner.user)
+
+        expect { delete group_member_path(owner.group, owner) }
+          .to change(Member, :count).by(-1)
       end
     end
 
