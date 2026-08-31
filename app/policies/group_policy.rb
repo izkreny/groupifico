@@ -15,8 +15,15 @@ class GroupPolicy < ApplicationPolicy
 
   relation_scope { |relation| relation.merge(user.current_groups) }
 
-  def index?  = true
-  def create? = true
+  # Every rule an active member reaches, answered exactly as the pre-check used to answer it. They
+  # are what keeps this commit behavior-preserving while the pre-check stops granting; the capability
+  # table in docs/AUTHORIZATION.md is applied to them next.
+  def index?   = true
+  def create?  = true
+  def show?    = true
+  def edit?    = true
+  def update?  = true
+  def destroy? = true
 
   private
     def group_for(record) = record
