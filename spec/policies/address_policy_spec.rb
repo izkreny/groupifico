@@ -3,7 +3,7 @@ require 'rails_helper'
 RSpec.describe AddressPolicy, type: :policy do
   let(:user)    { create(:user) }
   let(:record)  { create(:address) }
-  let(:context) { { user: user } }
+  let(:context) { { user: } }
 
   # Unconditionally true, so there is no denial case to pair this with: Action Policy's Defaults
   # module answers `index?` false, and this rule exists only to override that. Asserted by name
@@ -20,12 +20,12 @@ RSpec.describe AddressPolicy, type: :policy do
     failed "when no group or event of the user's points at the address"
 
     succeed "when a group the user belongs to has the address" do
-      before { create(:member, user: user, group: create(:group, address: record)) }
+      before { create(:member, user:, group: create(:group, address: record)) }
     end
 
     succeed "when an event of a group the user belongs to has the address" do
       before do
-        member = create(:member, user: user)
+        member = create(:member, user:)
         create(:event, group: member.group, address: record)
       end
     end
@@ -40,7 +40,7 @@ RSpec.describe AddressPolicy, type: :policy do
   # `describe_rule :destroy?` below proves rather than assumes.
   describe_rule :destroy? do
     failed "when a group the user belongs to has the address" do
-      before { create(:member, user: user, group: create(:group, address: record)) }
+      before { create(:member, user:, group: create(:group, address: record)) }
     end
   end
 
@@ -59,11 +59,17 @@ RSpec.describe AddressPolicy, type: :policy do
   # that refusal is what this rule reads.
   describe_rule :update? do
     failed "when the member of the owning group is paused" do
-      before { create(:member, :paused, user: user, group: create(:group, address: record)) }
+      before { create(:member, :paused, :owner, user:, group: create(:group, address: record)) }
     end
 
-    succeed "when the member of the owning group is active" do
-      before { create(:member, :active, user: user, group: create(:group, address: record)) }
+    succeed "when the member owns the group the address belongs to" do
+      before { create(:member, :active, :owner, user:, group: create(:group, address: record)) }
+    end
+
+    # Correcting the group's home address is the same capability as editing the group, so it moved
+    # here the moment GroupPolicy#update? did, with nothing in this file changing.
+    failed "when the member belongs to the owning group but does not own it" do
+      before { create(:member, :active, user:, group: create(:group, address: record)) }
     end
   end
 
@@ -73,12 +79,12 @@ RSpec.describe AddressPolicy, type: :policy do
   describe "the relation scope" do
     it "excludes an address reachable only through a group the user has left" do
       gone = create(:address)
-      create(:member, :inactive, user: user, group: create(:group, address: gone))
+      create(:member, :inactive, user:, group: create(:group, address: gone))
 
       kept = create(:address)
-      create(:member, :active, user: user, group: create(:group, address: kept))
+      create(:member, :active, user:, group: create(:group, address: kept))
 
-      scoped = described_class.new(nil, user: user).apply_scope(Address.all, type: :active_record_relation)
+      scoped = described_class.new(nil, user:).apply_scope(Address.all, type: :active_record_relation)
 
       expect(scoped).to include kept
       expect(scoped).not_to include gone

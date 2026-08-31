@@ -3,6 +3,11 @@ class MembersController < ApplicationController
   # would filter to nothing, and `roles=` reads nothing as "hold no roles", which would revoke
   # every role the member has and answer with a success.
   rescue_from Role::UnknownName, with: :refuse_unknown_role
+  # A group must keep an owner, which Member and Role enforce with `throw :abort`. It surfaces here
+  # as RecordNotDestroyed from either end - removing the last owner, or revoking their role, which
+  # destroys the row without the member being touched - and it is a refusal the acting member can
+  # act on rather than a fault, so it gets a message instead of a 500.
+  rescue_from ActiveRecord::RecordNotDestroyed, with: :refuse_ownerless_group
 
   before_action :set_group
   before_action :set_member, only: %i[ show edit update destroy ]
@@ -31,6 +36,7 @@ class MembersController < ApplicationController
     @member = @group.members.new(new_member_params)
 
     authorize! @member
+    authorize! @member, to: :manage_roles? if @member.roles.any?
 
     if @member.save
       redirect_to group_member_path(@group, @member),
@@ -43,7 +49,10 @@ class MembersController < ApplicationController
   def update
     authorize! @member
 
-    if @member.update(member_params)
+    attributes = member_params
+    authorize! @member, to: :manage_roles? if granting_roles?(attributes)
+
+    if @member.update(attributes)
       redirect_to group_member_path(@group, @member),
         notice: "Member was successfully updated.",
         status: :see_other
@@ -77,9 +86,20 @@ class MembersController < ApplicationController
     end
 
     # Used on update: user_id stays out, so an existing membership cannot be handed to a
-    # different user. Who may set a role is still #96's and #173's question.
+    # different user. Who may set a role is `MemberPolicy#manage_roles?`, asked above.
     def member_params
       role_records params.expect(member: [ :status, roles: [] ])
+    end
+
+    # A posted `roles` key that changes nothing is not a grant. #193 puts role checkboxes on the
+    # member form, after which every status change posts the roles the member already holds, and
+    # refusing an administrator their own row over an unchanged list would be a defect in this
+    # check rather than a rule doing its job. Names are already unique here, so sorting compares
+    # the sets.
+    def granting_roles?(attributes)
+      return false unless attributes.key?(:roles)
+
+      attributes[:roles].map(&:name).sort != @member.roles.map(&:name).sort
     end
 
     # Roles arrive as names and the association writer wants records, so the swap happens here
@@ -96,5 +116,11 @@ class MembersController < ApplicationController
 
     def refuse_unknown_role
       head :unprocessable_entity
+    end
+
+    def refuse_ownerless_group
+      redirect_to group_member_path(@group, @member),
+        alert: "A group must always have an owner.",
+        status: :see_other
     end
 end

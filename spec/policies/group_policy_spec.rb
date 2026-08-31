@@ -30,6 +30,93 @@ RSpec.describe GroupPolicy, type: :policy do
     succeed "when the user belongs to no group"
   end
 
+  # One example per marked cell of the group table in docs/AUTHORIZATION.md. Named after the
+  # capability rather than the controller action, so a spec here and a row there can be read against
+  # each other; a cell the table leaves blank has a `failed` example and never a missing one.
+  describe_rule :show? do
+    let(:member)  { create(:member) }
+    let(:record)  { member.group }
+    let(:context) { { user: member.user } }
+
+    succeed "for a member holding no role, who may see the group and its details"
+  end
+
+  describe_rule :update? do
+    let(:group)   { create(:group) }
+    let(:member)  { create(:member, group:) }
+    let(:record)  { group }
+    let(:context) { { user: member.user } }
+
+    failed "for a member holding no role, who may not edit the group's name, type or description"
+
+    succeed "for an owner" do
+      let(:member) { create(:member, :owner, group:) }
+    end
+
+    failed "for an administrator, because the row is the owner's alone" do
+      let(:member) { create(:member, :administrator, group:) }
+    end
+
+    failed "for a members administrator" do
+      let(:member) { create(:member, :members_administrator, group:) }
+    end
+
+    failed "for an events administrator" do
+      let(:member) { create(:member, :events_administrator, group:) }
+    end
+  end
+
+  describe_rule :destroy? do
+    let(:group)   { create(:group) }
+    let(:member)  { create(:member, group:) }
+    let(:record)  { group }
+    let(:context) { { user: member.user } }
+
+    failed "for a member holding no role, who may not delete the group"
+
+    succeed "for an owner" do
+      let(:member) { create(:member, :owner, group:) }
+    end
+
+    failed "for an administrator, because the row is the owner's alone" do
+      let(:member) { create(:member, :administrator, group:) }
+    end
+
+    failed "for an events administrator" do
+      let(:member) { create(:member, :events_administrator, group:) }
+    end
+
+    failed "for a members administrator" do
+      let(:member) { create(:member, :members_administrator, group:) }
+    end
+  end
+
+  # `edit?` answers `membership.owner?` under its own name rather than aliasing or composing
+  # `update?`, so that opening the form stays a read while submitting it stays a write; the policy
+  # carries the account of why both alternatives rename the running rule. Both halves are asserted
+  # here: the verdict follows the owner rule, and a paused owner - refused `update?` by the status
+  # pre-check - is still admitted to the form.
+  describe_rule :edit? do
+    let(:group)   { create(:group) }
+    let(:member)  { create(:member, group:) }
+    let(:record)  { group }
+    let(:context) { { user: member.user } }
+
+    failed "for a member holding no role"
+
+    succeed "for an owner" do
+      let(:member) { create(:member, :owner, group:) }
+    end
+
+    failed "for an administrator" do
+      let(:member) { create(:member, :administrator, group:) }
+    end
+
+    succeed "for a paused owner, who keeps every read" do
+      let(:member) { create(:member, :paused, :owner, group:) }
+    end
+  end
+
   # `new?` has no rule of its own here, and that is the point: it resolves through Action Policy's
   # inherited alias to `create?`, which is what keeps the form and the submission answering alike.
   # ApplicationPolicy leaves `new?` out of WRITE_RULES on exactly that basis, so a real `new?`
@@ -43,10 +130,10 @@ RSpec.describe GroupPolicy, type: :policy do
   describe "the relation scope" do
     it "excludes a group the user has left" do
       user = create(:user)
-      left = create(:member, :inactive, user: user).group
-      kept = create(:member, :active, user: user).group
+      left = create(:member, :inactive, user:).group
+      kept = create(:member, :active, user:).group
 
-      scoped = described_class.new(nil, user: user).apply_scope(Group.all, type: :active_record_relation)
+      scoped = described_class.new(nil, user:).apply_scope(Group.all, type: :active_record_relation)
 
       expect(scoped).to contain_exactly(kept)
       expect(scoped).not_to include left

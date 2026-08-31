@@ -36,4 +36,16 @@ class Group < ApplicationRecord
   def addresses
     Address.where(id: events.select(:address_id)).or(Address.where(id: address_id))
   end
+
+  # Asked before a group loses an owner, by whichever end is losing one - the member being removed,
+  # the role being revoked, or the status leaving `active`. Kept here because "does this group still
+  # have an owner" is a fact about the group, and every caller would otherwise write the same join.
+  #
+  # `active` is what makes the answer mean anything. A `paused` owner is refused every write by the
+  # status pre-check, including the write that would restore them, and an `inactive` one has left,
+  # so counting either would let the last owner who can actually act be removed while the predicate
+  # still answered yes.
+  def owned_by_anyone_but?(member)
+    members.active.joins(:roles).where(roles: { name: Role::OWNER }).where.not(id: member.id).exists?
+  end
 end

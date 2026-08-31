@@ -136,14 +136,38 @@ RSpec.describe "Groups", type: :request do
       end
     end
 
-    context "when signed in as an active member" do
+    context "when signed in as an owner" do
       it "shows the edit group page" do
-        member = create(:member, :active)
+        member = create(:member, :active, :owner)
         sign_in_as(member.user)
 
         get edit_group_path(member.group)
 
         expect(response).to have_http_status :ok
+      end
+
+      # Opening the form is a read, so the status pre-check lets a paused owner through and stops
+      # them at the submission instead. `edit?` therefore answers `membership.owner?` under its own
+      # name rather than through an alias or a `check?`, both of which rename the running rule to
+      # `update?` and refuse this.
+      it "shows the edit group page to a paused owner, who is stopped at the submission" do
+        member = create(:member, :paused, :owner)
+        sign_in_as(member.user)
+
+        get edit_group_path(member.group)
+
+        expect(response).to have_http_status :ok
+      end
+    end
+
+    context "when signed in as a member who does not own the group" do
+      it "refuses an administrator with a redirect rather than a 404" do
+        member = create(:member, :active, :administrator)
+        sign_in_as(member.user)
+
+        get edit_group_path(member.group)
+
+        expect(response).to redirect_to root_path
       end
     end
   end
@@ -225,9 +249,9 @@ RSpec.describe "Groups", type: :request do
       end
     end
 
-    context "when signed in as an active member" do
+    context "when signed in as an owner" do
       it "updates the group" do
-        member = create(:member, :active)
+        member = create(:member, :active, :owner)
         sign_in_as(member.user)
 
         patch group_path(member.group), params: { group: { name: "Renamed" } }
@@ -237,12 +261,39 @@ RSpec.describe "Groups", type: :request do
       end
 
       it "re-renders the edit page when the group is invalid" do
-        member = create(:member, :active)
+        member = create(:member, :active, :owner)
         sign_in_as(member.user)
 
         patch group_path(member.group), params: { group: { name: "" } }
 
         expect(response).to have_http_status :unprocessable_entity
+      end
+    end
+
+    # The distinction ADR 0003 records, and the one the role rules add: a non-member is told
+    # nothing and gets the 404 above, while a member who lacks the role is refused plainly. The
+    # refusal is the redirect every other denial gets rather than a bare 403 status, because a
+    # refused Turbo submission that lands back on its own form looks like a dead button.
+    context "when signed in as a member who does not own the group" do
+      it "refuses an ordinary member, and does not answer as a missing record does" do
+        member = create(:member, :active, group: create(:group, name: "Original"))
+        sign_in_as(member.user)
+
+        patch group_path(member.group), params: { group: { name: "Renamed" } }
+
+        expect(response).to redirect_to root_path
+        expect(flash[:alert]).to be_present
+        expect(member.group.reload.name).to eq "Original"
+      end
+
+      it "refuses an administrator, who administers members and not the group itself" do
+        member = create(:member, :active, :administrator, group: create(:group, name: "Original"))
+        sign_in_as(member.user)
+
+        patch group_path(member.group), params: { group: { name: "Renamed" } }
+
+        expect(response).to redirect_to root_path
+        expect(member.group.reload.name).to eq "Original"
       end
     end
 
@@ -312,15 +363,27 @@ RSpec.describe "Groups", type: :request do
       end
     end
 
-    context "when signed in as an active member" do
+    context "when signed in as an owner" do
       it "destroys the group" do
-        member = create(:member, :active)
+        member = create(:member, :active, :owner)
         sign_in_as(member.user)
 
         expect { delete group_path(member.group) }
           .to change(Group, :count).by(-1)
 
         expect(response).to redirect_to groups_path
+      end
+    end
+
+    context "when signed in as a member who does not own the group" do
+      it "refuses an administrator and does not destroy the group" do
+        member = create(:member, :active, :administrator)
+        sign_in_as(member.user)
+
+        expect { delete group_path(member.group) }
+          .not_to change(Group, :count)
+
+        expect(response).to redirect_to root_path
       end
     end
 

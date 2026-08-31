@@ -168,11 +168,11 @@ RSpec.describe "Registrations", type: :request do
       end
     end
 
-    context "when signed in as an active member" do
+    context "when signed in as an events administrator" do
       it "shows the edit registration page" do
         event = create(:event)
         registration = create(:registration, event:, member: create(:member, group: event.group))
-        viewer = create(:member, :active, group: event.group)
+        viewer = create(:member, :active, :events_administrator, group: event.group)
         sign_in_as(viewer.user)
 
         get edit_group_event_registration_path(event.group, event, registration)
@@ -229,6 +229,54 @@ RSpec.describe "Registrations", type: :request do
       end
     end
 
+    # Filling the event is the manager's job and the three roles', and saying `invited` is part of
+    # it. A member speaking for themselves says `yes`, `maybe` or `no`, and nothing else.
+    context "when signed in as the event's manager" do
+      it "invites another member" do
+        actor = create(:member, :active)
+        event = create(:event, group: actor.group, manager: actor)
+        invitee = create(:member, group: actor.group)
+        sign_in_as(actor.user)
+
+        expect { post group_event_registrations_path(event.group, event), params: { registration: { member_id: invitee.id, status: "invited" } } }
+          .to change(Registration, :count).by(1)
+      end
+    end
+
+    context "when signed in as a member speaking for themselves" do
+      it "answers without naming a status, taking the record's default" do
+        event = create(:event)
+        member = create(:member, :active, group: event.group)
+        sign_in_as(member.user)
+
+        expect { post group_event_registrations_path(event.group, event), params: { registration: { member_id: member.id } } }
+          .to change(Registration, :count).by(1)
+      end
+
+      it "cannot register another member" do
+        event = create(:event)
+        member = create(:member, :active, group: event.group)
+        other  = create(:member, group: event.group)
+        sign_in_as(member.user)
+
+        expect { post group_event_registrations_path(event.group, event), params: { registration: { member_id: other.id } } }
+          .not_to change(Registration, :count)
+
+        expect(response).to redirect_to root_path
+      end
+
+      it "cannot post themselves as invited, which is somebody else's word" do
+        event = create(:event)
+        member = create(:member, :active, group: event.group)
+        sign_in_as(member.user)
+
+        expect { post group_event_registrations_path(event.group, event), params: { registration: { member_id: member.id, status: "invited" } } }
+          .not_to change(Registration, :count)
+
+        expect(response).to redirect_to root_path
+      end
+    end
+
     context "when signed in as a paused member" do
       it "refuses with a redirect carrying an alert, and does not create the registration" do
         event = create(:event)
@@ -267,11 +315,11 @@ RSpec.describe "Registrations", type: :request do
       end
     end
 
-    context "when signed in as an active member" do
+    context "when signed in as an events administrator" do
       it "updates the registration" do
         event = create(:event)
         registration = create(:registration, event:, member: create(:member, group: event.group))
-        actor = create(:member, :active, group: event.group)
+        actor = create(:member, :active, :events_administrator, group: event.group)
         sign_in_as(actor.user)
 
         patch group_event_registration_path(event.group, event, registration), params: { registration: { status: "yes" } }
@@ -283,12 +331,64 @@ RSpec.describe "Registrations", type: :request do
       it "re-renders the edit page when the registration is invalid" do
         event = create(:event)
         registration = create(:registration, event:, member: create(:member, group: event.group))
-        actor = create(:member, :active, group: event.group)
+        actor = create(:member, :active, :events_administrator, group: event.group)
         sign_in_as(actor.user)
 
-        patch group_event_registration_path(event.group, event, registration), params: { registration: { member_id: "" } }
+        patch group_event_registration_path(event.group, event, registration), params: { registration: { status: "bogus" } }
 
         expect(response).to have_http_status :unprocessable_entity
+      end
+
+      # member_id is not permitted on update at all, so an events administrator cannot hand a
+      # registration on either. Correcting who a registration is for is deleting it and making
+      # another, which the events table already decides.
+      it "cannot move a registration onto another member" do
+        event = create(:event)
+        holder = create(:member, group: event.group)
+        registration = create(:registration, event:, member: holder)
+        other = create(:member, group: event.group)
+        actor = create(:member, :active, :events_administrator, group: event.group)
+        sign_in_as(actor.user)
+
+        patch group_event_registration_path(event.group, event, registration), params: { registration: { member_id: other.id, status: "yes" } }
+
+        expect(registration.reload.member).to eq holder
+      end
+
+      it "changes another member's answer, which the manager may not" do
+        event = create(:event)
+        registration = create(:registration, status: "yes", event:, member: create(:member, group: event.group))
+        manager = create(:member, :active, group: event.group)
+        event.update!(manager: manager)
+        sign_in_as(manager.user)
+
+        patch group_event_registration_path(event.group, event, registration), params: { registration: { status: "no" } }
+
+        expect(response).to redirect_to root_path
+        expect(registration.reload.status).to eq "yes"
+      end
+
+      it "lets a member change their own answer while holding no role" do
+        event = create(:event)
+        actor = create(:member, :active, group: event.group)
+        registration = create(:registration, status: "reserved", event:, member: actor)
+        sign_in_as(actor.user)
+
+        patch group_event_registration_path(event.group, event, registration), params: { registration: { status: "yes" } }
+
+        expect(registration.reload.status).to eq "yes"
+      end
+
+      it "refuses a member writing invited onto their own registration" do
+        event = create(:event)
+        actor = create(:member, :active, group: event.group)
+        registration = create(:registration, status: "yes", event:, member: actor)
+        sign_in_as(actor.user)
+
+        patch group_event_registration_path(event.group, event, registration), params: { registration: { status: "invited" } }
+
+        expect(response).to redirect_to root_path
+        expect(registration.reload.status).to eq "yes"
       end
 
       it "ignores a posted event_id, leaving the registration on its own event" do
@@ -345,17 +445,68 @@ RSpec.describe "Registrations", type: :request do
       end
     end
 
-    context "when signed in as an active member" do
+    context "when signed in as an events administrator" do
       it "destroys the registration" do
         event = create(:event)
         registration = create(:registration, event:, member: create(:member, group: event.group))
-        actor = create(:member, :active, group: event.group)
+        actor = create(:member, :active, :events_administrator, group: event.group)
         sign_in_as(actor.user)
 
         expect { delete group_event_registration_path(event.group, event, registration) }
           .to change(Registration, :count).by(-1)
 
         expect(response).to redirect_to group_event_registrations_path(event.group, event)
+      end
+    end
+
+    # A registration is answered, never withdrawn: declining is the `no` answer, so nobody removes
+    # their own and the manager does not remove anybody's.
+    # update? is decided against the record as loaded, so a member passes it on their own
+    # registration before any posted member_id is applied. Permitting member_id there let them
+    # answer for somebody else and lose their own registration in the same request - two capabilities
+    # the events table gives the three roles, and one it gives nobody.
+    context "when a member posts another member's id onto their own registration" do
+      it "leaves the registration where it was, and answers for nobody else" do
+        event = create(:event)
+        actor = create(:member, :active, group: event.group)
+        other = create(:member, group: event.group)
+        registration = create(:registration, status: "reserved", event:, member: actor)
+        sign_in_as(actor.user)
+
+        patch group_event_registration_path(event.group, event, registration),
+          params: { registration: { member_id: other.id, status: "yes" } }
+
+        expect(registration.reload.member).to eq actor
+        expect(other.registrations).to be_empty
+      end
+    end
+
+    context "when signed in as the member the registration is for" do
+      it "refuses, leaving them to answer no instead" do
+        event = create(:event)
+        actor = create(:member, :active, group: event.group)
+        registration = create(:registration, event:, member: actor)
+        sign_in_as(actor.user)
+
+        expect { delete group_event_registration_path(event.group, event, registration) }
+          .not_to change(Registration, :count)
+
+        expect(response).to redirect_to root_path
+      end
+    end
+
+    context "when signed in as the event's manager" do
+      it "refuses, because taking a registration away is not theirs" do
+        event = create(:event)
+        manager = create(:member, :active, group: event.group)
+        event.update!(manager: manager)
+        registration = create(:registration, event:, member: create(:member, group: event.group))
+        sign_in_as(manager.user)
+
+        expect { delete group_event_registration_path(event.group, event, registration) }
+          .not_to change(Registration, :count)
+
+        expect(response).to redirect_to root_path
       end
     end
 

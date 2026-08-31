@@ -14,7 +14,14 @@ class ApplicationPolicy < ActionPolicy::Base
   # they will be refused at submission is worse than refusing them at the link. What is left -
   # `show?`, `edit?`, and `index?` where it reaches this far - is read, and a `paused` member
   # keeps read.
-  WRITE_RULES = %i[ create? update? destroy? ].freeze
+  #
+  # `manage_roles?` and `manage_answers?` are here because granting a role and writing a status
+  # nobody may say about themselves are writes like any other, and a rule absent from this list is
+  # read: a paused member would keep it while losing `update?`, which is the one combination either
+  # must never allow. Neither is reachable that way today, since the pre-check refuses the ordinary
+  # write first - the entries cost nothing now and the flow that needs them is one `allowed_to?` in
+  # a view away.
+  WRITE_RULES = %i[ create? update? destroy? manage_roles? manage_answers? ].freeze
 
   # `authorize!` resolves its `to:` rule against the policy *before* the pre-checks below ever run,
   # so a rule nobody defines here does not reach `verify_active_membership!` as itself - it falls
@@ -23,12 +30,14 @@ class ApplicationPolicy < ActionPolicy::Base
   # `index?` need no such stub - Action Policy's own base class already defines `create?`/`index?`
   # and aliases `new?` to `create?`.
   #
-  # They return false, and that is load-bearing rather than tidy. For a policy that keeps the
-  # pre-checks the body is unreachable - allow!/deny! settles the rule first - but AddressPolicy
-  # and UserProfilePolicy both `skip_pre_check` and answer reachability themselves, so for those
-  # two the body is the whole rule. Returning true here handed every skipping policy a granted
-  # `destroy?` it never wrote: caught when AddressPolicy's own `destroy?` was removed and its
-  # policy spec reported `Expected to fail but succeed: <AddressPolicy#destroy?: true>`.
+  # They return false, and that is load-bearing rather than tidy: it is what every subclass is
+  # measured against. `verify_active_membership!` refuses and never grants, so an active member
+  # reaches the rule itself and one of these bodies is the answer wherever the subclass wrote none.
+  # A stub returning true would hand every such subclass a granted `destroy?` nobody wrote, which
+  # is how AddressPolicy once acquired one: its policy spec reported
+  # `Expected to fail but succeed: <AddressPolicy#destroy?: true>` the moment its own rule was
+  # removed. Deny-by-default is the whole point, so the price is that a subclass relying on the
+  # pre-checks must define every rule it means to grant.
   def show?    = false
   def edit?    = false
   def update?  = false
@@ -60,10 +69,15 @@ class ApplicationPolicy < ActionPolicy::Base
 
     # A member belongs; whether they may currently act is a status question, not a role one.
     # `inactive` has left and is refused exactly like a non-member. `paused` still belongs and keeps
-    # read, but not write, until #93 and #96 give write its own rule to consult.
+    # read, but not write.
+    #
+    # It refuses and never grants, which is what makes every rule below it reachable. An `allow!`
+    # here would settle authorization outright and the rule would never run, so a role rule written
+    # under one moves no verdict at all: every active member would already have been granted. The
+    # bare `return` says "this pre-check has no objection", and the rule decides.
     def verify_active_membership!
-      return allow! if membership.active?
-      return allow! if membership.paused? && !write_rule?
+      return if membership.active?
+      return if membership.paused? && !write_rule?
       return deny! if membership.paused?
 
       details[:not_found] = true

@@ -22,7 +22,7 @@ RSpec.describe "Addresses", type: :request do
       it "lists only addresses reachable through the acting user's groups and events" do
         reachable = create(:address)
         group     = create(:group, address: reachable)
-        member    = create(:member, group: group)
+        member    = create(:member, group:)
         unreachable = create(:address)
         sign_in_as(member.user)
 
@@ -47,7 +47,7 @@ RSpec.describe "Addresses", type: :request do
       it "shows the address page" do
         address = create(:address)
         group   = create(:group, address: address)
-        member  = create(:member, group: group)
+        member  = create(:member, group:)
 
         sign_in_as(member.user)
 
@@ -62,7 +62,7 @@ RSpec.describe "Addresses", type: :request do
       it "does not offer the destroy button" do
         address = create(:address)
         group   = create(:group, address: address)
-        member  = create(:member, group: group)
+        member  = create(:member, group:)
 
         sign_in_as(member.user)
 
@@ -153,7 +153,7 @@ RSpec.describe "Addresses", type: :request do
       it "shows the edit address page" do
         address = create(:address)
         group   = create(:group, address: address)
-        member  = create(:member, group: group)
+        member  = create(:member, group:)
 
         sign_in_as(member.user)
 
@@ -173,11 +173,14 @@ RSpec.describe "Addresses", type: :request do
       end
     end
 
-    context "when successfully signed in" do
+    # An address inherits its owner's answer, so the group's home address is the owner's to correct
+    # and nobody else's. Nothing in AddressPolicy says so: GroupPolicy#update? tightened and this
+    # followed.
+    context "when signed in as the group's owner" do
       it "updates the address" do
         address = create(:address)
         group   = create(:group, address: address)
-        member  = create(:member, group: group)
+        member  = create(:member, :owner, group:)
 
         sign_in_as(member.user)
 
@@ -190,13 +193,28 @@ RSpec.describe "Addresses", type: :request do
       it "re-renders the edit page when the address is invalid" do
         address = create(:address)
         group   = create(:group, address: address)
-        member  = create(:member, group: group)
+        member  = create(:member, :owner, group:)
 
         sign_in_as(member.user)
 
         patch address_path(address), params: { address: { name: "" } }
 
         expect(response).to have_http_status :unprocessable_entity
+      end
+    end
+
+    context "when signed in as a member who does not own the group" do
+      it "refuses the correction and leaves the address alone" do
+        address = create(:address, name: "Original")
+        group   = create(:group, address: address)
+        member  = create(:member, group:)
+
+        sign_in_as(member.user)
+
+        patch address_path(address), params: { address: { name: "Renamed" } }
+
+        expect(response).to redirect_to root_path
+        expect(address.reload.name).to eq "Original"
       end
     end
   end

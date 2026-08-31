@@ -64,4 +64,22 @@ RSpec.describe Role, type: :model do
       expect(role.grants?(:polls)).to be true
     end
   end
+
+  # The one question `#grants?` cannot answer. It admits `administrator` for every module, so no
+  # module name asks "is this the owner", and the capability table gives several rows to `owner`
+  # alone.
+  describe "#owner?" do
+    it "answers true for the owner role" do
+      role = build(:role, name: "owner")
+
+      expect(role.owner?).to be true
+    end
+
+    it "answers false for the administrator role, which every module question admits" do
+      role = build(:role, name: "administrator")
+
+      expect(role.grants?(:members)).to be true
+      expect(role.owner?).to be false
+    end
+  end
 end

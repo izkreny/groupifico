@@ -117,4 +117,22 @@ RSpec.describe Group, type: :model do
       end
     end
   end
+
+  describe "#owned_by_anyone_but?" do
+    it "answers false when the named member is the group's only owner" do
+      group = create(:group)
+      owner = create(:member, :owner, group:)
+      create(:member, :administrator, group:)
+
+      expect(group.owned_by_anyone_but?(owner)).to be false
+    end
+
+    it "answers true when another member owns the group as well" do
+      group = create(:group)
+      owner = create(:member, :owner, group:)
+      create(:member, :owner, group:)
+
+      expect(group.owned_by_anyone_but?(owner)).to be true
+    end
+  end
 end

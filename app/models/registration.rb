@@ -34,5 +34,11 @@ class Registration < ApplicationRecord
   belongs_to :member
   belongs_to :event
 
+  # The statuses that are an answer. `reserved` and `invited` are the other two, and they are what
+  # somebody filling the event puts you into rather than something you say about yourself. Named
+  # here because the vocabulary is the model's; `RegistrationPolicy` and `RegistrationsController`
+  # both ask it rather than each holding a list.
+  ANSWERS = %w[ yes maybe no ].freeze
+
   enum :status, %i[ reserved invited yes maybe no ], default: :reserved, validate: true
 end

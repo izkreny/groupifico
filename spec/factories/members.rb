@@ -51,5 +51,24 @@ FactoryBot.define do
     trait :inactive do
       status { :inactive }
     end
+
+    # One trait per role in Role::NAMES, because a spec that names the capability it is proving
+    # reads better than one assembling a roles array inline. A member holding several roles builds
+    # its own array, which is rare enough not to earn a trait of its own.
+    trait :owner do
+      roles { [ build(:role, name: "owner") ] }
+    end
+
+    trait :administrator do
+      roles { [ build(:role, name: "administrator") ] }
+    end
+
+    trait :events_administrator do
+      roles { [ build(:role, name: "events_administrator") ] }
+    end
+
+    trait :members_administrator do
+      roles { [ build(:role, name: "members_administrator") ] }
+    end
   end
 end
