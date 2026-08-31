@@ -4,13 +4,11 @@
 
 Who may do what inside a group, and why the code answers it the way it does. The mechanism is Action Policy, adopted in [ADR 0003](adr/2026-08-25_authorization-with-action-policy_0003.md); this document is the model that sits on top of it.
 
-## Specification, or record?
+## A record, not a specification
 
-Both, and the difference matters when the two disagree.
+Everything here describes code that exists. Where this document and the code disagree, the code is right and this document is a bug - including every mark in the capability tables, each of which is a rule with an example naming the capability it proves.
 
-**A record, enforced today:** the two questions below, the status filter that answers the second, and everything in `## Records that have no group at all`. Each describes code that exists, so where this document and the code disagree, the code is right and this document is a bug.
-
-**A specification, enforced by nothing yet:** every mark in the capability tables. No policy consults a role, so a marked cell is a decision waiting for #96 and #173 to write the rule and the example that prove it. Until then a mark tells you what the application will do, never what it does.
+Two things are stated as facts about the mechanism rather than about who may do what, and both are worth knowing before reading a rule: `ApplicationPolicy`'s status pre-check refuses and never grants, so a policy's own rule is what decides; and `ActionPolicy::Base` denies any rule a policy does not define, so a capability nobody wrote is refused rather than raised.
 
 ## Two questions, in order
 
@@ -70,15 +68,21 @@ A cell marked `x` means the column grants the capability. A blank means it does 
 | Change another member's attendance answer              |        |   x   |       x       |          x           |                       |         |
 | Remove another member's registration                   |        |   x   |       x       |          x           |                       |         |
 
-**Where each column's authority lives.** For the role columns it is `Role::NAMES`, which holds the vocabulary, and `Role#grants?`, which decides how a role name answers a module question; a role column that is not in `Role::NAMES` is a bug in these tables. For `member` it is `ApplicationPolicy`'s two pre-checks, and for `manager` it is `events.manager_id`, neither of which consults a role row at all.
+**Where each column's authority lives.** For the role columns it is `Role::NAMES`, which holds the vocabulary, and two predicates on `Member`: `can_manage?`, which asks `Role#grants?` how a role name answers a module question, and `owner?`, which asks `Role#owner?`. A role column that is not in `Role::NAMES` is a bug in these tables. For `member` it is `ApplicationPolicy`'s two pre-checks, and for `manager` it is `events.manager_id`, neither of which consults a role row at all.
 
-**The predicate cannot produce these tables yet.** `Role#grants?` answers true for every module question on both `owner` and `administrator`, so `Member#can_manage?` cannot tell the two apart, and every row given to `owner` alone above would be granted to `administrator` by the authority this section names. #173 adds the predicate that can, and until it lands the split marked here is a specification the mechanism cannot yet express.
+**Two predicates, because one cannot say this much.** `Role#grants?` answers true for every module question on both `owner` and `administrator`, so `can_manage?` cannot tell the two apart and no module name expresses a row given to `owner` alone - `can_manage?(:group)` would admit an administrator, which is the opposite of what the group rows say. `Member#owner?` is what those rows ask. Everything else is `can_manage?`: the member rows are `can_manage?(:members)`, which matches `owner`, `administrator` and `members_administrator` exactly, and the events rows are `can_manage?(:events)`.
 
-Nothing enforces the cells yet. #96 and #173 write one example per marked cell, named after the capability rather than the controller action, which is what stops the tables and the code drifting apart. Until they land, every mark is a specification and none of it is enforced.
+Every marked cell has an example named after the capability rather than the controller action, in `spec/policies/`, which is what stops the tables and the code drifting apart. A blank cell has one too, asserting the refusal, because a rule proven only by its denials is a rule that might not exist: `ActionPolicy::Base` answers a misspelled rule name with a denial that looks exactly like a considered one.
 
-**A member who belongs but lacks the role will get `403` rather than `404`, and does not today.** `verify_active_membership!` answers `allow!` for every active member, so a member holding no role at all can still rename their group, which `spec/requests/groups_spec.rb` asserts. The refusal arrives with the rules, and it is a `403` rather than a `404` because concealment from somebody who can already see the group in the interface is noise rather than security. The split is the one ADR 0003 records.
+**Two capabilities are not controller actions and are asked as a second question.** `MemberPolicy#manage_roles?` decides the two role rows, and `MembersController` asks it whenever the posted roles differ from the ones the member holds - the set rather than the key's presence, so an administrator changing a status while the form posts unchanged roles keeps their own row. `RegistrationPolicy#manage_answers?` decides which statuses the actor may write, and `RegistrationsController` asks it whenever the posted status is not one a member says about themselves, because a posted status is not on the record when `update?` runs.
+
+**No capability can leave a group ownerless.** The members table lets three columns remove a member and gives the owner alone the revoking of a role, and both stop short of the last owner: a group always has one. That is a domain invariant rather than an authorization rule - it refuses the last owner acting on themselves, and a policy answering that would be telling the group's most privileged member they are not allowed - so it lives on `Member` and `Role` as a `before_destroy` guard, and `MembersController` turns the refusal into a message. Destroying the group itself still cascades through its last owner, because a group on its way out needs no owner.
+
+**A member who belongs but lacks the role is refused plainly rather than concealed.** That is the split ADR 0003 records: a non-member is told nothing and gets the `404`, while somebody who can already see the group in the interface is told they may not, because concealment from them is noise rather than security. Concretely the refusal is the redirect with an alert that `ApplicationController#deny_access` gives every denial that is not `not_found`, rather than a bare `403` status - a refused Turbo submission that lands back on its own form is indistinguishable from a dead button. So the distinction is in what the response says, not in its status code.
 
 **Correcting an address has no row of its own.** An address has no permissions and asks whichever group or event points at it: read one you may read the owner of, change one you may change the owner of. So `AddressPolicy` skips the shared pre-checks, and the group's home address row and the event edit row already decide it between them.
+
+**A registration is answered, never withdrawn.** The statuses are `reserved`, `invited`, `yes`, `maybe` and `no`, and only the last three are an answer, so a member's own writes are limited to those three: `reserved` and `invited` are what somebody filling the event puts you into. Declining is the `no` answer rather than a deletion, which is why no row grants a member the removal of their own registration and `RegistrationPolicy#destroy?` is the three roles' alone.
 
 **A manager invites and does not un-invite.** `manager` is marked for registering another member for their event and is deliberately not marked for changing that member's answer or removing their registration. Filling an event is the manager's job; overruling somebody's own answer, or taking a registration away once it exists, stays with the group's administrators and its events administrators, and a mistaken invitation is undone by one of them rather than by the person who made it.
 

@@ -86,7 +86,7 @@ class MembersController < ApplicationController
     end
 
     # Used on update: user_id stays out, so an existing membership cannot be handed to a
-    # different user. Who may set a role is still #96's and #173's question.
+    # different user. Who may set a role is `MemberPolicy#manage_roles?`, asked above.
     def member_params
       role_records params.expect(member: [ :status, roles: [] ])
     end
