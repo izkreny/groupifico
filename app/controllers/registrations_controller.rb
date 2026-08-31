@@ -102,7 +102,7 @@ class RegistrationsController < ApplicationController
     # model's default, so a member registering themselves without naming a status has claimed
     # nothing, and reading the record instead would refuse the commonest case there is.
     def answering?(status)
-      status.nil? || status.in?(RegistrationPolicy::ANSWERS)
+      status.nil? || status.in?(Registration::ANSWERS)
     end
 
     # Present and not ours. A blank passes through so the model refuses it, rather than being

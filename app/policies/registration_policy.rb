@@ -1,8 +1,4 @@
 class RegistrationPolicy < ApplicationPolicy
-  # The statuses that are an answer. `reserved` and `invited` are the other two, and they are what
-  # somebody else puts you into rather than something you say about yourself.
-  ANSWERS = %w[ yes maybe no ].freeze
-
   relation_scope { |relation| relation.joins(:event).merge(Event.where(group: user.current_groups)) }
 
   # The registration rows of the events table in docs/AUTHORIZATION.md. Every member sees who is
