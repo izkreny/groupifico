@@ -41,6 +41,6 @@ class Group < ApplicationRecord
   # or the role being revoked. Kept here because "does this group still have an owner" is a fact
   # about the group, and both callers would otherwise write the same join.
   def owned_by_anyone_but?(member)
-    members.joins(:roles).where(roles: { name: "owner" }).where.not(id: member.id).exists?
+    members.joins(:roles).where(roles: { name: Role::OWNER }).where.not(id: member.id).exists?
   end
 end

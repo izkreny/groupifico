@@ -32,6 +32,10 @@ class Role < ApplicationRecord
   # what keeps a module whose model is still unwritten out of the list.
   NAMES = %w[ owner administrator events_administrator members_administrator ].freeze
 
+  # Named because two questions ask for it and the name belongs in one place: `#owner?` below, and
+  # `Group#owned_by_anyone_but?`, which needs the string in a join condition rather than a record.
+  OWNER = "owner".freeze
+
   # Raised where a name outside the vocabulary has to stop the work rather than fail a validation:
   # `MembersController` refuses the request with it, because dropping the name instead would read
   # as "hold no roles" and revoke the ones the member has.
@@ -55,7 +59,7 @@ class Role < ApplicationRecord
   # The question above cannot ask this one. It admits `administrator` for every module, so no
   # module name distinguishes the two, and several rows of the capability table are the owner's
   # alone - editing the group, deleting it, and granting a role.
-  def owner? = name == "owner"
+  def owner? = name == OWNER
 
   private
     # A member on their way out takes their roles with them, and `Member`'s own guard has already
