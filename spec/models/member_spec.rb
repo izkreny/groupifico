@@ -164,6 +164,40 @@ RSpec.describe Member, type: :model do
       expect(owner.reload.roles.map(&:name)).to eq [ "owner" ]
     end
 
+    it "cannot pause themselves, which would lock the group" do
+      group = create(:group)
+      owner = create(:member, :owner, group: group)
+      create(:member, group: group)
+
+      expect(owner.update(status: :paused)).to be false
+      expect(owner.reload).to be_active
+    end
+
+    it "cannot be deactivated either" do
+      group = create(:group)
+      owner = create(:member, :owner, group: group)
+
+      expect(owner.update(status: :inactive)).to be false
+    end
+
+    it "can step back once another active owner exists" do
+      group = create(:group)
+      owner = create(:member, :owner, group: group)
+      create(:member, :owner, group: group)
+
+      expect(owner.update(status: :paused)).to be true
+    end
+
+    # An owner who is paused is refused every write including the one that would restore them, and
+    # an inactive one has left, so neither can be the owner a group is counted as having.
+    it "is not replaced by a paused owner when the last active one is removed" do
+      group = create(:group)
+      owner = create(:member, :owner, group: group)
+      create(:member, :paused, :owner, group: group)
+
+      expect(owner.destroy).to be false
+    end
+
     it "does not stop the group itself being destroyed" do
       group = create(:group)
       create(:member, :owner, group: group)

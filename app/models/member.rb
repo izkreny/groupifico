@@ -53,6 +53,14 @@ class Member < ApplicationRecord
   # sole owner delete themselves.
   before_destroy :ensure_the_group_keeps_an_owner, prepend: true
 
+  # The same invariant on the other move that reaches it. Removing the last owner and revoking their
+  # role are both destructions and are guarded as such; leaving `active` is an ordinary update, and
+  # without this a group's only owner could pause themselves and lock the group permanently - they
+  # are then refused every write including the status write that would restore them, and nobody else
+  # holds `can_manage?(:members)`. A validation rather than a `throw :abort` because this one has a
+  # form to render the message on.
+  validate :group_keeps_an_active_owner, on: :update
+
   delegate :full_name, to: :profile
 
   # The one question a policy asks. It learns nothing about how the answer is stored, which is what
@@ -72,6 +80,14 @@ class Member < ApplicationRecord
   private
     # Destroying the group destroys its members, and a group on its way out needs no owner.
     # `destroyed_by_association` is what tells the two cases apart.
+    def group_keeps_an_active_owner
+      return unless status_changed? && !active?
+      return unless owner?
+      return if group.owned_by_anyone_but?(self)
+
+      errors.add(:status, "cannot leave the group without an active owner")
+    end
+
     def ensure_the_group_keeps_an_owner
       return unless owner?
       return if destroyed_by_association

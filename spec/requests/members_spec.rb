@@ -176,19 +176,6 @@ RSpec.describe "Members", type: :request do
       end
     end
 
-    context "when revoking the last owner's role" do
-      it "refuses and leaves the role in place" do
-        owner = create(:member, :active, :owner)
-        sign_in_as(owner.user)
-
-        patch group_member_path(owner.group, owner), params: { member: { roles: [ "" ] } }
-
-        expect(response).to redirect_to group_member_path(owner.group, owner)
-        expect(flash[:alert]).to be_present
-        expect(owner.reload).to be_owner
-      end
-    end
-
     context "when signed in as a member who cannot change anybody" do
       it "refuses the form" do
         member = create(:member, :active)
@@ -484,6 +471,32 @@ RSpec.describe "Members", type: :request do
 
         expect(response).to redirect_to root_path
         expect(member.reload.roles.map(&:name)).to eq [ "events_administrator" ]
+      end
+    end
+
+    context "when the status change would leave the group without an active owner" do
+      it "re-renders the edit page and leaves the member active" do
+        owner = create(:member, :active, :owner)
+        create(:member, group: owner.group)
+        sign_in_as(owner.user)
+
+        patch group_member_path(owner.group, owner), params: { member: { status: "paused" } }
+
+        expect(response).to have_http_status :unprocessable_entity
+        expect(owner.reload).to be_active
+      end
+    end
+
+    context "when revoking the last owner's role" do
+      it "refuses and leaves the role in place" do
+        owner = create(:member, :active, :owner)
+        sign_in_as(owner.user)
+
+        patch group_member_path(owner.group, owner), params: { member: { roles: [ "" ] } }
+
+        expect(response).to redirect_to group_member_path(owner.group, owner)
+        expect(flash[:alert]).to be_present
+        expect(owner.reload).to be_owner
       end
     end
 
