@@ -36,7 +36,7 @@ The fourth pass is the one that changed the design rather than confirming it, an
 
 None of those gates can read. They prove the file parses, the paths resolve and nothing else in the repository broke; they say nothing about whether the argument holds, whether each quotation is faithful to the source it names, or whether the three issue bodies genuinely stopped duplicating the record rather than merely getting shorter. That judgement is the owner's, on the diff and on the three issues.
 
-The trim also produces no diff, because an issue body is not a file. Its evidence is the issues themselves, which is why the ADR's last acceptance criterion is written against them rather than against this branch.
+The trim also produces no diff, because an issue body is not a file. Its evidence is the issues themselves, which is why the last of #209's acceptance criteria is written against them rather than against this branch. The ADR holds no criteria of its own; #209 holds them all.
 
 ## Open questions
 
