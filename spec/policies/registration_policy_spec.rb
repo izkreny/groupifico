@@ -10,6 +10,104 @@ require 'rails_helper'
 # was watched happening. That shielding is a property of the callers, not of the scopes, and it
 # disappears the moment a second caller arrives.
 RSpec.describe RegistrationPolicy, type: :policy do
+  # One example per marked registration cell of the events table in docs/AUTHORIZATION.md. The split
+  # that needs the most care is the manager's: marked for registering somebody, unmarked for
+  # changing their answer afterwards and for removing their registration.
+  describe_rule :show? do
+    let(:actor)   { create(:member) }
+    let(:event)   { create(:event, group: actor.group) }
+    let(:record)  { create(:registration, event: event, member: create(:member, group: actor.group)) }
+    let(:context) { { user: actor.user } }
+
+    succeed "for a member holding no role, who may see who is registered and what they answered"
+  end
+
+  describe_rule :create? do
+    let(:group)   { create(:group) }
+    let(:actor)   { create(:member, group: group) }
+    let(:event)   { create(:event, group: group) }
+    let(:record)  { build(:registration, event: event, member: create(:member, group: group)) }
+    let(:context) { { user: actor.user } }
+
+    failed "for a member holding no role, registering somebody else"
+
+    succeed "for a member registering themselves, whatever roles they hold" do
+      let(:record) { build(:registration, event: event, member: actor) }
+    end
+
+    succeed "for an events administrator" do
+      let(:actor) { create(:member, :events_administrator, group: group) }
+    end
+
+    succeed "for the event's manager, which is the invitation row" do
+      let(:event) { create(:event, group: group, manager: actor) }
+    end
+  end
+
+  describe_rule :update? do
+    let(:group)   { create(:group) }
+    let(:actor)   { create(:member, group: group) }
+    let(:event)   { create(:event, group: group) }
+    let(:record)  { create(:registration, event: event, member: create(:member, group: group)) }
+    let(:context) { { user: actor.user } }
+
+    failed "for a member holding no role, changing another member's answer"
+
+    succeed "for a member changing their own answer" do
+      let(:record) { create(:registration, event: event, member: actor) }
+    end
+
+    succeed "for an events administrator" do
+      let(:actor) { create(:member, :events_administrator, group: group) }
+    end
+
+    failed "for the event's manager, who invites and does not overrule" do
+      let(:event) { create(:event, group: group, manager: actor) }
+    end
+  end
+
+  describe_rule :destroy? do
+    let(:group)   { create(:group) }
+    let(:actor)   { create(:member, group: group) }
+    let(:event)   { create(:event, group: group) }
+    let(:record)  { create(:registration, event: event, member: create(:member, group: group)) }
+    let(:context) { { user: actor.user } }
+
+    failed "for a member holding no role"
+
+    succeed "for an events administrator" do
+      let(:actor) { create(:member, :events_administrator, group: group) }
+    end
+
+    failed "for the member the registration is for, who answers no instead of withdrawing" do
+      let(:record) { create(:registration, event: event, member: actor) }
+    end
+
+    failed "for the event's manager" do
+      let(:event) { create(:event, group: group, manager: actor) }
+    end
+  end
+
+  # Which statuses the actor may write, asked by the controller because a posted status is not on
+  # the record when update? runs. `reserved` and `invited` are what somebody else puts you into.
+  describe_rule :manage_answers? do
+    let(:group)   { create(:group) }
+    let(:actor)   { create(:member, group: group) }
+    let(:event)   { create(:event, group: group) }
+    let(:record)  { create(:registration, event: event, member: actor) }
+    let(:context) { { user: actor.user } }
+
+    failed "for a member holding no role, even on their own registration"
+
+    succeed "for an events administrator" do
+      let(:actor) { create(:member, :events_administrator, group: group) }
+    end
+
+    succeed "for the event's manager, who fills the event" do
+      let(:event) { create(:event, group: group, manager: actor) }
+    end
+  end
+
   describe "the relation scope" do
     it "excludes registrations on events of a group the user has left" do
       user = create(:user)

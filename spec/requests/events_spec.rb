@@ -121,14 +121,25 @@ RSpec.describe "Events", type: :request do
       end
     end
 
-    context "when signed in as an active member" do
+    context "when signed in as an events administrator" do
       it "shows the new event page" do
-        member = create(:member, :active)
+        member = create(:member, :active, :events_administrator)
         sign_in_as(member.user)
 
         get new_group_event_path(member.group)
 
         expect(response).to have_http_status :ok
+      end
+    end
+
+    context "when signed in as a member who cannot create events" do
+      it "refuses the form rather than offering one the submission would reject" do
+        member = create(:member, :active)
+        sign_in_as(member.user)
+
+        get new_group_event_path(member.group)
+
+        expect(response).to redirect_to root_path
       end
     end
   end
@@ -169,10 +180,11 @@ RSpec.describe "Events", type: :request do
       end
     end
 
-    context "when signed in as an active member" do
+    context "when signed in as an events administrator" do
       it "renders the new event page" do
-        event = create(:event)
-        sign_in_as(event.creator.user)
+        actor = create(:member, :active, :events_administrator)
+        event = create(:event, group: actor.group)
+        sign_in_as(actor.user)
 
         get duplicate_group_event_path(event.group, event)
 
@@ -203,14 +215,40 @@ RSpec.describe "Events", type: :request do
       end
     end
 
-    context "when signed in as an active member" do
+    context "when signed in as an events administrator" do
       it "shows the edit event page" do
+        actor = create(:member, :active, :events_administrator)
+        event = create(:event, group: actor.group)
+        sign_in_as(actor.user)
+
+        get edit_group_event_path(event.group, event)
+
+        expect(response).to have_http_status :ok
+      end
+    end
+
+    context "when signed in as the event's manager" do
+      it "shows the edit event page, holding no role at all" do
+        actor = create(:member, :active)
+        event = create(:event, group: actor.group, manager: actor)
+        sign_in_as(actor.user)
+
+        get edit_group_event_path(event.group, event)
+
+        expect(response).to have_http_status :ok
+      end
+    end
+
+    # Creating an event is a record of who made it and confers nothing afterwards: the role that
+    # allowed it may be gone tomorrow while the column stays.
+    context "when signed in as the event's creator, holding no role" do
+      it "refuses the form" do
         event = create(:event)
         sign_in_as(event.creator.user)
 
         get edit_group_event_path(event.group, event)
 
-        expect(response).to have_http_status :ok
+        expect(response).to redirect_to root_path
       end
     end
   end
@@ -239,9 +277,9 @@ RSpec.describe "Events", type: :request do
       end
     end
 
-    context "when signed in as an active member" do
+    context "when signed in as an events administrator" do
       it "creates the event" do
-        creator = create(:member, :active)
+        creator = create(:member, :active, :events_administrator)
         sign_in_as(creator.user)
         params  = { name: "Rehearsal", starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour, creator_id: creator.id }
 
@@ -250,13 +288,25 @@ RSpec.describe "Events", type: :request do
       end
 
       it "re-renders the new page when the event is invalid" do
-        member = create(:member, :active)
+        member = create(:member, :active, :events_administrator)
         sign_in_as(member.user)
 
         expect { post group_events_path(member.group), params: { event: { name: "" } } }
           .not_to change(Event, :count)
 
         expect(response).to have_http_status :unprocessable_entity
+      end
+
+      it "creates no event for a member who manages one but holds no role" do
+        actor = create(:member, :active)
+        create(:event, group: actor.group, manager: actor)
+        sign_in_as(actor.user)
+        params = { name: "Rehearsal", starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour, creator_id: actor.id }
+
+        expect { post group_events_path(actor.group), params: { event: params } }
+          .not_to change(Event, :count)
+
+        expect(response).to redirect_to root_path
       end
     end
 
@@ -298,10 +348,11 @@ RSpec.describe "Events", type: :request do
       end
     end
 
-    context "when signed in as an active member" do
+    context "when signed in as an events administrator" do
       it "updates the event" do
-        event = create(:event)
-        sign_in_as(event.creator.user)
+        actor = create(:member, :active, :events_administrator)
+        event = create(:event, group: actor.group)
+        sign_in_as(actor.user)
 
         patch group_event_path(event.group, event), params: { event: { name: "Renamed" } }
 
@@ -310,8 +361,9 @@ RSpec.describe "Events", type: :request do
       end
 
       it "re-renders the edit page when the event is invalid" do
-        event = create(:event)
-        sign_in_as(event.creator.user)
+        actor = create(:member, :active, :events_administrator)
+        event = create(:event, group: actor.group)
+        sign_in_as(actor.user)
 
         patch group_event_path(event.group, event), params: { event: { name: "" } }
 
@@ -319,14 +371,14 @@ RSpec.describe "Events", type: :request do
       end
 
       it "ignores a posted group_id, leaving the event in its own group" do
-        event = create(:event)
-        original_group = event.group
+        actor = create(:member, :active, :events_administrator)
+        event = create(:event, group: actor.group)
         other_group = create(:group)
-        sign_in_as(event.creator.user)
+        sign_in_as(actor.user)
 
         patch group_event_path(event.group, event), params: { event: { group_id: other_group.id } }
 
-        expect(event.reload.group).to eq original_group
+        expect(event.reload.group).to eq actor.group
       end
     end
 
@@ -369,15 +421,29 @@ RSpec.describe "Events", type: :request do
       end
     end
 
-    context "when signed in as an active member" do
+    context "when signed in as an events administrator" do
       it "destroys the event" do
-        event = create(:event)
-        sign_in_as(event.creator.user)
+        actor = create(:member, :active, :events_administrator)
+        event = create(:event, group: actor.group)
+        sign_in_as(actor.user)
 
         expect { delete group_event_path(event.group, event) }
           .to change(Event, :count).by(-1)
 
         expect(response).to redirect_to group_events_path(event.group)
+      end
+    end
+
+    context "when signed in as the event's manager" do
+      it "refuses, because filling an event is the manager's job and deleting one is not" do
+        actor = create(:member, :active)
+        event = create(:event, group: actor.group, manager: actor)
+        sign_in_as(actor.user)
+
+        expect { delete group_event_path(event.group, event) }
+          .not_to change(Event, :count)
+
+        expect(response).to redirect_to root_path
       end
     end
 

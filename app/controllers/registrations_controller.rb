@@ -24,9 +24,11 @@ class RegistrationsController < ApplicationController
   end
 
   def create
-    @registration = @event.registrations.new(registration_params)
+    attributes    = registration_params
+    @registration = @event.registrations.new(attributes)
 
     authorize! @registration
+    authorize! @registration, to: :manage_answers? unless answering?(attributes[:status])
 
     if @registration.save
       redirect_to group_event_registration_path(@group, @event, @registration),
@@ -39,7 +41,10 @@ class RegistrationsController < ApplicationController
   def update
     authorize! @registration
 
-    if @registration.update(registration_params)
+    attributes = registration_params
+    authorize! @registration, to: :manage_answers? unless answering?(attributes[:status])
+
+    if @registration.update(attributes)
       redirect_to group_event_registration_path(@group, @event, @registration),
         notice: "Registration was successfully updated.",
         status: :see_other
@@ -77,6 +82,16 @@ class RegistrationsController < ApplicationController
     def registration_params
       params.expect(registration: [ :status, :member_id ])
         .tap { |permitted| permitted.delete(:member_id) if foreign_member?(permitted[:member_id]) }
+    end
+
+    # A posted status the actor is saying about themselves. `reserved` and `invited` are not
+    # answers, so writing either is the second question `manage_answers?` decides.
+    #
+    # The posted value rather than the record's, on create as well as update. `reserved` is the
+    # model's default, so a member registering themselves without naming a status has claimed
+    # nothing, and reading the record instead would refuse the commonest case there is.
+    def answering?(status)
+      status.nil? || status.in?(RegistrationPolicy::ANSWERS)
     end
 
     # Present and not ours. A blank passes through so the model refuses it, rather than being
