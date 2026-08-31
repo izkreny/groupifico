@@ -53,9 +53,9 @@ A row is what makes a link single use. It is also what keeps #125 possible at al
 
 ### Built here, and not adopted
 
-Every passwordless-specific gem in the Ruby Toolbox `rails_authentication` category is magic-link only: `passwordless`, `devise-passwordless` and `nopassword` all send a link and none offers digit entry. The one gem offering an emailed code is `rodauth-rails`, and it handles authentication through Roda middleware with its own session layer and table set, replacing `Current`, the `Authentication` concern, the signed cookie and the `sessions` table wholesale. That is an auth-stack transplant, not a feature adoption.
+Every passwordless-specific gem in the Ruby Toolbox `rails_authentication` category is built around the link: `mikker/passwordless`, `devise-passwordless` and `rubymonolith/nopassword` all mail one, and none of them treats a typed code as a flow of its own. `mikker/passwordless` comes closest, mailing its six-character token beside the link and rendering a field to type it into, `f.text_field :token` with `autocomplete: "one-time-code"`. The gem offering a code as a first-class flow is `rodauth-rails`, and it handles authentication through Roda middleware with its own session layer and table set, replacing `Current`, the `Authentication` concern, the signed cookie and the `sessions` table wholesale. That is an auth-stack transplant, not a feature adoption.
 
-None of them claims Rails 8.1 support, and each is unbounded above rather than tested against it: `passwordless` declares `rails >= 5.1.4`, `nopassword` declares `rails >= 7.0.1`, `rodauth-rails` declares `railties >= 5.2`, and `devise-passwordless` declares no Rails dependency at all, riding whatever Devise itself supports. That is compatibility by omission.
+None of them claims Rails 8.1 support, and each is unbounded above rather than tested against it: `mikker/passwordless` declares `rails >= 5.1.4`, `rubymonolith/nopassword` declares `rails >= 7.0.1`, `rodauth-rails` declares `railties >= 5.2`, and `devise-passwordless` declares no Rails dependency at all, riding whatever Devise itself supports. That is compatibility by omission. Each gem is named with its owner throughout, because `nopassword` in particular is not a unique name: `creditario/nopassword` is a different project with a different gemspec and different constraints.
 
 Reading their source turned the argument from a preference into a conclusion, because it showed what adoption would have meant inheriting. `mikker/passwordless` stored the raw token in the database for every 0.x release, and its 1.0 upgrade guide has to instruct every application using it to drop that column by hand, with `remove_column(:passwordless_sessions, :token, :string, null: false)`. Its `claim!` checks whether a row is claimed and then calls `touch`, with no transaction, no lock and no constraint, so two concurrent requests both pass. Its sign-in link guards only `HEAD` requests, under a comment that names the scanner problem correctly and then solves the wrong half of it. Its default delivery is `deliver_now`, inside the request. Its token generator is `CHARS.sample(6, random: SecureRandom).join`, and `Array#sample` draws without replacement, so the real keyspace is roughly 2^30 rather than 36^6.
 
@@ -71,7 +71,9 @@ Rodauth arrived at the same shape from the other direction, hardening this hop i
 
 ### The token is a digest, travels in the query string, and is spent in one statement
 
-**Stored as an HMAC digest, never raw.** A database dump then yields nothing usable. `mikker/passwordless` had to migrate off raw storage with `remove_column(:passwordless_sessions, :token)`.
+**Stored as an HMAC digest, never raw.** A database dump then yields nothing usable. The section above has what `mikker/passwordless` had to tell its users to do instead.
+
+**Rodauth runs the scheme the other way round, and that direction is rejected here rather than overlooked.** It stores the raw key and HMACs only the value that leaves in the email, so a database leak yields nothing without `hmac_secret`. For a single-purpose token, hashing before storage protects against a database-only leak just as well; rodauth inverts it because the same plumbing serves TOTP, where the raw shared secret has to stay computable and therefore cannot be pre-hashed. Nothing here shares that constraint.
 
 **Carried in the query string, never in a path segment.** `ActionDispatch::Http::FilterParameters#filtered_path` returns `query_string.empty? ? path : "#{path}?#{filtered_query_string}"`, and `Rails::Rack::Logger` logs that value, so only the query string is ever filtered. A token in a path segment reaches the log in plaintext whatever `config.filter_parameters` holds. `mikker/passwordless` routes `/:resource/sign_in/:id/:token` and leaks on every redemption, and so does this repository today through `resources :passwords, param: :token`.
 
@@ -89,7 +91,7 @@ The copy counts too, not only the redirect target. Rodauth's own default sends b
 
 `bike_index` is the deliberate outlier, showing a distinct error for an unknown address in exchange for a clearer message. That trade is available and is not taken here.
 
-The wrinkle this application creates for itself is that #207 leaves no way to sign up, so a person nobody invited would otherwise be told to check an inbox nothing will ever arrive in. The message names the way out instead: ask the group's owner or an administrator for an invitation. It says the same thing to everyone, so it leaks nothing.
+The wrinkle this application creates for itself is that #207 leaves no standalone sign-up page, the two ways in being to start a group or to be invited, so a person nobody invited who types their address into the sign-in form would otherwise be told to check an inbox nothing will ever arrive in. The message names the way out instead: ask the group's owner or an administrator for an invitation. It says the same thing to everyone, so it leaks nothing.
 
 ### Both routes refuse a visitor who is already signed in
 
@@ -117,7 +119,9 @@ Two conditions make the pre-filled form safe, and both belong to #208. It must n
 
 ### Fifteen minutes
 
-The corpus converges between ten and twenty: `discourse` 10, `bike_index` 10, `basecamp_fizzy` 15, `hcb` 15, `pupilfirst` 15, `dev.to` 20, with `loomio`'s configurable hour the outlier. Rodauth's own `email_auth_deadline_interval` defaults to a full day, so fifteen minutes is the conservative end of the range rather than the middle of it.
+The corpus converges between ten and twenty: `bike_index` 10, `basecamp_fizzy` 15, `hcb` 15, `pupilfirst` 15, `dev.to` 20, with `loomio`'s configurable hour the outlier. Rodauth's own `email_auth_deadline_interval` defaults to a full day, so fifteen minutes is the conservative end of the range rather than the middle of it.
+
+`discourse` is left out of that range deliberately, and the reason matters more than the number. Its 10 minutes is `EmailLoginCode::VALID_FOR`, which governs its emailed code; its link is an `EmailToken` bounded by `SiteSetting.email_token_valid_hours`, defaulting to 48. Reading the code's window as a link's would have narrowed the range using the credential this record did not choose, which is exactly the distinction the mechanism section above draws.
 
 It is also the only window in the application, because the section above leaves one credential to have a window at all.
 
@@ -137,6 +141,6 @@ Under any magic-link scheme, access to the inbox is already access to the accoun
 
 **If the HMAC key ever needs rotating**, rodauth's `compute_old_hmac` pattern is the one to copy: verify against the previous secret as a fallback, so no stored row has to be touched.
 
-**A "sign out my other devices" screen has a precedent waiting.** Rodauth's `active_sessions` keeps one row per login holding an HMAC of a per-session id with `created_at` and `last_use`, checks it on every request, and lets logout drop one row or all of them. `SessionsController` already carries a comment anticipating the day such a screen makes its `destroy` an authorization question. No issue exists for it.
+**A "sign out my other devices" screen has a precedent waiting.** Rodauth's `active_sessions` keeps one row per login holding an HMAC of a per-session id with `created_at` and `last_use`, checks it on every request, and lets logout drop one row or all of them. `SessionsController` already carries a comment anticipating such a screen, and its point is that revoking another device would be a different action, `DELETE /sessions/:id`, which needs a policy of its own: the skip names its actions precisely so that new action cannot inherit an exemption nobody chose for it. No issue exists for the screen.
 
-**#139, #207 and #208 cite this record instead of repeating it.** Their technical notes carry what an implementer needs at hand and point here for why.
+**#139, #207 and #208 cite this record instead of repeating it.** Their technical notes carry what an implementer needs at hand, and the reasoning behind it lives here alone. That is the property to check when any of the four is edited: a fact stated in two places has already begun to drift, and the first copy of the `rate_limit` signature to disagree with the other was caught in review on this very branch.
