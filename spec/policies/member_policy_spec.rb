@@ -24,76 +24,76 @@ RSpec.describe MemberPolicy, type: :policy do
 
   describe_rule :create? do
     let(:group)   { create(:group) }
-    let(:actor)   { create(:member, group: group) }
-    let(:record)  { build(:member, group: group) }
+    let(:actor)   { create(:member, group:) }
+    let(:record)  { build(:member, group:) }
     let(:context) { { user: actor.user } }
 
     failed "for a member holding no role, who may not add a person to the group"
 
     succeed "for an owner" do
-      let(:actor) { create(:member, :owner, group: group) }
+      let(:actor) { create(:member, :owner, group:) }
     end
 
     succeed "for an administrator" do
-      let(:actor) { create(:member, :administrator, group: group) }
+      let(:actor) { create(:member, :administrator, group:) }
     end
 
     succeed "for a members administrator" do
-      let(:actor) { create(:member, :members_administrator, group: group) }
+      let(:actor) { create(:member, :members_administrator, group:) }
     end
 
     failed "for an events administrator, whose column the row leaves blank" do
-      let(:actor) { create(:member, :events_administrator, group: group) }
+      let(:actor) { create(:member, :events_administrator, group:) }
     end
   end
 
   describe_rule :update? do
     let(:group)   { create(:group) }
-    let(:actor)   { create(:member, group: group) }
-    let(:record)  { create(:member, group: group) }
+    let(:actor)   { create(:member, group:) }
+    let(:record)  { create(:member, group:) }
     let(:context) { { user: actor.user } }
 
     failed "for a member holding no role, who may not change another member's status"
 
     succeed "for an owner" do
-      let(:actor) { create(:member, :owner, group: group) }
+      let(:actor) { create(:member, :owner, group:) }
     end
 
     succeed "for an administrator" do
-      let(:actor) { create(:member, :administrator, group: group) }
+      let(:actor) { create(:member, :administrator, group:) }
     end
 
     succeed "for a members administrator" do
-      let(:actor) { create(:member, :members_administrator, group: group) }
+      let(:actor) { create(:member, :members_administrator, group:) }
     end
 
     failed "for an events administrator" do
-      let(:actor) { create(:member, :events_administrator, group: group) }
+      let(:actor) { create(:member, :events_administrator, group:) }
     end
   end
 
   describe_rule :destroy? do
     let(:group)   { create(:group) }
-    let(:actor)   { create(:member, group: group) }
-    let(:record)  { create(:member, group: group) }
+    let(:actor)   { create(:member, group:) }
+    let(:record)  { create(:member, group:) }
     let(:context) { { user: actor.user } }
 
     failed "for a member holding no role, who may not remove a member from the group"
 
     succeed "for an owner" do
-      let(:actor) { create(:member, :owner, group: group) }
+      let(:actor) { create(:member, :owner, group:) }
     end
 
     succeed "for an administrator" do
-      let(:actor) { create(:member, :administrator, group: group) }
+      let(:actor) { create(:member, :administrator, group:) }
     end
 
     succeed "for a members administrator" do
-      let(:actor) { create(:member, :members_administrator, group: group) }
+      let(:actor) { create(:member, :members_administrator, group:) }
     end
 
     failed "for an events administrator" do
-      let(:actor) { create(:member, :events_administrator, group: group) }
+      let(:actor) { create(:member, :events_administrator, group:) }
     end
   end
 
@@ -102,42 +102,42 @@ RSpec.describe MemberPolicy, type: :policy do
   # decisions apart, and the table gives both to the owner alone.
   describe_rule :manage_roles? do
     let(:group)   { create(:group) }
-    let(:actor)   { create(:member, group: group) }
-    let(:record)  { create(:member, group: group) }
+    let(:actor)   { create(:member, group:) }
+    let(:record)  { create(:member, group:) }
     let(:context) { { user: actor.user } }
 
     failed "for a member holding no role"
 
     succeed "for an owner" do
-      let(:actor) { create(:member, :owner, group: group) }
+      let(:actor) { create(:member, :owner, group:) }
     end
 
     failed "for an administrator, who may add a member but not grant one a role" do
-      let(:actor) { create(:member, :administrator, group: group) }
+      let(:actor) { create(:member, :administrator, group:) }
     end
 
     failed "for a members administrator" do
-      let(:actor) { create(:member, :members_administrator, group: group) }
+      let(:actor) { create(:member, :members_administrator, group:) }
     end
 
     failed "for an events administrator" do
-      let(:actor) { create(:member, :events_administrator, group: group) }
+      let(:actor) { create(:member, :events_administrator, group:) }
     end
 
     # It is in WRITE_RULES, so the status pre-check refuses it before the rule is reached. Without
     # that entry a paused owner would keep the one capability that hands out every other.
     failed "for a paused owner, because granting a role is a write" do
-      let(:actor) { create(:member, :paused, :owner, group: group) }
+      let(:actor) { create(:member, :paused, :owner, group:) }
     end
   end
 
   describe "the relation scope" do
     it "excludes members of a group the user has left" do
       user = create(:user)
-      gone = create(:member, group: create(:member, :inactive, user: user).group)
-      kept = create(:member, group: create(:member, :active, user: user).group)
+      gone = create(:member, group: create(:member, :inactive, user:).group)
+      kept = create(:member, group: create(:member, :active, user:).group)
 
-      scoped = described_class.new(nil, user: user).apply_scope(Member.all, type: :active_record_relation)
+      scoped = described_class.new(nil, user:).apply_scope(Member.all, type: :active_record_relation)
 
       expect(scoped).to include kept
       expect(scoped).not_to include gone

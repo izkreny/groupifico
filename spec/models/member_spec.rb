@@ -50,39 +50,39 @@ RSpec.describe Member, type: :model do
 
   describe "#can_manage?" do
     it "answers true for the module a single module role administers" do
-      member = create(:member, roles: [ build(:role, name: "events_administrator") ])
+      member = create(:member, :events_administrator)
 
       expect(member.can_manage?(:events)).to be true
     end
 
     it "answers false for a module no role of the member administers" do
-      member = create(:member, roles: [ build(:role, name: "events_administrator") ])
+      member = create(:member, :events_administrator)
 
       expect(member.can_manage?(:polls)).to be false
     end
 
     it "answers false for the members module when the member administers a different one" do
-      member = create(:member, roles: [ build(:role, name: "events_administrator") ])
+      member = create(:member, :events_administrator)
 
       expect(member.can_manage?(:members)).to be false
     end
 
     it "answers every module for a member holding owner alongside a module role" do
-      member = create(:member, roles: [ build(:role, name: "owner"), build(:role, name: "events_administrator") ])
+      member = create(:member, roles: [ build(:role, name: Role::OWNER), build(:role, name: "events_administrator") ])
 
       expect(member.can_manage?(:events)).to be true
       expect(member.can_manage?(:polls)).to be true
     end
 
     it "answers the members module for an owner holding no other role" do
-      member = create(:member, roles: [ build(:role, name: "owner") ])
+      member = create(:member, :owner)
 
       expect(member.roles.map(&:name)).to eq [ "owner" ]
       expect(member.can_manage?(:members)).to be true
     end
 
     it "answers the members module for a members_administrator, and nothing else" do
-      member = create(:member, roles: [ build(:role, name: "members_administrator") ])
+      member = create(:member, :members_administrator)
 
       expect(member.can_manage?(:members)).to be true
       expect(member.can_manage?(:events)).to be false
@@ -105,13 +105,13 @@ RSpec.describe Member, type: :model do
 
   describe "#owner?" do
     it "answers true for a member holding the owner role" do
-      member = create(:member, roles: [ build(:role, name: "owner") ])
+      member = create(:member, :owner)
 
       expect(member.owner?).to be true
     end
 
     it "answers false for an administrator, who can manage every module and owns nothing" do
-      member = create(:member, roles: [ build(:role, name: "administrator") ])
+      member = create(:member, :administrator)
 
       expect(member.can_manage?(:members)).to be true
       expect(member.owner?).to be false
@@ -129,8 +129,8 @@ RSpec.describe Member, type: :model do
   describe "the last owner" do
     it "cannot be removed from the group" do
       group = create(:group)
-      owner = create(:member, :owner, group: group)
-      create(:member, group: group)
+      owner = create(:member, :owner, group:)
+      create(:member, group:)
 
       expect(owner.destroy).to be false
       expect(described_class.exists?(owner.id)).to be true
@@ -138,7 +138,7 @@ RSpec.describe Member, type: :model do
 
     it "cannot be stripped of the owner role" do
       group = create(:group)
-      owner = create(:member, :owner, group: group)
+      owner = create(:member, :owner, group:)
 
       expect { owner.roles = [] }.to raise_error ActiveRecord::RecordNotDestroyed
       expect(owner.reload).to be_owner
@@ -146,8 +146,8 @@ RSpec.describe Member, type: :model do
 
     it "can be removed once another member owns the group too" do
       group = create(:group)
-      owner = create(:member, :owner, group: group)
-      create(:member, :owner, group: group)
+      owner = create(:member, :owner, group:)
+      create(:member, :owner, group:)
 
       expect(owner.destroy).to be_truthy
     end
@@ -157,7 +157,7 @@ RSpec.describe Member, type: :model do
     # roles have already gone, and the answer is always no.
     it "is asked before the member's roles are destroyed" do
       group = create(:group)
-      owner = create(:member, :owner, group: group)
+      owner = create(:member, :owner, group:)
 
       owner.destroy
 
@@ -166,8 +166,8 @@ RSpec.describe Member, type: :model do
 
     it "cannot pause themselves, which would lock the group" do
       group = create(:group)
-      owner = create(:member, :owner, group: group)
-      create(:member, group: group)
+      owner = create(:member, :owner, group:)
+      create(:member, group:)
 
       expect(owner.update(status: :paused)).to be false
       expect(owner.reload).to be_active
@@ -175,15 +175,15 @@ RSpec.describe Member, type: :model do
 
     it "cannot be deactivated either" do
       group = create(:group)
-      owner = create(:member, :owner, group: group)
+      owner = create(:member, :owner, group:)
 
       expect(owner.update(status: :inactive)).to be false
     end
 
     it "can step back once another active owner exists" do
       group = create(:group)
-      owner = create(:member, :owner, group: group)
-      create(:member, :owner, group: group)
+      owner = create(:member, :owner, group:)
+      create(:member, :owner, group:)
 
       expect(owner.update(status: :paused)).to be true
     end
@@ -192,15 +192,15 @@ RSpec.describe Member, type: :model do
     # an inactive one has left, so neither can be the owner a group is counted as having.
     it "is not replaced by a paused owner when the last active one is removed" do
       group = create(:group)
-      owner = create(:member, :owner, group: group)
-      create(:member, :paused, :owner, group: group)
+      owner = create(:member, :owner, group:)
+      create(:member, :paused, :owner, group:)
 
       expect(owner.destroy).to be false
     end
 
     it "does not stop the group itself being destroyed" do
       group = create(:group)
-      create(:member, :owner, group: group)
+      create(:member, :owner, group:)
 
       expect(group.destroy).to be_truthy
       expect(described_class.where(group_id: group.id)).to be_empty

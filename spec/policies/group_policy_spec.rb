@@ -43,51 +43,51 @@ RSpec.describe GroupPolicy, type: :policy do
 
   describe_rule :update? do
     let(:group)   { create(:group) }
-    let(:member)  { create(:member, group: group) }
+    let(:member)  { create(:member, group:) }
     let(:record)  { group }
     let(:context) { { user: member.user } }
 
     failed "for a member holding no role, who may not edit the group's name, type or description"
 
     succeed "for an owner" do
-      let(:member) { create(:member, :owner, group: group) }
+      let(:member) { create(:member, :owner, group:) }
     end
 
     failed "for an administrator, because the row is the owner's alone" do
-      let(:member) { create(:member, :administrator, group: group) }
+      let(:member) { create(:member, :administrator, group:) }
     end
 
     failed "for a members administrator" do
-      let(:member) { create(:member, :members_administrator, group: group) }
+      let(:member) { create(:member, :members_administrator, group:) }
     end
 
     failed "for an events administrator" do
-      let(:member) { create(:member, :events_administrator, group: group) }
+      let(:member) { create(:member, :events_administrator, group:) }
     end
   end
 
   describe_rule :destroy? do
     let(:group)   { create(:group) }
-    let(:member)  { create(:member, group: group) }
+    let(:member)  { create(:member, group:) }
     let(:record)  { group }
     let(:context) { { user: member.user } }
 
     failed "for a member holding no role, who may not delete the group"
 
     succeed "for an owner" do
-      let(:member) { create(:member, :owner, group: group) }
+      let(:member) { create(:member, :owner, group:) }
     end
 
     failed "for an administrator, because the row is the owner's alone" do
-      let(:member) { create(:member, :administrator, group: group) }
+      let(:member) { create(:member, :administrator, group:) }
     end
 
     failed "for an events administrator" do
-      let(:member) { create(:member, :events_administrator, group: group) }
+      let(:member) { create(:member, :events_administrator, group:) }
     end
 
     failed "for a members administrator" do
-      let(:member) { create(:member, :members_administrator, group: group) }
+      let(:member) { create(:member, :members_administrator, group:) }
     end
   end
 
@@ -98,22 +98,22 @@ RSpec.describe GroupPolicy, type: :policy do
   # pre-check - is still admitted to the form.
   describe_rule :edit? do
     let(:group)   { create(:group) }
-    let(:member)  { create(:member, group: group) }
+    let(:member)  { create(:member, group:) }
     let(:record)  { group }
     let(:context) { { user: member.user } }
 
     failed "for a member holding no role"
 
     succeed "for an owner" do
-      let(:member) { create(:member, :owner, group: group) }
+      let(:member) { create(:member, :owner, group:) }
     end
 
     failed "for an administrator" do
-      let(:member) { create(:member, :administrator, group: group) }
+      let(:member) { create(:member, :administrator, group:) }
     end
 
     succeed "for a paused owner, who keeps every read" do
-      let(:member) { create(:member, :paused, :owner, group: group) }
+      let(:member) { create(:member, :paused, :owner, group:) }
     end
   end
 
@@ -130,10 +130,10 @@ RSpec.describe GroupPolicy, type: :policy do
   describe "the relation scope" do
     it "excludes a group the user has left" do
       user = create(:user)
-      left = create(:member, :inactive, user: user).group
-      kept = create(:member, :active, user: user).group
+      left = create(:member, :inactive, user:).group
+      kept = create(:member, :active, user:).group
 
-      scoped = described_class.new(nil, user: user).apply_scope(Group.all, type: :active_record_relation)
+      scoped = described_class.new(nil, user:).apply_scope(Group.all, type: :active_record_relation)
 
       expect(scoped).to contain_exactly(kept)
       expect(scoped).not_to include left
