@@ -25,7 +25,7 @@ class ApplicationController < ActionController::Base
   #
   # `if:` rather than `only:`: `only:` makes Rails check every controller for a literal `index`
   # method and raise if one is missing (`raise_on_missing_callback_actions`, on in this app), which
-  # would break every controller with no index action at all - `SessionsController`, `PasswordsController`,
+  # would break every controller with no index action at all - `SessionsController`, `SignInsController`,
   # and the rest. A runtime condition asks no such question; it is simply never true for them.
   verify_authorized_scoped if: -> { action_name == "index" }
 
