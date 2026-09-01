@@ -1,23 +1,5 @@
 require 'rails_helper'
 
-# ## Schema Information
-#
-# Table name: `users`
-#
-# ### Columns
-#
-# Name              | Type               | Attributes
-# ----------------- | ------------------ | ---------------------------
-# **`id`**          | `integer`          | `not null, primary key`
-# **`email`**       | `string(250)`      | `not null`
-# **`created_at`**  | `datetime`         | `not null`
-# **`updated_at`**  | `datetime`         | `not null`
-#
-# ### Indexes
-#
-# * `index_users_on_email` (_unique_):
-#     * **`email`**
-#
 RSpec.describe User, type: :model do
   describe "(associations)" do
     it { is_expected.to have_many(:sessions).dependent(:destroy) }

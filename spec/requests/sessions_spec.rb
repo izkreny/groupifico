@@ -36,22 +36,27 @@ RSpec.describe "Sessions", type: :request do
       # The response has to match in status, body and timing, so the mail is enqueued rather than
       # delivered: a path that waits on SMTP is distinguishable however identical the page is.
       it "answers an address with no account identically, and enqueues nothing" do
-        create(:user)
+        user = create(:user)
         stranger = build(:user)
+
+        post session_path, params: { email: user.email }
+        known = [ response.status, flash[:notice] ]
 
         expect { post session_path, params: { email: stranger.email } }
           .not_to have_enqueued_mail(SignInMailer, :link)
 
-        expect(response).to redirect_to new_session_path
-        expect(flash[:notice]).to eq(SessionsController::LINK_SENT)
+        expect([ response.status, flash[:notice] ]).to eq(known)
       end
 
-      it "gives an address that has an account the very same answer" do
-        user = create(:user)
+      # Against the words rather than against the constant: comparing the flash to
+      # `SessionsController::LINK_SENT` would prove only that one constant equals itself, and #139
+      # requires this text to point a person without an account at an invitation. It is also the
+      # copy the PR body flags as something `bin/ci` cannot judge, so nothing else covers it.
+      it "tells a person with no account how to get one" do
+        post session_path, params: { email: build(:user).email }
 
-        post session_path, params: { email: user.email }
-
-        expect(flash[:notice]).to eq(SessionsController::LINK_SENT)
+        expect(flash[:notice]).to include("invitation")
+        expect(flash[:notice]).to match(/owner or an administrator/)
       end
 
       it "starts no session, because the link has not been followed yet" do

@@ -90,12 +90,14 @@ RSpec.describe SignInToken, type: :model do
     it "spends the token in one conditional write, with no read before it to race against" do
       token = described_class.mint(create(:user))
       statements = []
-      subscriber = ActiveSupport::Notifications.subscribe("sql.active_record") do |*, payload|
-        statements << payload[:sql] if payload[:sql].include?("sign_in_tokens")
-      end
+      collect = ->(*, payload) { statements << payload[:sql] if payload[:sql].include?("sign_in_tokens") }
 
-      described_class.redeem!(token)
-      ActiveSupport::Notifications.unsubscribe(subscriber)
+      # The block form rather than subscribe/unsubscribe: an unsubscribe written as a plain
+      # statement is skipped when the call under test raises, which is the one case this example
+      # exists to notice, and the leaked subscriber then lands on every later example instead.
+      ActiveSupport::Notifications.subscribed(collect, "sql.active_record") do
+        described_class.redeem!(token)
+      end
 
       expect(statements.first).to start_with("UPDATE")
     end
