@@ -53,8 +53,18 @@ class SignInToken < ApplicationRecord
       end
     end
 
+    # Resolves a live link without spending it, so the confirmation page can name the account it
+    # would sign in. A read, so it races with nothing: whatever it finds, `redeem!`'s conditional
+    # UPDATE is still the only thing that decides who gets a session. Answers `nil` rather than
+    # raising, because its caller renders a page instead of authenticating anybody.
+    def pending(token)
+      return nil unless usable?(token)
+
+      outstanding.find_by(token_digest: digest(token), expires_at: Time.current..)
+    end
+
     def redeem!(token)
-      raise InvalidToken unless token.is_a?(String) && token.present?
+      raise InvalidToken unless usable?(token)
 
       now    = Time.current
       wanted = digest(token)
@@ -83,6 +93,12 @@ class SignInToken < ApplicationRecord
     end
 
     private
+      # What "malformed" means, in one place: `digest` raises `TypeError` on anything that is not
+      # a string, and both callers have to keep that out of their own contract.
+      def usable?(token)
+        token.is_a?(String) && token.present?
+      end
+
       def hmac_key
         Rails.application.key_generator.generate_key("SignInToken token digest", 32)
       end

@@ -16,7 +16,7 @@ class SignInsController < ApplicationController
   before_action :hold_token_from_query_string, only: :show
   rate_limit to: 10, within: 3.minutes, only: :create, with: -> { redirect_to new_session_path, alert: "Try again later." }
 
-  # Renders, and does nothing else. Company mail filters open every link in a message before the
+  # Renders, and spends nothing. Company mail filters open every link in a message before the
   # recipient does, so this GET is as likely to be a scanner as a person: it may not spend the
   # token and it may not start a session. ADR 0004's `The emailed link never authenticates` is
   # where that decision lives.
@@ -40,8 +40,15 @@ class SignInsController < ApplicationController
     # The token arrives in the query string, per ADR 0004, and moves into the browser session so
     # that the button below submits nothing but a form: only the query string is filtered out of
     # the log, and a token repeated on the POST would be a second chance to leak it.
+    #
+    # It is also resolved here rather than only at the POST, because the page has to name the
+    # account it would sign in - a link nobody sent you is otherwise indistinguishable from your
+    # own, and pressing the button hands your session to whoever did send it. A link that resolves
+    # to nothing gets the page refused instead of a page with nobody's name on it.
     def hold_token_from_query_string
-      if params[:token].present?
+      @sign_in_token = SignInToken.pending(params[:token])
+
+      if @sign_in_token
         session[:sign_in_token] = params[:token]
       else
         redirect_to new_session_path, alert: INVALID_LINK

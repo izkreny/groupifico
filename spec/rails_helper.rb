@@ -72,6 +72,7 @@ RSpec.configure do |config|
 
   config.include FactoryBot::Syntax::Methods
   config.include AuthenticationHelper, type: :request
+  config.include HtmlHelper, type: :request
   # `freeze_time` and `travel_to`, which `.agents/testing.md` requires of anything time-dependent.
   config.include ActiveSupport::Testing::TimeHelpers
 end

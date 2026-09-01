@@ -23,8 +23,29 @@ RSpec.describe "SignIns", type: :request do
         expect(SignInToken.redeem!(token)).to eq(user)
       end
 
+      # Parsed out of the rendered HTML rather than matched against the body as a string, so a
+      # frontend rewrite that moves or restyles this cannot drop it silently: the address has to
+      # still be somewhere a reader would see it. It is what stops a link nobody sent you being
+      # indistinguishable from your own.
+      it "names the account it would sign in" do
+        user = create(:user)
+
+        get sign_in_path(token: SignInToken.mint(user))
+
+        expect(page_text(response.body)).to include(user.email)
+      end
+
       it "refuses a request carrying no token at all" do
         get sign_in_path
+
+        expect(response).to redirect_to new_session_path
+        expect(flash[:alert]).to eq(SignInsController::INVALID_LINK)
+      end
+
+      # Refused rather than rendered without a name: a page that cannot say whose account this is
+      # is the page the naming exists to replace.
+      it "refuses a token that resolves to nothing" do
+        get sign_in_path(token: "not-a-real-token")
 
         expect(response).to redirect_to new_session_path
         expect(flash[:alert]).to eq(SignInsController::INVALID_LINK)
@@ -54,18 +75,19 @@ RSpec.describe "SignIns", type: :request do
         expect(response).to redirect_to root_url
       end
 
-      # Signed out in between, because a second press while still signed in is refused by the
+      # Signed out in between, because a second attempt while still signed in is refused by the
       # already-authenticated guard instead, which would pass this example without the link ever
-      # having been spent.
+      # having been spent. The refusal now lands on the second GET rather than the POST: a spent
+      # link resolves to nothing, so the page that would carry the button is never rendered.
       it "refuses a second use of one link" do
         token = SignInToken.mint(create(:user))
         get sign_in_path(token: token)
         post sign_in_path
         delete session_path
 
-        get sign_in_path(token: token)
-        expect { post sign_in_path }.not_to change(Session, :count)
+        expect { get sign_in_path(token: token) }.not_to change(Session, :count)
 
+        expect(response).to redirect_to new_session_path
         expect(flash[:alert]).to eq(SignInsController::INVALID_LINK)
       end
 
@@ -82,9 +104,14 @@ RSpec.describe "SignIns", type: :request do
 
       # Whether it worked or not, the token is spent from the browser's point of view. Leaving it
       # behind on the failure path would hand a second attempt to whoever gets the session next.
+      # The failure is staged by expiry rather than by a bogus token, since the GET now refuses
+      # anything that resolves to nothing and a bogus one never reaches the session at all.
       it "drops the token from the browser session on the failure path too" do
-        get sign_in_path(token: "not-a-real-token")
-        post sign_in_path
+        get sign_in_path(token: SignInToken.mint(create(:user)))
+
+        travel_to SignInToken::EXPIRES_IN.from_now + 1.second do
+          post sign_in_path
+        end
 
         expect(session[:sign_in_token]).to be_nil
       end
