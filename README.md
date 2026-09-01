@@ -38,7 +38,7 @@ For more information, check out the [backlog](https://github.com/izkreny/groupif
 
 #### User
 - Global application identity via unique email
-- User logs in with an email and password, and the session persists until signed out
+- User signs in by asking for a link at their email address and pressing the button on the page it opens, and the session persists until signed out
 - User can become a Member of one or more Groups
 
 #### Member aka _Group membership_
@@ -77,7 +77,7 @@ Attributes read `type name "key, comment"`: type before name, which is mermaid's
 
 > [!IMPORTANT]
 > - Foreign key attributes are omitted where a relationship line already shows the link. `creator_id` and `manager_id` are the exception, because both point at `MEMBER` so their names cannot say where they point, and neither has a database constraint behind it.
-> - The `sessions` table is not drawn. Authentication gets its own diagram once passwordless login lands, rather than crowding this one.
+> - Neither authentication table is drawn: `sessions`, nor `sign_in_tokens` alongside it. They get a diagram of their own rather than crowding this one, and #139 landing the passwordless flow is what leaves something worth drawing.
 > - Column limits are Rails-level facts. SQLite does not enforce a declared length, so a limit is what the model validations are set from and what a move to another database engine would need, not a constraint the database applies.
 > - `MEMBER 1+ to 1 GROUP` is what the create path guarantees, not what the database enforces. A group is created with its creator as an `owner` member, so it never starts empty; nothing stops the last member being removed afterwards, and no constraint or validation upholds the `1+`.
 
@@ -113,13 +113,11 @@ erDiagram
   %% ENTITIES
 
   %% UNIQUE INDEX (email)
-  %% FK: user_profiles and members reference users, ON DELETE CASCADE, ON UPDATE CASCADE
+  %% FK: user_profiles, members and sign_in_tokens reference users, ON DELETE CASCADE, ON UPDATE CASCADE
   %% FK: sessions references users with no options, so NO ACTION; has_many dependent: :destroy cleans them up
   USER {
     %% email limit: 250 chars. Normalised to stripped lowercase, uniqueness validated case-insensitively
-    STRING email           "UK, NN"
-    %% password_digest holds the bcrypt hash from has_secure_password. No limit declared
-    STRING password_digest "NN"
+    STRING email "UK, NN"
   }
 
   %% UNIQUE INDEX (user_id), UNIQUE INDEX (mobile_phone)
