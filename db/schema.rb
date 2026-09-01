@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_28_093000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_01_120001) do
   create_table "addresses", force: :cascade do |t|
     t.string "building_number", limit: 250
     t.string "city", limit: 250
@@ -90,6 +90,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_28_093000) do
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
+  create_table "sign_in_tokens", force: :cascade do |t|
+    t.datetime "consumed_at"
+    t.datetime "created_at", null: false
+    t.datetime "expires_at", null: false
+    t.string "token_digest", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["token_digest"], name: "index_sign_in_tokens_on_token_digest", unique: true
+    t.index ["user_id"], name: "index_sign_in_tokens_on_user_id"
+  end
+
   create_table "user_profiles", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "first_name", limit: 250
@@ -104,7 +115,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_28_093000) do
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email", limit: 250, null: false
-    t.string "password_digest", null: false
     t.datetime "updated_at", null: false
     t.index ["email"], name: "index_users_on_email", unique: true
   end
@@ -118,5 +128,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_28_093000) do
   add_foreign_key "registrations", "members", on_update: :cascade, on_delete: :cascade
   add_foreign_key "roles", "members", on_update: :cascade, on_delete: :cascade
   add_foreign_key "sessions", "users"
+  add_foreign_key "sign_in_tokens", "users", on_update: :cascade, on_delete: :cascade
   add_foreign_key "user_profiles", "users", on_update: :cascade, on_delete: :cascade
 end

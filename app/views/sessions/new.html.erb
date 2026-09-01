@@ -1,23 +1,15 @@
 <div class="mx-auto md:w-2/3 w-full">
   <h1 class="font-bold text-4xl">Sign in</h1>
 
+  <p class="my-5">Give us your email address and we will send you a link that signs you in.</p>
+
   <%= form_with url: session_url, class: "contents" do |form| %>
     <div class="my-5">
       <%= form.email_field :email, required: true, autofocus: true, autocomplete: "username", placeholder: "Enter your email address", value: params[:email], class: "input w-full" %>
     </div>
 
-    <div class="my-5">
-      <%= form.password_field :password, required: true, autocomplete: "current-password", placeholder: "Enter your password", maxlength: 72, class: "input w-full" %>
-    </div>
-
-    <div class="col-span-6 sm:flex sm:items-center sm:gap-4">
-      <div class="inline">
-        <%= form.submit "Sign in", class: "btn btn-primary" %>
-      </div>
-
-      <div class="mt-4 text-sm sm:mt-0">
-        <%= link_to "Forgot password?", new_password_path, class: "link link-hover" %>
-      </div>
+    <div class="inline">
+      <%= form.submit "Email me a sign-in link", class: "btn btn-primary" %>
     </div>
   <% end %>
 </div>

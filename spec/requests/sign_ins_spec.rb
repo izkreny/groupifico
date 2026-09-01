@@ -1,0 +1,116 @@
+require 'rails_helper'
+
+RSpec.describe "SignIns", type: :request do
+  describe "GET /sign_in" do
+    context "when not signed in" do
+      # A company mail filter opens every link in a message before the recipient does, so this GET
+      # is as likely to be a scanner as a person. Both halves matter: it renders, and it spends
+      # nothing.
+      it "renders the confirmation page and starts no session" do
+        token = SignInToken.mint(create(:user))
+
+        expect { get sign_in_path(token: token) }.not_to change(Session, :count)
+
+        expect(response).to have_http_status :ok
+      end
+
+      it "leaves the link unspent, so the button still works afterwards" do
+        user = create(:user)
+        token = SignInToken.mint(user)
+
+        get sign_in_path(token: token)
+
+        expect(SignInToken.redeem!(token)).to eq(user)
+      end
+
+      it "refuses a request carrying no token at all" do
+        get sign_in_path
+
+        expect(response).to redirect_to new_session_path
+        expect(flash[:alert]).to eq(SignInsController::INVALID_LINK)
+      end
+    end
+
+    context "when already signed in" do
+      it "redirects to the root page rather than offering a second account" do
+        sign_in_as(create(:user))
+        token = SignInToken.mint(create(:user))
+
+        get sign_in_path(token: token)
+
+        expect(response).to redirect_to root_path
+      end
+    end
+  end
+
+  describe "POST /sign_in" do
+    context "when not signed in" do
+      it "signs the person in and redirects to the root page" do
+        user = create(:user)
+        get sign_in_path(token: SignInToken.mint(user))
+
+        expect { post sign_in_path }.to change { user.sessions.count }.by(1)
+
+        expect(response).to redirect_to root_url
+      end
+
+      # Signed out in between, because a second press while still signed in is refused by the
+      # already-authenticated guard instead, which would pass this example without the link ever
+      # having been spent.
+      it "refuses a second use of one link" do
+        token = SignInToken.mint(create(:user))
+        get sign_in_path(token: token)
+        post sign_in_path
+        delete session_path
+
+        get sign_in_path(token: token)
+        expect { post sign_in_path }.not_to change(Session, :count)
+
+        expect(flash[:alert]).to eq(SignInsController::INVALID_LINK)
+      end
+
+      it "refuses a link past its window" do
+        token = SignInToken.mint(create(:user))
+        get sign_in_path(token: token)
+
+        travel_to SignInToken::EXPIRES_IN.from_now + 1.second do
+          expect { post sign_in_path }.not_to change(Session, :count)
+        end
+
+        expect(response).to redirect_to new_session_path
+      end
+
+      # Whether it worked or not, the token is spent from the browser's point of view. Leaving it
+      # behind on the failure path would hand a second attempt to whoever gets the session next.
+      it "drops the token from the browser session on the failure path too" do
+        get sign_in_path(token: "not-a-real-token")
+        post sign_in_path
+
+        expect(session[:sign_in_token]).to be_nil
+      end
+
+      # Through the one thing the old session carried that could steer anything. Asserting on
+      # `session.id`, or on a key set between requests, passes with `reset_session` deleted: a
+      # request spec re-reads `session` from each response.
+      it "issues a fresh browser session, so a destination planted before sign-in does not survive it" do
+        get groups_path # refused, and plants where to return to afterwards
+        get sign_in_path(token: SignInToken.mint(create(:user)))
+
+        post sign_in_path
+
+        expect(response).to redirect_to root_url
+      end
+    end
+
+    context "when already signed in" do
+      it "redirects to the root page without starting another session" do
+        sign_in_as(create(:user))
+        SignInToken.mint(create(:user))
+
+        expect { post sign_in_path }.not_to change(Session, :count)
+
+        expect(response).to redirect_to root_path
+      end
+    end
+  end
+end

@@ -1,6 +1,10 @@
 Rails.application.routes.draw do
   resource :session
-  resources :passwords, param: :token
+  # The emailed link is a GET that renders and a POST that redeems, and they are separate actions
+  # on their own resource because a mail scanner following the link must reach one that cannot
+  # sign anybody in. The token rides the query string, never a path segment, since `filtered_path`
+  # filters only the query string - both decisions are ADR 0004's.
+  resource :sign_in, only: %i[ show create ]
   # An address exists only as a detail of the group or event that points at it: both build one
   # through `accepts_nested_attributes_for :address`, and `EventsController` picks an existing one
   # out of `group.addresses`. So there is nothing to create standalone - an address pointed at by
