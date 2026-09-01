@@ -1,0 +1,14 @@
+<div class="mx-auto md:w-2/3 w-full">
+  <h1 class="font-bold text-4xl">Finish signing in</h1>
+
+  <p class="my-5">
+    You are about to sign in as <strong><%= @sign_in_token.user.email %></strong>.
+    If that is not your address, close this page: the link you followed was not sent to you.
+  </p>
+
+  <p class="my-5">Press the button to sign in. The link you followed works once, so this finishes it.</p>
+
+  <div class="inline">
+    <%= button_to "Sign in", sign_in_path, class: "btn btn-primary" %>
+  </div>
+</div>

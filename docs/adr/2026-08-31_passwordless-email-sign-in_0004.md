@@ -93,6 +93,8 @@ The copy counts too, not only the redirect target. Rodauth's own default sends b
 
 The wrinkle this application creates for itself is that #207 leaves no standalone sign-up page, the two ways in being to start a group or to be invited, so a person nobody invited who types their address into the sign-in form would otherwise be told to check an inbox nothing will ever arrive in. The message names the way out instead: ask the group's owner or an administrator for an invitation. It says the same thing to everyone, so it leaks nothing.
 
+**It names one of those two ways and not both, and that is a choice about the audience rather than a route being withheld.** Somebody who reaches the sign-in form believes they already have an account, so the likely truths are that they were meant to be invited and were not, or that they typed a different address; neither is helped by being nudged into founding a group they never came to found. A person who does want to start one arrives by that route instead, which #207 builds and which this form is not the door to. The consequence to hold on to is that the same words reach everybody, the account holder included, so the invitation sentence has to read as ordinary rather than as a mistake to somebody whose link is already on its way.
+
 ### Both routes refuse a visitor who is already signed in
 
 Rodauth's `check_already_logged_in` hook defaults to a no-op, and its own 2.47.0 notes call that out: "For backwards compatibility, Rodauth allows already authenticated sessions to access endpoints that are designed to be used by unauthentication sessions. This hightens the risk of account confusion attacks. It's strongly recommended that this configuration method be used to halt or redirect... (doing so prevented the webauthn_login vulnerability fixed in 2.46.0)."
@@ -133,7 +135,9 @@ Under any magic-link scheme, access to the inbox is already access to the accoun
 
 **A token leak into the application log is fixed as a side effect.** `resources :passwords, param: :token` has been writing reset tokens into the log through `filtered_path`, and deleting the route ends it. It was found while reading `mikker/passwordless`, not while reading this repository.
 
-**`start_new_session_for` gains `reset_session`.** `mikker/passwordless` shipped without it and added it in 0.11.0 as session-fixation protection. The severity here is low, because authentication rides its own signed cookie rather than the Rails session, so a fixed session id grants no login; what it reaches is `session[:return_to_after_authenticating]`, which could be pre-planted to steer the landing page.
+**`start_new_session_for` gains `reset_session`, and the stored landing page goes.** `mikker/passwordless` shipped without the reset and added it in 0.11.0 as session-fixation protection. The severity here is low, because authentication rides its own signed cookie rather than the Rails session, so a fixed session id grants no login; what a planted session would reach is `session[:return_to_after_authenticating]`, pre-planted to steer where the person lands after signing in.
+
+That key is therefore not stored at all. Reading it back across the reset would hand the steer straight back, and nothing in a browser session distinguishes the person who was refused at a page from an attacker who planted the same key in their browser, so there is no version of the feature that survives the reset. Returning somebody to where they were needs a destination the old session cannot reach, which means carrying it in the emailed link; that is a change nobody has scheduled, and until it happens sign-in lands at the root.
 
 **Something has to sweep spent and expired rows**, which is the price of the row-per-request choice above.
 

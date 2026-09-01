@@ -3,59 +3,81 @@ require 'rails_helper'
 RSpec.describe "Sessions", type: :request do
   describe "GET /session/new" do
     context "when not signed in" do
-      it "renders the sign-in page" do
+      it "renders the sign-in page, asking for an email address and nothing else" do
         get new_session_path
 
-        expect(response).to have_http_status :ok
+        expect(response.body).to include('type="email"')
+        expect(response.body).not_to include('type="password"')
       end
     end
 
     context "when already signed in" do
-      it "still renders the sign-in page" do
+      it "redirects to the root page instead of offering to sign in again" do
         sign_in_as(create(:user))
 
         get new_session_path
 
-        expect(response).to have_http_status :ok
+        expect(response).to redirect_to root_path
       end
     end
   end
 
   describe "POST /session" do
     context "when not signed in" do
-      it "signs in with valid credentials and redirects to the root page" do
+      it "enqueues the sign-in link for an address that has an account" do
         user = create(:user)
 
-        post session_path, params: { email: user.email, password: user.password }
-
-        expect(response).to redirect_to root_path
-      end
-
-      it "redirects back to sign-in for an unknown email address" do
-        create(:user, password: "0000")
-        potential_user = build(:user)
-
-        post session_path, params: { email: potential_user.email, password: "0000" }
+        expect { post session_path, params: { email: user.email } }
+          .to have_enqueued_mail(SignInMailer, :link).with(user)
 
         expect(response).to redirect_to new_session_path
       end
 
-      it "redirects back to sign-in for a wrong password" do
-        user = create(:user, password: "0000")
+      # The response has to match in status, body and timing, so the mail is enqueued rather than
+      # delivered: a path that waits on SMTP is distinguishable however identical the page is.
+      it "answers an address with no account identically, and enqueues nothing" do
+        user = create(:user)
+        stranger = build(:user)
 
-        post session_path, params: { email: user.email, password: "9999" }
+        post session_path, params: { email: user.email }
+        known = [ response.status, response.location, flash[:notice] ]
 
+        expect { post session_path, params: { email: stranger.email } }
+          .not_to have_enqueued_mail(SignInMailer, :link)
+
+        # Where it lands is in the tuple as well as the status and the copy: it is a field the two
+        # paths could differ in, and leaving it out made this weaker than the plain redirect
+        # assertion it replaced.
+        expect([ response.status, response.location, flash[:notice] ]).to eq(known)
         expect(response).to redirect_to new_session_path
+      end
+
+      # Against the words rather than against the constant: comparing the flash to
+      # `SessionsController::LINK_SENT` would prove only that one constant equals itself, and #139
+      # requires this text to point a person without an account at an invitation. It is also the
+      # copy the PR body flags as something `bin/ci` cannot judge, so nothing else covers it.
+      it "tells a person with no account how to get one" do
+        post session_path, params: { email: build(:user).email }
+
+        expect(flash[:notice]).to include("invitation")
+        expect(flash[:notice]).to include("owner or an administrator")
+      end
+
+      it "starts no session, because the link has not been followed yet" do
+        user = create(:user)
+
+        expect { post session_path, params: { email: user.email } }
+          .not_to change(Session, :count)
       end
     end
 
     context "when already signed in" do
-      it "signs in as the newly authenticated user, creating another session" do
+      it "redirects to the root page without enqueueing anything" do
         sign_in_as(create(:user))
         other_user = create(:user)
 
-        expect { post session_path, params: { email: other_user.email, password: other_user.password } }
-          .to change { other_user.sessions.count }.by(1)
+        expect { post session_path, params: { email: other_user.email } }
+          .not_to have_enqueued_mail(SignInMailer, :link)
 
         expect(response).to redirect_to root_path
       end

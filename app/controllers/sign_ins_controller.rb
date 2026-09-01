@@ -1,0 +1,57 @@
+class SignInsController < ApplicationController
+  # Permanent, both actions. Redeeming an emailed link is how a person becomes authenticated at
+  # all, so there is no signed-in user to authorize against - the argument the deleted
+  # `PasswordsController` made for the recovery flow, arriving here with the flow that replaced it.
+  # Named actions rather than a bare skip, so an action added later cannot inherit an exemption
+  # nobody chose for it - the reason `SessionsController` gives for naming its own.
+  skip_verify_authorized only: %i[ show create ]
+
+  # Says nothing about which of the four failures it was - unknown digest, already spent, expired,
+  # malformed - because telling them apart answers questions the holder of a link must not be able
+  # to ask.
+  INVALID_LINK = "That sign-in link is invalid or has expired. Ask for a new one."
+
+  allow_unauthenticated_access only: %i[ show create ]
+  before_action :refuse_authenticated
+  before_action :hold_token_from_query_string, only: :show
+  rate_limit to: 10, within: 3.minutes, only: :create, with: -> { redirect_to new_session_path, alert: "Try again later." }
+
+  # Renders, and spends nothing. Company mail filters open every link in a message before the
+  # recipient does, so this GET is as likely to be a scanner as a person: it may not spend the
+  # token and it may not start a session. ADR 0004's `The emailed link never authenticates` is
+  # where that decision lives.
+  def show
+  end
+
+  def create
+    # Read once and gone, on the failure path below as well as on this one.
+    user = SignInToken.redeem!(session.delete(:sign_in_token))
+
+    start_new_session_for user
+
+    # The root, always. Nothing records where somebody was bounced from, deliberately, and
+    # `request_authentication` carries why.
+    redirect_to root_url
+  rescue SignInToken::InvalidToken
+    redirect_to new_session_path, alert: INVALID_LINK
+  end
+
+  private
+    # The token arrives in the query string, per ADR 0004, and moves into the browser session so
+    # that the button below submits nothing but a form: only the query string is filtered out of
+    # the log, and a token repeated on the POST would be a second chance to leak it.
+    #
+    # It is also resolved here rather than only at the POST, because the page has to name the
+    # account it would sign in - a link nobody sent you is otherwise indistinguishable from your
+    # own, and pressing the button hands your session to whoever did send it. A link that resolves
+    # to nothing gets the page refused instead of a page with nobody's name on it.
+    def hold_token_from_query_string
+      @sign_in_token = SignInToken.pending(params[:token])
+
+      if @sign_in_token
+        session[:sign_in_token] = params[:token]
+      else
+        redirect_to new_session_path, alert: INVALID_LINK
+      end
+    end
+end

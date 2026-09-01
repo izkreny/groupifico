@@ -4,13 +4,12 @@
 #
 # ### Columns
 #
-# Name                   | Type               | Attributes
-# ---------------------- | ------------------ | ---------------------------
-# **`id`**               | `integer`          | `not null, primary key`
-# **`email`**            | `string(250)`      | `not null`
-# **`password_digest`**  | `string`           | `not null`
-# **`created_at`**       | `datetime`         | `not null`
-# **`updated_at`**       | `datetime`         | `not null`
+# Name              | Type               | Attributes
+# ----------------- | ------------------ | ---------------------------
+# **`id`**          | `integer`          | `not null, primary key`
+# **`email`**       | `string(250)`      | `not null`
+# **`created_at`**  | `datetime`         | `not null`
+# **`updated_at`**  | `datetime`         | `not null`
 #
 # ### Indexes
 #
@@ -18,8 +17,8 @@
 #     * **`email`**
 #
 class User < ApplicationRecord
-  has_secure_password
   has_many :sessions, dependent: :destroy
+  has_many :sign_in_tokens, dependent: :destroy
   has_one :profile, class_name: "UserProfile", dependent: :destroy
   has_many :members, dependent: :destroy
   has_many :groups, through: :members
@@ -37,4 +36,15 @@ class User < ApplicationRecord
 
   before_validation -> { build_profile unless profile }, on: :create
   validates :profile, presence: true, on: :create
+
+  # An outstanding link signs in whoever holds it, and it was sent to an address this account no
+  # longer answers to. Inside the transaction rather than after commit, so a rolled-back email
+  # change takes the invalidation back with it. Consumed rather than deleted, keeping the record
+  # of what was issued that ADR 0004 chose the row-per-request table for.
+  after_update :consume_outstanding_sign_in_tokens, if: :saved_change_to_email?
+
+  private
+    def consume_outstanding_sign_in_tokens
+      sign_in_tokens.consume_all
+    end
 end

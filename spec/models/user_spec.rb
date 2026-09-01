@@ -3,13 +3,13 @@ require 'rails_helper'
 RSpec.describe User, type: :model do
   describe "(associations)" do
     it { is_expected.to have_many(:sessions).dependent(:destroy) }
+    it { is_expected.to have_many(:sign_in_tokens).dependent(:destroy) }
     it { is_expected.to have_one(:profile).class_name("UserProfile").dependent(:destroy) }
     it { is_expected.to have_many(:members).dependent(:destroy) }
     it { is_expected.to have_many(:groups).through(:members) }
   end
 
   describe "(validations)" do
-    it { is_expected.to have_secure_password }
     it { is_expected.to normalize(:email).from(" NAME@XYZ.COM\t\n").to("name@xyz.com") }
     it { is_expected.to validate_presence_of(:email) }
     it { is_expected.to validate_length_of(:email).is_at_most(250) }
@@ -20,6 +20,29 @@ RSpec.describe User, type: :model do
       subject { create(:user) }
 
       it { is_expected.to validate_uniqueness_of(:email).case_insensitive }
+    end
+  end
+
+  describe "(sign-in links outstanding when the address changes)" do
+    it "consumes them, because they were sent where this account no longer answers" do
+      user = create(:user)
+      token = SignInToken.mint(user)
+
+      user.update!(email: "moved.on@example.com")
+
+      expect { SignInToken.redeem!(token) }.to raise_error(SignInToken::InvalidToken)
+    end
+
+    # `email` is the only attribute this table carries today, so without this the guard on the
+    # callback would be indistinguishable from no guard at all, and the first column added would
+    # start invalidating live links for nothing.
+    it "leaves them alone when the record is saved without the address changing" do
+      user = create(:user)
+      token = SignInToken.mint(user)
+
+      user.update!(updated_at: 1.minute.from_now)
+
+      expect(SignInToken.redeem!(token)).to eq(user)
     end
   end
 

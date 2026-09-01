@@ -4,13 +4,12 @@
 #
 # ### Columns
 #
-# Name                   | Type               | Attributes
-# ---------------------- | ------------------ | ---------------------------
-# **`id`**               | `integer`          | `not null, primary key`
-# **`email`**            | `string(250)`      | `not null`
-# **`password_digest`**  | `string`           | `not null`
-# **`created_at`**       | `datetime`         | `not null`
-# **`updated_at`**       | `datetime`         | `not null`
+# Name              | Type               | Attributes
+# ----------------- | ------------------ | ---------------------------
+# **`id`**          | `integer`          | `not null, primary key`
+# **`email`**       | `string(250)`      | `not null`
+# **`created_at`**  | `datetime`         | `not null`
+# **`updated_at`**  | `datetime`         | `not null`
 #
 # ### Indexes
 #
@@ -29,7 +28,6 @@ FactoryBot.define do
     # from a finite pool and raised `RetryLimitExceeded` once a run created enough users - a suite
     # that failed on how many examples ran before it rather than on anything it asserted.
     sequence(:email) { |n| "#{first_name.parameterize}.#{last_name.parameterize}.#{n}@example.com" }
-    password { "0000" } # Faker::Internet.password
 
     trait :with_full_profile do
       after(:create) do |user, context|
