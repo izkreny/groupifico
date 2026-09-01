@@ -6,12 +6,12 @@
 
 `.rspec` holds three lines: `--require spec_helper`, `--format documentation` and `--warnings`. Drop the last two and keep the first. Nothing else in the repository configures the formatter, so removing the flag is the whole change: `spec/spec_helper.rb` does carry the generator's `config.default_formatter = "doc"`, but it sits inside the `=begin` block that spans lines 49 to 93 and has never executed, which is #213's business rather than this branch's.
 
-Then add a `## Running the suite` section to `.agents/testing.md`, after `## Framework choices`, recording `bin/rspec --format documentation --warnings` as the verbose invocation and when it is worth reaching for. That file points at [`.agents/gh-solo.md`](../../.agents/gh-solo.md) for the local gate, so this section names the verbose run and does not restate that `bin/ci` is the gate.
+`.rspec` is the whole diff. The verbose run that replaces the flags is `bin/rspec --format documentation --warnings`, for when the question is which examples exist or which one hangs; neither flag goes back into `.rspec`, and neither belongs in a `.rspec-local` either, since that applies to every run in the checkout just the same. That belongs here and in the pull request body rather than in `.agents/testing.md`, per the decision recorded under `## Settled`.
 
 ## Steps
 
 - Reduce `.rspec` to `--require spec_helper`
-- Add `## Running the suite` to `.agents/testing.md` with the verbose invocation and when to use it
+- Record the verbose invocation and the rule keeping the flags out of `.rspec`, in this plan and in the pull request body
 - Measure a full run before and after, and record both figures in the pull request
 
 ## Verification
@@ -28,4 +28,4 @@ None.
 
 ## Settled
 
-None yet.
+- **Where does the reason for the missing flags live?** In this plan and in the pull request body, never in `.agents/testing.md`. The reason a change was made is a historic fact about one change, and `.agents/testing.md` is read by every agent on every task, so a paragraph of history there is paid for on every read and drifts the moment the file it describes moves again. The plan and the body are fetchable by the change they belong to, and the body lands in the squash commit on `main`, so `git log` answers "why is `.rspec` one line" without anything standing rules have to carry. The rejected alternative was a `## Running the suite` section in `.agents/testing.md`, first as two paragraphs and then trimmed to two sentences; both were removed. Settled in a review thread on this pull request, 2026-09-01.
