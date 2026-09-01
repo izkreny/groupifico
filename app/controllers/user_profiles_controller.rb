@@ -17,7 +17,7 @@ class UserProfilesController < ApplicationController
         notice: "User profile was successfully updated.",
         status: :see_other
     else
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 

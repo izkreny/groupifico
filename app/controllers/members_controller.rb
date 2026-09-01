@@ -42,7 +42,7 @@ class MembersController < ApplicationController
       redirect_to group_member_path(@group, @member),
         notice: "Member was successfully created."
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -57,7 +57,7 @@ class MembersController < ApplicationController
         notice: "Member was successfully updated.",
         status: :see_other
     else
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 
@@ -115,7 +115,7 @@ class MembersController < ApplicationController
     end
 
     def refuse_unknown_role
-      head :unprocessable_entity
+      head :unprocessable_content
     end
 
     def refuse_ownerless_group

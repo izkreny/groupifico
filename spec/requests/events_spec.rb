@@ -306,7 +306,7 @@ RSpec.describe "Events", type: :request do
         expect { post group_events_path(member.group), params: { event: { name: "" } } }
           .not_to change(Event, :count)
 
-        expect(response).to have_http_status :unprocessable_entity
+        expect(response).to have_http_status :unprocessable_content
       end
 
       it "creates no event for a member who manages one but holds no role" do
@@ -379,7 +379,7 @@ RSpec.describe "Events", type: :request do
 
         patch group_event_path(event.group, event), params: { event: { name: "" } }
 
-        expect(response).to have_http_status :unprocessable_entity
+        expect(response).to have_http_status :unprocessable_content
       end
 
       it "ignores a posted group_id, leaving the event in its own group" do

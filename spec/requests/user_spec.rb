@@ -87,7 +87,7 @@ RSpec.describe "User", type: :request do
         expect { post user_path, params: { user: { email: signed_in.email, password: "0000" } } }
           .not_to change(User, :count)
 
-        expect(response).to have_http_status :unprocessable_entity
+        expect(response).to have_http_status :unprocessable_content
       end
     end
   end

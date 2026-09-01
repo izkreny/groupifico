@@ -35,7 +35,7 @@ class UsersController < ApplicationController
       redirect_to user_path,
         notice: "User was successfully created."
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -45,7 +45,7 @@ class UsersController < ApplicationController
         notice: "User was successfully updated.",
         status: :see_other
     else
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 

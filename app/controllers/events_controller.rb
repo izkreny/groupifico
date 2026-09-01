@@ -46,7 +46,7 @@ class EventsController < ApplicationController
       redirect_to group_event_path(@group, @event),
         notice: "Event was successfully created."
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -58,7 +58,7 @@ class EventsController < ApplicationController
         notice: "Event was successfully updated.",
         status: :see_other
     else
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 

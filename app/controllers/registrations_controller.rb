@@ -34,7 +34,7 @@ class RegistrationsController < ApplicationController
       redirect_to group_event_registration_path(@group, @event, @registration),
         notice: "Registration was successfully created."
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -49,7 +49,7 @@ class RegistrationsController < ApplicationController
         notice: "Registration was successfully updated.",
         status: :see_other
     else
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 
