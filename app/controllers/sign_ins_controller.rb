@@ -29,8 +29,8 @@ class SignInsController < ApplicationController
 
     start_new_session_for user
 
-    # The root, always. Where somebody was bounced from is stored in the browser session, and
-    # `start_new_session_for` has just reset it - deliberately, per `request_authentication`.
+    # The root, always. Nothing records where somebody was bounced from, deliberately, and
+    # `request_authentication` carries why.
     redirect_to root_url
   rescue SignInToken::InvalidToken
     redirect_to new_session_path, alert: INVALID_LINK

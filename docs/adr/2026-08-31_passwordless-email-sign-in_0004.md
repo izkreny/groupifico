@@ -135,7 +135,9 @@ Under any magic-link scheme, access to the inbox is already access to the accoun
 
 **A token leak into the application log is fixed as a side effect.** `resources :passwords, param: :token` has been writing reset tokens into the log through `filtered_path`, and deleting the route ends it. It was found while reading `mikker/passwordless`, not while reading this repository.
 
-**`start_new_session_for` gains `reset_session`.** `mikker/passwordless` shipped without it and added it in 0.11.0 as session-fixation protection. The severity here is low, because authentication rides its own signed cookie rather than the Rails session, so a fixed session id grants no login; what it reaches is `session[:return_to_after_authenticating]`, which could be pre-planted to steer the landing page.
+**`start_new_session_for` gains `reset_session`, and the stored landing page goes.** `mikker/passwordless` shipped without the reset and added it in 0.11.0 as session-fixation protection. The severity here is low, because authentication rides its own signed cookie rather than the Rails session, so a fixed session id grants no login; what a planted session would reach is `session[:return_to_after_authenticating]`, pre-planted to steer where the person lands after signing in.
+
+That key is therefore not stored at all. Reading it back across the reset would hand the steer straight back, and nothing in a browser session distinguishes the person who was refused at a page from an attacker who planted the same key in their browser, so there is no version of the feature that survives the reset. Returning somebody to where they were needs a destination the old session cannot reach, which means carrying it in the emailed link; that is a change nobody has scheduled, and until it happens sign-in lands at the root.
 
 **Something has to sweep spent and expired rows**, which is the price of the row-per-request choice above.
 

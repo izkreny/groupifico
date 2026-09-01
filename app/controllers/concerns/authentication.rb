@@ -48,8 +48,8 @@ module Authentication
 
     # `reset_session` first, so a browser session planted before sign-in does not survive it. The
     # signed cookie this method sets is what authenticates, so a fixed session id grants no login
-    # on its own; what a planted session would reach is whatever else the application keeps there,
-    # which is why the reset stands rather than being scoped to the keys that exist today.
+    # on its own; what a planted session would reach is whatever else the application keeps there.
+    # ADR 0004 records why the landing page is no longer among those things.
     def start_new_session_for(user)
       reset_session
 

@@ -40,12 +40,16 @@ RSpec.describe "Sessions", type: :request do
         stranger = build(:user)
 
         post session_path, params: { email: user.email }
-        known = [ response.status, flash[:notice] ]
+        known = [ response.status, response.location, flash[:notice] ]
 
         expect { post session_path, params: { email: stranger.email } }
           .not_to have_enqueued_mail(SignInMailer, :link)
 
-        expect([ response.status, flash[:notice] ]).to eq(known)
+        # Where it lands is in the tuple as well as the status and the copy: it is a field the two
+        # paths could differ in, and leaving it out made this weaker than the plain redirect
+        # assertion it replaced.
+        expect([ response.status, response.location, flash[:notice] ]).to eq(known)
+        expect(response).to redirect_to new_session_path
       end
 
       # Against the words rather than against the constant: comparing the flash to
