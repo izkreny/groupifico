@@ -11,7 +11,7 @@ class SignInsController < ApplicationController
   # to ask.
   INVALID_LINK = "That sign-in link is invalid or has expired. Ask for a new one."
 
-  allow_unauthenticated_access
+  allow_unauthenticated_access only: %i[ show create ]
   before_action :refuse_authenticated
   before_action :hold_token_from_query_string, only: :show
   rate_limit to: 10, within: 3.minutes, only: :create, with: -> { redirect_to new_session_path, alert: "Try again later." }
