@@ -56,7 +56,7 @@ RSpec.describe "Sessions", type: :request do
         post session_path, params: { email: build(:user).email }
 
         expect(flash[:notice]).to include("invitation")
-        expect(flash[:notice]).to match(/owner or an administrator/)
+        expect(flash[:notice]).to include("owner or an administrator")
       end
 
       it "starts no session, because the link has not been followed yet" do
