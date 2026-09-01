@@ -89,16 +89,16 @@ RSpec.describe "SignIns", type: :request do
         expect(session[:sign_in_token]).to be_nil
       end
 
-      # Through the one thing the old session carried that could steer anything. Asserting on
-      # `session.id`, or on a key set between requests, passes with `reset_session` deleted: a
-      # request spec re-reads `session` from each response.
-      it "issues a fresh browser session, so a destination planted before sign-in does not survive it" do
-        get groups_path # refused, and plants where to return to afterwards
+      # On the session id, because nothing the application stores in a browser session now
+      # outlives sign-in for a value assertion to catch. Setting a key between requests would
+      # assert nothing either way - a request spec re-reads `session` from each response.
+      it "issues a fresh browser session, so one planted before sign-in does not survive it" do
         get sign_in_path(token: SignInToken.mint(create(:user)))
+        planted = session.id.to_s
 
         post sign_in_path
 
-        expect(response).to redirect_to root_url
+        expect(session.id.to_s).not_to eq(planted)
       end
     end
 

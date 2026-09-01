@@ -37,20 +37,19 @@ module Authentication
       Session.find_by(id: cookies.signed[:session_id]) if cookies.signed[:session_id]
     end
 
+    # Records nowhere to return to. Signing in resets the browser session, so a destination stored
+    # here could only be read back by defeating that reset - and nothing in a session distinguishes
+    # the person who was refused here from an attacker who planted the same key in their browser.
+    # Returning somebody to where they were needs a destination the old session cannot reach, which
+    # means carrying it in the emailed link.
     def request_authentication
-      session[:return_to_after_authenticating] = request.url
       redirect_to new_session_path
-    end
-
-    def after_authentication_url
-      session.delete(:return_to_after_authenticating) || root_url
     end
 
     # `reset_session` first, so a browser session planted before sign-in does not survive it. The
     # signed cookie this method sets is what authenticates, so a fixed session id grants no login
-    # on its own; what it reaches is `session[:return_to_after_authenticating]`, which a planted
-    # session could otherwise use to steer where the person lands. Reading that destination before
-    # calling this would hand the steer straight back, so callers read it afterwards or not at all.
+    # on its own; what a planted session would reach is whatever else the application keeps there,
+    # which is why the reset stands rather than being scoped to the keys that exist today.
     def start_new_session_for(user)
       reset_session
 

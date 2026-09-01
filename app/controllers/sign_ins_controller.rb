@@ -27,15 +27,11 @@ class SignInsController < ApplicationController
     # Read once and gone, on the failure path below as well as on this one.
     user = SignInToken.redeem!(session.delete(:sign_in_token))
 
-    # `start_new_session_for` resets the browser session first, so `after_authentication_url` finds
-    # no stored destination and answers with the root. That is the point rather than an oversight:
-    # the destination is planted by whoever held this browser session before sign-in, and nothing
-    # in the session can tell the person who was bounced off a group page from an attacker who
-    # planted the same key. Following a link back to where you were is the thing #139's fresh
-    # session criterion gives up, and a link that carries its own destination is the way to get it
-    # back later.
     start_new_session_for user
-    redirect_to after_authentication_url
+
+    # The root, always. Where somebody was bounced from is stored in the browser session, and
+    # `start_new_session_for` has just reset it - deliberately, per `request_authentication`.
+    redirect_to root_url
   rescue SignInToken::InvalidToken
     redirect_to new_session_path, alert: INVALID_LINK
   end
