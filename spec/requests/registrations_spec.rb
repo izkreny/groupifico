@@ -225,7 +225,7 @@ RSpec.describe "Registrations", type: :request do
         expect { post group_event_registrations_path(event.group, event), params: { registration: { member_id: "" } } }
           .not_to change(Registration, :count)
 
-        expect(response).to have_http_status :unprocessable_entity
+        expect(response).to have_http_status :unprocessable_content
       end
     end
 
@@ -336,7 +336,7 @@ RSpec.describe "Registrations", type: :request do
 
         patch group_event_registration_path(event.group, event, registration), params: { registration: { status: "bogus" } }
 
-        expect(response).to have_http_status :unprocessable_entity
+        expect(response).to have_http_status :unprocessable_content
       end
 
       # member_id is not permitted on update at all, so an events administrator cannot hand a

@@ -213,7 +213,7 @@ RSpec.describe "Groups", type: :request do
         expect(response).to have_http_status :ok
       end
 
-      it "responds :unprocessable_entity and creates no records when the group is invalid" do
+      it "responds :unprocessable_content and creates no records when the group is invalid" do
         sign_in_as(create(:user))
 
         group_count  = Group.count
@@ -223,7 +223,7 @@ RSpec.describe "Groups", type: :request do
 
         expect(Group.count).to eq group_count
         expect(Member.count).to eq member_count
-        expect(response).to have_http_status :unprocessable_entity
+        expect(response).to have_http_status :unprocessable_content
       end
     end
   end
@@ -266,7 +266,7 @@ RSpec.describe "Groups", type: :request do
 
         patch group_path(member.group), params: { group: { name: "" } }
 
-        expect(response).to have_http_status :unprocessable_entity
+        expect(response).to have_http_status :unprocessable_content
       end
     end
 

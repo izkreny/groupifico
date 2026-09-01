@@ -221,7 +221,7 @@ RSpec.describe "Members", type: :request do
         expect { post group_members_path(actor.group), params: { member: { user_id: invitee.id, roles: [ "events_administrator", "bogus" ] } } }
           .not_to change(Member, :count)
 
-        expect(response).to have_http_status :unprocessable_entity
+        expect(response).to have_http_status :unprocessable_content
       end
 
       it "creates the member with the roles posted for them" do
@@ -254,7 +254,7 @@ RSpec.describe "Members", type: :request do
         expect { post group_members_path(actor.group), params: { member: { user_id: "" } } }
           .not_to change(Member, :count)
 
-        expect(response).to have_http_status :unprocessable_entity
+        expect(response).to have_http_status :unprocessable_content
       end
     end
 
@@ -353,7 +353,7 @@ RSpec.describe "Members", type: :request do
 
         patch group_member_path(member.group, member), params: { member: { roles: [ "bogus" ] } }
 
-        expect(response).to have_http_status :unprocessable_entity
+        expect(response).to have_http_status :unprocessable_content
         expect(member.reload.roles.map(&:name)).to eq [ "administrator" ]
       end
 
@@ -408,7 +408,7 @@ RSpec.describe "Members", type: :request do
 
         patch group_member_path(member.group, member), params: { member: { status: "" } }
 
-        expect(response).to have_http_status :unprocessable_entity
+        expect(response).to have_http_status :unprocessable_content
       end
 
       it "ignores a posted group_id, leaving the membership in its own group" do
@@ -482,7 +482,7 @@ RSpec.describe "Members", type: :request do
 
         patch group_member_path(owner.group, owner), params: { member: { status: "paused" } }
 
-        expect(response).to have_http_status :unprocessable_entity
+        expect(response).to have_http_status :unprocessable_content
         expect(owner.reload).to be_active
       end
     end

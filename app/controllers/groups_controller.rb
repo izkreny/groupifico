@@ -34,7 +34,7 @@ class GroupsController < ApplicationController
       redirect_to group_path(@group),
         notice: "Group was successfully created."
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -46,7 +46,7 @@ class GroupsController < ApplicationController
         notice: "Group was successfully updated.",
         status: :see_other
     else
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 
