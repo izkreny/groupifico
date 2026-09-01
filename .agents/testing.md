@@ -6,6 +6,12 @@ The rules specs are written and reviewed against. This file wins on any conflict
 
 RSpec (`rspec-rails`) with FactoryBot (`factory_bot_rails`), plus `capybara` and `selenium-webdriver` waiting in the Gemfile for the system layer. This is a deliberate deviation from the 37signals default of Minitest with fixtures, and no alignment pass "fixes" it: testing is where this repository keeps its own choices.
 
+## Running the suite
+
+`bin/rspec` runs quiet: `.rspec` carries `--require spec_helper` and nothing else, so a green full-suite run prints the progress dots, the timing line and the counts. Nobody reads a passing suite example by example, and an agent session pays for every line of it in context. A failure still prints in full, the description, the message, the diff, the backtrace line and the command that reruns that one example, so nothing that matters is hidden.
+
+The verbose run is `bin/rspec --format documentation --warnings`. Reach for it when the question is which examples exist or which one hangs, never when the question is whether the suite passes. Neither flag goes back into `.rspec`, and neither belongs in a `.rspec-local`: both files apply to every run in the checkout, agent runs included, which puts the noise back. A personal always-verbose default is a shell alias. `--warnings` sets `$VERBOSE`, and what it surfaces today comes from gems rather than from this repository's own code.
+
 ## Philosophy
 
 Kent Beck's, without the test-first ordering. Tests ship in the same commit or PR as the behavior they cover, not before, not later; security fixes always include a regression test.
