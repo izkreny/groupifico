@@ -36,14 +36,14 @@ The generator's explanatory comment above each kept setting stays with it; a del
 
 ## Verification
 
-- [ ] `bin/rspec` prints a `Randomized with seed` line
-- [ ] `bin/rspec --seed 12345`, `bin/rspec --seed 1` and `bin/rspec --seed 90210` all pass
-- [ ] `bin/rspec spec/models/role_spec.rb` prints per-example names, while a full `bin/rspec` stays on progress dots
-- [ ] A deliberately introduced order dependency fails under at least one seed, and passes again once reverted
-- [ ] `bin/rubocop` reports an `RSpec/Focus` offense for a temporarily committed `fit`, and is clean once reverted
-- [ ] `bin/ci` passes
-- [ ] The `gh-solo` documentation check passes over this plan file
-- [ ] `gh pr checks` green on `lint`, `scan_js`, `scan_ruby` and `test`
+- `bin/rspec` prints a `Randomized with seed` line
+- `bin/rspec --seed 12345`, `bin/rspec --seed 1` and `bin/rspec --seed 90210` all pass
+- `bin/rspec spec/models/role_spec.rb` prints per-example names, while a full `bin/rspec` stays on progress dots
+- A deliberately introduced order dependency fails under at least one seed, and passes again once reverted
+- `bin/rubocop` reports an `RSpec/Focus` offense for a temporarily committed `fit`, and is clean once reverted
+- `bin/ci` passes
+- The `gh-solo` documentation check passes over this plan file
+- `gh pr checks` green on `lint`, `scan_js`, `scan_ruby` and `test`
 
 What those gates cannot see: three seeds are three samples, not a proof of order independence, so a dependency that only two specific files in one specific order trigger can still survive them. They also say nothing about whether `filter_run_when_matching :focus` is worth its risk, since the linter guard is a different check from the one that would notice a shrunken suite.
 
