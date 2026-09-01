@@ -51,6 +51,14 @@ RSpec.configure do |config|
   # metadata: `fit`, `fdescribe` and `fcontext`, respectively.
   config.filter_run_when_matching :focus
 
+  # Allows RSpec to persist some state between runs in order to support
+  # the `--only-failures` and `--next-failure` CLI options. We recommend
+  # you configure your source control system to ignore this file.
+  # Off: the suite runs in about ten seconds, so neither option saves
+  # anything measurable, and the state file would be a per-checkout
+  # liability. Deferred to #216, not settled.
+  # config.example_status_persistence_file_path = "spec/examples.txt"
+
   # Limits the available syntax to the non-monkey patched syntax that is
   # recommended. For more details, see:
   # https://rspec.info/features/3-12/rspec-core/configuration/zero-monkey-patching-mode/
@@ -65,6 +73,13 @@ RSpec.configure do |config|
     # (e.g. via a command-line flag).
     config.default_formatter = "doc"
   end
+
+  # Print the 10 slowest examples and example groups at the
+  # end of the spec run, to help surface which specs are running
+  # particularly slow.
+  # Off: it prints on every run, against the quiet default of #211.
+  # `bin/rspec --profile` gives it on demand.
+  # config.profile_examples = 10
 
   # Run specs in random order to surface order dependencies. If you find an
   # order dependency and want to debug it, you can fix the order by providing
