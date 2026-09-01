@@ -8,9 +8,7 @@ RSpec (`rspec-rails`) with FactoryBot (`factory_bot_rails`), plus `capybara` and
 
 ## Running the suite
 
-`bin/rspec` runs quiet: `.rspec` carries `--require spec_helper` and nothing else, so a green full-suite run prints the progress dots, the timing line and the counts. Nobody reads a passing suite example by example, and an agent session pays for every line of it in context. A failure still prints in full, the description, the message, the diff, the backtrace line and the command that reruns that one example, so nothing that matters is hidden.
-
-The verbose run is `bin/rspec --format documentation --warnings`. Reach for it when the question is which examples exist or which one hangs, never when the question is whether the suite passes. Neither flag goes back into `.rspec`, and neither belongs in a `.rspec-local`: both files apply to every run in the checkout, agent runs included, which puts the noise back. A personal always-verbose default is a shell alias. `--warnings` sets `$VERBOSE`, and what it surfaces today comes from gems rather than from this repository's own code.
+The verbose run is `bin/rspec --format documentation --warnings`, for when the question is which examples exist or which one hangs. Neither flag lives in `.rspec`, and neither belongs in a `.rspec-local` either, since that applies to every run in the checkout just the same; a personal always-verbose default is a shell alias.
 
 ## Philosophy
 
