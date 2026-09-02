@@ -34,9 +34,11 @@ flowchart TD
 
   %% Nobody has proven the address, and there is no actor to authorize until the act creates one
   signedin -- no --> asks["They name a group<br/>and give an email address"]
-  asks --> request[("A sign-up request is recorded:<br/>the address, the group name,<br/>a link digest, fifteen minutes")]
-  request --> mailed["A confirmation link is emailed,<br/>whether or not that address<br/>already has an account"]
-  mailed --> opened{"Is the link opened<br/>within fifteen minutes?"}
+
+  %% Recorded and mailed by one job, so the submission itself writes nothing at all
+  %% Every address gets a link, account or not, so a known and an unknown one answer alike
+  asks --> request[("The request is recorded and<br/>its link emailed, in one job:<br/>the address, the group name,<br/>a link digest, fifteen minutes")]
+  request --> opened{"Is the link opened<br/>within fifteen minutes?"}
 
   opened -- no --> lapsed["The request lapses unspent:<br/>no user, no group, nothing to undo"]
 
@@ -80,11 +82,17 @@ flowchart TD
 
 **Two singular resources, mirroring the sign-in pair.** The form and the emailed link stay split the way `resource :session` and `resource :sign_in` are split, because asking for a link and redeeming one are different actions with different guards.
 
-**The shared parts of redemption become a controller concern rather than a second copy.** `hold_token_from_query_string` is where ADR 0004's "the emailed link never authenticates" is actually implemented, along with the reason the page names the account: a link nobody sent you is otherwise indistinguishable from your own. Two callers is early for an extraction, and this one is taken anyway because what would be duplicated is the security measure.
+**The two paths are built to the same shape, so that what is common can be lifted out when it earns it.** Each side of sign-in has a counterpart on this side with the same action set and the same guard stack: `resource :session` (`new`, `create`) asks for a link and `resource :sign_up` (`new`, `create`) does the same; `resource :sign_in` (`show`, `create`) redeems one and `resource :sign_up_confirmation` (`show`, `create`) does the same. Both askers carry `allow_unauthenticated_access`, `refuse_authenticated`, `skip_verify_authorized`, a `rate_limit` on `create`, one copy constant for the identical answer, and a mailer call. Both redeemers carry those guards plus `hold_token_from_query_string` on `show` and one copy constant for the refusal.
 
-**The sign-up form is rate limited, and for a reason `sessions#create` does not have.** That action mails only an address with an account; this one mails any address given to it, so it is a mail-bombing vector as well as a brute-force one. The limit is keyed on the submitted address alongside the IP.
+**Two of those seams have two callers already and are extracted now; the rest are left as shape.** Extracted: the model concern above, and the token-from-query-string handling, because both have real bodies and both are where a security measure would otherwise be reimplemented. Left alone: the guard stack, which is four declarative macros whose concern would be thinner than the lines it saves, and the copy constants, whose text differs. Naming them here is what makes a later extraction a move rather than a redesign.
 
-**The mint happens in the mailer.** `SignInMailer#link` mints there so `deliver_later` serialises a global id rather than writing a raw token into `solid_queue_jobs.arguments`. The sign-up mail carries the address and the group name, neither of which is secret, so the same shape holds and the fifteen minutes start when the mail is built.
+**Both redemptions hand their controller what it needs to sign somebody in, so the two `create` actions read alike.** `SignInToken.redeem!` returns the `User`; `SignUp.redeem!` returns the `Member` the transaction created, which carries the user to sign in and the group to land on. So each action is the same three steps: redeem the token out of the browser session, `start_new_session_for`, redirect, with `SignInToken::InvalidToken` rescued to the same refusal in both.
+
+**The one deliberate divergence is the rate limit's key, and it is the sign-up side that needs more.** `sessions#create` mails only an address that has an account, so its default `by: request.remote_ip` is enough; `sign_up#create` mails any address handed to it, making it a mail-bombing vector as well as a brute-force one, so its limit is keyed on the submitted address alongside the IP. Same macro, same window, one argument different.
+
+**The mint happens in the mailer, so recording the request and mailing its link are one job.** `SignInMailer#link` mints there so `deliver_later` serialises a global id rather than writing a raw token into `solid_queue_jobs.arguments`, and the sign-up mail cannot do otherwise even if that reason were absent: the row stores only a digest, so a token minted in the controller could never be recovered to put in the URL. The consequence is worth stating rather than leaving to be inferred from the schema. `POST /sign_up` returns having written nothing at all, which is the cleanest form of answering identically whether or not the address has an account; the row comes into existence in the job, and the fifteen minutes start when the mail is built. The job payload carries the address and the group name, neither of which is secret.
+
+**A `SignUpMailer` of its own, not a second method on `SignInMailer`.** What the two flows share is the credential mechanism in the model concern, not the delivery: this mail takes no user, links to its own route, and names the group, so one method serving both would branch on whether a group name was passed, and a sign-up mail living in a class named for signing in would be a naming lie.
 
 ## Out of scope
 
@@ -98,10 +106,10 @@ flowchart TD
 - Extract the shared credential mechanism off `SignInToken` into a model concern: the HMAC digest with a key label derived from the model name, `EXPIRES_IN`, the mint, the `outstanding` scope, `InvalidToken`, and the conditional `UPDATE` as a `spend!` returning the row. Behaviour preserving, its own commit, with `spec/models/sign_in_token_spec.rb` green across it
 - Migrate `create_table :sign_ups`: `email` (string, limit 250, `null: false`), `group_name` (string, limit 250, `null: false`), `token_digest` (string, `null: false`, unique index), `expires_at` (`null: false`), `consumed_at` (nullable), timestamps. No foreign key, because the point of the row is that no user exists yet
 - Add `SignUp` on the concern, with `normalizes :email` matching `User`'s so confirmation compares one spelling, and presence and length validations on both domain columns
-- Add `SignUp.redeem!`: one transaction holding `spend!`, `User.find_or_create_by!(email:)`, the group and its owner membership, so a failure anywhere leaves the link live and no records behind, and consume the user's outstanding sign-in tokens once there is a session
+- Add `SignUp.redeem!`, returning the `Member` it created so its controller reads like `SignInsController#create`: one transaction holding `spend!`, `User.find_or_create_by!(email:)`, the group and its owner membership, so a failure anywhere leaves the link live and no records behind, and consume the user's outstanding sign-in tokens once there is a session
 - Move the owner membership onto `Group`, taking the user explicitly, and call it from both `GroupsController#create` and `SignUp.redeem!`
 - Add `SignUpsController` (`new`, `create`) behind `resource :sign_up, only: %i[ new create ]`, with `allow_unauthenticated_access`, `refuse_authenticated`, `skip_verify_authorized`, the rate limit keyed on the address and the IP, and a response identical whether or not the address already has an account
-- Add `SignUpConfirmationsController` (`show`, `create`) behind `resource :sign_up_confirmation, only: %i[ show create ]`, with the same guards, and extract the token-from-query-string handling it shares with `SignInsController` into a controller concern
+- Add `SignUpConfirmationsController` (`show`, `create`) behind `resource :sign_up_confirmation, only: %i[ show create ]`, action-for-action with `SignInsController` and carrying the same guards, and extract the token-from-query-string handling the two share into a controller concern, parameterised by its browser-session key so an outstanding sign-in link and an outstanding sign-up link cannot overwrite each other
 - Add `SignUpMailer#link` and its two views; the mail names the group and the fifteen minutes, and the mailer mints
 - Add the two views: the form asking for a group name and an address, and a confirmation page naming both the address and the group before its button, for the reason `hold_token_from_query_string`'s comment gives about a planted link
 - Link the form from `_navigation.html.erb` beside "Log in", so a signed-out visitor can reach it
