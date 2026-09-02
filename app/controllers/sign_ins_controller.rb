@@ -1,5 +1,5 @@
 class SignInsController < ApplicationController
-  include TokenFromQueryString
+  include EmailedLinkToken
 
   # Permanent, both actions. Redeeming an emailed link is how a person becomes authenticated at
   # all, so there is no signed-in user to authorize against - the argument the deleted

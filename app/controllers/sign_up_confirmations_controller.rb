@@ -1,5 +1,5 @@
 class SignUpConfirmationsController < ApplicationController
-  include TokenFromQueryString
+  include EmailedLinkToken
 
   # Permanent, both actions, for `SignInsController`'s reason: confirming is how a person becomes
   # authenticated at all, so there is nobody to authorize against yet.

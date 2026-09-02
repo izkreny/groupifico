@@ -12,7 +12,13 @@
 #
 # The browser-session key comes off the model, so an outstanding sign-in link and an outstanding
 # sign-up link in one browser cannot overwrite each other.
-module TokenFromQueryString
+#
+# Named for the thing it is about rather than for where the token arrives, because only
+# `hold_token_from_query_string` reads a query string and the rest work on the browser session -
+# a name pinned to the source would already be describing a quarter of the file. `Tokenizer` and
+# its variants were considered and refused: that word means splitting text into lexical tokens
+# everywhere else, and its `-er` names something that mints, which is `Redeemable#mint`.
+module EmailedLinkToken
   extend ActiveSupport::Concern
 
   private
