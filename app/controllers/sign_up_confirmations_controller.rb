@@ -9,6 +9,11 @@ class SignUpConfirmationsController < ApplicationController
   # because telling them apart answers questions the holder of a link must not be able to ask.
   INVALID_LINK = "That link is invalid or has expired. Ask for a new one."
 
+  # The other outcome `SignUp.redeem!` is specified to produce, and it needs its own words: the
+  # spend rolled back with the rest of the transaction, so this link is still live and saying it
+  # expired would be false.
+  UNFINISHED = "Something went wrong finishing your group. Your link still works - try again."
+
   allow_unauthenticated_access only: %i[ show create ]
   before_action :refuse_authenticated
   before_action :hold_sign_up, only: :show
@@ -19,15 +24,24 @@ class SignUpConfirmationsController < ApplicationController
   def show
   end
 
+  # The token is read rather than taken, because one of the two failures below leaves the link
+  # live. `start_new_session_for` resets the browser session on the way through, so the success
+  # path drops it without being asked; the dead-link path drops it explicitly.
   def create
-    member = SignUp.redeem!(token_from_session(SignUp))
+    member = SignUp.redeem!(held_token(SignUp))
 
     start_new_session_for member.user
 
     # The group they just named, which is the whole of what they asked for.
     redirect_to group_url(member.group)
   rescue SignUp::InvalidToken
+    token_from_session(SignUp)
+
     redirect_to new_sign_up_path, alert: INVALID_LINK
+  rescue ActiveRecord::RecordInvalid
+    # Back to `show`, which re-resolves the link and refuses it if it has since died, so this
+    # path needs no second copy of that guard.
+    redirect_to sign_up_confirmation_path(token: held_token(SignUp)), alert: UNFINISHED
   end
 
   private

@@ -132,6 +132,21 @@ RSpec.describe "SignUpConfirmations", type: :request do
         expect(session[:sign_up]).to be_nil
       end
 
+      # The other outcome `redeem!` produces. The spend rolls back with the rest, so the link is
+      # still live and the page has to come back rather than the form: telling the holder it
+      # expired would be false, and would strand a link that still works.
+      it "sends a failed confirmation back to the page, with the link still live" do
+        token = SignUp.mint(email: "starter@example.com", group_name: "Chamber Choir")
+        get sign_up_confirmation_path(token: token)
+        SignUp.find_by!(email: "starter@example.com").update_columns(group_name: "")
+
+        post sign_up_confirmation_path
+
+        expect(response).to redirect_to sign_up_confirmation_path(token: token)
+        expect(flash[:alert]).to eq(SignUpConfirmationsController::UNFINISHED)
+        expect(SignUp.find_by!(email: "starter@example.com").consumed_at).to be_nil
+      end
+
       it "issues a fresh browser session, so one planted before sign-up does not survive it" do
         get sign_up_confirmation_path(token: SignUp.mint(email: "starter@example.com", group_name: "Chamber Choir"))
         planted = session.id.to_s

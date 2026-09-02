@@ -34,5 +34,11 @@ module TokenFromQueryString
       session.delete(token_key(model))
     end
 
+    # The same read without the drop, for a caller that has a failure the link survives - the
+    # holder is meant to try again, so dropping the token here would strand a live link.
+    def held_token(model)
+      session[token_key(model)]
+    end
+
     def token_key(model) = model.name.underscore.to_sym
 end
