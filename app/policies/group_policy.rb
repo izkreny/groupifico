@@ -5,6 +5,10 @@
 # no id (a new group) or no useful one (the `Group` class itself, for the index). Any signed-in
 # user may list groups and start a new one; which groups they see is the scope's job.
 #
+# `create?` is the only authorization question either route to a group asks. Signing up creates a
+# group too, and reaches no policy at all: there is no actor to authorize until the confirmation
+# has created one. `docs/AUTHORIZATION.md` states both acts.
+#
 # `new?` is absent from both lists rather than forgotten. Action Policy aliases it to `create?` and
 # drops that alias the moment a real method of the name exists, so a `new?` here would let the form
 # and the submission answer differently - the split `ApplicationPolicy` avoids by leaving `new?`

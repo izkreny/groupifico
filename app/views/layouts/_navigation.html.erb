@@ -6,6 +6,7 @@
     <% if authenticated? %>
       <%= button_to "Log out", session_path, method: :delete, class: "btn btn-ghost" %>
     <% else %>
+      <%= link_to "Start a group", new_sign_up_path, class: "btn btn-ghost" %>
       <%= link_to "Log in", new_session_path, class: "btn btn-ghost" %>
     <% end %>
   </div>

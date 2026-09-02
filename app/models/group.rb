@@ -37,6 +37,18 @@ class Group < ApplicationRecord
     Address.where(id: events.select(:address_id)).or(Address.where(id: address_id))
   end
 
+  # Whoever starts a group owns it, and both routes to a group say so through here rather than
+  # each assembling the same member and role. The user arrives explicitly because only one of the
+  # two callers has a session to read it from: `SignUp.redeem!` is creating the account in the
+  # same breath, so there is no `Current.user` to reach for.
+  #
+  # Built rather than saved, because `GroupsController#create` authorizes the group with its
+  # membership already on it and then relies on one `save` failing into `render :new`. Returned so
+  # that `SignUp.redeem!` has the member to sign in and land.
+  def add_owner(user)
+    members.build(user: user, roles: [ Role.new(name: Role::OWNER) ])
+  end
+
   # Asked before a group loses an owner, by whichever end is losing one - the member being removed,
   # the role being revoked, or the status leaving `active`. Kept here because "does this group still
   # have an owner" is a fact about the group, and every caller would otherwise write the same join.

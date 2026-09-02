@@ -1,4 +1,6 @@
 class SignInsController < ApplicationController
+  include EmailedLinkToken
+
   # Permanent, both actions. Redeeming an emailed link is how a person becomes authenticated at
   # all, so there is no signed-in user to authorize against - the argument the deleted
   # `PasswordsController` made for the recovery flow, arriving here with the flow that replaced it.
@@ -13,7 +15,7 @@ class SignInsController < ApplicationController
 
   allow_unauthenticated_access only: %i[ show create ]
   before_action :refuse_authenticated
-  before_action :hold_token_from_query_string, only: :show
+  before_action :hold_sign_in_token, only: :show
   rate_limit to: 10, within: 3.minutes, only: :create, with: -> { redirect_to new_session_path, alert: "Try again later." }
 
   # Renders, and spends nothing. Company mail filters open every link in a message before the
@@ -24,8 +26,7 @@ class SignInsController < ApplicationController
   end
 
   def create
-    # Read once and gone, on the failure path below as well as on this one.
-    user = SignInToken.redeem!(session.delete(:sign_in_token))
+    user = SignInToken.redeem!(token_from_session(SignInToken))
 
     start_new_session_for user
 
@@ -37,21 +38,7 @@ class SignInsController < ApplicationController
   end
 
   private
-    # The token arrives in the query string, per ADR 0004, and moves into the browser session so
-    # that the button below submits nothing but a form: only the query string is filtered out of
-    # the log, and a token repeated on the POST would be a second chance to leak it.
-    #
-    # It is also resolved here rather than only at the POST, because the page has to name the
-    # account it would sign in - a link nobody sent you is otherwise indistinguishable from your
-    # own, and pressing the button hands your session to whoever did send it. A link that resolves
-    # to nothing gets the page refused instead of a page with nobody's name on it.
-    def hold_token_from_query_string
-      @sign_in_token = SignInToken.pending(params[:token])
-
-      if @sign_in_token
-        session[:sign_in_token] = params[:token]
-      else
-        redirect_to new_session_path, alert: INVALID_LINK
-      end
+    def hold_sign_in_token
+      @sign_in_token = hold_token_from_query_string(SignInToken, refused_to: new_session_path, alert: INVALID_LINK)
     end
 end

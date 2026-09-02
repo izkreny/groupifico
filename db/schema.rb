@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_01_120001) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_02_140000) do
   create_table "addresses", force: :cascade do |t|
     t.string "building_number", limit: 250
     t.string "city", limit: 250
@@ -99,6 +99,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_120001) do
     t.integer "user_id", null: false
     t.index ["token_digest"], name: "index_sign_in_tokens_on_token_digest", unique: true
     t.index ["user_id"], name: "index_sign_in_tokens_on_user_id"
+  end
+
+  create_table "sign_ups", force: :cascade do |t|
+    t.datetime "consumed_at"
+    t.datetime "created_at", null: false
+    t.string "email", limit: 250, null: false
+    t.datetime "expires_at", null: false
+    t.string "group_name", limit: 250, null: false
+    t.string "token_digest", null: false
+    t.datetime "updated_at", null: false
+    t.index ["token_digest"], name: "index_sign_ups_on_token_digest", unique: true
   end
 
   create_table "user_profiles", force: :cascade do |t|

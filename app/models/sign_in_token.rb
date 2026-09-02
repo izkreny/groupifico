@@ -27,80 +27,19 @@
 #     * **`user_id => users.id`**
 #
 class SignInToken < ApplicationRecord
-  # Everything that is not a live, unspent link raises this one error: a blank or malformed value,
-  # a digest no row carries, a link already spent, a link past its expiry. They are deliberately
-  # indistinguishable to the caller, and the typed error is what keeps a malformed value from
-  # arriving as a `TypeError` out of the digest call instead.
-  class InvalidToken < StandardError; end
-
-  EXPIRES_IN = 15.minutes
-
-  # 32 bytes is 256 bits, twice what #139 asks for. `SecureRandom.urlsafe_base64` draws with
-  # replacement; the `Array#sample` generator ADR 0004 found in `mikker/passwordless` does not,
-  # which is how a nominally 36^6 keyspace turned out to be about 2^30.
-  TOKEN_BYTES = 32
+  include Redeemable
 
   belongs_to :user
 
-  scope :outstanding, -> { where(consumed_at: nil) }
-
   class << self
-    # Returns the raw token, which is the only moment it exists outside the email. Nothing stores
-    # it: the row carries its digest.
-    def mint(user)
-      SecureRandom.urlsafe_base64(TOKEN_BYTES).tap do |token|
-        create!(user: user, token_digest: digest(token), expires_at: EXPIRES_IN.from_now)
-      end
-    end
-
-    # Resolves a live link without spending it, so the confirmation page can name the account it
-    # would sign in. A read, so it races with nothing: whatever it finds, `redeem!`'s conditional
-    # UPDATE is still the only thing that decides who gets a session. Answers `nil` rather than
-    # raising, because its caller renders a page instead of authenticating anybody.
-    def pending(token)
-      return nil unless usable?(token)
-
-      outstanding.find_by(token_digest: digest(token), expires_at: Time.current..)
-    end
+    # The one column this table has beyond the credential, so the caller names it positionally and
+    # the concern's keyword form stays the general one.
+    def mint(user) = super(user: user)
 
     def redeem!(token)
-      raise InvalidToken unless usable?(token)
+      spent = spend!(token)
 
-      now    = Time.current
-      wanted = digest(token)
-
-      # One conditional UPDATE, acting on the number of rows it changed. Reading the row, comparing
-      # in Ruby and then updating it by id is a time-of-check gap that two concurrent redemptions
-      # both pass; there is no separate read here to race against. ADR 0004 records the rodauth
-      # release that had to close exactly that gap.
-      spent = outstanding.where(token_digest: wanted, expires_at: now..)
-                         .update_all(consumed_at: now, updated_at: now)
-      raise InvalidToken if spent.zero?
-
-      # Safe to read only because the row is already spent: whatever else raced for it has lost.
-      find_by!(token_digest: wanted).user.tap { it.sign_in_tokens.consume_all(at: now) }
+      spent.user.tap { it.sign_in_tokens.consume_all(at: spent.consumed_at) }
     end
-
-    # Deterministic, so a lookup by digest is an indexed single-row read and the link needs to
-    # carry no account id for one. Keyed off `secret_key_base` through the key generator, so there
-    # is no new secret to manage and rotation has rodauth's fallback pattern available.
-    def digest(token)
-      OpenSSL::HMAC.hexdigest("SHA256", hmac_key, token)
-    end
-
-    def consume_all(at: Time.current)
-      outstanding.update_all(consumed_at: at, updated_at: at)
-    end
-
-    private
-      # What "malformed" means, in one place: `digest` raises `TypeError` on anything that is not
-      # a string, and both callers have to keep that out of their own contract.
-      def usable?(token)
-        token.is_a?(String) && token.present?
-      end
-
-      def hmac_key
-        Rails.application.key_generator.generate_key("SignInToken token digest", 32)
-      end
   end
 end

@@ -21,26 +21,6 @@ RSpec.describe "User", type: :request do
     end
   end
 
-  describe "GET /user/new" do
-    context "when not signed in" do
-      it "redirects to the login page" do
-        get new_user_path
-
-        expect(response).to redirect_to new_session_path
-      end
-    end
-
-    context "when successfully signed in" do
-      it "shows new user page" do
-        sign_in_as(create(:user))
-
-        get new_user_path
-
-        expect(response).to have_http_status :ok
-      end
-    end
-  end
-
   describe "GET /user/edit" do
     context "when not signed in" do
       it "redirects to the login page" do
@@ -57,37 +37,6 @@ RSpec.describe "User", type: :request do
         get edit_user_path
 
         expect(response).to have_http_status :ok
-      end
-    end
-  end
-
-  describe "POST /user" do
-    context "when not signed in" do
-      it "redirects to the login page" do
-        post user_path, params: { user: { email: "new@example.com" } }
-
-        expect(response).to redirect_to new_session_path
-      end
-    end
-
-    context "when successfully signed in" do
-      it "creates new user" do
-        sign_in_as(create(:user))
-
-        expect { post user_path, params: { user: { email: "new@example.com" } } }
-          .to change(User, :count).by(1)
-
-        expect(response).to redirect_to user_path
-      end
-
-      it "re-renders the new page when the user is invalid" do
-        signed_in = create(:user)
-        sign_in_as(signed_in)
-
-        expect { post user_path, params: { user: { email: signed_in.email } } }
-          .not_to change(User, :count)
-
-        expect(response).to have_http_status :unprocessable_content
       end
     end
   end

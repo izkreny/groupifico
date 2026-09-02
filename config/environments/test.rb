@@ -22,6 +22,12 @@ Rails.application.configure do
   config.consider_all_requests_local = true
   config.cache_store = :null_store
 
+  # `rate_limit` captures `store: cache_store` when a controller's class body runs, and
+  # `increment` on the null store answers nil, so `count && count > to` is never true and no rate
+  # limit in the application can fire under test. Its own store is therefore a real one, which is
+  # what lets a request spec drive a limit to its threshold; nothing else reads this store.
+  config.action_controller.cache_store = :memory_store
+
   # Render exception templates for rescuable exceptions and raise for other exceptions.
   config.action_dispatch.show_exceptions = :rescuable
 
