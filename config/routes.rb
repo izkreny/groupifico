@@ -26,8 +26,6 @@ Rails.application.routes.draw do
   end
   resolve("User")        { [ :user         ] }
   resolve("UserProfile") { [ :user_profile ] }
-  # A singular resource, so polymorphic routing has no plural path to build for a new record.
-  resolve("SignUp")      { [ :sign_up      ] }
 
 
   resources :groups do
