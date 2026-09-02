@@ -123,7 +123,8 @@ RSpec.describe "SignUpConfirmations", type: :request do
       # The dead-link path drops the token, and this is the example that holds it to that: leaving
       # it behind would hand a second attempt to whoever gets the browser session next. The one
       # path that keeps it is `RecordInvalid`, where the transaction rolled the spend back and the
-      # link is still the holder's to retry - covered by the example above.
+      # link is still the holder's to retry, which "sends a failed confirmation back to the page"
+      # covers.
       it "drops the token from the browser session when the link is dead" do
         get sign_up_confirmation_path(token: SignUp.mint(email: "starter@example.com", group_name: "Chamber Choir"))
 
