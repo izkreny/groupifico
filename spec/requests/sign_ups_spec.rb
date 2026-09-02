@@ -30,7 +30,7 @@ RSpec.describe "SignUps", type: :request do
         expect { post sign_up_path, params: { sign_up: { email: "starter@example.com", group_name: "Chamber Choir" } } }
           .to have_enqueued_mail(SignUpMailer, :link).with("starter@example.com", "Chamber Choir")
 
-        expect(SignUp.count).to be_zero
+        expect(SignUp.where(email: "starter@example.com")).not_to exist
         expect(response).to redirect_to new_sign_up_path
       end
 
@@ -67,6 +67,42 @@ RSpec.describe "SignUps", type: :request do
         post sign_up_path, params: { sign_up: { email: "not-an-address", group_name: "Chamber Choir" } }
 
         expect(response).to have_http_status :unprocessable_content
+      end
+
+      # Both limits, each driven past its threshold on its own key while the other stays clear:
+      # eleven addresses from one IP can only trip the IP limit, and one address from eleven IPs
+      # can only trip the address one. Rails' memory store is shared across examples in a run, so
+      # each uses a key of its own.
+      it "refuses an eleventh submission from one address, however the IP moves" do
+        11.times do |n|
+          post sign_up_path, params: { sign_up: { email: "flooded@example.com", group_name: "Choir" } },
+            headers: { "REMOTE_ADDR" => "10.0.0.#{n}" }
+        end
+
+        expect(response).to redirect_to new_sign_up_path
+        expect(flash[:alert]).to eq("Try again later.")
+      end
+
+      it "refuses an eleventh submission from one IP, however the address moves" do
+        11.times do |n|
+          post sign_up_path, params: { sign_up: { email: "walker-#{n}@example.com", group_name: "Choir" } },
+            headers: { "REMOTE_ADDR" => "10.1.0.1" }
+        end
+
+        expect(response).to redirect_to new_sign_up_path
+        expect(flash[:alert]).to eq("Try again later.")
+      end
+
+      # The finding's own scenario: a POST with no `sign_up` key gives the address limit a blank
+      # key, and Rails' `[..., name, by].compact.join(":")` makes that a valid bucket every such
+      # request would share. Eleven of them from eleven IPs each get their own refusal rather than
+      # one shared counter's.
+      it "buckets an address-less submission by IP rather than into one shared counter" do
+        11.times do |n|
+          post sign_up_path, params: { group_name: "Choir" }, headers: { "REMOTE_ADDR" => "10.2.0.#{n}" }
+        end
+
+        expect(response).to have_http_status :bad_request
       end
 
       it "starts no session, because the link has not been followed yet" do

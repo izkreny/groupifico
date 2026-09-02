@@ -75,6 +75,12 @@ RSpec.configure do |config|
   config.include HtmlHelper, type: :request
   # `freeze_time` and `travel_to`, which `.agents/testing.md` requires of anything time-dependent.
   config.include ActiveSupport::Testing::TimeHelpers
+
+  # Rate-limit counters live in the controller cache store, which is one object for the whole run,
+  # so without this every request an example makes is still counted against the next one's
+  # threshold - an interdependency `.agents/testing.md` bans outright. Standing setup rather than
+  # need-driven, the same reason WebMock closes the net above.
+  config.before { ActionController::Base.cache_store.clear }
 end
 
 Shoulda::Matchers.configure do |config|

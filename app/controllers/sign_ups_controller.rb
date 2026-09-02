@@ -18,10 +18,14 @@ class SignUpsController < ApplicationController
   # working through addresses; the address limit is what `sessions#create` needs no equivalent of,
   # since this form mails any address handed to it and is therefore a mail-bombing vector as well
   # as a brute-force one. Varying the address would reset a composite counter.
+  #
+  # The fallback matters: Rails builds the bucket as `[..., name, by].compact.join(":")`, so a
+  # blank `by` is a valid key that every address-less POST would share, turning this into one
+  # global counter. Falling back to the IP keeps such requests bucketed per caller.
   rate_limit to: 10, within: 3.minutes, only: :create, name: "by-ip",
     with: -> { redirect_to new_sign_up_path, alert: "Try again later." }
   rate_limit to: 10, within: 3.minutes, only: :create, name: "by-address",
-    by: -> { params.dig(:sign_up, :email).to_s.strip.downcase },
+    by: -> { params.dig(:sign_up, :email).to_s.strip.downcase.presence || request.remote_ip },
     with: -> { redirect_to new_sign_up_path, alert: "Try again later." }
 
   def new
