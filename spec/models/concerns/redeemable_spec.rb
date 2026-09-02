@@ -21,5 +21,15 @@ RSpec.describe Redeemable, type: :model do
 
       expect(SignInToken.digest(raw)).to eq(OpenSSL::HMAC.hexdigest("SHA256", key, raw))
     end
+
+    # The label is derived per model, so the two tables draw from independent keyspaces. Nothing
+    # exploits a shared one today, since every lookup is confined to its own table, which is why
+    # the independence needs saying out loud somewhere - watched failing against a version passing
+    # the literal "SignInToken token digest" for both.
+    it "gives the two tables independent keyspaces for one raw token" do
+      raw = "shared-raw-token"
+
+      expect(SignUp.digest(raw)).not_to eq(SignInToken.digest(raw))
+    end
   end
 end
