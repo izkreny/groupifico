@@ -12,46 +12,47 @@ The sign-in mechanism and every decision behind it are [ADR 0004](../adr/2026-08
 
 ## The flow
 
-Both routes to a group, and what exists at each point along them. The fork is whether the acting address is already proven, which is what decides whether anything can be written before a link comes back.
+Both routes to a group, and what exists at each point along them. The fork is whether this person is signed in, since a session is what proves the address is theirs, and that is what decides whether anything can be written before a link comes back.
 
 ```mermaid
 ---
 title: Sign up by creating a group
 # IMPORTANT!
-# - The fork is whether the acting address is already proven, not whether a group exists
-# - Nothing on the unproven branch is written until the emailed link is confirmed
+# - The fork is whether this person is signed in, which is what proves the address is theirs
+# - `refuse_authenticated` and `require_authentication` enforce it, so neither branch is reachable from the other's situation
+# - Nothing on the signed-out branch is written until the emailed link is confirmed
 ---
 
 flowchart TD
-  visitor(["Somebody wants a group"]) --> proven{"Is the address<br/>already proven?"}
+  person(["A person with an email address<br/>wants a group"]) --> signedin{"Is this person<br/>signed in?"}
 
-  %% A session is that proof, so this branch defers nothing and sends no mail
-  proven -- "yes, a session proves it" --> gnew["GET /groups/new"]
-  gnew --> gcreate["POST /groups<br/>authorized by GroupPolicy create?"]
-  gcreate --> exists(["A group exists with an owner member"])
+  %% Their session already proves the address is theirs, so this branch defers nothing and mails nothing
+  %% It is also the one authorization question either branch asks: `GroupPolicy` `create?`
+  signedin -- yes --> names["They name the group"]
+  names --> made["The group is created,<br/>with them as its owner"]
+  made --> exists(["A group exists,<br/>with an owner member"])
 
-  %% No actor exists yet, so nothing on this branch is an authorization question
-  proven -- "no, nobody has proven it" --> sform["GET /sign_up<br/>asks a group name and an address"]
-  sform --> spost["POST /sign_up<br/>rate limited by address and IP"]
-  spost --> row[("sign_ups row:<br/>address, group name,<br/>token digest, fifteen minutes")]
-  row --> mail["SignUpMailer link, enqueued<br/>so a known and an unknown<br/>address answer alike"]
-  mail --> opened{"Opened within<br/>fifteen minutes?"}
+  %% Nobody has proven the address, and there is no actor to authorize until the act creates one
+  signedin -- no --> asks["They name a group<br/>and give an email address"]
+  asks --> request[("A sign-up request is recorded:<br/>the address, the group name,<br/>a link digest, fifteen minutes")]
+  request --> mailed["A confirmation link is emailed,<br/>whether or not that address<br/>already has an account"]
+  mailed --> opened{"Is the link opened<br/>within fifteen minutes?"}
 
-  opened -- no --> lapsed["The row lapses unspent:<br/>no user, no group, nothing to undo"]
+  opened -- no --> lapsed["The request lapses unspent:<br/>no user, no group, nothing to undo"]
 
-  %% A mail scanner reaches this GET as often as a person does, so it authenticates nobody
-  opened -- yes --> confirmshow["GET /sign_up_confirmation<br/>renders only, spends nothing,<br/>names the address and the group"]
-  confirmshow --> confirmpost["POST /sign_up_confirmation"]
-  confirmpost --> spend
+  %% A mail filter opens the link as often as a person does, so opening it signs nobody in
+  opened -- yes --> page["The link opens a page naming<br/>the address and the group;<br/>it spends nothing"]
+  page --> confirms["They confirm"]
+  confirms --> spent
 
   subgraph txn ["One transaction: all of it, or none of it"]
     direction TB
-    spend["One conditional UPDATE spends the row"] --> user["The user, found or created by address"]
-    user --> owned["The group, and its owner member"]
+    spent["The request is spent"] --> user["The user is found by<br/>that address, or created"]
+    user --> owned["The group is created,<br/>with them as its owner"]
   end
 
-  owned -- "any write invalid" --> rollback["Rolled back: the link stays live<br/>and nothing was created"]
-  owned -- "committed" --> landed["A new session, landing<br/>on the group just named"]
+  owned -- "anything invalid" --> rollback["Nothing is created<br/>and the link stays live"]
+  owned -- "all of it valid" --> landed["They are signed in, on the<br/>group they just named"]
   landed --> exists
 ```
 
