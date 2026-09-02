@@ -14,7 +14,7 @@ Kent Beck's, without the test-first ordering. Tests ship in the same commit or P
 - **Test behavior, not implementation**, so tests survive refactoring.
 - **Never add production complexity for testability.** No test-induced design damage.
 - **Watch a new test fail once**, on the pre-fix input or the wrong value. A test never seen red proves nothing.
-- **Never mix behavior changes with refactoring**, in the code or in the specs.
+- **Never mix behavior changes with refactoring in one commit**, in the code or in the specs. The commit is the unit, never the pull request.
 
 ## Spec layers and what each covers
 
