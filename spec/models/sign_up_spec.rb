@@ -96,17 +96,19 @@ RSpec.describe SignUp, type: :model do
     # The spend is inside the transaction, so a failure anywhere rolls it back and the link stays
     # live for a retry rather than being burnt. Staged with `update_columns`, which is the only
     # way past the model's own validations to a row the transaction has to refuse: SQLite does not
-    # enforce the column's length, so a blank group name reaches `Group` and is refused there.
+    # enforce the column's length, so a blank group name reaches `Group` and is refused there. The
+    # row is reached by its address rather than by `.sole`, so any other writer of this table fails
+    # the assertion this example makes instead of masking it behind `SoleRecordExceeded`.
     #
     # Watched failing against a version that spends before `transaction do` opens: the link came
     # back consumed and the person holding it had nothing left to retry with.
     it "creates nothing and leaves the link live when any part fails" do
       token = described_class.mint(email: "starter@example.com", group_name: "Chamber Choir")
-      described_class.sole.update_columns(group_name: "")
+      described_class.find_by!(email: "starter@example.com").update_columns(group_name: "")
 
       expect { described_class.redeem!(token) }.to raise_error(ActiveRecord::RecordInvalid)
 
-      expect(described_class.sole.consumed_at).to be_nil
+      expect(described_class.find_by!(email: "starter@example.com").consumed_at).to be_nil
       expect(User.where(email: "starter@example.com")).not_to exist
       expect(Group.where(name: "")).not_to exist
     end
