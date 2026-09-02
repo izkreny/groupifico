@@ -10,6 +10,51 @@ There is no sign-up page. `UsersController#new` and `#create` are what a signed-
 
 The sign-in mechanism and every decision behind it are [ADR 0004](../adr/2026-08-31_passwordless-email-sign-in_0004.md). This plan cites it and does not restate it.
 
+## The flow
+
+Both routes to a group, and what exists at each point along them. The fork is whether the acting address is already proven, which is what decides whether anything can be written before a link comes back.
+
+```mermaid
+---
+title: Sign up by creating a group
+# IMPORTANT!
+# - The fork is whether the acting address is already proven, not whether a group exists
+# - Nothing on the unproven branch is written until the emailed link is confirmed
+---
+
+flowchart TD
+  visitor(["Somebody wants a group"]) --> proven{"Is the address<br/>already proven?"}
+
+  %% A session is that proof, so this branch defers nothing and sends no mail
+  proven -- "yes, a session proves it" --> gnew["GET /groups/new"]
+  gnew --> gcreate["POST /groups<br/>authorized by GroupPolicy create?"]
+  gcreate --> exists(["A group exists with an owner member"])
+
+  %% No actor exists yet, so nothing on this branch is an authorization question
+  proven -- "no, nobody has proven it" --> sform["GET /sign_up<br/>asks a group name and an address"]
+  sform --> spost["POST /sign_up<br/>rate limited by address and IP"]
+  spost --> row[("sign_ups row:<br/>address, group name,<br/>token digest, fifteen minutes")]
+  row --> mail["SignUpMailer link, enqueued<br/>so a known and an unknown<br/>address answer alike"]
+  mail --> opened{"Opened within<br/>fifteen minutes?"}
+
+  opened -- no --> lapsed["The row lapses unspent:<br/>no user, no group, nothing to undo"]
+
+  %% A mail scanner reaches this GET as often as a person does, so it authenticates nobody
+  opened -- yes --> confirmshow["GET /sign_up_confirmation<br/>renders only, spends nothing,<br/>names the address and the group"]
+  confirmshow --> confirmpost["POST /sign_up_confirmation"]
+  confirmpost --> spend
+
+  subgraph txn ["One transaction: all of it, or none of it"]
+    direction TB
+    spend["One conditional UPDATE spends the row"] --> user["The user, found or created by address"]
+    user --> owned["The group, and its owner member"]
+  end
+
+  owned -- "any write invalid" --> rollback["Rolled back: the link stays live<br/>and nothing was created"]
+  owned -- "committed" --> landed["A new session, landing<br/>on the group just named"]
+  landed --> exists
+```
+
 ## Decisions
 
 **A pending sign-up is a request to start a group, so it gets a table of its own.** `sign_ups` holds the address and the group name, which are domain facts a credential table has no business carrying. It also has to hold them somewhere durable: the click may land on a different device, so the browser session cannot carry the group name, and `Session` cannot either, because that row exists only once sign-in has succeeded.
