@@ -5,6 +5,11 @@ Rails.application.routes.draw do
   # sign anybody in. The token rides the query string, never a path segment, since `filtered_path`
   # filters only the query string - both decisions are ADR 0004's.
   resource :sign_in, only: %i[ show create ]
+  # Two singular resources mirroring the sign-in pair, and split for the same reason: asking for a
+  # link and redeeming one are different actions with different guards. `resource :sign_up` is the
+  # counterpart of `resource :session`, and `resource :sign_up_confirmation` of `resource :sign_in`.
+  resource :sign_up, only: %i[ new create ]
+  resource :sign_up_confirmation, only: %i[ show create ]
   # An address exists only as a detail of the group or event that points at it: both build one
   # through `accepts_nested_attributes_for :address`, and `EventsController` picks an existing one
   # out of `group.addresses`. So there is nothing to create standalone - an address pointed at by
@@ -14,11 +19,15 @@ Rails.application.routes.draw do
   # form gestures at is #187.
   resources :addresses, only: %i[ index show edit update ]
 
-  resource :user do
+  # No `new` and no `create`: signing up and being invited are the two ways to become a user, and
+  # neither of them is a signed-in visitor asking for a second account.
+  resource :user, only: %i[ show edit update destroy ] do
     resource :profile, controller: "user_profiles", only: %i[ show edit update ]
   end
   resolve("User")        { [ :user         ] }
   resolve("UserProfile") { [ :user_profile ] }
+  # A singular resource, so polymorphic routing has no plural path to build for a new record.
+  resolve("SignUp")      { [ :sign_up      ] }
 
 
   resources :groups do

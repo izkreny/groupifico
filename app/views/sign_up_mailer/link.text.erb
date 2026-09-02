@@ -1,0 +1,8 @@
+Finish starting <%= @group_name %>:
+<%= sign_up_confirmation_url(token: @token) %>
+
+The link works once and expires in <%= distance_of_time_in_words(0, SignUp::EXPIRES_IN) %>.
+It opens a page with a button on it; no account and no group exist until you press that button.
+
+If you did not ask to start a group, ignore this message and the link expires unused.
+Nothing has been created in your name.

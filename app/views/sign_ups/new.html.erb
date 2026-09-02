@@ -1,0 +1,27 @@
+<% content_for :title, "Start a group" %>
+
+<div class="mx-auto md:w-2/3 w-full">
+  <h1 class="font-bold text-4xl">Start a group</h1>
+
+  <p class="my-5">Name your group and give us your email address. We will send you a link that creates both.</p>
+
+  <%= form_with model: @sign_up, url: sign_up_url, class: "contents" do |form| %>
+    <%= render "shared/errors", object: @sign_up %>
+
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend">Your group</legend>
+
+      <%= form.label      :group_name, "Group name", class: "label" %>
+      <%= form.text_field :group_name, required: true, autofocus: true, placeholder: "Enter a name for your group", class: "input w-full" %>
+
+      <%= form.label       :email, "Email address", class: "label" %>
+      <%= form.email_field :email, required: true, autocomplete: "username", placeholder: "Enter your email address", class: "input w-full" %>
+    </fieldset>
+
+    <div class="inline">
+      <%= form.submit "Email me a link to start it", class: "btn btn-primary" %>
+    </div>
+  <% end %>
+
+  <p class="my-5">Already have an account? <%= link_to "Log in", new_session_path, class: "link" %>.</p>
+</div>

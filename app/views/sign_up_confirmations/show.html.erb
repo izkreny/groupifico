@@ -1,0 +1,17 @@
+<% content_for :title, "Finish starting your group" %>
+
+<div class="mx-auto md:w-2/3 w-full">
+  <h1 class="font-bold text-4xl">Finish starting your group</h1>
+
+  <p class="my-5">
+    You are about to create <strong><%= @sign_up.group_name %></strong> and an account for
+    <strong><%= @sign_up.email %></strong>.
+    If either is not what you asked for, close this page: the link you followed was not sent to you.
+  </p>
+
+  <p class="my-5">Press the button and both exist, with you as the group's owner. The link you followed works once, so this finishes it.</p>
+
+  <div class="inline">
+    <%= button_to "Create the group", sign_up_confirmation_path, class: "btn btn-primary" %>
+  </div>
+</div>
