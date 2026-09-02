@@ -120,9 +120,11 @@ RSpec.describe "SignUpConfirmations", type: :request do
         expect(Group.where(name: "Chamber Choir")).not_to exist
       end
 
-      # Whether it worked or not, the token is spent from the browser's point of view. Leaving it
-      # behind on the failure path would hand a second attempt to whoever gets the session next.
-      it "drops the token from the browser session on the failure path too" do
+      # The dead-link path drops the token, and this is the example that holds it to that: leaving
+      # it behind would hand a second attempt to whoever gets the browser session next. The one
+      # path that keeps it is `RecordInvalid`, where the transaction rolled the spend back and the
+      # link is still the holder's to retry - covered by the example above.
+      it "drops the token from the browser session when the link is dead" do
         get sign_up_confirmation_path(token: SignUp.mint(email: "starter@example.com", group_name: "Chamber Choir"))
 
         travel_to SignUp::EXPIRES_IN.from_now + 1.second do
