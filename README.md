@@ -77,7 +77,7 @@ Attributes read `type name "key, comment"`: type before name, which is mermaid's
 
 > [!IMPORTANT]
 > - Foreign key attributes are omitted where a relationship line already shows the link. `creator_id` and `manager_id` are the exception, because both point at `MEMBER` so their names cannot say where they point, and neither has a database constraint behind it.
-> - Neither authentication table is drawn: `sessions`, nor `sign_in_tokens` alongside it. They get a diagram of their own rather than crowding this one, and #139 landing the passwordless flow is what leaves something worth drawing.
+> - No authentication table is drawn here. `sessions`, `sign_in_tokens` and `sign_ups` have a diagram of their own, [below](#authentication-entity-relationship-diagram), rather than crowding this one, so what is left here is the domain.
 > - Column limits are Rails-level facts. SQLite does not enforce a declared length, so a limit is what the model validations are set from and what a move to another database engine would need, not a constraint the database applies.
 > - `MEMBER 1+ to 1 GROUP` is what the create path guarantees, not what the database enforces. A group is created with its creator as an `owner` member, so it never starts empty; nothing stops the last member being removed afterwards, and no constraint or validation upholds the `1+`.
 
@@ -113,8 +113,8 @@ erDiagram
   %% ENTITIES
 
   %% UNIQUE INDEX (email)
-  %% FK: user_profiles, members and sign_in_tokens reference users, ON DELETE CASCADE, ON UPDATE CASCADE
-  %% FK: sessions references users with no options, so NO ACTION; has_many dependent: :destroy cleans them up
+  %% FK: user_profiles and members reference users, ON DELETE CASCADE, ON UPDATE CASCADE
+  %% FK: sessions and sign_in_tokens also reference users; their rules are in the authentication ERD below
   USER {
     %% email limit: 250 chars. Normalised to stripped lowercase, uniqueness validated case-insensitively
     STRING email "UK, NN"
@@ -198,5 +198,71 @@ erDiagram
     STRING country_code    "NULL"
     FLOAT  latitude        "NULL"
     FLOAT  longitude       "NULL"
+  }
+```
+
+### Authentication Entity Relationship Diagram
+
+The tables the domain diagram above leaves out: `sessions`, `sign_in_tokens` and `sign_ups`. It is a second picture rather than a second convention, so the token legend and the `"Default attributes for each ENTITY"` block above both apply here unchanged, and so does the rule that the source carries what the picture does not. The mechanism these three tables implement, and every decision behind it, is [ADR 0004](./docs/adr/2026-08-31_passwordless-email-sign-in_0004.md).
+
+> [!IMPORTANT]
+> - `USER` renders with no attributes because it is only the anchor here. The domain diagram above draws it in full, and an entity with no block claims to show no columns, where one that listed `email` alone would claim to show all of them.
+> - `SIGN_UP` has no relationship line because it has no foreign key. The row exists before the account does, and it reaches `users` by email value at redemption, through `User.find_or_create_by!`; mermaid has no attribute-level anchor to hang that on.
+> - A link is spent by a conditional `UPDATE` that sets `consumed_at`, never by deleting the row, so both token tables keep the record of what was issued. `consumed_at IS NULL` is what the `outstanding` scope selects.
+> - `sessions` has no cascade behind it. Its foreign key is declared with no options, so the database does `NO ACTION`, and `User has_many :sessions, dependent: :destroy` is the whole of the cleanup.
+
+```mermaid
+---
+title: Groupifico authentication ERD
+# IMPORTANT!
+# - Official syntax for entity attributes is: `type name key "comment"`
+# - Syntax for entity attributes used below: `type name "key, comment"`
+---
+
+erDiagram
+  direction TB
+
+  %% RELATIONSHIPS
+  %% SIGN_UP has none: it carries no user_id, so there is nothing to draw a line from
+  USER  1  to  0+  SESSION        :  "↓ open    … belong ↑"
+  USER  1  to  0+  SIGN_IN_TOKEN  :  "↓ request … belong ↑"
+
+  %% ENTITIES
+
+  %% USER is drawn in full in the domain ERD above; it is the anchor here and nothing more
+  %% FK: sessions and sign_in_tokens both reference users, with the rules noted on each below
+
+  %% FK: user_id references users with no options, so NO ACTION; has_many dependent: :destroy cleans them up
+  SESSION {
+    %% ip_address has no limit declared
+    STRING ip_address "NULL"
+    %% user_agent has no limit declared
+    STRING user_agent "NULL"
+  }
+
+  %% UNIQUE INDEX (token_digest)
+  %% FK: user_id references users, ON DELETE CASCADE, ON UPDATE CASCADE
+  SIGN_IN_TOKEN {
+    %% token_digest has no limit declared. Holds an HMAC-SHA256 hexdigest, never the token itself
+    STRING   token_digest "UK, NN"
+    %% expires_at is set at mint to Redeemable::EXPIRES_IN from now, which is 15 minutes
+    DATETIME expires_at   "NN"
+    %% consumed_at is null until the link is spent. The `outstanding` scope is the null ones
+    DATETIME consumed_at  "NULL"
+  }
+
+  %% UNIQUE INDEX (token_digest)
+  %% No foreign key and no user_id: the row predates the account it creates
+  SIGN_UP {
+    %% email limit: 250 chars. Normalised to stripped lowercase, matching User exactly
+    STRING   email        "NN"
+    %% group_name limit: 250 chars. Becomes the new Group's name at redemption
+    STRING   group_name   "NN"
+    %% token_digest has no limit declared. Holds an HMAC-SHA256 hexdigest, never the token itself
+    STRING   token_digest "UK, NN"
+    %% expires_at is set at mint to Redeemable::EXPIRES_IN from now, which is 15 minutes
+    DATETIME expires_at   "NN"
+    %% consumed_at is null until the link is spent. The `outstanding` scope is the null ones
+    DATETIME consumed_at  "NULL"
   }
 ```
