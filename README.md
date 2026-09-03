@@ -212,7 +212,6 @@ The tables the domain diagram above leaves out: `sessions`, `sign_in_tokens` and
 > - `SIGN_UP` has no line, which by the rule above means no database foreign key. What that leaves unsaid is where it does reach `users`: by email value at redemption, through `User.find_or_create_by!`, which mermaid has no attribute-level anchor to hang on.
 > - `SIGN_IN_TOKEN` and `SIGN_UP` repeat three columns because both models include the `Redeemable` concern, which owns them: each model gets its own HMAC-SHA256 digest, keyed off `secret_key_base` through a per-model key so the two tables draw from independent keyspaces, and `Redeemable::EXPIRES_IN` is fifteen minutes. The `%%` lines below name what owns each fact rather than restating its value, so there is one place to change either.
 > - A link is spent by a conditional `UPDATE` that sets `consumed_at`, never by deleting the row, so both token tables keep the record of what was issued.
-> - `sessions` has no cascade behind it. Its foreign key is declared with no options, so the database does `NO ACTION`, and `User has_many :sessions, dependent: :destroy` is the whole of the cleanup.
 
 ```mermaid
 ---
@@ -234,7 +233,7 @@ erDiagram
 
   %% RELATIONSHIPS
   %% A line is an Active Record association, and the constraint behind it can still be weak:
-  %% sessions declares its foreign key with no options, so the database does NO ACTION
+  %% SESSION's own comment below is the case in this diagram
   %% SIGN_UP has none: it carries no user_id, so there is nothing to draw a line from
   USER  1  to  0+  SESSION        :  "↓ open    … belong ↑"
   USER  1  to  0+  SIGN_IN_TOKEN  :  "↓ request … belong ↑"
