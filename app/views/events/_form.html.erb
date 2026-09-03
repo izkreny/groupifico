@@ -22,9 +22,6 @@
     <%= form.label  :category, class: "label" %>
     <%= form.select :category, event_categories, {}, class: "select w-full" %>
 
-    <%= form.label             :creator_id, class: "label" %>
-    <%= form.collection_select :creator_id, event.group.members, :id, :full_name, {}, class: "select w-full" %>
-
     <%= form.label             :manager_id, class: "label" %>
     <%= form.collection_select :manager_id, event.group.members, :id, :full_name, {}, class: "select w-full" %>
 
