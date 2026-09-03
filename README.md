@@ -203,10 +203,10 @@ erDiagram
 
 ### Authentication Entity Relationship Diagram
 
-The tables the domain diagram above leaves out: `sessions`, `sign_in_tokens` and `sign_ups`. It is a second picture rather than a second convention, so the token legend and the `"Default attributes for each ENTITY"` block above both apply here unchanged, and so does the rule that the source carries what the picture does not. The mechanism these three tables implement, and every decision behind it, is [ADR 0004](./docs/adr/2026-08-31_passwordless-email-sign-in_0004.md).
+The tables the domain diagram above leaves out: `sessions`, `sign_in_tokens` and `sign_ups`. It is a second picture rather than a second convention, so the token legend above applies here unchanged, and so does the rule that the source carries what the picture does not. The mechanism these three tables implement, and every decision behind it, is [ADR 0004](./docs/adr/2026-08-31_passwordless-email-sign-in_0004.md).
 
 > [!IMPORTANT]
-> - `USER` renders with no attributes because it is only the anchor here. The domain diagram above draws it in full, and an entity with no block claims to show no columns, where one that listed `email` alone would claim to show all of them.
+> - `USER` and the default-attributes block are drawn here as well as above, rather than borrowed from the domain diagram, so this diagram carries everything needed to read it if it ever leaves this file. The token legend is the one thing it still shares.
 > - `SIGN_UP` has no relationship line because it has no foreign key. The row exists before the account does, and it reaches `users` by email value at redemption, through `User.find_or_create_by!`; mermaid has no attribute-level anchor to hang that on.
 > - `SIGN_IN_TOKEN` and `SIGN_UP` repeat three columns because both models include the `Redeemable` concern, which owns them: each model gets its own HMAC-SHA256 digest, keyed off `secret_key_base` through a per-model key so the two tables draw from independent keyspaces, and `Redeemable::EXPIRES_IN` is fifteen minutes. The `%%` lines below name what owns each fact rather than restating its value, so there is one place to change either.
 > - A link is spent by a conditional `UPDATE` that sets `consumed_at`, never by deleting the row, so both token tables keep the record of what was issued.
@@ -223,6 +223,13 @@ title: Groupifico authentication ERD
 erDiagram
   direction TB
 
+  %% DEFAULT ATTRIBUTES
+  "Default attributes for each ENTITY" {
+    INTEGER  id         "PK, UK, NN, AI"
+    DATETIME created_at "NN"
+    DATETIME updated_at "NN"
+  }
+
   %% RELATIONSHIPS
   %% SIGN_UP has none: it carries no user_id, so there is nothing to draw a line from
   USER  1  to  0+  SESSION        :  "↓ open    … belong ↑"
@@ -230,8 +237,12 @@ erDiagram
 
   %% ENTITIES
 
-  %% USER is drawn in full in the domain ERD above; it is the anchor here and nothing more
+  %% UNIQUE INDEX (email)
   %% FK: sessions and sign_in_tokens both reference users, with the rules noted on each below
+  USER {
+    %% email limit: 250 chars. Normalised to stripped lowercase, uniqueness validated case-insensitively
+    STRING email "UK, NN"
+  }
 
   %% FK: user_id references users with no options, so NO ACTION; has_many dependent: :destroy cleans them up
   SESSION {
