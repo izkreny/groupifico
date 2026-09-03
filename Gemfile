@@ -42,6 +42,9 @@ gem "image_processing", "~> 2.0"
 # Authorization policies [https://github.com/palkan/action_policy]
 gem "action_policy"
 
+# Deliver transactional mail through MailPace [https://github.com/mailpace/mailpace-rails]
+gem "mailpace-rails"
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
