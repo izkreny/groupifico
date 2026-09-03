@@ -46,12 +46,17 @@ RSpec.describe Event, type: :model do
         expect(event.creator).to eq another
       end
 
-      it "is invalid when the acting user is no member of the event's group" do
-        Current.session = create(:user).sessions.create!
+      # A member of some other group rather than a member of none: an unscoped lookup would find
+      # this one and hand another group's member the event, which is the whole substance of
+      # deriving the creator from `group` and the mutation `create(:user)` alone could not catch.
+      it "is invalid when the acting user's only membership is in another group" do
+        outsider = create(:member)
+        Current.session = outsider.user.sessions.create!
 
         event = build(:event, creator: nil)
 
         expect(event).to be_invalid
+        expect(event.errors[:creator]).to include "must exist"
       end
 
       it "refuses a persisted event whose creator has been destroyed, rather than reassigning it" do
