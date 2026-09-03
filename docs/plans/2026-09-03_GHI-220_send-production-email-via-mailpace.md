@@ -14,29 +14,36 @@ The configuration goes in `config/environments/production.rb`, replacing the com
 
 One credential key, `mailpace_api_token`, flat. MailPace issues one token per domain and #221 records what a second domain would need, but there is one domain today and a nested hash with one entry is a shape built for a future that is not scheduled.
 
+Everything a recipient sees about mail belongs in this branch rather than trailing behind it, so the sender's brand and the mail's own copy change together: a message signed `hello@chorifico.com` whose body reads "Sign in to Groupifico" is inconsistent in the one place a user is deciding whether to trust the link. That is the two `sign_in_mailer` views and nothing else, since `sign_up_mailer` names the group rather than the product and `app/views/layouts/mailer.html.erb` carries no brand at all. The remaining `Groupifico` strings live in the application chrome, not in mail, and stay for a separate issue.
+
+The live send gets a rake task rather than a one-off console recipe, so it is repeatable and reviewable. It runs in development because that is the only environment that can reach MailPace: `config/environments/test.rb:43` pins `delivery_method = :test`, and `spec/rails_helper.rb:16` calls `WebMock.disable_net_connect!(allow_localhost: true)`, so no spec can send. Development needs the delivery method set explicitly in the task, since `config/environments/development.rb` sets none and only turns `raise_delivery_errors` off.
+
 ## Steps
 
 - Add `gem "mailpace-rails"` to the `Gemfile`, unpinned and in the main group, matching how `action_policy` and the rest are declared, and commit the resulting `Gemfile.lock`
-- Owner step: add `mailpace_api_token` through `bin/rails credentials:edit`, using a token rotated after the original was pasted into a chat transcript
+- Owner step: add `mailpace_api_token` through `bin/rails credentials:edit`, using a rotated token
 - Replace the commented `smtp_settings` block in `config/environments/production.rb` with `config.action_mailer.delivery_method = :mailpace` and `config.action_mailer.mailpace_settings = { api_token: Rails.application.credentials.mailpace_api_token }`
-- Set `default from:` in `app/mailers/application_mailer.rb` to the address settled under `## Open questions`, replacing `from@example.com`
+- Set `default from:` in `app/mailers/application_mailer.rb` to `"Chorifico <hello@chorifico.com>"`, replacing `from@example.com`
+- Replace "Groupifico" with "Chorifico" in `app/views/sign_in_mailer/link.text.erb` and `app/views/sign_in_mailer/link.html.erb`, so the copy matches the sender
+- Add `lib/tasks/mailpace.rake` exposing a `mailpace:smoke` task that takes a recipient address, sets `:mailpace` and the credential explicitly, and delivers one message now
 - Verify DKIM for `chorifico.com` in the MailPace dashboard, which the service requires before it accepts any message
-- Send one message for real, then send one with a deliberately wrong token and watch it fail
+- Run the smoke task for real, then run it with a deliberately wrong token and watch it fail
 
 ## Verification
 
 - `bin/ci` passes, which puts the new gem and the three dependencies it brings, `httparty`, `multi_xml` and `csv`, through `bin/bundler-audit`
-- A live send with the real token completes without raising and the message appears in the MailPace dashboard
-- The same send with a deliberately wrong token raises `Mailpace::DeliveryError`, proving the failure path rather than assuming it
+- `bin/rails mailpace:smoke` in development delivers to a real address without raising, which the gem only allows on an HTTP 200
+- The same task with a deliberately wrong token raises `Mailpace::DeliveryError`, proving the failure path rather than assuming it
+- The delivered message reads "Chorifico" in both the html and text parts and is signed `Chorifico <hello@chorifico.com>`
 
-The gates cannot see whether the message reaches an inbox rather than a spam folder, which is a judgement about DKIM, SPF and DMARC on `chorifico.com` rather than something with an exit code. They also cannot see that the link inside a delivered sign-in mail still points at `example.com`: `config/environments/production.rb:61` is #76's business and stays untouched here, so end-to-end sign-in through a real inbox is only provable once that lands.
+The gates cannot see whether the message is listed in the MailPace dashboard, nor whether it reaches an inbox rather than a spam folder, which is a judgement about DKIM, SPF and DMARC on `chorifico.com` rather than something with an exit code. They also cannot see that the link inside a delivered sign-in mail still points at `example.com`: `config/environments/production.rb:61` is #76's business and stays untouched here, so end-to-end sign-in through a real inbox is only provable once that lands. Nor do they prove the production path itself, since the smoke task configures the delivery method in development rather than reading `config/environments/production.rb`.
 
 ## Open questions
 
-- **Bare address or display name?** `default from: "hello@chorifico.com"` is what #220 asks for, but `"Chorifico <hello@chorifico.com>"` is what a recipient would see in a mail client. The gem preserves the display name, verified by reading `mail.header[:from].element.addresses.first.to_s` back as `"Chorifico <hello@chorifico.com>"`, so both work and this is a product choice.
-- **Where does the live send happen?** `RAILS_ENV=production bin/rails runner` locally proves the real `config/environments/production.rb` path but needs a production database in the checkout; `bin/kamal app exec` proves it on the real container but depends on #76.
-- **Does the mail copy change with the sender?** `app/views/sign_in_mailer/link.html.erb:2` reads "Sign in to Groupifico" while the sender becomes `hello@chorifico.com`. Leaving it is a visible inconsistency at beta; changing it is scope this issue did not ask for.
+None.
 
 ## Settled
 
-None yet.
+- **Bare address or display name?** `"Chorifico <hello@chorifico.com>"`, with the display name a recipient actually sees, rather than the bare address #220 asked for; the gem preserves it, verified by reading `mail.header[:from].element.addresses.first.to_s` back. Settled in a review thread on this pull request, 2026-09-03.
+- **Where does the live send happen?** In development, through a `mailpace:smoke` rake task, rather than under `RAILS_ENV=production` locally or through `bin/kamal app exec`; test is excluded by its own `delivery_method = :test` and by WebMock, and a task in development waits on neither a production database nor #76. Settled in a review thread on this pull request, 2026-09-03.
+- **Does the mail copy change with the sender?** Yes, in this branch: everything a recipient sees about mail lands together, so the two `sign_in_mailer` views drop "Groupifico" for "Chorifico". The application chrome keeps its `Groupifico` strings for a separate issue, discussed in the terminal against #137. Settled in a review thread on this pull request, 2026-09-03.
