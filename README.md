@@ -76,7 +76,7 @@ Attributes read `type name "key, comment"`: type before name, which is mermaid's
 | `AI` | Auto-increment |
 
 > [!IMPORTANT]
-> - Foreign key attributes are omitted where a relationship line already shows the link. `creator_id` and `manager_id` are the exception, because both point at `MEMBER` so their names cannot say where they point, and neither has a database constraint behind it.
+> - Foreign key attributes are omitted where a relationship line already shows the link, and the rule runs both ways: **no line means no database foreign key**, in either diagram. `creator_id` and `manager_id` are why the rule names the database rather than the reference - both point at `MEMBER`, so their names cannot say where they point and they are drawn as `FK: ENTITY` attributes instead, but neither has a constraint behind it. This bullet owns the convention for both diagrams; the one below points here rather than restating it.
 > - No authentication table is drawn here. `sessions`, `sign_in_tokens` and `sign_ups` have a diagram of their own, [below](#authentication-entity-relationship-diagram), rather than crowding this one, so what is left here is the domain.
 > - Column limits are Rails-level facts. SQLite does not enforce a declared length, so a limit is what the model validations are set from and what a move to another database engine would need, not a constraint the database applies.
 > - `MEMBER 1+ to 1 GROUP` is what the create path guarantees, not what the database enforces. A group is created with its creator as an `owner` member, so it never starts empty; nothing stops the last member being removed afterwards, and no constraint or validation upholds the `1+`.
@@ -100,6 +100,8 @@ erDiagram
   }
 
   %% RELATIONSHIPS
+  %% A line is an Active Record association. Every one drawn here also has an add_foreign_key
+  %% behind it, but nothing enforces that pairing, so read a line as an association first
   USER    1   to  0+  MEMBER        :  "↓ become … belong ↑"
   USER    1   to  1   USER_PROFILE  :  "↓ has    … belong ↑"
   MEMBER  1+  to  1   GROUP         :  "↓ belong … has ↑"
@@ -207,7 +209,7 @@ The tables the domain diagram above leaves out: `sessions`, `sign_in_tokens` and
 
 > [!IMPORTANT]
 > - `USER` and the default-attributes block are drawn here as well as above, rather than borrowed from the domain diagram, so this diagram carries everything needed to read it if it ever leaves this file. The token legend is the one thing it still shares.
-> - `SIGN_UP` has no relationship line because it has no foreign key. The row exists before the account does, and it reaches `users` by email value at redemption, through `User.find_or_create_by!`; mermaid has no attribute-level anchor to hang that on.
+> - `SIGN_UP` has no line, which by the rule above means no database foreign key. What that leaves unsaid is where it does reach `users`: by email value at redemption, through `User.find_or_create_by!`, which mermaid has no attribute-level anchor to hang on.
 > - `SIGN_IN_TOKEN` and `SIGN_UP` repeat three columns because both models include the `Redeemable` concern, which owns them: each model gets its own HMAC-SHA256 digest, keyed off `secret_key_base` through a per-model key so the two tables draw from independent keyspaces, and `Redeemable::EXPIRES_IN` is fifteen minutes. The `%%` lines below name what owns each fact rather than restating its value, so there is one place to change either.
 > - A link is spent by a conditional `UPDATE` that sets `consumed_at`, never by deleting the row, so both token tables keep the record of what was issued.
 > - `sessions` has no cascade behind it. Its foreign key is declared with no options, so the database does `NO ACTION`, and `User has_many :sessions, dependent: :destroy` is the whole of the cleanup.
@@ -231,6 +233,8 @@ erDiagram
   }
 
   %% RELATIONSHIPS
+  %% A line is an Active Record association, and the constraint behind it can still be weak:
+  %% sessions declares its foreign key with no options, so the database does NO ACTION
   %% SIGN_UP has none: it carries no user_id, so there is nothing to draw a line from
   USER  1  to  0+  SESSION        :  "↓ open    … belong ↑"
   USER  1  to  0+  SIGN_IN_TOKEN  :  "↓ request … belong ↑"

@@ -76,8 +76,9 @@ Whether both diagrams are still readable at a glance. That is the entire reason 
 
 ## Open questions
 
-- **How does `SIGN_UP` sit with no foreign key?** Either an isolated entity with a `%%` line explaining the email-value link, or a dashed `optionally to` edge to `USER` labelled with what redemption does. ADR 0002 rejected `optionally to` for `creator_id` and `manager_id` on the grounds that an unanchored edge conveys less than an attribute row, and the same argument applies here. My preference is the isolated entity.
+None.
 
 ## Settled
 
 - **How much of `USER` renders in the second diagram?** A bare anchor box carries no columns and duplicates nothing, but ADR 0002 calls a rendered entity that hides one of its columns the failure the exercise is correcting. Rendering `email` alone breaches that reading; rendering nothing may sidestep it, since an entity with no block is not claiming to show its columns. **Decided in RF1's thread: `USER` renders in full, and the default-attributes block is drawn here too.** The reason overrides the *One default-attributes block, shared* decision above: this diagram may one day leave the README, so it has to carry everything needed to read it. The token legend stays shared and is now the only thing borrowed.
+- **How does `SIGN_UP` sit with no foreign key?** Either an isolated entity with a `%%` line explaining the email-value link, or a dashed `optionally to` edge to `USER`. **Decided in the terminal: the isolated entity, with the convention stated once rather than per entity.** The domain diagram's first `[!IMPORTANT]` bullet now owns it for both diagrams - no line means no database foreign key - and the auth block points there instead of restating it. The caveat the rule cannot carry, that a line is an association and `sessions` declares its key with no options, went into `%%` comments in both fences rather than into the prose.
