@@ -1,6 +1,13 @@
 require 'rails_helper'
 
 RSpec.describe MailpaceDelivery do
+  # The subclass only protects anything while it is what the `:mailpace` symbol resolves to, and
+  # what puts it there is one `to_prepare` block in an initializer. Losing that block restores the
+  # gem's swallowing in full silence, and every example below would still pass.
+  it "is the class registered behind the :mailpace delivery method" do
+    expect(ActionMailer::Base.delivery_methods[:mailpace]).to eq(described_class)
+  end
+
   describe "#deliver!" do
     # MailPace's own 4xx bodies carry an `error` key and the gem raises on those. This is the shape
     # it does not recognise: an edge or a proxy answering with HTML, where the gem's
