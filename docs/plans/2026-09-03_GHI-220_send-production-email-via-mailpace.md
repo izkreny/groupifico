@@ -25,7 +25,7 @@ One credential key, `mailpace_api_token`, flat. MailPace issues one token per do
 
 ## Verification
 
-- `bin/ci` passes, which puts the new gem and its `httparty` dependency through `bin/bundler-audit`
+- `bin/ci` passes, which puts the new gem and the three dependencies it brings, `httparty`, `multi_xml` and `csv`, through `bin/bundler-audit`
 - A live send with the real token completes without raising and the message appears in the MailPace dashboard
 - The same send with a deliberately wrong token raises `Mailpace::DeliveryError`, proving the failure path rather than assuming it
 
