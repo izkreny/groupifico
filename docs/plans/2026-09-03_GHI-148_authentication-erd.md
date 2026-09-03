@@ -16,10 +16,10 @@ Nothing about the notation is open. This plan reuses ADR 0002's conventions and 
 
 From `db/schema.rb` at `2026_09_02_140000`, which stays the authority both diagrams describe.
 
-| Table            | Columns beyond `id`, `created_at`, `updated_at`                  | Unique index   | Foreign key                                    |
-|------------------|------------------------------------------------------------------|----------------|------------------------------------------------|
-| `sessions`       | `ip_address`, `user_agent`, `user_id`                            | none           | `user_id`, no options, so `NO ACTION`          |
-| `sign_in_tokens` | `token_digest`, `expires_at`, `consumed_at`, `user_id`           | `token_digest` | `user_id`, `ON DELETE` and `ON UPDATE CASCADE` |
+| Table            | Columns beyond `id`, `created_at`, `updated_at`                    | Unique index   | Foreign key                                    |
+|------------------|--------------------------------------------------------------------|----------------|------------------------------------------------|
+| `sessions`       | `ip_address`, `user_agent`, `user_id`                              | none           | `user_id`, no options, so `NO ACTION`          |
+| `sign_in_tokens` | `token_digest`, `expires_at`, `consumed_at`, `user_id`             | `token_digest` | `user_id`, `ON DELETE` and `ON UPDATE CASCADE` |
 | `sign_ups`       | `email`, `group_name`, `token_digest`, `expires_at`, `consumed_at` | `token_digest` | none at all                                    |
 
 Two facts shape the diagram more than the columns do.
