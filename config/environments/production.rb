@@ -60,14 +60,11 @@ Rails.application.configure do
   # Set host to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = { host: "example.com" }
 
-  # Specify outgoing SMTP server. Remember to add smtp/* credentials via bin/rails credentials:edit.
-  # config.action_mailer.smtp_settings = {
-  #   user_name: Rails.application.credentials.dig(:smtp, :user_name),
-  #   password: Rails.application.credentials.dig(:smtp, :password),
-  #   address: "smtp.example.com",
-  #   port: 587,
-  #   authentication: :plain
-  # }
+  # Deliver over MailPace's HTTPS API rather than SMTP, whose ports the VPS provider blocks. Set
+  # here and never in config/application.rb, where the gem's README puts it: that file applies to
+  # every environment, so development would send real mail to real addresses.
+  config.action_mailer.delivery_method   = :mailpace
+  config.action_mailer.mailpace_settings = { api_token: Rails.application.credentials.mailpace_api_token }
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation cannot be found).
