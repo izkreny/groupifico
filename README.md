@@ -208,7 +208,8 @@ The tables the domain diagram above leaves out: `sessions`, `sign_in_tokens` and
 > [!IMPORTANT]
 > - `USER` renders with no attributes because it is only the anchor here. The domain diagram above draws it in full, and an entity with no block claims to show no columns, where one that listed `email` alone would claim to show all of them.
 > - `SIGN_UP` has no relationship line because it has no foreign key. The row exists before the account does, and it reaches `users` by email value at redemption, through `User.find_or_create_by!`; mermaid has no attribute-level anchor to hang that on.
-> - A link is spent by a conditional `UPDATE` that sets `consumed_at`, never by deleting the row, so both token tables keep the record of what was issued. `consumed_at IS NULL` is what the `outstanding` scope selects.
+> - `SIGN_IN_TOKEN` and `SIGN_UP` repeat three columns because both models include the `Redeemable` concern, which owns them: the digest is HMAC-SHA256, keyed off `secret_key_base`, and `Redeemable::EXPIRES_IN` is fifteen minutes. The `%%` lines below name the concern rather than restating its values, so there is one place to change either.
+> - A link is spent by a conditional `UPDATE` that sets `consumed_at`, never by deleting the row, so both token tables keep the record of what was issued.
 > - `sessions` has no cascade behind it. Its foreign key is declared with no options, so the database does `NO ACTION`, and `User has_many :sessions, dependent: :destroy` is the whole of the cleanup.
 
 ```mermaid
@@ -243,11 +244,11 @@ erDiagram
   %% UNIQUE INDEX (token_digest)
   %% FK: user_id references users, ON DELETE CASCADE, ON UPDATE CASCADE
   SIGN_IN_TOKEN {
-    %% token_digest has no limit declared. Holds an HMAC-SHA256 hexdigest, never the token itself
+    %% token_digest has no limit declared. Written and matched by Redeemable.digest, never the token
     STRING   token_digest "UK, NN"
-    %% expires_at is set at mint to Redeemable::EXPIRES_IN from now, which is 15 minutes
+    %% expires_at is set at mint to Redeemable::EXPIRES_IN from now
     DATETIME expires_at   "NN"
-    %% consumed_at is null until the link is spent. The `outstanding` scope is the null ones
+    %% consumed_at is null until the link is spent, which is what the outstanding scope selects
     DATETIME consumed_at  "NULL"
   }
 
@@ -258,11 +259,11 @@ erDiagram
     STRING   email        "NN"
     %% group_name limit: 250 chars. Becomes the new Group's name at redemption
     STRING   group_name   "NN"
-    %% token_digest has no limit declared. Holds an HMAC-SHA256 hexdigest, never the token itself
+    %% token_digest has no limit declared. Written and matched by Redeemable.digest, never the token
     STRING   token_digest "UK, NN"
-    %% expires_at is set at mint to Redeemable::EXPIRES_IN from now, which is 15 minutes
+    %% expires_at is set at mint to Redeemable::EXPIRES_IN from now
     DATETIME expires_at   "NN"
-    %% consumed_at is null until the link is spent. The `outstanding` scope is the null ones
+    %% consumed_at is null until the link is spent, which is what the outstanding scope selects
     DATETIME consumed_at  "NULL"
   }
 ```
