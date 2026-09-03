@@ -33,6 +33,16 @@ RSpec.describe SignInMailer, type: :mailer do
 
       expect(SignInToken.redeem!(token)).to eq(user)
     end
+
+    # The sender and the copy are asserted together because a mail signed by one brand and worded
+    # by another undermines the single decision it exists to support: whether to trust the link.
+    it "presents one brand, in the sender and in the copy alike" do
+      mail = described_class.link(create(:user))
+
+      expect(mail[:from].to_s).to eq("Chorifico <hello@chorifico.com>")
+      expect(mail.body.encoded).to include("Chorifico")
+      expect(mail.body.encoded).not_to include("Groupifico")
+    end
   end
 
   private
