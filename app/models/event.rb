@@ -36,7 +36,13 @@ class Event < ApplicationRecord
   belongs_to :group
   belongs_to :address, optional: true, touch: true
   accepts_nested_attributes_for :address, reject_if: -> { it.values.all?(&:empty?) }
-  belongs_to :creator, class_name: "Member", foreign_key: "creator_id", inverse_of: :created_events
+  # Derived from the event's own group rather than from a `Current.member`, which only the
+  # controllers that set it could answer and which would read `nil` under every other: `group` is
+  # already on the record by the time the default's `before_validation` runs. That callback runs
+  # ahead of the group presence check, hence `group&.` - without it `Event.new.valid?` raises
+  # instead of collecting its errors.
+  belongs_to :creator, class_name: "Member", foreign_key: "creator_id", inverse_of: :created_events,
+    default: -> { group&.members&.find_by(user: Current.user) }
   belongs_to :manager, class_name: "Member", foreign_key: "manager_id", inverse_of: :managed_events, optional: true
   has_many :registrations, dependent: :destroy
   has_many :attendees, through: :registrations, source: :member

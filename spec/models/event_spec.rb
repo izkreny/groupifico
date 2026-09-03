@@ -23,6 +23,37 @@ RSpec.describe Event, type: :model do
         expect(event.address).not_to be_nil
       end
     end
+
+    describe "creator with a ':default' option" do
+      it "fills the creator with the acting user's membership of the event's group" do
+        member = create(:member)
+        Current.session = member.user.sessions.create!
+
+        event = build(:event, group: member.group, creator: nil)
+
+        expect(event).to be_valid
+        expect(event.creator).to eq member
+      end
+
+      it "keeps a creator that was assigned explicitly" do
+        member  = create(:member)
+        another = create(:member, group: member.group)
+        Current.session = member.user.sessions.create!
+
+        event = build(:event, group: member.group, creator: another)
+
+        expect(event).to be_valid
+        expect(event.creator).to eq another
+      end
+
+      it "is invalid when the acting user is no member of the event's group" do
+        Current.session = create(:user).sessions.create!
+
+        event = build(:event, creator: nil)
+
+        expect(event).to be_invalid
+      end
+    end
   end
 
   describe "(enums)" do
