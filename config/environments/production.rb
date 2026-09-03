@@ -61,8 +61,10 @@ Rails.application.configure do
   config.action_mailer.default_url_options = { host: "example.com" }
 
   # Deliver over MailPace's HTTPS API rather than SMTP, whose ports the VPS provider blocks. Set
-  # here and never in config/application.rb, where the gem's README puts it: that file applies to
-  # every environment, so development would send real mail to real addresses.
+  # here and never in config/application.rb, where the gem's README puts it: which transport an
+  # environment uses is exactly what config/environments exists to say, and putting it in
+  # application.rb would leave the test suite's own :test delivery method as the only thing
+  # standing between `bin/rspec` and live sends.
   config.action_mailer.delivery_method   = :mailpace
   config.action_mailer.mailpace_settings = { api_token: Rails.application.credentials.mailpace_api_token }
 
