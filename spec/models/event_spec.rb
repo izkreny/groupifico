@@ -53,6 +53,16 @@ RSpec.describe Event, type: :model do
 
         expect(event).to be_invalid
       end
+
+      it "refuses a persisted event whose creator has been destroyed, rather than reassigning it" do
+        event = create(:event)
+        actor = create(:member, group: event.group)
+        event.creator.destroy!
+        Current.session = actor.user.sessions.create!
+
+        expect(event.reload).to be_invalid
+        expect(event.errors[:creator]).to include "must exist"
+      end
     end
   end
 
