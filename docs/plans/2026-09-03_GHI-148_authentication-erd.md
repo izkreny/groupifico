@@ -76,9 +76,8 @@ Whether both diagrams are still readable at a glance. That is the entire reason 
 
 ## Open questions
 
-- **How much of `USER` renders in the second diagram?** A bare anchor box carries no columns and duplicates nothing, but ADR 0002 calls a rendered entity that hides one of its columns the failure the exercise is correcting. Rendering `email` alone breaches that reading; rendering nothing may sidestep it, since an entity with no block is not claiming to show its columns. My preference is the bare box plus a `%%` line saying `USER` is drawn in full in the domain diagram above.
 - **How does `SIGN_UP` sit with no foreign key?** Either an isolated entity with a `%%` line explaining the email-value link, or a dashed `optionally to` edge to `USER` labelled with what redemption does. ADR 0002 rejected `optionally to` for `creator_id` and `manager_id` on the grounds that an unanchored edge conveys less than an attribute row, and the same argument applies here. My preference is the isolated entity.
 
 ## Settled
 
-None yet.
+- **How much of `USER` renders in the second diagram?** A bare anchor box carries no columns and duplicates nothing, but ADR 0002 calls a rendered entity that hides one of its columns the failure the exercise is correcting. Rendering `email` alone breaches that reading; rendering nothing may sidestep it, since an entity with no block is not claiming to show its columns. **Decided in RF1's thread: `USER` renders in full, and the default-attributes block is drawn here too.** The reason overrides the *One default-attributes block, shared* decision above: this diagram may one day leave the README, so it has to carry everything needed to read it. The token legend stays shared and is now the only thing borrowed.
