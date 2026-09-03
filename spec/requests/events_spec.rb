@@ -202,6 +202,19 @@ RSpec.describe "Events", type: :request do
 
         expect(response).to have_http_status :ok
       end
+
+      # `Event#duplicate` is `dup`, so the copy carries the original's `creator_id`. Nothing submits
+      # it, which is what makes the duplicate belong to whoever saves it rather than to whoever made
+      # the original.
+      it "carries no creator into the form" do
+        actor = create(:member, :active, :events_administrator)
+        event = create(:event, group: actor.group)
+        sign_in_as(actor.user)
+
+        get duplicate_group_event_path(event.group, event)
+
+        expect(response.body).not_to include "event[creator_id]"
+      end
     end
   end
 
@@ -270,7 +283,7 @@ RSpec.describe "Events", type: :request do
       it "redirects to the sign-in page" do
         group = create(:group)
 
-        post group_events_path(group), params: { event: { name: "Rehearsal", starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour, creator_id: create(:member, group:).id } }
+        post group_events_path(group), params: { event: { name: "Rehearsal", starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour } }
 
         expect(response).to redirect_to new_session_path
       end
@@ -279,7 +292,7 @@ RSpec.describe "Events", type: :request do
     context "when signed in as a non-member" do
       it "returns 404 and does not create the event" do
         group  = create(:group)
-        params = { name: "Rehearsal", starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour, creator_id: create(:member, group:).id }
+        params = { name: "Rehearsal", starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour }
         sign_in_as(create(:user))
 
         expect { post group_events_path(group), params: { event: params } }
@@ -290,13 +303,17 @@ RSpec.describe "Events", type: :request do
     end
 
     context "when signed in as an events administrator" do
-      it "creates the event" do
+      # The creator assertion belongs here rather than only in the model spec: the default reads
+      # `Current.user`, and only a real request proves the session is resumed before the create
+      # runs. A reordering that left it unset would pass every model spec.
+      it "creates the event with the signed-in member as its creator" do
         creator = create(:member, :active, :events_administrator)
         sign_in_as(creator.user)
-        params  = { name: "Rehearsal", starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour, creator_id: creator.id }
+        params  = { name: "Rehearsal", starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour }
 
         expect { post group_events_path(creator.group), params: { event: params } }.to change(Event, :count).by(1)
         expect(response).to redirect_to group_event_path(creator.group, Event.sole)
+        expect(Event.sole.creator).to eq creator
       end
 
       it "re-renders the new page when the event is invalid" do
@@ -313,7 +330,7 @@ RSpec.describe "Events", type: :request do
         actor = create(:member, :active)
         create(:event, group: actor.group, manager: actor)
         sign_in_as(actor.user)
-        params = { name: "Rehearsal", starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour, creator_id: actor.id }
+        params = { name: "Rehearsal", starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour }
 
         expect { post group_events_path(actor.group), params: { event: params } }
           .not_to change(Event, :count)
@@ -325,7 +342,7 @@ RSpec.describe "Events", type: :request do
     context "when signed in as a paused member" do
       it "refuses with a redirect carrying an alert, and does not create the event" do
         member = create(:member, :paused)
-        params = { name: "Rehearsal", starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour, creator_id: member.id }
+        params = { name: "Rehearsal", starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour }
         sign_in_as(member.user)
 
         expect { post group_events_path(member.group), params: { event: params } }
@@ -489,15 +506,20 @@ RSpec.describe "Events", type: :request do
       expect(event.reload.address).not_to eq elsewhere
     end
 
-    it "ignores a creator_id belonging to another group" do
-      event = create(:event)
-      actor = create(:member, :active, group: event.group)
-      outsider = create(:member)
+    # A member of the event's own group, holding the role that carries the update through, and a
+    # name posted alongside so the update is one that lands: the new name proves the request was
+    # processed and the unchanged creator proves the parameter is gone rather than guarded. An
+    # outsider's id would prove neither, since the guard that used to drop it and the parameter's
+    # absence are indistinguishable from out there.
+    it "ignores a creator_id, even one from the event's own group" do
+      actor = create(:member, :active, :events_administrator)
+      event = create(:event, group: actor.group)
       sign_in_as(actor.user)
 
-      patch group_event_path(event.group, event), params: { event: { creator_id: outsider.id } }
+      patch group_event_path(event.group, event), params: { event: { name: "Renamed", creator_id: actor.id } }
 
-      expect(event.reload.creator).not_to eq outsider
+      expect(event.reload.name).to eq "Renamed"
+      expect(event.creator).not_to eq actor
     end
   end
 

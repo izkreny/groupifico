@@ -36,7 +36,22 @@ class Event < ApplicationRecord
   belongs_to :group
   belongs_to :address, optional: true, touch: true
   accepts_nested_attributes_for :address, reject_if: -> { it.values.all?(&:empty?) }
-  belongs_to :creator, class_name: "Member", foreign_key: "creator_id", inverse_of: :created_events
+
+  # Derived from the event's own group rather than from a `Current.member`, which only the
+  # controllers that set it could answer and which would read `nil` under every other: `group` is
+  # already on the record by the time the default's `before_validation` runs.
+  #
+  # `new_record?` keeps it a create-time fill. The callback is unconditional and writes whatever
+  # the lambda returns whenever the reader is nil, so without the guard a saved event whose creator
+  # row had been destroyed would be handed to whoever validated it next. With it that write is a
+  # harmless nil and the required association refuses the save, which is what such an event did
+  # before this default existed.
+  #
+  # Both safe navigations earn their place: `group&.` because the callback runs ahead of the group
+  # presence check, so `Event.new.valid?` would otherwise raise instead of collecting its errors,
+  # and `members&.` because `nil&.members.find_by` raises on `find_by` rather than short-circuiting.
+  belongs_to :creator, class_name: "Member", foreign_key: "creator_id", inverse_of: :created_events,
+    default: -> { group&.members&.find_by(user: Current.user) if new_record? }
   belongs_to :manager, class_name: "Member", foreign_key: "manager_id", inverse_of: :managed_events, optional: true
   has_many :registrations, dependent: :destroy
   has_many :attendees, through: :registrations, source: :member

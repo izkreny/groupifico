@@ -23,6 +23,52 @@ RSpec.describe Event, type: :model do
         expect(event.address).not_to be_nil
       end
     end
+
+    describe "creator with a ':default' option" do
+      it "fills the creator with the acting user's membership of the event's group" do
+        member = create(:member)
+        Current.session = member.user.sessions.create!
+
+        event = build(:event, group: member.group, creator: nil)
+
+        expect(event).to be_valid
+        expect(event.creator).to eq member
+      end
+
+      it "keeps a creator that was assigned explicitly" do
+        member  = create(:member)
+        another = create(:member, group: member.group)
+        Current.session = member.user.sessions.create!
+
+        event = build(:event, group: member.group, creator: another)
+
+        expect(event).to be_valid
+        expect(event.creator).to eq another
+      end
+
+      # A member of some other group rather than a member of none: an unscoped lookup would find
+      # this one and hand another group's member the event, which is the whole substance of
+      # deriving the creator from `group` and the mutation `create(:user)` alone could not catch.
+      it "is invalid when the acting user's only membership is in another group" do
+        outsider = create(:member)
+        Current.session = outsider.user.sessions.create!
+
+        event = build(:event, creator: nil)
+
+        expect(event).to be_invalid
+        expect(event.errors[:creator]).to include "must exist"
+      end
+
+      it "refuses a persisted event whose creator has been destroyed, rather than reassigning it" do
+        event = create(:event)
+        actor = create(:member, group: event.group)
+        event.creator.destroy!
+        Current.session = actor.user.sessions.create!
+
+        expect(event.reload).to be_invalid
+        expect(event.errors[:creator]).to include "must exist"
+      end
+    end
   end
 
   describe "(enums)" do
