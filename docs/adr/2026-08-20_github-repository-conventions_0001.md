@@ -71,11 +71,11 @@ Four parallel jobs: `scan_ruby` runs Brakeman and bundler-audit, `scan_js` runs 
 
 Both are consequences of coupling failures that have nothing to do with each other, which is exactly what separate jobs buy. The parallelism was never the cost; the duplicated setup was, and it was cheap. **Do not group them again.**
 
-### `system-test` was deleted, and it comes back as its own job
+### `system-test` was deleted, and it does not come back as a job
 
 The `system-test` job is gone. Its test step was commented out and `spec/` holds model specs and factories only, so it took a runner on every pull request and reported success without running anything: a green check that proved nothing, which is worse than no check, because it reads as coverage.
 
-Its `actions/upload-artifact` step, which kept screenshots from failed system tests, went with it. **Issue #79 carries both back the day the first system spec lands**, and it is the only thing that will: no gate, no lint rule and no test will notice that day. It returns as a fifth job rather than as steps inside `test`, because a real browser suite runs longer than everything else here and should not sit in front of RSpec's result. The commented-out command it held, `bin/rails db:test:prepare test:system`, was Rails' minitest form and was already wrong for a repository that runs RSpec. `2026-09-04_browser-verification_0005.md` later decided there is no runner job at all: the suite runs locally from `bin/ci` and `gh signoff` reports it.
+Its `actions/upload-artifact` step, which kept screenshots from failed system tests, went with it. **Issue #79 brings the suite back the day the first system spec lands, and it runs locally rather than on a runner**, and it is the only thing that will: no gate, no lint rule and no test will notice that day. It returns as a fifth job rather than as steps inside `test`, because a real browser suite runs longer than everything else here and should not sit in front of RSpec's result. The commented-out command it held, `bin/rails db:test:prepare test:system`, was Rails' minitest form and was already wrong for a repository that runs RSpec. `2026-09-04_browser-verification_0005.md` later decided there is no runner job at all: the suite runs locally from `bin/ci` and `gh signoff` reports it.
 
 ## Consequences
 
