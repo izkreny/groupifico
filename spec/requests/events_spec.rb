@@ -526,9 +526,11 @@ RSpec.describe "Events", type: :request do
     # The second door onto an address, and the one the policy cannot see. `address_attributes` with
     # an `:id` would have `accepts_nested_attributes_for` update that address in place with only
     # `EventPolicy#update?` asked, so an events_administrator edited the group's home address that
-    # `AddressPolicy` reserves to the `owner`. The name posted alongside proves the request landed,
-    # so an unchanged address is the parameter being dropped rather than the whole update failing.
-    it "ignores address_attributes naming an existing address" do
+    # `AddressPolicy` reserves to the `owner`. With no `:id` permitted the attributes build a new
+    # address and the event is repointed at it, which is this actor's own to do - what they cannot
+    # do is reach the address they named. Both halves are asserted: an untouched home address alone
+    # would pass just as well if the whole update had failed, and the new name proves it did not.
+    it "builds a new address rather than editing the one address_attributes names" do
       home  = create(:address, name: "Rehearsal Hall")
       group = create(:group, address: home)
       event = create(:event, group:, address: home)
@@ -540,6 +542,8 @@ RSpec.describe "Events", type: :request do
 
       expect(event.reload.name).to eq "Renamed"
       expect(home.reload.name).to eq "Rehearsal Hall"
+      expect(event.address).not_to eq home
+      expect(event.address.name).to eq "Hijacked"
     end
   end
 
