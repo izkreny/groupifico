@@ -85,8 +85,9 @@ class EventsController < ApplicationController
     # scoped to this group - `group.members` and `group.addresses` - but the parameters are not, and
     # an unscoped foreign key in the body is the same boundary-crossing the unscoped lookup was,
     # arriving by another door. `:address_id` is the one with teeth: pointing an event at another
-    # group's address makes that address an owner of this event's group's making, and therefore
-    # editable, by somebody with no claim on it. Absent from the list because nothing may name them:
+    # group's address makes this event one of that address's owners, and `AddressPolicy` reads the
+    # owners, so it hands the address to somebody with no claim on it. Absent from the list because
+    # nothing may name them:
     # `:group_id`, which the URL supplies, and `:creator_id`, which the model answers from the
     # acting member.
     #

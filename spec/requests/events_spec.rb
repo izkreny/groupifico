@@ -542,7 +542,6 @@ RSpec.describe "Events", type: :request do
 
       expect(event.reload.name).to eq "Renamed"
       expect(home.reload.name).to eq "Rehearsal Hall"
-      expect(event.address).not_to eq home
       expect(event.address.name).to eq "Hijacked"
     end
   end

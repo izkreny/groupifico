@@ -72,10 +72,8 @@ RSpec.describe AddressPolicy, type: :policy do
       before { create(:member, :active, user:, group: create(:group, address: record)) }
     end
 
-    # The pair that fixes the home address to its group. An event may point at the group's own
-    # address - `Group#addresses` offers it - and asking every owner then let whoever may edit the
-    # event edit the group's home address, which the group table reserves to the `owner`. Watched
-    # granting exactly that before the rule split.
+    # The pair that fixes the home address to its group, watched granting the wrong answer before
+    # the rule split. The reasoning is `docs/AUTHORIZATION.md`'s and is not repeated here.
     failed "when an events_administrator reaches the group's home address through an event" do
       before do
         group = create(:group, address: record)
