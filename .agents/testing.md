@@ -4,7 +4,7 @@ The rules specs are written and reviewed against. This file wins on any conflict
 
 ## Framework choices
 
-RSpec (`rspec-rails`) with FactoryBot (`factory_bot_rails`), plus `capybara` and `selenium-webdriver` waiting in the Gemfile for the system layer. This is a deliberate deviation from the 37signals default of Minitest with fixtures, and no alignment pass "fixes" it: testing is where this repository keeps its own choices.
+RSpec (`rspec-rails`) with FactoryBot (`factory_bot_rails`), plus `capybara` for the system layer, driven by Cuprite per [`docs/adr/2026-09-04_browser-verification_0005.md`](../docs/adr/2026-09-04_browser-verification_0005.md); `selenium-webdriver` still sits in the Gemfile and leaves when #79 adds `cuprite`. This is a deliberate deviation from the 37signals default of Minitest with fixtures, and no alignment pass "fixes" it: testing is where this repository keeps its own choices.
 
 ## Philosophy
 
