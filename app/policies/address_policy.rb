@@ -30,12 +30,30 @@ class AddressPolicy < ApplicationPolicy
   # arrives as show? and the read/write split never sees it. `edit?` stays aliased, because opening
   # a form is a read - a paused member is stopped at submission, the same place `duplicate` stops
   # them.
-  def update? = owners.any? { |owner| allowed_to?(:update?, owner) }
+  #
+  # A group's home address answers to that group alone. An event may point at it - `Group#addresses`
+  # offers every address the group reaches, its own among them - but pointing at an address is using
+  # it, never owning it, and `docs/AUTHORIZATION.md` reserves correcting the home address to the
+  # `owner`. Asking every owner would hand it to whoever may edit the event instead, so where a group
+  # holds this address the events fall away and only its policy is asked.
+  #
+  # `owners` is left whole because `show?` reads it too and is not affected: every owner of an
+  # address belongs to one group, and belonging is the whole of the read.
+  def update?
+    home_of = Group.where(address_id: record.id)
+    return home_of.any? { |group| allowed_to?(:update?, group) } if home_of.exists?
+
+    owners.any? { |owner| allowed_to?(:update?, owner) }
+  end
 
   private
     # Every record pointing at this address. `any?` rather than `all?`: rights on one owner are
     # enough, which is the only sensible reading while nothing in the application can point two
-    # groups at one address. If that ever becomes reachable, this is the line to revisit - #187.
+    # groups at one address. Nothing can: `EventsController#foreign_address?` drops an `address_id`
+    # the acting group does not own, and its `address_attributes` permits no `:id` to name one. The
+    # nested attributes that do, `GroupsController`'s, meet Rails itself, which answers a foreign
+    # `id` there with `RecordNotFound`. Settled on #187, which carries that evidence and the
+    # migration it priced out.
     #
     # An orphan has no owners, so `any?` answers false and the address is refused to everybody -
     # which is the same conclusion the old reachability rule reached, by a shorter route.

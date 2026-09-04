@@ -71,6 +71,33 @@ RSpec.describe AddressPolicy, type: :policy do
     failed "when the member belongs to the owning group but does not own it" do
       before { create(:member, :active, user:, group: create(:group, address: record)) }
     end
+
+    # The pair that fixes the home address to its group, watched granting the wrong answer before
+    # the rule split. The reasoning is `docs/AUTHORIZATION.md`'s and is not repeated here.
+    failed "when an events_administrator reaches the group's home address through an event" do
+      before do
+        group = create(:group, address: record)
+        create(:event, group:, address: record)
+        create(:member, :active, :events_administrator, user:, group:)
+      end
+    end
+
+    # The manager is the other column the events table marks, and it is not a role, so it needs its
+    # own example rather than following the one above.
+    failed "when the event's manager reaches the group's home address through their event" do
+      before do
+        group  = create(:group, address: record)
+        member = create(:member, :active, user:, group:)
+        create(:event, group:, address: record, manager: member)
+      end
+    end
+
+    succeed "when an events_administrator edits an address only an event points at" do
+      before do
+        member = create(:member, :active, :events_administrator, user:)
+        create(:event, group: member.group, address: record)
+      end
+    end
   end
 
   # A relation_scope is not a rule, so the pre-checks never run for it - and this policy skips them

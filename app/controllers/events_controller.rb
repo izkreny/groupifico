@@ -85,15 +85,24 @@ class EventsController < ApplicationController
     # scoped to this group - `group.members` and `group.addresses` - but the parameters are not, and
     # an unscoped foreign key in the body is the same boundary-crossing the unscoped lookup was,
     # arriving by another door. `:address_id` is the one with teeth: pointing an event at another
-    # group's address makes that address `reachable?`, and therefore editable, by somebody with no
-    # claim on it. Absent from the list because nothing may name them: `:group_id`, which the URL
-    # supplies, and `:creator_id`, which the model answers from the acting member.
+    # group's address makes this event one of that address's owners, and `AddressPolicy` reads the
+    # owners, so it hands the address to somebody with no claim on it. Absent from the list because
+    # nothing may name them: `:group_id`, which the URL supplies, and `:creator_id`, which the model
+    # answers from the acting member.
+    #
+    # `address_attributes` permits no `:id`, which is what keeps editing an address out of this
+    # controller entirely. With one, `accepts_nested_attributes_for` updates the named address in
+    # place and only `EventPolicy#update?` is ever asked - so whoever may edit the event edits the
+    # address too, the group's home address included, which `AddressPolicy` reserves to the `owner`.
+    # Without one, the nested attributes can only build a new address, which is what the form asks
+    # for: it renders these fields solely when the event has no address yet, and links to
+    # `AddressesController#edit` otherwise, where the question is asked properly.
     def event_params
       params.expect(
         event: [ :name, :description, :starts_at, :ends_at, :status, :category,
           :manager_id, :address_id,
           address_attributes: [
-            :id, :name, :street_name, :building_number, :city, :postal_code, :state_code, :country_code, :latitude, :longitude
+            :name, :street_name, :building_number, :city, :postal_code, :state_code, :country_code, :latitude, :longitude
           ]
         ]
       ).tap do |permitted|

@@ -492,8 +492,9 @@ RSpec.describe "Events", type: :request do
   end
 
   describe "foreign keys posted in the body" do
-    # Pointing an event at another group's address is what makes that address reachable? - and so
-    # editable - by somebody with no claim on it. The picker is scoped; the parameter was not.
+    # Pointing an event at another group's address is what makes it an owner of that address - and
+    # so lets it be edited - by somebody with no claim on it. The picker is scoped; the parameter
+    # was not.
     it "ignores an address_id belonging to another group" do
       event = create(:event, address: create(:address))
       actor = create(:member, :active, group: event.group)
@@ -520,6 +521,28 @@ RSpec.describe "Events", type: :request do
 
       expect(event.reload.name).to eq "Renamed"
       expect(event.creator).not_to eq actor
+    end
+
+    # The second door onto an address, and the one the policy cannot see. `address_attributes` with
+    # an `:id` would have `accepts_nested_attributes_for` update that address in place with only
+    # `EventPolicy#update?` asked, so an events_administrator edited the group's home address that
+    # `AddressPolicy` reserves to the `owner`. With no `:id` permitted the attributes build a new
+    # address and the event is repointed at it, which is this actor's own to do - what they cannot
+    # do is reach the address they named. Both halves are asserted: an untouched home address alone
+    # would pass just as well if the whole update had failed, and the new name proves it did not.
+    it "builds a new address rather than editing the one address_attributes names" do
+      home  = create(:address, name: "Rehearsal Hall")
+      group = create(:group, address: home)
+      event = create(:event, group:, address: home)
+      actor = create(:member, :active, :events_administrator, group:)
+      sign_in_as(actor.user)
+
+      patch group_event_path(group, event),
+        params: { event: { name: "Renamed", address_attributes: { id: home.id, name: "Hijacked" } } }
+
+      expect(event.reload.name).to eq "Renamed"
+      expect(home.reload.name).to eq "Rehearsal Hall"
+      expect(event.address.name).to eq "Hijacked"
     end
   end
 
