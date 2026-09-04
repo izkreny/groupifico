@@ -14,7 +14,7 @@ Records the decisions #79 builds, so that #79 cites this file rather than carryi
 
 A ~200-line Node script driving Chromium over the DevTools Protocol, with no dependency beyond Node's global `WebSocket`, found both in one pass. It is attached to #186 rather than committed. The check that mattered was not "is the alert in the DOM" but "does the alert paint": the script composited the element's background over the first opaque ancestor on a 1x1 canvas and read the pixel back, so a translucent fill was measured as a person sees it rather than as `getComputedStyle` reports it. That is the class of defect a browser exists to catch, and it is the class an agent changing a view has no other way to see.
 
-Two questions followed. Whether that script earns a place in the repository beside the system-spec layer #79 was already going to build on `capybara` and `selenium-webdriver`, both waiting in the Gemfile. And, since `.agents/testing.md` keeps the system layer to a few critical happy paths, how an agent verifying its own frontend work avoids rewriting the same checks every time.
+Two questions followed. Whether that script earns a place in the repository beside the system-spec layer #79 was already going to build on `capybara` and `selenium-webdriver`, both waiting in the Gemfile. And how an agent verifying its own frontend work avoids rewriting the same checks every time, which is a question about where those checks accumulate.
 
 ## Decision
 
@@ -41,7 +41,7 @@ The survey behind it, each repository read from source rather than recalled, per
 
 The framework default is Selenium with headless Chrome, and every Basecamp application takes it unchanged. Three things in the survey outweigh that default here.
 
-The Basecamp suites are two to five files each, and the Rails testing guide now says system tests are to be used sparingly and no longer generates them from a scaffold. That is the size `.agents/testing.md` already asks for, so the suite will be small enough that the driver's ergonomics matter less than its footprint.
+The Basecamp suites are two to five files each, and the Rails testing guide now says system tests are to be used sparingly and no longer generates them from a scaffold. This repository goes the other way: `.agents/testing.md` asks for a system spec per view and per flow, which is affordable only because the suite never runs on a runner, so the driver's footprint matters more here rather than less, since every developer machine that runs `bin/ci` pays it.
 
 Cuprite is the one alternative the guide documents, in the same section that documents the default: add the gem, `require "capybara/cuprite"`, `driven_by :cuprite`. Everything else in the corpus is dead (Poltergeist, Apparition) or a second runtime (Playwright, Cypress) that a suite of a few files does not pay for.
 
@@ -68,6 +68,8 @@ Each of these was met in practice while writing #172's script, and each is helpe
 **`selenium-webdriver` leaves and `cuprite` arrives**, in #79, which also names a Chromium binary as a local development prerequisite, in `bin/setup` or the README, since nothing in the Gemfile provides one.
 
 **#79 changes shape.** Its title and criteria described a fifth runner job with screenshots uploaded from the workflow run. They now describe `bin/ci` running the suite, `gh signoff` posting the check, screenshots in `tmp/capybara`, and installing the extension as a step the owner runs, since an install is never an agent's to perform.
+
+**The suite covers every view and flow, so it grows with the application and `bin/ci` grows with it.** That is the owner's chosen trade, paid in local minutes rather than runner time, and it is only sustainable under the rule `.agents/testing.md` states: a spec is extended where a file already covers its view or flow, never rewritten beside it. Presence and absence of an element for a given member stay in the request specs, so the browser suite asserts only what a browser adds.
 
 **`bin/ci` includes the suite, or "local only" decays into "never".** A suite that only runs when somebody remembers is not a gate. This is #79's criterion, and the reason the signoff step in `config/ci.rb` sits after the tests rather than beside them.
 
