@@ -92,6 +92,8 @@ That is a domain invariant rather than an authorization rule - it refuses the la
 
 **Correcting an address has no row of its own.** An address has no permissions and asks whichever group or event points at it: read one you may read the owner of, change one you may change the owner of. So `AddressPolicy` skips the shared pre-checks, and the group's home address row and the event edit row already decide it between them.
 
+**Where both point at one address, the group's row wins.** An event may be given the group's own home address - `Group#addresses` offers every address the group reaches - and asking every owner would then let whoever may edit the event correct the home address, which the group table reserves to the `owner`. So `AddressPolicy#update?` asks the holding group alone wherever one holds the address, and falls back to the events only for an address no group calls home. Pointing at an address is using it, never owning it.
+
 **A registration is answered, never withdrawn.** The statuses are `reserved`, `invited`, `yes`, `maybe` and `no`, and only the last three are an answer, so a member's own writes are limited to those three: `reserved` and `invited` are what somebody filling the event puts you into. Declining is the `no` answer rather than a deletion, which is why no row grants a member the removal of their own registration and `RegistrationPolicy#destroy?` is the three roles' alone.
 
 **A manager invites and does not un-invite.** `manager` is marked for registering another member for their event and is deliberately not marked for changing that member's answer or removing their registration. Filling an event is the manager's job; overruling somebody's own answer, or taking a registration away once it exists, stays with the group's administrators and its events administrators, and a mistaken invitation is undone by one of them rather than by the person who made it.
@@ -106,4 +108,4 @@ Two things in this application sit outside the group axis entirely, and neither 
 
 **A user account and its profile belong to the acting user and to nobody else.** `UserProfilePolicy` skips both pre-checks and answers `record.user_id == user.id`, with `edit?` and `update?` aliased to `show?`, so the same identity test decides reading and writing. No group, no role, and no member of any group can reach another person's account or profile through the group they share. `UsersController` and `UserProfilesController` both resolve their record from `Current.user` rather than from the URL, so the identity is never taken from a parameter in the first place.
 
-**An address has no permissions of its own**, per the note above: it inherits from whichever group or event points at it.
+**An address has no permissions of its own**, per the note above: it inherits from whichever group or event points at it, and from the group alone where a group calls it home.
