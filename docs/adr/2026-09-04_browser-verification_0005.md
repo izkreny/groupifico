@@ -4,7 +4,7 @@
 
 ## Status
 
-Accepted, 2026-09-04. Amends two paragraphs of `2026-08-20_github-repository-conventions_0001.md`: the one that called local signoff for `system-test` "a preference to be tested rather than a settled rule", which this record settles, and the section saying the job "comes back as its own job", which this record replaces with no runner job at all. Both paragraphs stay, since the history they record is true, and each now points here.
+Accepted, 2026-09-04. Amends two paragraphs of `2026-08-20_github-repository-conventions_0001.md`: the one that called local signoff for `system-test` "a preference to be tested rather than a settled rule", which this record settles, and the section saying the job "comes back as its own job", which this record replaces with no runner job at all. Both paragraphs are rewritten to state the current answer and point here, keeping what they recorded as history.
 
 Records the decisions #79 builds, so that #79 cites this file rather than carrying the reasoning.
 
