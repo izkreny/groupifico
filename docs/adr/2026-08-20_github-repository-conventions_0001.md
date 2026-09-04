@@ -34,7 +34,7 @@ The consequence worth stating out loud: **the pull request title is load-bearing
 
 The pin has to be explicit in both directions, because omitting `app_id` does not mean "any app". The API documents omission as "automatically select the GitHub App that has recently provided this check", so a check added without an id silently inherits whoever reported it last. `-1` is the documented value for "explicitly allow any app". This asymmetry was found the hard way, on this branch: removing three checks and adding two back produced two pinned entries and two unpinned ones from identical requests.
 
-**`system-test` is the intended exception, and it is provisional.** When #79 brings that job back, its required check should be added with `app_id: -1` rather than pinned, because a browser suite may be run locally instead of on a runner, with `gh signoff` setting the status by hand; `config/ci.rb` already carries that step commented out. That is a preference to be tested rather than a settled rule: if local signoff turns out not to be worth it, pin `system-test` like the rest and delete this paragraph.
+**The browser suite's check is the one exception, and it is unpinned.** `2026-09-04_browser-verification_0005.md` decided that the suite runs locally rather than on a runner and that `gh signoff` posts its status, whose context is `signoff/<name>`; #79 adds that check with `app_id: -1`, the documented "any app" value, because a status posted from a laptop is by definition not from GitHub Actions. `config/ci.rb` already carries the signoff step commented out. When this record was written the expectation was a `system-test` job whose check took `-1` as a preference to be tested; 0005 is where it was tested and settled.
 
 `enforce_admins` is on for the reason it is usually off: there is one committer, and that committer is an admin. A protection rule an admin may bypass is not a rule, it is a reminder, and it protects the repository exactly as long as the owner remembers it is there. Turning it on costs a real merge that has to wait for a real check, which is the point.
 
@@ -71,11 +71,11 @@ Four parallel jobs: `scan_ruby` runs Brakeman and bundler-audit, `scan_js` runs 
 
 Both are consequences of coupling failures that have nothing to do with each other, which is exactly what separate jobs buy. The parallelism was never the cost; the duplicated setup was, and it was cheap. **Do not group them again.**
 
-### `system-test` was deleted, and it comes back as its own job
+### `system-test` was deleted, and it does not come back as a job
 
 The `system-test` job is gone. Its test step was commented out and `spec/` holds model specs and factories only, so it took a runner on every pull request and reported success without running anything: a green check that proved nothing, which is worse than no check, because it reads as coverage.
 
-Its `actions/upload-artifact` step, which kept screenshots from failed system tests, went with it. **Issue #79 carries both back the day the first system spec lands**, and it is the only thing that will: no gate, no lint rule and no test will notice that day. It returns as a fifth job rather than as steps inside `test`, because a real browser suite runs longer than everything else here and should not sit in front of RSpec's result. The commented-out command it held, `bin/rails db:test:prepare test:system`, was Rails' minitest form and was already wrong for a repository that runs RSpec.
+Its `actions/upload-artifact` step, which kept screenshots from failed system tests, went with it. **Issue #79 brings the suite back the day the first system spec lands, and it runs locally rather than on a runner**, and it is the only thing that will: no gate, no lint rule and no test will notice that day. It was expected to return as a fifth job rather than as steps inside `test`, because a real browser suite runs longer than everything else here and should not sit in front of RSpec's result; the local run keeps that property, since nothing on a runner waits on it. The commented-out command it held, `bin/rails db:test:prepare test:system`, was Rails' minitest form and was already wrong for a repository that runs RSpec. `2026-09-04_browser-verification_0005.md` later decided there is no runner job at all: the suite runs locally from `bin/ci` and `gh signoff` reports it.
 
 ## Consequences
 
@@ -87,7 +87,7 @@ gh api repos/izkreny/groupifico/branches/main/protection --jq '{checks: .require
 gh label list
 ```
 
-**Adding or renaming a CI job is now a two-part change, permanently.** The workflow edit and the `required_status_checks` update have to land together, with the new names read off a real pull request via `gh pr checks` first, and with `app_id` stated rather than omitted, per the pinning section above. Forgetting the second half leaves every open pull request blocked on a check that will never report, and `enforce_admins` means there is no way to merge past it: the recovery is to fix protection, not to force the merge. Issue #79 will hit this, since it adds a fifth job.
+**Adding or renaming a CI job is now a two-part change, permanently.** The workflow edit and the `required_status_checks` update have to land together, with the new names read off a real pull request via `gh pr checks` first, and with `app_id` stated rather than omitted, per the pinning section above. Forgetting the second half leaves every open pull request blocked on a check that will never report, and `enforce_admins` means there is no way to merge past it: the recovery is to fix protection, not to force the merge. Issue #79 will hit this, since it adds a required check, the `signoff/<name>` context that `2026-09-04_browser-verification_0005.md` decides on, even though it adds no job.
 
 **A second committer invalidates the review decision.** The zero-approval argument holds only because the author and the reviewer are the same person. Add a committer and `required_approving_review_count` should become one that same day, at which point the convention half of the gate can be retired.
 

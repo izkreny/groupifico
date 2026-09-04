@@ -4,7 +4,7 @@ The rules specs are written and reviewed against. This file wins on any conflict
 
 ## Framework choices
 
-RSpec (`rspec-rails`) with FactoryBot (`factory_bot_rails`), plus `capybara` and `selenium-webdriver` waiting in the Gemfile for the system layer. This is a deliberate deviation from the 37signals default of Minitest with fixtures, and no alignment pass "fixes" it: testing is where this repository keeps its own choices.
+RSpec (`rspec-rails`) with FactoryBot (`factory_bot_rails`), plus `capybara` for the system layer, driven by Cuprite per [`docs/adr/2026-09-04_browser-verification_0005.md`](../docs/adr/2026-09-04_browser-verification_0005.md); `selenium-webdriver` still sits in the Gemfile and leaves when #79 adds `cuprite`. This is a deliberate deviation from the 37signals default of Minitest with fixtures, and no alignment pass "fixes" it: testing is where this repository keeps its own choices.
 
 ## Philosophy
 
@@ -21,10 +21,10 @@ Kent Beck's, without the test-first ordering. Tests ship in the same commit or P
 - **Model specs** for validations, associations and domain logic. This is where business outcomes are asserted. Validations and associations use the installed `shoulda-matchers` one-liners; hand-rolled checks are for behavior the matchers cannot express.
 - **Request specs** for controller behavior: one file per controller, every action covered, over real HTTP. No controller specs, ever: request specs are the one layer that covers controllers.
 - **Helper specs** for helpers that carry logic.
-- **System specs**: a few critical happy paths only; one smoke test can cover a whole flow. The system layer, its CI job and its first specs belong to #79; this file defines no further system-spec conventions until that lands - only the Determinism section's Capybara seed rules below.
+- **System specs**: every view and every flow, one spec file per view or flow, run on the owner's machine and never on a CI runner, so the suite's length costs no runner time. **Extend the file that already covers the view or flow; a new file is for a view or flow no file covers yet.** That is what keeps the suite accumulating instead of being rewritten in every pull request. A system spec asserts what only a browser shows: that an element paints, that a Turbo navigation lands, that a control behaves when used; whether an element is present or absent for a given member is the request spec's assertion, per the duplication rule below. The layer's conventions are [`docs/adr/2026-09-04_browser-verification_0005.md`](../docs/adr/2026-09-04_browser-verification_0005.md): Cuprite as the driver, a suite that runs locally from `bin/ci` and is reported with `gh signoff` rather than run on a CI runner, and a shared paint matcher with a control watched failing. #79 builds the first specs and adds here what implementing them teaches; the Determinism section's Capybara seed rules below already apply.
 - **View specs**: banned by default. The one carve-out, judged case by case on the PR, is a partial carrying conditional or permission logic that request specs cannot easily reach - the pattern the few real-world heavy users of the layer (gitlabhq, identity-idp, alaveteli) reserve it for. Routine views are covered by request specs asserting the key HTML, and by system specs.
 
-**Never duplicate the same behavior assertion at multiple layers.** A request spec asserts the visible outcome: `expect(response).to redirect_to(order_path(Order.sole))` at most. The business outcome belongs in a model spec that builds its own record: `order = create(:order, items: two_items); expect(order.total).to eq(90)`.
+**Never duplicate the same behavior assertion at multiple layers.** A request spec asserts the visible outcome: `expect(response).to redirect_to(order_path(Order.sole))` at most, or that the rendered HTML does or does not carry a link a given member may see. The business outcome belongs in a model spec that builds its own record: `order = create(:order, items: two_items); expect(order.total).to eq(90)`. The system spec for the same page does not repeat either; it asserts what the browser adds, such as the link painting and leading where it says.
 
 ## The signed-in/signed-out pairing pattern
 
