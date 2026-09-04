@@ -492,8 +492,9 @@ RSpec.describe "Events", type: :request do
   end
 
   describe "foreign keys posted in the body" do
-    # Pointing an event at another group's address is what makes that address reachable? - and so
-    # editable - by somebody with no claim on it. The picker is scoped; the parameter was not.
+    # Pointing an event at another group's address is what makes it an owner of that address - and
+    # so lets it be edited - by somebody with no claim on it. The picker is scoped; the parameter
+    # was not.
     it "ignores an address_id belonging to another group" do
       event = create(:event, address: create(:address))
       actor = create(:member, :active, group: event.group)
@@ -520,6 +521,25 @@ RSpec.describe "Events", type: :request do
 
       expect(event.reload.name).to eq "Renamed"
       expect(event.creator).not_to eq actor
+    end
+
+    # The second door onto an address, and the one the policy cannot see. `address_attributes` with
+    # an `:id` would have `accepts_nested_attributes_for` update that address in place with only
+    # `EventPolicy#update?` asked, so an events_administrator edited the group's home address that
+    # `AddressPolicy` reserves to the `owner`. The name posted alongside proves the request landed,
+    # so an unchanged address is the parameter being dropped rather than the whole update failing.
+    it "ignores address_attributes naming an existing address" do
+      home  = create(:address, name: "Rehearsal Hall")
+      group = create(:group, address: home)
+      event = create(:event, group:, address: home)
+      actor = create(:member, :active, :events_administrator, group:)
+      sign_in_as(actor.user)
+
+      patch group_event_path(group, event),
+        params: { event: { name: "Renamed", address_attributes: { id: home.id, name: "Hijacked" } } }
+
+      expect(event.reload.name).to eq "Renamed"
+      expect(home.reload.name).to eq "Rehearsal Hall"
     end
   end
 
