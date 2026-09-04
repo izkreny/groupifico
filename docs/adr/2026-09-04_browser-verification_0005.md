@@ -73,6 +73,6 @@ Each of these was met in practice while writing #172's script, and each is helpe
 
 **A locally posted status is a trust claim with no artifact trail.** A runner leaves logs and screenshots anyone can open; a signoff leaves a green tick and the owner's word. In a repository with one committer that is the same trust the four pinned checks already extend to whoever pushed, and `gh signoff fail` at least leaves a red mark when the run fails. If a second committer ever arrives, this is the first decision to revisit.
 
-**The two paragraphs of ADR 0001 named under Status each gain a sentence pointing here**, and `.agents/gh-solo.md`'s note that `system-test` "takes `-1`" is corrected to the `signoff/<name>` context when #79 adds the check, so that the name in the file is the name in branch protection.
+**The two paragraphs of ADR 0001 named under Status are rewritten to the current answer and point here**, and `.agents/gh-solo.md`'s note that `system-test` "takes `-1`" is corrected to the `signoff/<name>` context when #79 adds the check, so that the name in the file is the name in branch protection.
 
 **`.agents/testing.md` stops deferring its system-spec conventions to #79.** The conventions are this record; #79 adds what implementing them teaches.
