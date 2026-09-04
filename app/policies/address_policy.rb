@@ -37,8 +37,8 @@ class AddressPolicy < ApplicationPolicy
     # enough, which is the only sensible reading while nothing in the application can point two
     # groups at one address. Nothing can: Rails refuses a foreign `id` in `address_attributes` with
     # `RecordNotFound`, and `EventsController#foreign_address?` drops an `address_id` the acting
-    # group does not own. An address belongs to one group and there is no catalogue crossing them -
-    # settled on #187, which carries that evidence and the migration it priced out.
+    # group does not own - settled on #187, which carries that evidence and the migration it
+    # priced out.
     #
     # An orphan has no owners, so `any?` answers false and the address is refused to everybody -
     # which is the same conclusion the old reachability rule reached, by a shorter route.
