@@ -84,6 +84,16 @@ RSpec.describe AddressPolicy, type: :policy do
       end
     end
 
+    # The manager is the other column the events table marks, and it is not a role, so it needs its
+    # own example rather than following the one above.
+    failed "when the event's manager reaches the group's home address through their event" do
+      before do
+        group  = create(:group, address: record)
+        member = create(:member, :active, user:, group:)
+        create(:event, group:, address: record, manager: member)
+      end
+    end
+
     succeed "when an events_administrator edits an address only an event points at" do
       before do
         member = create(:member, :active, :events_administrator, user:)

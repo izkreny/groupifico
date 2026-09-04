@@ -30,6 +30,7 @@ class AddressPolicy < ApplicationPolicy
   # arrives as show? and the read/write split never sees it. `edit?` stays aliased, because opening
   # a form is a read - a paused member is stopped at submission, the same place `duplicate` stops
   # them.
+  #
   # A group's home address answers to that group alone. An event may point at it - `Group#addresses`
   # offers every address the group reaches, its own among them - but pointing at an address is using
   # it, never owning it, and `docs/AUTHORIZATION.md` reserves correcting the home address to the
