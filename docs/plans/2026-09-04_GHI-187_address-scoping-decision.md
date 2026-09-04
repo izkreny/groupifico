@@ -8,7 +8,7 @@ Issue #187. Acceptance criteria live there.
 
 Three comments in the tree name #187 as an open question, and the question is answered. `config/routes.rb` promises a reuse flow the event form only "gestures at"; `spec/requests/addresses_spec.rb` leaves "whether a reusable venue catalogue should exist" to #187; `app/policies/address_policy.rb` says that if two groups pointing at one address "ever becomes reachable, this is the line to revisit". A reader who follows any of the three finds an issue, not an answer, and concludes the model is unsettled. It is settled: an address belongs to one group, reuse happens inside that group, and there is no cross-group catalogue.
 
-So the deliverable is prose, in the three places the code already looks. There is no migration and no controller change; the review round added one policy fix, which `## Settled` below records.
+So the deliverable started as prose, in the three places the code already looks. The review rounds found the decision was not actually enforced and the branch grew to enforce it: two doors onto an address now agree that a group's home address belongs to that group's owner. There is still no migration. `## Settled` below records both decisions.
 
 ## What the record is written from
 
@@ -30,6 +30,7 @@ The pattern is the one `config/routes.rb` and `spec/requests/addresses_spec.rb` 
 - Rewrite the closing clause of the comment above `describe "the routes that no longer exist"` in `spec/requests/addresses_spec.rb` so the catalogue reads as declined
 - Grep the tree for `#187` and confirm no remaining comment presents it as unanswered
 - Reserve a group's home address to that group's owner in `AddressPolicy#update?`, cover the refusal and its control in `spec/policies/address_policy_spec.rb`, and state the precedence in `docs/AUTHORIZATION.md`
+- Close the second door onto an address by dropping `:id` from `address_attributes` in `EventsController#event_params`, with a request spec proving a PATCH cannot rename the group's home address
 - Run the gates below
 
 ## Verification
@@ -48,4 +49,5 @@ None. The decision was made in the session that finished #187's description, aga
 
 - **Does the argument belong in an ADR, as #186's did?** No. An ADR earns its place when the decision has consequences a reader has to act on; this one records that nothing changes. The issue holds the evidence, and the repository's existing convention is that a comment cites an issue number for the reasoning - which is what "Settled on #172" already does twice.
 - **Does `docs/AUTHORIZATION.md` change?** It did in the end, though not for the reason this question was asked. The inheritance and the skipped pre-checks are untouched; what the review added is the precedence between a group and an event pointing at one address, in the note under the tables and in the closing line.
+- **`EventsController` edits an address through nested attributes with only `EventPolicy` asked, so the RF1 fix guards one door and not the other. Split it out, or close it here?** Settled in the session: here, once and for all. `event_params` drops `:id` from `address_attributes`, which leaves the nested attributes able to build a new address and unable to edit an existing one. The policy is not asked in the controller, because the form already agrees with the narrower rule: it renders those fields only when the event has no address, and links to `AddressesController#edit` otherwise. One door onto editing an address, and it authorizes.
 - **`AddressPolicy#update?` grants a group's home address to whoever may edit an event pointing at it. Which side is wrong, the policy or the tables?** Settled in the review round on RF1: the tables. An `events_administrator` may *use* the group's address - point an event at it - and may not edit it, which belongs solely to the `owner`. So the branch was rescoped to carry the fix rather than only the comments: `update?` asks the holding group alone wherever a group holds the address, and falls back to the events for an address no group calls home. The defect was pre-existing; retiring the `- #187` revisit pointer is what surfaced it.
