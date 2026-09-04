@@ -44,4 +44,5 @@ None. The decisions were made in the session that finished #186; what is left he
 
 ## Settled
 
-None yet.
+- **How many system specs, given that they never run on a runner?** Settled in the session after the review round: every view and every flow gets one, one spec file per view or flow, extended rather than rewritten when a later change touches the same view. Presence and absence of an element stay in the request specs; the browser suite asserts what a browser adds. The ADR's Cuprite argument was corrected to stop resting on a small suite.
+- **Do ADR 0001's two `system-test` paragraphs keep their history with a pointer, or state the current answer?** Settled in the review threads: they are rewritten to the current answer, with the old expectation kept as one sentence of history each.
