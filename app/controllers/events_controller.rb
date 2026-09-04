@@ -87,9 +87,8 @@ class EventsController < ApplicationController
     # arriving by another door. `:address_id` is the one with teeth: pointing an event at another
     # group's address makes this event one of that address's owners, and `AddressPolicy` reads the
     # owners, so it hands the address to somebody with no claim on it. Absent from the list because
-    # nothing may name them:
-    # `:group_id`, which the URL supplies, and `:creator_id`, which the model answers from the
-    # acting member.
+    # nothing may name them: `:group_id`, which the URL supplies, and `:creator_id`, which the model
+    # answers from the acting member.
     #
     # `address_attributes` permits no `:id`, which is what keeps editing an address out of this
     # controller entirely. With one, `accepts_nested_attributes_for` updates the named address in

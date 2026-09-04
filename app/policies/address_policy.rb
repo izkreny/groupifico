@@ -50,9 +50,9 @@ class AddressPolicy < ApplicationPolicy
     # Every record pointing at this address. `any?` rather than `all?`: rights on one owner are
     # enough, which is the only sensible reading while nothing in the application can point two
     # groups at one address. Nothing can: `EventsController#foreign_address?` drops an `address_id`
-    # the acting group does not own, and `GroupsController` is left with nested attributes, which
-    # Rails refuses a foreign `id` in with `RecordNotFound` - settled on #187, which carries that
-    # evidence and the migration it priced out.
+    # the acting group does not own, and the one nested-attributes door left, `GroupsController`,
+    # meets Rails itself, which answers a foreign `id` there with `RecordNotFound`. Settled on #187,
+    # which carries that evidence and the migration it priced out.
     #
     # An orphan has no owners, so `any?` answers false and the address is refused to everybody -
     # which is the same conclusion the old reachability rule reached, by a shorter route.
