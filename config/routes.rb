@@ -15,8 +15,8 @@ Rails.application.routes.draw do
   # out of `group.addresses`. So there is nothing to create standalone - an address pointed at by
   # nothing appears in no picker and is reachable by nobody, its own author included - and nothing
   # to destroy, since every address a member can reach is held by an ON DELETE RESTRICT reference.
-  # What is left is reading them and correcting them. Settled on #172; the reuse flow the event
-  # form gestures at is #187.
+  # What is left is reading them and correcting them. Settled on #172; that the reuse the event
+  # form offers stays inside one group, with no catalogue crossing them, is settled on #187.
   resources :addresses, only: %i[ index show edit update ]
 
   # No `new` and no `create`: signing up and being invited are the two ways to become a user, and

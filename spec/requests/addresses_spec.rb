@@ -119,7 +119,8 @@ RSpec.describe "Addresses", type: :request do
   # There is no GET /addresses/new and no POST /addresses. An address exists as a detail of the
   # group or event that points at it, both of which build one through nested attributes, so an
   # address created standalone appears in no picker and is reachable by nobody - its own author
-  # included. Settled on #172; whether a reusable venue catalogue should exist is #187.
+  # included. Settled on #172; a venue catalogue crossing groups was declined on #187 - an address
+  # belongs to one group, and the event form already reuses the ones that group has.
   #
   # Asked of the router itself rather than of a response. Asserting a 404 proves nothing here: the
   # actions and their views are gone too, so the request fails whether the route exists or not, and
