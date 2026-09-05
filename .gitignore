@@ -40,5 +40,5 @@
 # Ignore machine-local agent permission grants, but keep the shared config.
 /.claude/settings.local.json
 
-# Worktrees Claude Code creates itself; only this path counts as managed.
+# Worktrees created under the managed path, per .agents/gh-solo.md.
 /.claude/worktrees/
