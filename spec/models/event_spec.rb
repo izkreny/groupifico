@@ -102,6 +102,23 @@ RSpec.describe Event, type: :model do
     end
   end
 
+  # The pair is what pins the zone rather than either example alone: a single offset is shared by
+  # dozens of zones, while +02:00 in July and +01:00 in January together are CET/CEST. Both read
+  # the value that would be written, which is what a member typing 20:00 into the form submits.
+  describe "(the application's time zone)" do
+    it "reads a time submitted in July as CEST" do
+      event = described_class.new(starts_at: "2026-07-01 20:00")
+
+      expect(event.starts_at.utc.strftime("%H:%M")).to eq "18:00"
+    end
+
+    it "reads a time submitted in January as CET" do
+      event = described_class.new(starts_at: "2026-01-01 20:00")
+
+      expect(event.starts_at.utc.strftime("%H:%M")).to eq "19:00"
+    end
+  end
+
   describe ".upcoming" do
     before do
       create(:event, :from_the_past)
@@ -180,6 +197,18 @@ RSpec.describe Event, type: :model do
         not_same_day_event = build(:event, starts_at: "2011-11-11 11:00:00", ends_at: "2012-12-12 12:00:00")
 
         expect(not_same_day_event).not_to be_same_day
+      end
+    end
+
+    # A summer night from 00:30 to 02:00 is one day to everyone who attends it and two days in UTC,
+    # which is the whole of what the application's time zone buys: the instants are given here in
+    # UTC so the example asserts the zone the dates are read in rather than the zone they are
+    # written with.
+    context "when the event starts and ends on one local day that spans two UTC days" do
+      it "returns true" do
+        overnight_event = build(:event, starts_at: Time.utc(2026, 6, 30, 22, 30), ends_at: Time.utc(2026, 7, 1, 0, 0))
+
+        expect(overnight_event).to be_same_day
       end
     end
   end
