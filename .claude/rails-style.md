@@ -1,0 +1,1 @@
+../.agents/rails-style.md

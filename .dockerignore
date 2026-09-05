@@ -46,6 +46,9 @@
 # Ignore development files
 /.devcontainer
 
+# Ignore .claude/, whose worktrees would otherwise carry the key and the databases into the build context.
+/.claude/
+
 # Ignore Docker-related files
 /.dockerignore
 /Dockerfile*
