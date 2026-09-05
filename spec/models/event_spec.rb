@@ -102,6 +102,23 @@ RSpec.describe Event, type: :model do
     end
   end
 
+  # The pair is what pins the zone rather than either example alone: a single offset is shared by
+  # dozens of zones, while +02:00 in July and +01:00 in January together are CET/CEST. Both read
+  # the value that would be written, which is what a member typing 20:00 into the form submits.
+  describe "(the application's time zone)" do
+    it "reads a time submitted in July as CEST" do
+      event = described_class.new(starts_at: "2026-07-01 20:00")
+
+      expect(event.starts_at.utc.strftime("%H:%M")).to eq "18:00"
+    end
+
+    it "reads a time submitted in January as CET" do
+      event = described_class.new(starts_at: "2026-01-01 20:00")
+
+      expect(event.starts_at.utc.strftime("%H:%M")).to eq "19:00"
+    end
+  end
+
   describe ".upcoming" do
     before do
       create(:event, :from_the_past)
