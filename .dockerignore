@@ -46,6 +46,9 @@
 # Ignore development files
 /.devcontainer
 
+# Ignore agent files, and any worktree created under .claude/worktrees/.
+/.claude/
+
 # Ignore Docker-related files
 /.dockerignore
 /Dockerfile*
