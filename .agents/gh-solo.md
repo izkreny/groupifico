@@ -2,9 +2,21 @@
 
 Per-repo facts for the `gh-solo` skills that read this file: the values they tell you to look up here rather than assume, and the places this repository differs from their defaults. This file wins on any conflict. Anything not listed here follows the skills' own standards.
 
-## Worktree folders
+## Worktrees
 
-For development, clone the repository into a folder named `main` inside a dedicated project folder, for example `~/Projects/groupifico/main`, so the worktrees for the parallel streams land beside it as siblings: `second`, with `third` to come when two streams feel comfortable. Each folder hosts one issue's branch, or a `gh stack` of dependent branches, at a time, and is reused across issues; never create a folder per branch. The decision record is the beta-scope spike plan, `docs/plans/2026-08-23_GHI-150_beta-scope-ai-harness.md`.
+One worktree per issue, created with its branch, at `.claude/worktrees/GHI-{number}/`. That path is the only location Claude Code treats as managed, so entering it never prompts, where a worktree anywhere else prompts on every session. Create it immediately after `gh issue develop`, which is where the branch comes from:
+
+```bash
+git worktree add .claude/worktrees/GHI-{number} {branch}
+```
+
+The repository root holds the default branch and stays on it. An issue is worked in its own worktree unless the owner says otherwise for that issue. A permanently checked-out trunk is also what the `pr-flow` skill's merge step assumes when it declines `--delete-branch`.
+
+A stack is the exception, and takes one worktree for the whole stack. `gh stack sync` and `gh stack rebase` rewrite every branch in it, and git refuses to move a branch checked out in another worktree, so a worktree per branch fails a cascade rebase partway through and leaves the stack half-moved. The `pr-flow` skill's stack workflow states the same trap from its own side.
+
+A new worktree carries no gitignored state: `config/master.key` and `storage/*.sqlite3` are absent, so copy the key in from the root checkout and seed the database before running `bin/ci` there.
+
+Remove the worktree before deleting the branch, `git worktree remove .claude/worktrees/GHI-{number}`. A branch still checked out somewhere cannot be deleted from the root.
 
 ## Commit and branch types
 
