@@ -14,7 +14,7 @@ The repository root holds the default branch and stays on it. An issue is worked
 
 A stack is the exception, and takes one worktree for the whole stack. `gh stack sync` and `gh stack rebase` rewrite every branch in it, and git refuses to move a branch checked out in another worktree, so a worktree per branch fails a cascade rebase partway through and leaves the stack half-moved. The `pr-flow` skill's stack workflow states the same trap from its own side.
 
-A new worktree carries no gitignored state, and needs none for `bin/ci`: its first step is `bin/setup`, and it seeds and resets the test database itself. `config/master.key` is still worth copying in from an existing checkout, because `bin/rails credentials:edit` mints a fresh wrong one rather than failing, and nothing outside production reads credentials to tell you it is missing.
+A new worktree carries no gitignored state, and needs none for `bin/ci`: its first step is `bin/setup`, and it seeds and resets the test database itself. Running the server there does need one step first, `bin/rails db:prepare`, or the first request answers `ActiveRecord::PendingMigrationError` rather than a page, which names the database and reads like a connection problem. `config/master.key` is worth copying in from an existing checkout even though development needs none of it, because `bin/rails credentials:edit` mints a fresh wrong one rather than failing and `Rails.application.credentials` returns nil instead of raising.
 
 Remove the worktree before deleting the branch, `git worktree remove .claude/worktrees/GHI-{number}`. A branch still checked out somewhere cannot be deleted from the root.
 
