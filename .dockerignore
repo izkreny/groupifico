@@ -46,7 +46,7 @@
 # Ignore development files
 /.devcontainer
 
-# Ignore agent files, and any worktree created under .claude/worktrees/.
+# Ignore .claude/, whose worktrees would otherwise carry the key and the databases into the build context.
 /.claude/
 
 # Ignore Docker-related files
