@@ -182,6 +182,18 @@ RSpec.describe Event, type: :model do
         expect(not_same_day_event).not_to be_same_day
       end
     end
+
+    # A summer night from 00:30 to 02:00 is one day to everyone who attends it and two days in UTC,
+    # which is the whole of what the application's time zone buys: the instants are given here in
+    # UTC so the example asserts the zone the dates are read in rather than the zone they are
+    # written with.
+    context "when the event starts and ends on one local day that spans two UTC days" do
+      it "returns true" do
+        overnight_event = build(:event, starts_at: Time.utc(2026, 6, 30, 22, 30), ends_at: Time.utc(2026, 7, 1, 0, 0))
+
+        expect(overnight_event).to be_same_day
+      end
+    end
   end
 
   describe "#shift_by(duration)" do

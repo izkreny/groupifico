@@ -21,12 +21,19 @@ module Groupifico
     # :vips and install libvips in CI on the day variants are actually used.
     config.active_storage.variant_processor = :disabled
 
+    # Every member is in one time zone today, so times render where the members
+    # are rather than where the server is. Storage is untouched: this sets only
+    # Time.zone, which is what a time-zone-aware attribute is read in, what a
+    # datetime field renders and what a submitted string is parsed in, while
+    # ActiveRecord.default_timezone stays :utc. #135 and #89 are the multi-zone
+    # answer for the day one zone stops being true.
+    config.time_zone = "Europe/Zagreb"
+
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files
     # in config/environments, which are processed later.
     #
-    # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
   end
 end
