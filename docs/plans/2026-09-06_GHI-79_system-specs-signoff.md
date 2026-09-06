@@ -33,7 +33,7 @@ The branch protection change is last, and it is the one step with a blast radius
 - Add the control spec asserting an uncompiled utility class does not paint, and watch it go red against a class that does compile before trusting it
 - Add a browser sign-in helper that mints a sign-in token, visits the link's URL and completes the confirmation, wired to `type: :system` alongside the existing request-spec helpers
 - Write the first system spec for the refusal path: a paused member submitting the group edit form lands on the root page and the alert paints, asserting only what a browser adds over the request specs that already cover the redirect and the message
-- Make `bin/setup` fail loudly when no Chromium binary can be found, so a machine without one learns at setup rather than mid-suite
+- Point Cuprite at Chromium explicitly rather than letting Ferrum search, resolving the binary from a documented environment variable and falling back to the usual Chromium names, and have `bin/setup` fail loudly when neither finds one
 - Record in `.agents/testing.md` what implementing the layer taught, and remove every transitional sentence about it: the Framework choices line names the driver without naming what it replaced, and the system-spec bullet states the conventions without citing the issue that built them
 - Correct the CI check-run section of `.agents/gh-solo.md` to name the signoff context as it now exists, replacing the anticipated `system-test` name
 - Last, and only after a signoff has posted on this pull request and its context has been read back from it, add that context to `required_status_checks` with `app_id: -1`
@@ -56,7 +56,6 @@ Two things no gate here can see. Whether the paint matcher measures what a perso
 
 - The context name is the owner's to choose, and it is permanent once branch protection requires it. `system` keeps the suite's own word; `system-test` preserves the name ADR 0001 anticipated and the one `.agents/gh-solo.md` currently carries, at the cost of implying a job that no longer exists. The plan writes whichever is chosen into both files and into protection.
 - The commented block posts nothing on the failure branch: `failure` prints locally while `gh signoff fail` would leave a red mark on the commit. The decision record's trust argument leans on that red mark existing, but the issue's criteria never ask for it, so adding it is scope the owner should grant rather than the plan assume.
-- Whether Ferrum finds a Chromium binary unaided on a developer machine, or whether the suite needs an explicit browser path, is unknown until the first spec runs. It changes what `bin/setup` checks for and possibly adds a documented environment variable.
 - `spec/rails_helper.rb` blocks outbound HTTP with `WebMock.disable_net_connect!(allow_localhost: true)`, and the allowance should cover both Capybara's server and Cuprite's DevTools socket. `basecamp_once-campfire` nonetheless disables WebMock outright in its system-test base class, so if the first spec cannot reach the browser this is the first thing to suspect rather than the driver.
 
 ## Settled
