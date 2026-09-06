@@ -4,7 +4,7 @@
 
 ## Status
 
-Accepted, 2026-09-04. Amends two paragraphs of `2026-08-20_github-repository-conventions_0001.md`: the one that called local signoff for `system-test` "a preference to be tested rather than a settled rule", which this record settles, and the section saying the job "comes back as its own job", which this record replaces with no runner job at all. Both paragraphs are rewritten to state the current answer and point here, keeping what they recorded as history.
+Accepted, 2026-09-04. Amended 2026-09-06 by #79: the reporting decision in `The suite runs locally` is superseded, and that section states the current answer and keeps what it recorded. Amends two paragraphs of `2026-08-20_github-repository-conventions_0001.md`: the one that called local signoff for `system-test` "a preference to be tested rather than a settled rule", which this record settles, and the section saying the job "comes back as its own job", which this record replaces with no runner job at all. Both paragraphs are rewritten to state the current answer and point here, keeping what they recorded as history.
 
 Records the decisions #79 builds, so that #79 cites this file rather than carrying the reasoning.
 
@@ -47,7 +47,9 @@ Cuprite is the one alternative the guide documents, in the same section that doc
 
 Selenium drives Chrome through a version-matched `chromedriver` binary, which is why `basecamp_writebook`'s workflow installs the browser itself before the suite runs. Cuprite drives Chromium over the DevTools Protocol directly, through Ferrum, which is what #172's script already did with nothing installed beyond the browser. The paint check ports as it stands, through `page.evaluate_script`, because it was CDP all along.
 
-### The suite runs locally, and `gh signoff` reports it
+### The suite runs locally, and nothing reports it
+
+**Amended by #79, which built the layer.** This section decided that `gh signoff` would post a status and that branch protection would require it. It does not, and protection is untouched. What that requirement would have bought over the pull request's own `## Verification` box is only that the box cannot be ticked untruthfully, and a status posted from a laptop rests on exactly that trust already, so it bought less than its blast radius: with `enforce_admins` on, adding the context makes every open pull request need a signoff from that moment, branches cut earlier included, with no admin override. The box is the gate, `.agents/testing.md` states that running `bin/ci` before marking a pull request ready is required, and the extension is not used. Everything below is what was decided on 2026-09-04 and is kept because the reasoning about *where* the suite runs still holds; only the reporting changed.
 
 `spec/system` runs from `bin/ci` on the owner's machine and never on a GitHub Actions runner. There is no `system-test` job in `.github/workflows/ci.yml`, and #79 does not add one.
 
