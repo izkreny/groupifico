@@ -1,17 +1,12 @@
 module SystemAuthenticationHelper
   # The default. Everything in this application except authentication itself sits behind a session,
   # so a browser pass through the sign-in cycle would be a cost every spec in the suite pays, and
-  # the suite is meant to grow to one spec per view and per flow. The signed value is the one
-  # `AuthenticationHelper` already computes, so the cookie's signing scheme lives in one place.
+  # the suite is meant to grow to one spec per view and per flow. The signed value comes from
+  # `AuthenticationHelper`, which is where the cookie's signing scheme lives for both suites.
   def sign_in_as(user)
-    session = user.sessions.create!
-
-    ActionDispatch::TestRequest.create.cookie_jar.tap do |jar|
-      jar.signed[:session_id] = session.id
-      page.driver.set_cookie("session_id", jar[:session_id])
+    user.sessions.create!.tap do |session|
+      page.driver.set_cookie("session_id", AuthenticationHelper.signed_session_cookie(session))
     end
-
-    session
   end
 
   # For a spec whose subject *is* authentication. Mints a token, follows the link the email would
