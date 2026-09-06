@@ -14,14 +14,13 @@ CI.run do
   # Reset before the suite, not after the seed step: delete it and this run goes red instead of the next one.
   step "Tests: Reset database", "bin/rails db:test:prepare"
   step "Tests: Rails", "bin/rspec"
-  # step "Tests: Rails", "bin/rails test"
-  # step "Tests: System", "bin/rails test:system"
 
-  # Optional: set a green GitHub commit status to unblock PR merge.
-  # Requires the `gh` CLI and `gh extension install basecamp/gh-signoff`.
-  # if success?
-  #   step "Signoff: All systems go. Ready for merge and deploy.", "gh signoff"
-  # else
-  #   failure "Signoff: CI failed. Do not merge or deploy.", "Fix the issues and try again."
-  # end
+  # `app/assets/builds` is gitignored, so a fresh checkout has no compiled CSS and every page the
+  # browser loads renders unstyled - which makes a paint assertion pass for the wrong reason. The
+  # suite refuses outright without it; this is what stops that refusal being a daily surprise.
+  step "Tests: Stylesheet", "bin/rails tailwindcss:build"
+  # Last, and after the RSpec step: the browser suite is the slowest thing in this gate and should
+  # not sit in front of everything else's result. `.rspec` excludes `spec/system` from every bare
+  # run, the CI runner's included, so clearing the exclusion here is what admits it.
+  step "Tests: System", "bin/rspec --exclude-pattern '' spec/system"
 end

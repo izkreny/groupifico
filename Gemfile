@@ -76,7 +76,10 @@ end
 group :test do
   # Use system testing [https://guides.rubyonrails.org/testing.html#system-testing]
   gem "capybara"
-  gem "selenium-webdriver"
+  gem "cuprite"
+
+  # The Capybara cops, which rubocop-rspec carried until its 3.0 and no longer does
+  gem "rubocop-capybara", require: false
 
   # Blocks outbound HTTP so a spec can never depend on the network
   gem "webmock"
