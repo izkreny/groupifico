@@ -61,7 +61,7 @@ Two things no gate here can see. Whether the paint matcher measures what a perso
 
 ## Open questions
 
-- `spec/rails_helper.rb` blocks outbound HTTP with `WebMock.disable_net_connect!(allow_localhost: true)`, and the allowance should cover both Capybara's server and Cuprite's DevTools socket. `basecamp_once-campfire` nonetheless disables WebMock outright in its system-test base class, so if the first spec cannot reach the browser this is the first thing to suspect rather than the driver.
+None.
 
 ## Settled
 
@@ -70,5 +70,9 @@ Two things no gate here can see. Whether the paint matcher measures what a perso
 - **Is `gh signoff` used at all, once nothing requires its context?** No. It would post a green status no gate reads, which is what ADR 0001 rejected in deleting the `system-test` job, so the commented block in `config/ci.rb` is deleted rather than uncommented and the extension is not needed. This supersedes the section of ADR 0005 deciding that `gh signoff` reports this suite, which is amended by a step above rather than left contradicted, and it makes the issue's fourth acceptance criterion wrong as well as its fifth.
 
 - **What happens to the names that still say "signoff"?** The issue is renamed to "add the first system specs" and its two wrong criteria are rewritten, and the pull request title follows it, because both reach `main` and a wrong one there is permanent. This file's own name and the branch's keep the old slug, since renaming either mid-branch costs more than the mismatch does.
+
+- **Does WebMock need disabling for system specs, as `basecamp_once-campfire` does?** No. `allow_localhost: true` covers both Capybara's server and Cuprite's DevTools socket, observed by the first spec reaching a real page with no change to the WebMock setup.
+
+- **Does the suite need a compiled stylesheet, and does anything notice when it is missing?** It does need one, and nothing noticed. `app/assets/builds` is gitignored, so a fresh checkout renders every page unstyled and the paint matcher's negative control passed on a page where nothing painted at all. `bin/ci` now builds the stylesheet before the suite and the suite refuses without it. Found by checking what the browser had actually loaded rather than by trusting a green control.
 
 - **Does every system spec sign in through the browser?** No: only a spec whose subject is authentication. Every other spec sets the session cookie through the driver, because everything in this application except authentication sits behind it, so a browser sign-in per spec is a cost the whole suite pays forever. The reference suites are small enough that it never mattered to them; this one is built to grow to a spec per view and per flow.
