@@ -20,7 +20,8 @@ CI.run do
   # suite refuses outright without it; this is what stops that refusal being a daily surprise.
   step "Tests: Stylesheet", "bin/rails tailwindcss:build"
   # Last, and after the RSpec step: the browser suite is the slowest thing in this gate and should
-  # not sit in front of everything else's result. `.rspec` excludes `spec/system` from every bare
-  # run, the CI runner's included, so clearing the exclusion here is what admits it.
-  step "Tests: System", "bin/rspec --exclude-pattern '' spec/system"
+  # not sit in front of everything else's result. RSpec joins `.rspec`'s exclude pattern onto the
+  # path it is given, so the exclusion bites only when that path is `spec` or absent - naming the
+  # directory is itself what admits the suite, and no flag is needed here to override anything.
+  step "Tests: System", "bin/rspec spec/system"
 end
