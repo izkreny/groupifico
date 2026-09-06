@@ -22,7 +22,7 @@ The paint matcher goes further than anything in those suites. Fizzy is the only 
 
 The paint matcher is the reason this layer exists at all, so it carries its own control. An uncompiled utility class and a colour identical to its background both report a contrast ratio of exactly 1.0, which means a passing control proves two separate things: that the matcher measures, and that the class under test survived the Tailwind build. Per `.agents/testing.md` the control is watched red before it is trusted, and the way to watch it is to point it at a class that does compile and see the run go red.
 
-The branch protection change is last, and it is the one step with a blast radius beyond this branch. `enforce_admins` is on and there is no way to merge past a check that never reports, so the context name has to be read off a signoff that actually posted before it is required of anything. That ordering is a step in its own right below rather than a note, because getting it backwards blocks every open pull request with no admin override.
+Branch protection is not touched, and that is a deliberate narrowing of what the issue asked for. Requiring the signoff context would make every open pull request need one from that moment, branches cut before the change included, with `enforce_admins` on and no admin override. What the requirement would buy over a `## Verification` box is only that the box cannot be ticked untruthfully, and a signoff posted from a laptop already rests on exactly that trust, so it buys less than its blast radius costs. The gate is therefore the checkbox, which `merge` already refuses on, and `.agents/testing.md` carries the requirement in prose for the next reader.
 
 ## Steps
 
@@ -34,9 +34,10 @@ The branch protection change is last, and it is the one step with a blast radius
 - Add a browser sign-in helper that mints a sign-in token, visits the link's URL and completes the confirmation, wired to `type: :system` alongside the existing request-spec helpers
 - Write the first system spec for the refusal path: a paused member submitting the group edit form lands on the root page and the alert paints, asserting only what a browser adds over the request specs that already cover the redirect and the message
 - Point Cuprite at Chromium explicitly rather than letting Ferrum search, resolving the binary from a documented environment variable and falling back to the usual Chromium names, and have `bin/setup` fail loudly when neither finds one
+- Add `rubocop-capybara` to the `:test` group and load it as a plugin beside `rubocop-rspec`, which no longer carries the Capybara cops, then read its cop list and configure anything that fights the Determinism rules rather than working around it
 - Record in `.agents/testing.md` what implementing the layer taught, and remove every transitional sentence about it: the Framework choices line names the driver without naming what it replaced, and the system-spec bullet states the conventions without citing the issue that built them
-- Correct the CI check-run section of `.agents/gh-solo.md` to name the signoff context as it now exists, replacing the anticipated `system-test` name
-- Last, and only after a signoff has posted on this pull request and its context has been read back from it, add that context to `required_status_checks` with `app_id: -1`
+- State in `.agents/testing.md` that running the browser suite before marking a pull request ready is required, since nothing enforces it once branch protection is left alone
+- Correct the CI check-run section of `.agents/gh-solo.md` to say the browser suite is reported by a signoff rather than by a required check, replacing the anticipated `system-test` name
 
 ## Verification
 
@@ -47,10 +48,11 @@ The branch protection change is last, and it is the one step with a blast radius
 - The refusal spec exits 1 when `layouts/_flash.html.erb` has its `alert` branch removed, which is the defect this layer exists to catch
 - `test -n "$(ls tmp/capybara)"` exits 0 after a deliberately failed system spec, which is the screenshot landing where the issue asks for it
 - `bin/setup --skip-server` exits non-zero when no Chromium binary is discoverable, watched against a run where the binary is reachable
-- `gh signoff status` reports a posted context for this branch's HEAD, and `gh pr checks` names it, before any branch protection change is made
+- `bin/rspec --exclude-pattern "" spec/system` exits 0 on this branch's HEAD, which is the browser suite itself and the gate that replaces the required check
+- `gh pr checks` lists exactly the four contexts it lists today, which is branch protection having been left alone
 - `python3 <skill-dir>/scripts/docs-check.py --root . --ignore 'docs/plans*' --ignore '.agents/*' --ignore 'spec/system/*' --ignore 'spec/support/*'` exits 0 over this plan
 
-Two things no gate here can see. Whether the paint matcher measures what a person actually sees is a judgement about compositing, not an exit code: the control proves the matcher is live and the ratio is real, but a wrong opaque-ancestor walk would still produce a confident number. And a locally posted signoff is a trust claim with no artifact trail, which the decision record accepts deliberately for a repository with one committer; nothing in this branch changes that, and the first arrival of a second committer is the point to revisit it.
+Two things no gate here can see. Whether the paint matcher measures what a person actually sees is a judgement about compositing, not an exit code: the control proves the matcher is live and the ratio is real, but a wrong opaque-ancestor walk would still produce a confident number. And nothing here can see whether the browser suite was actually run before a pull request is marked ready, because the gate for it is a checkbox rather than a required check. That is the trade this branch takes deliberately, and it is a wider version of the trust the decision record already accepted for a laptop-posted signoff. The first arrival of a second committer is the point to revisit both.
 
 ## Open questions
 
