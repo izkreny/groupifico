@@ -1,4 +1,5 @@
 require "capybara/cuprite"
+require Rails.root.join("lib/chromium")
 
 # Rails resolves its screenshot directory as `Capybara.save_path.presence || "tmp/screenshots"`,
 # and Capybara ships the setting empty, so without this a failing spec writes somewhere the issue
@@ -13,27 +14,31 @@ Capybara.register_driver :chromium do |app|
     process_timeout: 30)
 end
 
-STYLESHEET = Rails.root.join("app/assets/builds/tailwind.css")
+module Stylesheet
+  PATH = Rails.root.join("app/assets/builds/tailwind.css")
 
-# Without this the whole layer is worthless rather than merely incomplete. `app/assets/builds` is
-# gitignored, so a fresh checkout has no compiled CSS, every page renders unstyled, and the paint
-# matcher's negative control passes because nothing on the page paints at all - a check that passes
-# on everything, which is indistinguishable from one that passes on nothing. Found exactly that way
-# while writing the control.
-MISSING_STYLESHEET = <<~MESSAGE.freeze
-  No compiled stylesheet at #{STYLESHEET.relative_path_from(Rails.root)}.
+  # Without this the whole layer is worthless rather than merely incomplete. `app/assets/builds` is
+  # gitignored, so a fresh checkout has no compiled CSS, every page renders unstyled, and the paint
+  # matcher's negative control passes because nothing on the page paints at all - a check that
+  # passes on everything, which cannot be told from one that passes on nothing. Found exactly that
+  # way while writing the control.
+  MISSING = <<~MESSAGE.freeze
+    No compiled stylesheet at #{PATH.relative_path_from(Rails.root)}.
 
-  System specs assert what a page paints, so an unstyled page makes them pass for the wrong
-  reason. Build it first:
+    System specs assert what a page paints, so an unstyled page makes them pass for the wrong
+    reason. Build it first:
 
-      bin/rails tailwindcss:build
+        bin/rails tailwindcss:build
 
-  `bin/ci` does this for you; a bare `bin/rspec spec/system` does not.
-MESSAGE
+    `bin/ci` does this for you; a bare `bin/rspec spec/system` does not.
+  MESSAGE
+
+  def self.compiled? = PATH.exist? && PATH.size.positive?
+end
 
 RSpec.configure do |config|
   config.before(type: :system) do
-    raise MISSING_STYLESHEET unless STYLESHEET.exist? && STYLESHEET.size.positive?
+    raise Stylesheet::MISSING unless Stylesheet.compiled?
 
     driven_by :chromium
   end

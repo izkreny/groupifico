@@ -25,22 +25,14 @@ FileUtils.chdir APP_ROOT do
   system! "bin/rails db:reset" if ARGV.include?("--reset")
 
   puts "\n== Checking for Chromium =="
-  # Chromium only. Ferrum's own lookup would take Chrome first where both are installed, and the
-  # system specs assert what a page paints, so which engine drew the pixel is part of the meaning.
-  chromium = ENV["CHROMIUM_PATH"]
-  chromium ||= %w[ chromium chromium-browser ].filter_map do |name|
-    ENV["PATH"].to_s.split(File::PATH_SEPARATOR)
-      .map { |dir| File.join(dir, name) }
-      .find { |path| File.executable?(path) && !File.directory?(path) }
-  end.first
-
-  abort <<~MESSAGE unless chromium
-    No Chromium binary found, and the system specs need one to run.
-
-    Install it through your package manager, or set CHROMIUM_PATH to the binary.
-    Tried, on PATH: chromium, chromium-browser
-  MESSAGE
-  puts chromium
+  # The same resolver the system specs use, so the two cannot disagree about which binaries count
+  # or about what a set-but-wrong CHROMIUM_PATH means.
+  require_relative "../lib/chromium"
+  begin
+    puts Chromium.path
+  rescue Chromium::NotFound => e
+    abort e.message
+  end
 
   puts "\n== Removing old logs and tempfiles =="
   system! "bin/rails log:clear tmp:clear"
