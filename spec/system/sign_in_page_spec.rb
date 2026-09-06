@@ -16,7 +16,9 @@ RSpec.describe "The sign-in page", type: :system do
     expect(page).to paint "input[type=submit]"
   end
 
-  it "accepts an address and answers without saying whether it exists" do
+  # Named for what it asserts. That the answer is identical whether or not the address has an
+  # account is `spec/requests/sessions_spec.rb`'s to prove, and nothing here reads the copy.
+  it "paints the notice after a submission" do
     fill_in "email", with: "someone@example.com"
     click_button "Email me a sign-in link"
 
