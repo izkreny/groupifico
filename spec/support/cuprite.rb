@@ -1,5 +1,4 @@
 require "capybara/cuprite"
-require Rails.root.join("lib/chromium")
 
 # Rails resolves its screenshot directory as `Capybara.save_path.presence || "tmp/screenshots"`,
 # and Capybara ships the setting empty, so without this a failing spec writes somewhere the issue
