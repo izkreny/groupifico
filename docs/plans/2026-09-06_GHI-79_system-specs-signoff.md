@@ -62,4 +62,4 @@ Two things no gate here can see. Whether the paint matcher measures what a perso
 
 ## Settled
 
-None yet.
+- **Should branch protection require the signoff context, as the issue's fifth criterion asks?** No. The gate is the `## Verification` checkbox, which `merge` already refuses on, and `.agents/testing.md` states the requirement in prose. Requiring the context would have made every open pull request need a signoff from that moment, with `enforce_admins` on and no admin override, and it buys only that the box cannot be ticked untruthfully, which is the same trust a laptop-posted signoff already asks for. The issue's fifth acceptance criterion is superseded and needs amending.
