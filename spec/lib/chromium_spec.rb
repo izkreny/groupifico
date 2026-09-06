@@ -5,10 +5,10 @@ RSpec.describe Chromium do
   # naming nothing executable used to pass the check and die later inside Ferrum's launcher, and an
   # empty value used to count as an answer.
   #
-  # Every example here builds its own PATH rather than reading the host's. These run inside the
-  # bare `bin/rspec` gate, which `.rspec` deliberately keeps free of the browser, so asserting the
-  # outcome of a real search would make an installed Chromium a precondition of a suite that is
-  # supposed to need none.
+  # Every example builds the PATH it needs in its own body rather than reading the host's. These
+  # run inside the bare `bin/rspec` gate, which `.rspec` deliberately keeps free of the browser, so
+  # asserting the outcome of a real search would make an installed Chromium a precondition of a
+  # suite that is supposed to need none.
   describe ".path" do
     around do |example|
       original = { "CHROMIUM_PATH" => ENV.fetch("CHROMIUM_PATH", nil), "PATH" => ENV.fetch("PATH", nil) }
@@ -17,21 +17,26 @@ RSpec.describe Chromium do
     end
 
     let(:elsewhere) { Dir.mktmpdir }
-    let(:planted) { File.join(elsewhere, "chromium") }
 
     after { FileUtils.remove_entry(elsewhere) }
 
-    def plant_a_browser
-      File.write(planted, "#!/bin/sh\n")
-      File.chmod(0o755, planted)
-      ENV["PATH"] = elsewhere
+    def executable_at(path)
+      File.write(path, "#!/bin/sh\n")
+      File.chmod(0o755, path)
+      path
     end
 
-    it "takes the environment variable when it names an executable" do
-      plant_a_browser
-      ENV["CHROMIUM_PATH"] = planted
+    # The two paths differ deliberately. Point the variable at the same binary the search would
+    # find and the example passes even with the variable ignored entirely, which is what it is
+    # here to rule out.
+    it "prefers the environment variable to anything on PATH" do
+      searchable = executable_at(File.join(elsewhere, "chromium"))
+      named = executable_at(File.join(elsewhere, "some-other-browser"))
+      ENV["PATH"] = elsewhere
+      ENV["CHROMIUM_PATH"] = named
 
-      expect(described_class.path).to eq planted
+      expect(described_class.path).to eq named
+      expect(described_class.path).not_to eq searchable
     end
 
     it "refuses a value that names nothing executable, quoting it" do
@@ -48,7 +53,8 @@ RSpec.describe Chromium do
     end
 
     it "searches when the variable is empty rather than treating it as an answer" do
-      plant_a_browser
+      planted = executable_at(File.join(elsewhere, "chromium"))
+      ENV["PATH"] = elsewhere
       ENV["CHROMIUM_PATH"] = ""
 
       expect(described_class.path).to eq planted
@@ -59,8 +65,8 @@ RSpec.describe Chromium do
     # the constant said and pass on a list naming Chrome, which is the one browser `NAMES` exists
     # to exclude.
     it "names what it tried when the search finds nothing" do
-      ENV["CHROMIUM_PATH"] = nil
       ENV["PATH"] = elsewhere
+      ENV["CHROMIUM_PATH"] = nil
 
       expect { described_class.path }
         .to raise_error described_class::NotFound, /Tried, on PATH: chromium, chromium-browser/
