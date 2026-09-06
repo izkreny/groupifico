@@ -30,13 +30,12 @@ RSpec.describe Chromium do
     # find and the example passes even with the variable ignored entirely, which is what it is
     # here to rule out.
     it "prefers the environment variable to anything on PATH" do
-      searchable = executable_at(File.join(elsewhere, "chromium"))
+      executable_at File.join(elsewhere, "chromium")
       named = executable_at(File.join(elsewhere, "some-other-browser"))
       ENV["PATH"] = elsewhere
       ENV["CHROMIUM_PATH"] = named
 
       expect(described_class.path).to eq named
-      expect(described_class.path).not_to eq searchable
     end
 
     it "refuses a value that names nothing executable, quoting it" do
@@ -65,8 +64,8 @@ RSpec.describe Chromium do
     # the constant said and pass on a list naming Chrome, which is the one browser `NAMES` exists
     # to exclude.
     it "names what it tried when the search finds nothing" do
-      ENV["PATH"] = elsewhere
       ENV["CHROMIUM_PATH"] = nil
+      ENV["PATH"] = elsewhere
 
       expect { described_class.path }
         .to raise_error described_class::NotFound, /Tried, on PATH: chromium, chromium-browser/
