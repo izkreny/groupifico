@@ -62,6 +62,8 @@ Every other axis in the standards is **open, and its labels arrive when somethin
 
 `commit-message.prefix` is deliberately not set. Dependabot infers its subject prefix from the patterns already in the repository, and `build` dominates `main`, so pinning it added a line of config to assert something the history already says.
 
+> **Correction, 2026-09-07 (#269).** The inference that paragraph relies on does not hold here either. Dependabot's own subjects are `ci:`, not `build:`: #266 is "ci: bump image_processing from 2.0.3 to 2.1.0", #267 is "ci: bump action_policy from 0.7.6 to 0.7.7", and 9b0bcc2 on `main` is "ci: update GitHub workflows actions", which [`.agents/gh-solo.md`](../../.agents/gh-solo.md) records as a Dependabot squash and a mistake. So leaving the key unset does not produce the vocabulary this repository uses, and `ci` is not one of its types. Whether to set the key is left open rather than decided here, because the bumps land by hand in pull requests of this repository's own and a Dependabot subject never reaches `main` unless one is merged, which [`.agents/dependencies.md`](../../.agents/dependencies.md) says never happens.
+
 ### The CI jobs stay separate, one check per concern
 
 Four parallel jobs: `scan_ruby` runs Brakeman and bundler-audit, `scan_js` runs `bin/importmap audit`, `lint` runs RuboCop, `test` runs RSpec.
