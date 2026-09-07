@@ -1,0 +1,39 @@
+# Configures Herb's linter, formatter and language server. Only the linter is
+# gated by `bin/ci`; see the `Style: ERB` step in `config/ci.rb`.
+#
+# Docs: https://herb-tools.dev/configuration
+
+# Locks the rule set to the rules that shipped in this release. A rule
+# introduced later stays off until this number is bumped, which is the
+# opposite of `.rubocop.yml`'s `NewCops: enable`. So bumping the package alone
+# leaves new rules inactive: on a Dependabot pull request, run
+# `node_modules/.bin/herb-lint --upgrade`, which raises this number and writes
+# an explicit `enabled: false` for each newly arrived rule, then decide each of
+# those on its own rather than leaving the whole batch off.
+version: 0.10.3
+
+# These templates are ActionView's, not plain ERB rendered by a script, so the
+# `actionview-*` rules are reading the right dialect. Declarative only: the
+# measurement behind this branch found the same 85 rules enabled and the same
+# offenses under the `ruby` default.
+framework: actionview
+
+linter:
+  enabled: true
+
+  # Fail on anything the linter reports, down to `hint`, rather than on
+  # `error` alone as the default does. `bin/rubocop` tolerates no offense
+  # either, and at the default an `info` offense would leave the gate green
+  # over a template the linter is complaining about.
+  failLevel: hint
+
+  rules:
+    # Rails generates the static error pages under `public/`, and this rule
+    # fires on each one for a missing space before `/>` inside a minified
+    # inline `<svg>`. `--fix` corrects them, but no reader benefits and
+    # `rails new` reintroduces it on the next framework upgrade, turning the
+    # gate red for something nobody changed. Scoped to this one rule so the
+    # other 84 keep running on pages users actually see.
+    html-no-space-in-tag:
+      exclude:
+        - 'public/**/*'
