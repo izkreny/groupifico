@@ -4,9 +4,9 @@ require "rails_helper"
 # assertion never watched failing cannot be told from one that cannot fail. Per `.agents/testing.md`
 # it was watched red, by giving the probe an `alt` attribute, before the matcher was trusted.
 #
-# The probe is an image with no alternative text because that is `image-alt`, tagged `wcag2a` -
-# so this control is also what holds `AxeMatcher::STANDARD` to all four of its tags. Under the
-# `:wcag21aa` the issue asked for, this page stays green with the probe on it.
+# The probe is an image with no alternative text because `image-alt` is tagged at WCAG 2.0 level A,
+# which makes this control what holds `AxeMatcher::STANDARD` to the whole cumulative standard: name
+# only the rules 2.1 added at AA and this page stays green with the probe sitting on it.
 RSpec.describe "The accessibility matcher", type: :system do
   before do
     visit new_session_path
