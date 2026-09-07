@@ -74,6 +74,11 @@ group :development do
 end
 
 group :test do
+  # Deque's accessibility engine and its RSpec matcher. `require: false` because the gem's entry
+  # point is named `axe-rspec`, which Bundler's autorequire would not find under the gem's own
+  # name, and because its whole content is a global include `spec/support/axe.rb` does not want.
+  gem "axe-core-rspec", require: false
+
   # Use system testing [https://guides.rubyonrails.org/testing.html#system-testing]
   gem "capybara"
   gem "cuprite"

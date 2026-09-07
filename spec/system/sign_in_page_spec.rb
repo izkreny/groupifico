@@ -16,6 +16,12 @@ RSpec.describe "The sign-in page", type: :system do
     expect(page).to paint "input[type=submit]"
   end
 
+  # The other half of what a browser adds, and the half `paint` cannot reach: whether the form is
+  # usable by someone who never sees it. `spec/support/axe.rb` owns which rules that means.
+  it "has no accessibility violations" do
+    expect(page).to be_accessible
+  end
+
   # Named for what it asserts. That the answer is identical whether or not the address has an
   # account is `spec/requests/sessions_spec.rb`'s to prove, and nothing here reads the copy.
   it "paints the notice after a submission" do
