@@ -24,6 +24,16 @@ FileUtils.chdir APP_ROOT do
   system! "bin/rails db:prepare"
   system! "bin/rails db:reset" if ARGV.include?("--reset")
 
+  puts "\n== Checking for Chromium =="
+  # The same resolver the system specs use, so the two cannot disagree about which binaries count
+  # or about what a set-but-wrong CHROMIUM_PATH means.
+  require_relative "../lib/chromium"
+  begin
+    puts Chromium.path
+  rescue Chromium::NotFound => e
+    abort e.message
+  end
+
   puts "\n== Removing old logs and tempfiles =="
   system! "bin/rails log:clear tmp:clear"
 
