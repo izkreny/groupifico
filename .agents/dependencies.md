@@ -23,10 +23,18 @@ Pinning `BUNDLE_VERSION=system` to sidestep this is the option #72 considered an
 
 ## Gems held below their latest release
 
-Both are held by upstream requirements rather than by anything in this repository's own `Gemfile`, so neither is a defect to fix here and neither needs re-investigating. Re-read the requirement from `Gemfile.lock` when it next comes up, and move on.
+None of these is a defect to fix here and none needs re-investigating. Re-read the requirement when it next comes up, and move on.
+
+Two are held by upstream requirements rather than by anything in this repository, so `Gemfile.lock` is where to read them:
 
 - **`diff-lcs`** stays below 2.0. `rspec-expectations` and `rspec-mocks` both require `diff-lcs (>= 1.2.0, < 2.0)`. It moves when rspec does.
 - **`marcel`** stays below 2.0. Rails' `activestorage` requires `marcel (~> 1.0)`. It moves when Rails does.
+
+One is held by this repository's own `Gemfile`, which is the difference that matters: nothing upstream stops it, so without the pin an ordinary `bundle update` takes it and breaks the application.
+
+- **`json`** stays below 3.0, pinned `~> 2.21`. json 3.0 enforces keyword arguments on every method's options, and `ActiveSupport::JSON.decode` passes a positional hash: `data = ::JSON.parse(json, options)`. Rails fixed it in rails/rails#58601, merged to `main` on 2026-08-28, but the 8-1-stable backport rails/rails#58603 is unmerged and no 8.1.x release carries it. It moves when Rails ships the fix; **#274 tracks that**, and `bundle outdated json --strict` exits 0 for as long as the pin holds.
+
+**Check the installed gem, never the release note.** A Rails changelog saying it fixed json 3.0 compatibility is not the same as `ActiveSupport::JSON.decode` being keyword-safe on the version this lockfile pins. Read the line itself, in the decoding file under the path `gem which active_support` prints.
 
 ## A Dependabot pull request is a notification, and is never merged
 

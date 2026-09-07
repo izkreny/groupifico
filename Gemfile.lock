@@ -464,6 +464,7 @@ DEPENDENCIES
   image_processing (~> 2.0)
   importmap-rails
   jbuilder
+  json (~> 2.21)
   kamal
   mailpace-rails
   propshaft
