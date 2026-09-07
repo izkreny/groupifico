@@ -15,6 +15,11 @@ FileUtils.chdir APP_ROOT do
   puts "== Installing dependencies =="
   system("bundle check") || system!("bundle install")
 
+  # `bin/ci`'s ERB lint step runs the binary out of `node_modules`, and this is
+  # the step that puts it there. `npm ci` rather than `npm install` so the
+  # lockfile decides the tree, matching what the `lint` job does in CI.
+  system! "npm ci" unless File.directory?("node_modules")
+
   # puts "\n== Copying sample files =="
   # unless File.exist?("config/database.yml")
   #   FileUtils.cp "config/database.yml.sample", "config/database.yml"
