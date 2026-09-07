@@ -13,8 +13,9 @@ module AxeMatcher
   # WCAG 2.1 AA is cumulative and `according_to` is not. `Axe::API::Rules#according_to` passes its
   # arguments straight into axe's `runOnly: { type: :tag }`, so a lone `:wcag21aa` runs only the
   # rules WCAG 2.1 introduced at AA - a few dozen out of the standard. Measured, not assumed:
-  # `image-alt` is tagged `wcag2a`/`wcag111` in the engine the gem ships, and an image with no
-  # `alt` stays green under that one tag. `spec/system/axe_matcher_spec.rb` is what keeps it so.
+  # `image-alt` is tagged at WCAG 2.0 level A in the engine the gem ships, and an image with no
+  # `alt` stays green under the 2.1 AA tag alone. `spec/system/axe_matcher_spec.rb` probes both
+  # ends of this list; the two levels between them it does not pin, and says so.
   #
   # This is also the one place a rule would be skipped, with `.skipping`, if one ever had to be.
   # Nothing is skipped today: the rule this list first caught was a real defect in the layout.
