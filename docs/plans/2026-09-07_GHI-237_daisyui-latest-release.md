@@ -40,8 +40,8 @@ What the gate cannot see: of the twenty classes, the browser suite asserts on th
 
 ## Open questions
 
-- #237's Overview says the vendored bundle is "a 5.0 release"; it is 5.5.19 by checksum and by the version string in the file. Correct the issue body? Editing an issue is governed by the `tracker` skill rather than done from this branch.
+None.
 
 ## Settled
 
-None yet.
+- #237's Overview said the vendored bundle was "a 5.0 release"; it is 5.5.19 by checksum and by the version string in the file. Correct the issue body? Decided: correct it. The issue's Overview now names 5.5.19 and says how both checks were made.
