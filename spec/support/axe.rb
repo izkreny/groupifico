@@ -20,16 +20,11 @@ module AxeMatcher
   # Nothing is skipped today: the rule this list first caught was a real defect in the layout.
   STANDARD = [ :wcag2a, :wcag2aa, :wcag21a, :wcag21aa ].freeze
 
-  # An audit of a real page measured 0.54s, against the 2s `Capybara.default_max_wait_time` that
-  # `Capybara::Session#evaluate_async_script` would have imposed. Determinism, not patience.
-  TIMEOUT = 15
-
-  # `Axe::Core#wrap_driver` probes for methods rather than requiring a driver class, so these four
-  # are the whole of what axe asks of a browser - and answering them here is what keeps
+  # `Axe::Core#wrap_driver` probes for methods rather than requiring a driver class, so these are
+  # the whole of what axe asks of a browser - and answering them here is what keeps
   # `Capybara::Cuprite::Browser` unreopened. `execute_async_script` is the one that matters: the
   # gem calls Selenium's name for it and Ferrum's is `evaluate_async`. Both append their callback
-  # as the last argument, which is what axe's own `arguments[arguments.length - 1]` reads, so the
-  # translation is the name and the timeout and nothing else.
+  # as the last argument, which is what axe's own `arguments[arguments.length - 1]` reads.
   class Page
     def initialize(session)
       @session = session
@@ -39,8 +34,15 @@ module AxeMatcher
     def evaluate_script(script, *args) = @session.evaluate_script(script, *args)
     def find_css(selector) = @session.driver.find_css(selector)
 
+    # The wait is read off the browser rather than chosen here, because two numbers that disagree
+    # mean the smaller one always wins while the larger one reads as the limit: `evaluate_async`
+    # puts its argument in a JS `setTimeout` only, and `Ferrum::Page#command` separately bounds the
+    # CDP response by `Ferrum::Browser`'s own `timeout`, which is 5s unless `cuprite.rb` raises it.
+    # What this path still buys over `Capybara::Session#evaluate_async_script` is not inheriting
+    # `default_max_wait_time`, which is 2s against an audit measured at 0.54s.
     def execute_async_script(script, *args)
-      @session.driver.browser.evaluate_async(script, TIMEOUT, *args)
+      browser = @session.driver.browser
+      browser.evaluate_async(script, browser.timeout, *args)
     end
   end
 end
