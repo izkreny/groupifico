@@ -4,7 +4,7 @@ The rules specs are written and reviewed against. This file wins on any conflict
 
 ## Framework choices
 
-RSpec (`rspec-rails`) with FactoryBot (`factory_bot_rails`), plus `capybara` and `cuprite` for the system layer, driving Chromium over the DevTools Protocol per [`docs/adr/2026-09-04_browser-verification_0005.md`](../docs/adr/2026-09-04_browser-verification_0005.md). `rubocop-capybara` carries the Capybara cops, which `rubocop-rspec` dropped at its 3.0. This is a deliberate deviation from the 37signals default of Minitest with fixtures, and no alignment pass "fixes" it: testing is where this repository keeps its own choices.
+RSpec (`rspec-rails`) with FactoryBot (`factory_bot_rails`), plus `capybara` and `cuprite` for the system layer, driving Chromium over the DevTools Protocol per [`docs/adr/2026-09-04_browser-verification_0005.md`](../docs/adr/2026-09-04_browser-verification_0005.md). `rubocop-capybara` carries the Capybara cops. This is a deliberate deviation from the 37signals default of Minitest with fixtures, and no alignment pass "fixes" it: testing is where this repository keeps its own choices.
 
 ## Philosophy
 
@@ -78,7 +78,7 @@ Authorization tests assert the negative space: forbidden access returns the redi
 
 ## Determinism
 
-- **No `sleep`, ever.** Explicit waits. In Capybara: semantic selectors first (`:label`, `:button`, `:link`, `:field`) and never OR-chained `has_css?` calls. **Never a negation matcher directly after `visit`**, which can be satisfied before the navigation resolves; assert the positive instead. `rubocop-capybara` enforces that last one, and caught it in this repository's own first system spec.
+- **No `sleep`, ever.** Explicit waits. In Capybara: semantic selectors first (`:label`, `:button`, `:link`, `:field`) and never OR-chained `has_css?` calls. **Never a negation matcher directly after `visit`**, which can be satisfied before the navigation resolves; assert the positive instead. `rubocop-capybara` enforces that last one.
 - **No test interdependencies**: the suite passes under any order.
 - Cover the edges deliberately: nil, empty collections, boundaries.
 - Keep the output clean: a suite where anything new is immediately visible. When silencing noise, the fix may change how a test runs, never what it covers.
