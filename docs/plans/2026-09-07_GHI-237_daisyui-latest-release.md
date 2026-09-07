@@ -32,7 +32,7 @@ Read there at plan time, the 5.5.20 to 5.7.28 range carries no breaking change, 
 
 ## Verification
 
-- [ ] `bin/ci`
+- `bin/ci`
 
 `bin/ci` is this repository's one gate, per `.agents/gh-solo.md`, and two of its steps carry this change. `Tests: Stylesheet` runs `bin/rails tailwindcss:build`, which compiles the new bundle, so a plugin-API break dies there rather than inside a view. `Tests: System` runs the browser suite, whose `paint` matcher composites an element over the first ancestor that paints an opaque background and reports the real contrast ratio, and whose `be_accessible` matcher runs axe.
 
