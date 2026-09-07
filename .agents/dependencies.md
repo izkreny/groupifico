@@ -30,11 +30,11 @@ Held by upstream requirements rather than by anything in this repository, so `Ge
 - **`diff-lcs`** stays below 2.0. `rspec-expectations` and `rspec-mocks` both require `diff-lcs (>= 1.2.0, < 2.0)`. It moves when rspec does.
 - **`marcel`** stays below 2.0. Rails' `activestorage` requires `marcel (~> 1.0)`. It moves when Rails does.
 
-Held by this repository's own `Gemfile`, which is the difference that matters: nothing upstream stops these, so without the pin an ordinary `bundle update` takes it and breaks the application.
+Held by this repository's own `Gemfile`, which is the difference that matters: nothing upstream stops a bump like these, so without its pin an ordinary `bundle update` takes the gem and breaks the application.
 
 - **`json`** stays below 3.0, pinned `~> 2.21`. json 3.0 takes keyword-only options, and `ActiveSupport::JSON.decode` on the released `activesupport` 8.1.3.1 passes a positional hash: `data = ::JSON.parse(json, options)`. Rails fixed it in rails/rails#58601 and the fix is already on the `8-1-stable` branch, so what is missing is a release cut from that branch rather than the work. **Watch for the next 8.1.x release, not for a pull request**: the fix reached the branch as a direct commit with no backport pull request of its own, so there is no number whose merge announces it. **#274 tracks the unpin**, and `bundle outdated json --strict` exits 0 for as long as the pin holds.
 
-**Check the installed gem, never the release note.** That is what makes the rule above concrete: read the `JSON.parse` line in the decoding file under the path `gem which active_support` prints, and unpin when it passes `**options`. A changelog claiming json 3.0 compatibility is not the same as the version this lockfile resolves being keyword-safe, and citing a pull request instead of the line is what put a wrong reference in this file once already.
+**Check the installed gem, never the release note.** Read the `JSON.parse` line in the decoding file under the path `gem which active_support` prints, and unpin when it passes `**options`. A changelog claiming json 3.0 compatibility is not the same as the version this lockfile resolves being keyword-safe, and a pull request number is a claim about upstream's intentions where that line is the fact this application runs on.
 
 ## A Dependabot pull request is a notification, and is never merged
 
