@@ -38,11 +38,14 @@ class Group < ApplicationRecord
   # read in another would answer for whichever brand were current at the read. A `before_validation`
   # runs at a defined point inside `save`, so that gap does not exist. ADR 0006 has the evidence.
   #
-  # `||=` carries the whole guarantee, and it carries it twice: a submitted type wins over the
-  # domain, and an existing group keeps its type when it is edited from a domain implying another,
-  # because the column is `null: false` so a persisted row always has one. An `on: :create` guard
-  # was tried and removed - nothing could be made to fail without it.
-  before_validation -> { self[:group_type] ||= Current.brand.group_type }
+  # `||=` is what lets a submitted type win over the domain, and `on: :create` is what keeps the
+  # callback off an existing group. Both are needed, and `null: false` substitutes for neither:
+  # that constrains the persisted column, while this reads the in-memory attribute, which mass
+  # assignment can blank first - `:group_type` is a permitted param and `EnumType#cast` turns a
+  # submitted blank into nil. Without the condition, editing a choir from an unbranded domain with
+  # that field blank retyped it to general and answered 303, where the enum's own inclusion check
+  # should have refused it.
+  before_validation -> { self[:group_type] ||= Current.brand.group_type }, on: :create
 
   validates_associated :address
   validates :name, presence: true, length: { maximum: 250 }
