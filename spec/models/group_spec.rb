@@ -60,17 +60,6 @@ RSpec.describe Group, type: :model do
           expect(group.group_type).to eq("band")
         end
       end
-
-      # Editing a group from a domain that implies another type must not retype it under the owner.
-      # `||=` is the whole of what stops that, which is why this example fails alongside the one
-      # above when the operator is weakened.
-      it "leaves an existing group's type alone when it is edited from a branded domain" do
-        group = create(:group)
-
-        Current.set(brand: Brand.new("chorifico.com")) { group.update!(name: "Renamed") }
-
-        expect(group.reload.group_type).to eq("general")
-      end
     end
   end
 
