@@ -16,9 +16,12 @@ FileUtils.chdir APP_ROOT do
   system("bundle check") || system!("bundle install")
 
   # `bin/ci`'s ERB lint step runs the binary out of `node_modules`, and this is
-  # the step that puts it there. `npm ci` rather than `npm install` so the
-  # lockfile decides the tree, matching what the `lint` job does in CI.
-  system! "npm ci" unless File.directory?("node_modules")
+  # the step that puts it there. Unconditional, because the directory's presence
+  # says nothing about which version is inside it: after a merged Dependabot bump
+  # an existing checkout would keep linting with the old one while the `lint` job
+  # used the new, and `bin/ci` would report green over a rule set CI never ran.
+  # `npm ci` installs from the lockfile and is what that job runs - #241.
+  system! "npm ci"
 
   # puts "\n== Copying sample files =="
   # unless File.exist?("config/database.yml")
