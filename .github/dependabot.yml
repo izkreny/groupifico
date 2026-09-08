@@ -5,9 +5,11 @@ updates:
   schedule:
     interval: weekly
   open-pull-requests-limit: 10
-  # No labels at all. Labels belong on issues, never on pull requests, and
-  # Dependabot recreates its own `dependencies` and ecosystem labels on the
-  # next run unless this list is present and empty.
+  # No labels at all: they belong on issues, never on pull requests. The
+  # empty list is the documented way to say so, and GitHub's backend
+  # ignores it, so Dependabot labels its pull requests anyway and those
+  # labels are left alone. Kept as the correct declaration of intent.
+  # `.agents/dependencies.md` has the upstream issue and the standing call.
   labels: []
 - package-ecosystem: github-actions
   directory: "/"
