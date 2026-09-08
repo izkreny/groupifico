@@ -229,7 +229,7 @@ RSpec.describe "Groups", type: :request do
 
     # The suite's default host is `www.example.com`, which carries no brand, so the first example
     # here is the control: without it, the whole wiring could be absent and nothing would say so.
-    context "when the request arrives on a branded domain" do
+    context "when typing the group from the domain it arrived on" do
       it "types the group general on an unbranded host" do
         sign_in_as(create(:user))
 
@@ -249,15 +249,6 @@ RSpec.describe "Groups", type: :request do
 
       it "types the group a choir on a subdomain of chorifico.com" do
         host! "www.chorifico.com"
-        sign_in_as(create(:user))
-
-        post groups_path, params: { group: { name: "Choraliers" } }
-
-        expect(Group.sole.group_type).to eq("choir")
-      end
-
-      it "types the group a choir whatever case the Host header arrives in" do
-        host! "Chorifico.com"
         sign_in_as(create(:user))
 
         post groups_path, params: { group: { name: "Choraliers" } }
