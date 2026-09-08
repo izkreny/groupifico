@@ -226,6 +226,45 @@ RSpec.describe "Groups", type: :request do
         expect(response).to have_http_status :unprocessable_content
       end
     end
+
+    # The suite's default host is `www.example.com`, which carries no brand, so the first example
+    # here is the control: without it, the whole wiring could be absent and nothing would say so.
+    context "when the request arrives on a branded domain" do
+      it "types the group general on an unbranded host" do
+        sign_in_as(create(:user))
+
+        post groups_path, params: { group: { name: "Choraliers" } }
+
+        expect(Group.sole.group_type).to eq("general")
+      end
+
+      it "types the group a choir on chorifico.com" do
+        host! "chorifico.com"
+        sign_in_as(create(:user))
+
+        post groups_path, params: { group: { name: "Choraliers" } }
+
+        expect(Group.sole.group_type).to eq("choir")
+      end
+
+      it "types the group a choir on a subdomain of chorifico.com" do
+        host! "www.chorifico.com"
+        sign_in_as(create(:user))
+
+        post groups_path, params: { group: { name: "Choraliers" } }
+
+        expect(Group.sole.group_type).to eq("choir")
+      end
+
+      it "lets a submitted type win over the domain" do
+        host! "chorifico.com"
+        sign_in_as(create(:user))
+
+        post groups_path, params: { group: { name: "Choraliers", group_type: "band" } }
+
+        expect(Group.sole.group_type).to eq("band")
+      end
+    end
   end
 
   describe "PATCH /groups/:id" do

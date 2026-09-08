@@ -139,7 +139,7 @@ erDiagram
     STRING  name        "NN"
     %% description limit: 100000 bytes at the column, validated at 25000 chars in the model
     TEXT    description "NULL"
-    %% ENUM group_type options: general | choir | band. Default: choir
+    %% ENUM group_type options: general | choir | band. Default: from the request domain, general where it carries no brand
     INTEGER group_type  "ENUM, NN"
   }
 

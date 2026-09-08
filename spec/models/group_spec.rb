@@ -24,7 +24,52 @@ RSpec.describe Group, type: :model do
   end
 
   describe "(enums)" do
-    it { is_expected.to define_enum_for(:group_type).with_values(general: 0, choir: 1, band: 2).with_default(:choir).validating }
+    it { is_expected.to define_enum_for(:group_type).with_values(general: 0, choir: 1, band: 2).validating }
+
+    # Hand-rolled rather than `with_default`, which asserts a value and so passes just as happily
+    # against a fixed `default: :general`. What matters is that the value tracks the brand, and
+    # only a pair of examples under different brands can say that.
+    describe "the group_type default" do
+      it "is general when no brand has been resolved" do
+        expect(described_class.new.group_type).to eq("general")
+      end
+
+      it "is choir under the chorifico.com brand" do
+        Current.set(brand: Brand.new("chorifico.com")) do
+          expect(described_class.new.group_type).to eq("choir")
+        end
+      end
+
+      it "yields to an explicitly given type" do
+        Current.set(brand: Brand.new("chorifico.com")) do
+          expect(described_class.new(group_type: :band).group_type).to eq("band")
+        end
+      end
+
+      # The value is resolved when it is first read rather than at `Group.new`, so a record built
+      # before the brand was known still answers for the brand in force at the read. Both creation
+      # routes read it inside the request - `save` runs the validation that reads it - so this is
+      # the mechanism working; it is pinned because a record carried out of its request and read
+      # there would resolve against whatever brand is current then.
+      it "is resolved when the value is first read, not at instantiation" do
+        built_before_any_brand = described_class.new
+
+        resolved = Current.set(brand: Brand.new("chorifico.com")) { built_before_any_brand.group_type }
+
+        expect(resolved).to eq("choir")
+      end
+
+      # The other half of the same fact, and the more important one: once read, the type is the
+      # record's own and no later brand moves it.
+      it "keeps the type it first resolved" do
+        group = described_class.new
+        group.group_type
+
+        resolved = Current.set(brand: Brand.new("chorifico.com")) { group.group_type }
+
+        expect(resolved).to eq("general")
+      end
+    end
   end
 
   describe "(validations)" do

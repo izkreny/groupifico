@@ -27,7 +27,20 @@ class Group < ApplicationRecord
   # TODO: add order by `counter_cache` aka Adress field `events_count`
   has_many :events_addresses, -> { distinct }, through: :events, source: :address
 
-  enum :group_type, %i[ general choir band ], default: :choir, validate: true
+  # Defaulted from the domain the request arrived on rather than from a fixed value, so a group
+  # started on `chorifico.com` is a choir and one started anywhere else is general. `Brand` owns
+  # the mapping and `ApplicationController` puts the answer in `Current`.
+  #
+  # The lambda is called with no arguments and cannot see the record - unlike `belongs_to`'s
+  # `default:`, which is a `before_validation` and reads `self` freely - so the rule has to come
+  # from ambient state.
+  #
+  # It resolves when the value is first read rather than at `Group.new`, and memoizes from there.
+  # Both routes to a group read it inside the request that created it, because `save` runs the
+  # validation that reads it: `GroupsController#create` and `SignUp.redeem!`. A record built in a
+  # request and first read outside one would resolve against whatever brand is current then, which
+  # is why nothing hands an unsaved `Group` to a job.
+  enum :group_type, %i[ general choir band ], default: -> { Current.brand.group_type }, validate: true
 
   validates_associated :address
   validates :name, presence: true, length: { maximum: 250 }
