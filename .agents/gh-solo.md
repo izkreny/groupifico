@@ -32,7 +32,7 @@ One vocabulary, three places: the branch name, the commit headers on the branch,
 
 They are job ids from `.github/workflows/ci.yml`, because no job there sets a job-level `name:`. `enforce_admins` is on, so adding or renaming a required job means moving `required_status_checks` in the same change or every open pull request waits forever on a check that never reports.
 
-**Required is not the same as present, so read that list as what `main` demands rather than as an inventory of what appears.** `.github/dependabot.yml` is the one non-required check-run in use: GitHub validates that file and reports a check named after it, from `dependabot-api` rather than from the Actions app, on any pull request that touches it. It gates nothing and belongs in no `required_status_checks` entry.
+**Required is not the same as present, so read that list as what `main` demands rather than as an inventory of what appears.** `.github/dependabot.yml` is the one non-required check-run in use: GitHub validates that file and reports a check named after it, from `dependabot-api` rather than from the Actions app. It is reported against the head of a push whose commits change that file, not against every later head of the pull request, so it is normally absent by the time a branch is reviewed. Measured on this branch when the check was added: `899a618`, the push carrying that change, returns it alongside the four, and `49e9624` returns the four alone. It gates nothing and belongs in no `required_status_checks` entry.
 
 Every required check is pinned to `app_id` 15368, GitHub Actions, so only a run of the workflow can satisfy them. **State `app_id` when adding a check, never omit it:** omission means "whichever app reported this last", not "any app", and `-1` is the value for "any app".
 
@@ -44,4 +44,4 @@ The local gate is `bin/ci`, a superset of every required job that also replants 
 
 ## Dependabot carries no labels
 
-`.github/dependabot.yml` sets `labels: []` on both update entries, and that empty list is load-bearing. Labels belong on issues and never on pull requests, and with the key absent Dependabot applies `dependencies` plus an ecosystem label and **creates those labels itself if they do not exist**. Deleting them without the empty list only postpones them to the next bump.
+`.github/dependabot.yml` sets `labels: []` on every update entry it carries, and that empty list is load-bearing. Labels belong on issues and never on pull requests, and with the key absent Dependabot applies `dependencies` plus an ecosystem label and **creates those labels itself if they do not exist**. Deleting them without the empty list only postpones them to the next bump.
