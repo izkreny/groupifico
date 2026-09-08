@@ -24,8 +24,8 @@ class Brand
   #
   # Downcased because nothing upstream does it and hostnames are case-insensitive per RFC 4343:
   # `request.host` is the raw `Host` header with the port stripped, and `extract_domain` only
-  # splits and rejoins it, so a client sending `Chorifico.com` would miss the mapping and get a
-  # general group. Verified against this branch before the guard existed.
+  # splits and rejoins it, so a client sending `Chorifico.com` would otherwise miss the mapping
+  # and get a general group.
   def initialize(domain)
     @domain = domain&.downcase
   end
