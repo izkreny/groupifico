@@ -19,6 +19,12 @@ RSpec.describe Brand, type: :model do
     it "is general when there is no domain at all" do
       expect(described_class.new(nil).group_type).to eq("general")
     end
+
+    # Nothing upstream downcases the `Host` header, and hostnames are case-insensitive, so a
+    # client that does not lowercase it would otherwise miss the mapping.
+    it "is choir whatever case the domain arrives in" do
+      expect(described_class.new("ChoRifico.COM").group_type).to eq("choir")
+    end
   end
 
   # Not a test of `Brand` so much as of the assumption it is built on: it takes a domain because

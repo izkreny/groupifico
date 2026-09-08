@@ -21,8 +21,13 @@ class Brand
   # A domain rather than a host, because `ActionDispatch::Http::URL.extract_domain` - which is what
   # `request.domain` calls - already collapses `www.chorifico.com` and `api.www.chorifico.com` onto
   # `chorifico.com`. Matching a host here would answer `general` on any subdomain the proxy serves.
+  #
+  # Downcased because nothing upstream does it and hostnames are case-insensitive per RFC 4343:
+  # `request.host` is the raw `Host` header with the port stripped, and `extract_domain` only
+  # splits and rejoins it, so a client sending `Chorifico.com` would miss the mapping and get a
+  # general group. Verified against this branch before the guard existed.
   def initialize(domain)
-    @domain = domain
+    @domain = domain&.downcase
   end
 
   def group_type

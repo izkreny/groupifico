@@ -198,6 +198,15 @@ RSpec.describe "SignUpConfirmations", type: :request do
 
         expect(Group.sole.group_type).to eq("choir")
       end
+
+      it "types the group a choir whatever case the Host header arrives in" do
+        host! "Chorifico.com"
+        get sign_up_confirmation_path(token: SignUp.mint(email: "starter@example.com", group_name: "Chamber Choir"))
+
+        post sign_up_confirmation_path
+
+        expect(Group.sole.group_type).to eq("choir")
+      end
     end
 
     context "when already signed in" do

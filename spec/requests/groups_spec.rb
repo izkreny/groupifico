@@ -256,6 +256,15 @@ RSpec.describe "Groups", type: :request do
         expect(Group.sole.group_type).to eq("choir")
       end
 
+      it "types the group a choir whatever case the Host header arrives in" do
+        host! "Chorifico.com"
+        sign_in_as(create(:user))
+
+        post groups_path, params: { group: { name: "Choraliers" } }
+
+        expect(Group.sole.group_type).to eq("choir")
+      end
+
       it "lets a submitted type win over the domain" do
         host! "chorifico.com"
         sign_in_as(create(:user))
