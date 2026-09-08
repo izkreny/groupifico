@@ -27,20 +27,22 @@ class Group < ApplicationRecord
   # TODO: add order by `counter_cache` aka Adress field `events_count`
   has_many :events_addresses, -> { distinct }, through: :events, source: :address
 
-  # Defaulted from the domain the request arrived on rather than from a fixed value, so a group
-  # started on `chorifico.com` is a choir and one started anywhere else is general. `Brand` owns
-  # the mapping and `ApplicationController` puts the answer in `Current`.
+  enum :group_type, %i[ general choir band ], validate: true
+
+  # Taken from the domain the request arrived on rather than from a fixed value, so a group started
+  # on `chorifico.com` is a choir and one started anywhere else is general. `Brand` owns the mapping
+  # and `ApplicationController` puts the answer in `Current`.
   #
-  # The lambda is called with no arguments and cannot see the record - unlike `belongs_to`'s
-  # `default:`, which is a `before_validation` and reads `self` freely - so the rule has to come
-  # from ambient state.
+  # A callback rather than a callable `enum default:`, which the enum would accept: an attribute's
+  # Proc default resolves on first read and memoizes, so a record built in one request and first
+  # read in another would answer for whichever brand were current at the read. A `before_validation`
+  # runs at a defined point inside `save`, so that gap does not exist. ADR 0006 has the evidence.
   #
-  # It resolves when the value is first read rather than at `Group.new`, and memoizes from there.
-  # Both routes to a group read it inside the request that created it, because `save` runs the
-  # validation that reads it: `GroupsController#create` and `SignUp.redeem!`. A record built in a
-  # request and first read outside one would resolve against whatever brand is current then, which
-  # is why nothing hands an unsaved `Group` to a job.
-  enum :group_type, %i[ general choir band ], default: -> { Current.brand.group_type }, validate: true
+  # `||=` carries the whole guarantee, and it carries it twice: a submitted type wins over the
+  # domain, and an existing group keeps its type when it is edited from a domain implying another,
+  # because the column is `null: false` so a persisted row always has one. An `on: :create` guard
+  # was tried and removed - nothing could be made to fail without it.
+  before_validation -> { self[:group_type] ||= Current.brand.group_type }
 
   validates_associated :address
   validates :name, presence: true, length: { maximum: 250 }

@@ -29,21 +29,47 @@ RSpec.describe Group, type: :model do
     # Hand-rolled rather than `with_default`, which asserts a value and so passes just as happily
     # against a fixed `default: :general`. What matters is that the value tracks the brand, and
     # only a pair of examples under different brands can say that.
-    describe "the group_type default" do
+    #
+    # Each one validates, because the type is settled in a `before_validation` rather than by an
+    # enum default: an unvalidated `Group.new` carries no type at all.
+    describe "the group_type taken from the brand" do
       it "is general when no brand has been resolved" do
-        expect(described_class.new.group_type).to eq("general")
+        group = build(:group)
+
+        group.valid?
+
+        expect(group.group_type).to eq("general")
       end
 
       it "is choir under the chorifico.com brand" do
         Current.set(brand: Brand.new("chorifico.com")) do
-          expect(described_class.new.group_type).to eq("choir")
+          group = build(:group)
+
+          group.valid?
+
+          expect(group.group_type).to eq("choir")
         end
       end
 
       it "yields to an explicitly given type" do
         Current.set(brand: Brand.new("chorifico.com")) do
-          expect(described_class.new(group_type: :band).group_type).to eq("band")
+          group = build(:group, group_type: :band)
+
+          group.valid?
+
+          expect(group.group_type).to eq("band")
         end
+      end
+
+      # Editing a group from a domain that implies another type must not retype it under the owner.
+      # `||=` is the whole of what stops that, which is why this example fails alongside the one
+      # above when the operator is weakened.
+      it "leaves an existing group's type alone when it is edited from a branded domain" do
+        group = create(:group)
+
+        Current.set(brand: Brand.new("chorifico.com")) { group.update!(name: "Renamed") }
+
+        expect(group.reload.group_type).to eq("general")
       end
     end
   end
