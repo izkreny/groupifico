@@ -28,17 +28,19 @@ One vocabulary, three places: the branch name, the commit headers on the branch,
 
 ## CI check-run names
 
-`lint`, `scan_js`, `scan_ruby` and `test`. Those four, and nothing else.
+`main` requires exactly these: `lint`, `scan_js`, `scan_ruby`, `test`. Requiring anything beyond them is a decision rather than a default.
 
-They are job ids from `.github/workflows/ci.yml`, because no job there sets a job-level `name:`. `main` requires all four, and `enforce_admins` is on, so adding or renaming a job means moving `required_status_checks` in the same change or every open pull request waits forever on a check that never reports.
+They are job ids from `.github/workflows/ci.yml`, because no job there sets a job-level `name:`. `enforce_admins` is on, so adding or renaming a required job means moving `required_status_checks` in the same change or every open pull request waits forever on a check that never reports.
 
-All four are pinned to `app_id` 15368, GitHub Actions, so only a run of the workflow can satisfy them. **State `app_id` when adding a check, never omit it:** omission means "whichever app reported this last", not "any app", and `-1` is the value for "any app".
+**Required is not the same as present, so read that list as what `main` demands rather than as an inventory of what appears.** `.github/dependabot.yml` is the one non-required check-run in use: GitHub validates that file and reports a check named after it, from the `dependabot` app, `app_id` 29110, rather than from the Actions app. It is reported against the head of a push whose commits change that file, not against every later head of the pull request, so it is normally absent by the time a branch is reviewed. Established by reading `gh api repos/{owner}/{repo}/commits/<sha>/check-runs` across a branch's successive pushed heads, which is also how to re-establish it: the check appears on the head that carried the change and on no head after it, and it is absent even from the commit that edited the file where that commit was not itself a pushed head. It gates nothing and belongs in no `required_status_checks` entry.
+
+Every required check is pinned to `app_id` 15368, GitHub Actions, so only a run of the workflow can satisfy them. **State `app_id` when adding a check, never omit it:** omission means "whichever app reported this last", not "any app", and `-1` is the value for "any app".
 
 **The browser suite has no check of its own, and adding one is a decision rather than an oversight to correct.** It runs from `bin/ci` on a developer machine and reports nowhere, so the pull request's `## Verification` box is its only gate and `.agents/testing.md` states that running it is required. The reasoning is in `docs/adr/2026-09-04_browser-verification_0005.md`.
 
-The four run in parallel and stay separate deliberately. Merging them into one job couples failures that have nothing to do with each other: a RuboCop nit would hide the security scans behind it, and a red scan would stop `actions/cache` saving the RuboCop cache, since its post step is guarded by `success()`. The decision record `docs/adr/2026-08-20_github-repository-conventions_0001.md` has the detail. Do not group them again.
+They run in parallel and stay separate deliberately. Merging them into one job couples failures that have nothing to do with each other: a RuboCop nit would hide the security scans behind it, and a red scan would stop `actions/cache` saving the RuboCop cache, since its post step is guarded by `success()`. The decision record `docs/adr/2026-08-20_github-repository-conventions_0001.md` has the detail. Do not group them again.
 
-The local gate is `bin/ci`, a superset of all four jobs that also replants the test seeds. Never invent a check command for this repository; it is that one.
+The local gate is `bin/ci`, a superset of every required job that also replants the test seeds. Never invent a check command for this repository; it is that one.
 
 ## Dependencies
 

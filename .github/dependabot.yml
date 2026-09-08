@@ -17,3 +17,9 @@ updates:
     interval: weekly
   open-pull-requests-limit: 10
   labels: []
+- package-ecosystem: npm
+  directory: "/"
+  schedule:
+    interval: weekly
+  open-pull-requests-limit: 10
+  labels: []

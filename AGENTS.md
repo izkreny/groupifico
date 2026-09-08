@@ -26,6 +26,7 @@
 
 ### LINTING
 - RuboCop's verdicts are not always right, and what happens next is governed. An inline `rubocop:disable` is never allowed: `Style/DisableCopsWithinSourceCodeDirective` makes the directive itself an offense, and `bin/rubocop` runs with `--ignore-disable-comments` so that holds even for a directive that names this cop, its department, or `all` - a cop that bites means stop and ask the owner, never silently disable, and never contort code just to appease a cop. A cop that is wrong for this repository generally gets reconfigured once in `.rubocop.yml`, with a comment saying why; a one-off case that a generally-right cop judges wrongly is a conversation, not a config change.
+- The same holds for ERB, where Herb's linter is the gate. An inline `<%# herb:disable %>` is never allowed either, and `herb-lint` runs with `--ignore-disable-comments` at both call sites so the directive is inert; a rule that is wrong for this repository gets reconfigured once in [`.herb.yml`](.herb.yml), with a comment saying why. That file's `version:` key is where the two linters differ in kind: it locks the rule set, so a rule Herb adds later stays off until `herb-lint --upgrade` bumps it, where `.rubocop.yml` sets `NewCops: enable` and opts in on its own.
 
 ## PROJECT KNOWLEDGE
 

@@ -62,8 +62,20 @@ jobs:
           restore-keys: |
             rubocop-${{ runner.os }}-${{ env.DEPENDENCIES_HASH }}-
 
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install Node dependencies
+        run: npm ci
+
       - name: Lint code for consistent style
         run: bin/rubocop -f github
+
+      - name: Lint ERB templates for valid HTML
+        run: node_modules/.bin/herb-lint --ignore-disable-comments
 
   test:
     runs-on: ubuntu-latest

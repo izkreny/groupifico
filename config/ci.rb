@@ -4,6 +4,10 @@ CI.run do
   step "Setup", "bin/setup --skip-server"
 
   step "Style: Ruby", "bin/rubocop"
+  # `--ignore-disable-comments` for the reason `bin/rubocop` passes the flag of
+  # the same name: `<%# herb:disable %>` is an inline suppression, and CLAUDE.md
+  # bans those outright, so the flag is what leaves the ban no exception.
+  step "Style: ERB", "node_modules/.bin/herb-lint --ignore-disable-comments"
 
   step "Security: Gem audit", "bin/bundler-audit"
   step "Security: Importmap vulnerability audit", "bin/importmap audit"
