@@ -198,7 +198,6 @@ RSpec.describe "SignUpConfirmations", type: :request do
 
         expect(Group.sole.group_type).to eq("choir")
       end
-
     end
 
     context "when already signed in" do
