@@ -42,6 +42,6 @@ They run in parallel and stay separate deliberately. Merging them into one job c
 
 The local gate is `bin/ci`, a superset of every required job that also replants the test seeds. Never invent a check command for this repository; it is that one.
 
-## Dependabot carries no labels
+## Dependencies
 
-`.github/dependabot.yml` sets `labels: []` on every update entry it carries, and that empty list is load-bearing. Labels belong on issues and never on pull requests, and with the key absent Dependabot applies `dependencies` plus an ecosystem label and **creates those labels itself if they do not exist**. Deleting them without the empty list only postpones them to the next bump.
+[`dependencies.md`](dependencies.md) owns dependency work: the update order, the `BUNDLED WITH` trap, the gems held below their latest release, and everything about Dependabot including what its pull requests are for and why their labels are left alone.

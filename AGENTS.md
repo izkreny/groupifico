@@ -33,6 +33,7 @@
 - General information about the project is available inside the [README](README.md) file.
 - The repository's GitHub conventions live in [`.agents/gh-solo.md`](.agents/gh-solo.md).
 - Who may do what inside a group lives in [`docs/AUTHORIZATION.md`](docs/AUTHORIZATION.md): the membership and status questions the policies ask, and the capability tables the role rules are written against. Read it before changing an authorization rule or a spec that proves one, wherever either lives.
+- How a dependency moves lives in [`.agents/dependencies.md`](.agents/dependencies.md): the update order, the `BUNDLED WITH` trap, the gems held below their latest release, and what a Dependabot pull request is for. Read it before bumping a gem, editing `Gemfile` or `Gemfile.lock`, or acting on a Dependabot pull request.
 
 ## REFERENCE EXAMPLES
 
