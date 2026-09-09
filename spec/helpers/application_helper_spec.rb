@@ -83,4 +83,73 @@ RSpec.describe ApplicationHelper, type: :helper do
       expect(helper.shell_tabs?(nil)).to be false
     end
   end
+
+  # RF7. These two decide whether a back chevron appears and where it leads, which is the visible
+  # consequence nothing was exercising.
+  describe "#pushed_screen?" do
+    it "is false on each section's own root, which a tab points at" do
+      %w[ groups/show events/index members/index ].each do |root|
+        controller, action = root.split("/")
+        allow(helper).to receive_messages(controller_name: controller, action_name: action)
+
+        expect(helper.pushed_screen?).to be(false), "expected #{root} not to be a pushed screen"
+      end
+    end
+
+    it "is true on a detail screen" do
+      allow(helper).to receive_messages(controller_name: "events", action_name: "show")
+
+      expect(helper.pushed_screen?).to be true
+    end
+
+    it "is true on a form" do
+      allow(helper).to receive_messages(controller_name: "members", action_name: "edit")
+
+      expect(helper.pushed_screen?).to be true
+    end
+
+    # A roster is pushed and still answers for Events, so this is the one case where the two
+    # helpers disagree about the screen and both are right.
+    it "is true on a roster, which answers for the Events section" do
+      allow(helper).to receive_messages(controller_name: "registrations", action_name: "index")
+
+      expect(helper.pushed_screen?).to be true
+      expect(helper.shell_section).to eq :events
+    end
+
+    it "is false outside a group, where there is no section to be pushed from" do
+      allow(helper).to receive_messages(controller_name: "user_profiles", action_name: "show")
+
+      expect(helper.pushed_screen?).to be false
+    end
+  end
+
+  describe "#section_root_path" do
+    it "leads to the group home from the Home section" do
+      group = create(:group)
+      allow(helper).to receive(:controller_name).and_return("groups")
+
+      expect(helper.section_root_path(group)).to eq helper.group_path(group)
+    end
+
+    it "leads to the events list from anywhere in the Events section" do
+      group = create(:group)
+      allow(helper).to receive(:controller_name).and_return("registrations")
+
+      expect(helper.section_root_path(group)).to eq helper.group_events_path(group)
+    end
+
+    it "leads to the members list from the Members section" do
+      group = create(:group)
+      allow(helper).to receive(:controller_name).and_return("members")
+
+      expect(helper.section_root_path(group)).to eq helper.group_members_path(group)
+    end
+
+    it "is nothing outside a group" do
+      allow(helper).to receive(:controller_name).and_return("user_profiles")
+
+      expect(helper.section_root_path(create(:group))).to be_nil
+    end
+  end
 end

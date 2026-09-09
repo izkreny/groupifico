@@ -171,4 +171,34 @@ RSpec.describe Group, type: :model do
       expect(group.owned_by_anyone_but?(owner)).to be true
     end
   end
+
+  # RF6. Both of the method's decisions get an example: the filter, and the ordering. Times are
+  # frozen so "upcoming" cannot depend on how long the suite takes to reach this file.
+  describe "#next_event" do
+    it "is the soonest of the group's upcoming events" do
+      freeze_time do
+        group = create(:group)
+        creator = create(:member, group:)
+        later = create(:event, group:, creator:, starts_at: 10.days.from_now, ends_at: 10.days.from_now + 1.hour)
+        soonest = create(:event, group:, creator:, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 1.hour)
+
+        expect(group.next_event).to eq soonest
+        expect(group.next_event).not_to eq later
+      end
+    end
+
+    it "ignores an event that has already started" do
+      freeze_time do
+        group = create(:group)
+        creator = create(:member, group:)
+        create(:event, group:, creator:, starts_at: 2.days.ago, ends_at: 2.days.ago + 1.hour)
+
+        expect(group.next_event).to be_nil
+      end
+    end
+
+    it "is nil for a group with no events at all" do
+      expect(create(:group).next_event).to be_nil
+    end
+  end
 end

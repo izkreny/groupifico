@@ -82,6 +82,11 @@ class Group < ApplicationRecord
   # What the switcher shows under each group's name, so a reader choosing between groups sees the
   # thing they came for rather than only a name. Here rather than in a helper because "the next
   # event" is a fact about the group, and `Event.upcoming` is already the scope that decides which.
+  #
+  # This asks the database once per switcher row, which no preload avoids: filtering and sorting in
+  # Ruby off a preloaded `events` would need `upcoming`'s own boundary written a second time, and
+  # two spellings of one rule drifting is a worse defect than a query for each of the handful of
+  # groups a reader belongs to. RF8 raised it as a possible smell rather than a breach.
   def next_event
     events.upcoming.order(:starts_at).first
   end
