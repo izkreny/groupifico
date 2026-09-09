@@ -16,7 +16,10 @@
   "start_url": "/",
   "display": "standalone",
   "scope": "/",
-  "description": "Groupifico.",
-  "theme_color": "red",
-  "background_color": "red"
+  <%# No `theme_color` and no `background_color`, both of which the manifest spec makes optional.
+      A manifest carries one value and cannot switch on the device preference, so any colour named
+      here paints the launch surface and the OS chrome in one theme while the page under it paints
+      whichever theme the device asked for. Omitting them leaves the browser to pick, which is the
+      only way this file follows the two themes rather than contradicting one of them. %>
+  "description": "Groupifico."
 }
