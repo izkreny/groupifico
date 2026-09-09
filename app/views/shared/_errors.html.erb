@@ -1,5 +1,14 @@
-<% if object.errors.any? %>
-  <div id="error_explanation" role="alert" class="alert alert-error mb-5">
-    <span>Please fix the highlighted fields.</span>
+<%# locals: (form:) %>
+<% messages = form.unattached_error_messages %>
+
+<% if form.object.errors.any? %>
+  <div id="error_explanation" role="alert" class="alert alert-error alert-vertical mb-5">
+    <% if form.object.errors.size > messages.size %>
+      <span>Please fix the highlighted fields.</span>
+    <% end %>
+
+    <% messages.each do |message| %>
+      <span><%= message %></span>
+    <% end %>
   </div>
 <% end %>

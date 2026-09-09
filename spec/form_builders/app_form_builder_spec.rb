@@ -51,5 +51,99 @@ RSpec.describe AppFormBuilder do
 
       expect(field_for(address, :name)).not_to include "field_with_errors"
     end
+
+    # RF2 removed `**options` as a speculative parameter, which was right while no caller passed
+    # anything. Converting the forms created the callers - `sign_ups/new` passes `required`,
+    # `autofocus`, `placeholder` and `autocomplete` - so it is back, with the defect RF2 actually
+    # named fixed: the earlier revision merged its own options last and dropped a caller's.
+    it "composes a caller's class with its own rather than replacing it" do
+      html = field_for(build(:address), :name, class: "h-24")
+
+      expect(Nokogiri::HTML(html).at_css("input")["class"].split).to include "input", "validator", "h-24"
+    end
+
+    it "keeps its own aria-describedby when the caller passes an aria hash" do
+      input = Nokogiri::HTML(field_for(build(:address), :name, hint: "Optional.", aria: { label: "Venue" })).at_css("input")
+
+      expect(input["aria-describedby"]).to eq "address_name_hint"
+      expect(input["aria-label"]).to eq "Venue"
+    end
+
+    it "passes a caller's own attributes through to the control" do
+      input = Nokogiri::HTML(field_for(build(:address), :name, required: true, placeholder: "Venue")).at_css("input")
+
+      expect(input["required"]).to eq "required"
+      expect(input["placeholder"]).to eq "Venue"
+    end
+
+    it "labels the field with the caller's text when one is given" do
+      html = field_for(build(:address), :name, label: "Venue name")
+
+      expect(Nokogiri::HTML(html).at_css("label[for='address_name']").text).to eq "Venue name"
+    end
+
+    # `select` takes its html options in a fourth positional argument, after the choices and its
+    # own options, so passing them second loses the component class and the aria pair into a hash
+    # it ignores: green markup with no error styling and no accessible association.
+    it "puts the component class and the aria pair on a select" do
+      address = build(:address, name: nil)
+      address.valid?
+
+      select = Nokogiri::HTML(field_for(address, :name, as: :select, choices: %w[ Hall Studio ])).at_css("select")
+
+      expect(select["class"].split).to include "select", "validator"
+      expect(select["aria-invalid"]).to eq "true"
+      expect(select["aria-describedby"]).to eq "address_name_error"
+    end
+  end
+
+  describe "#unattached_error_messages" do
+    def builder_for(record)
+      view = ApplicationController.new.tap { it.request = ActionDispatch::TestRequest.create }.view_context
+      captured = nil
+      view.form_with(model: record, url: "/x") { |form| captured = form and nil }
+
+      captured
+    end
+
+    it "carries a message whose attribute no field drew" do
+      group = Group.new(name: "Choir")
+      group.group_type = "orchestra"
+      group.valid?
+      form = builder_for(group)
+
+      form.field :name
+
+      expect(form.unattached_error_messages).to include "Group type is not included in the list"
+    end
+
+    it "leaves out a message whose field was drawn" do
+      group = Group.new
+      group.valid?
+      form = builder_for(group)
+
+      form.field :name
+
+      expect(form.unattached_error_messages).not_to include "Name can't be blank"
+    end
+
+    # `validates_associated` leaves "Address is invalid" on the parent while the address's own
+    # fields say what is actually wrong, so a nested form counts as covering its association.
+    it "treats a nested form as covering its association" do
+      group = Group.new(name: "Choir", address: Address.new)
+      group.valid?
+      form = builder_for(group)
+
+      form.fields_for(:address) { |nested| nested.field :name }
+
+      expect(form.unattached_error_messages).not_to include "Address is invalid"
+    end
+
+    it "carries a base error, which can never have a field of its own" do
+      group = Group.new(name: "Choir")
+      group.errors.add(:base, "Something is off")
+
+      expect(builder_for(group).unattached_error_messages).to eq [ "Something is off" ]
+    end
   end
 end
