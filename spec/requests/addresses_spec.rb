@@ -202,6 +202,25 @@ RSpec.describe "Addresses", type: :request do
 
         expect(response).to have_http_status :unprocessable_content
       end
+
+      # The one CI-run layer that sees the field pattern's markup. `spec/system` is excluded from
+      # every GitHub Actions job per `.agents/gh-solo.md`, so an edit renaming this id or dropping
+      # the aria pair would otherwise reach `main` with four green checks. The ids are the ones
+      # #239 promises the request specs keep asserting, #178's among them.
+      it "names the failed field's error, and points the control at it" do
+        address = create(:address)
+        group   = create(:group, address: address)
+        member  = create(:member, :owner, group:)
+
+        sign_in_as(member.user)
+
+        patch address_path(address), params: { address: { name: "" } }
+
+        expect(response.body).to include %(<p id="address_name_error" class="label text-error">Name can&#39;t be blank</p>)
+        expect(response.body).to include %(aria-invalid="true")
+        expect(response.body).to include %(aria-describedby="address_name_error")
+        expect(response.body).to include "Please fix the highlighted fields."
+      end
     end
 
     context "when signed in as a member who does not own the group" do
