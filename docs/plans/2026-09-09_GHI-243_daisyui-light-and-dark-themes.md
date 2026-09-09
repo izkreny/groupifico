@@ -47,11 +47,11 @@ A theme assertion that only measures paint is unfalsifiable, because a silently 
 ## Verification
 
 - `bin/ci`
-- `git diff --stat` on `app/assets/builds/tailwind.css` across the rebuild, showing only the `custom-theme` removal
+- The built stylesheet compared before and after the rebuild, split on `}` so a single-line file diffs at all, showing only the `custom-theme` rule removed
 
 `bin/ci` is this repository's one gate, per `.agents/gh-solo.md`. Its `Tests: Stylesheet` step runs `bin/rails tailwindcss:build`, so a malformed option block dies there rather than in a view, and its `Tests: System` step runs the browser suite that the new spec joins.
 
-What the gate cannot see: the built stylesheet is gitignored, so no check compares it before and after, and the claim that only the `custom-theme` rules left has to be made by hand. Nor does any gate prove that the emulation is what put the page in dark — only the `colorScheme` expectation inside the spec does, and that expectation is worth exactly as much as the fail-watch named in the steps.
+What the gate cannot see: the built stylesheet is gitignored, so the comparison above runs on this machine and reports to nothing, and its tick is the whole of the evidence that it ran. Nor does any gate prove that the emulation is what put the page in dark — only the `colorScheme` expectation inside the spec does, and that expectation is worth exactly as much as the fail-watch named in the steps.
 
 ## Open questions
 
