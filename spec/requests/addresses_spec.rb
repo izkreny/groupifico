@@ -207,19 +207,29 @@ RSpec.describe "Addresses", type: :request do
       # every GitHub Actions job per `.agents/gh-solo.md`, so an edit renaming this id or dropping
       # the aria pair would otherwise reach `main` with four green checks. The ids are the ones
       # #239 promises the request specs keep asserting, #178's among them.
-      it "names the failed field's error, and points the control at it" do
-        address = create(:address)
-        group   = create(:group, address: address)
-        member  = create(:member, :owner, group:)
-
+      #
+      # Parsed rather than matched as a string, so the assertion ties both attributes to the
+      # control that failed rather than to the body as a whole, and survives the classes around
+      # the value changing.
+      it "names the failed field's error, and points its own control at it" do
+        member  = create(:member, :owner, :with_all_attributes)
         sign_in_as(member.user)
 
-        patch address_path(address), params: { address: { name: "" } }
+        patch address_path(member.group.address), params: { address: { name: "" } }
+        control = Nokogiri::HTML(response.body).at_css("input#address_name")
 
-        expect(response.body).to include %(<p id="address_name_error" class="label text-error">Name can&#39;t be blank</p>)
-        expect(response.body).to include %(aria-invalid="true")
-        expect(response.body).to include %(aria-describedby="address_name_error")
-        expect(response.body).to include "Please fix the highlighted fields."
+        expect(Nokogiri::HTML(response.body).at_css("p#address_name_error").text).to eq "Name can't be blank"
+        expect(control["aria-invalid"]).to eq "true"
+        expect(control["aria-describedby"]).to eq "address_name_error"
+      end
+
+      it "shows the summary alert above the fields" do
+        member = create(:member, :owner, :with_all_attributes)
+        sign_in_as(member.user)
+
+        patch address_path(member.group.address), params: { address: { name: "" } }
+
+        expect(page_text(response.body)).to include "Please fix the highlighted fields."
       end
     end
 

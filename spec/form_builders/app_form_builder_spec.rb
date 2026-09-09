@@ -38,7 +38,7 @@ RSpec.describe AppFormBuilder do
 
       html = field_for(address, :name, hint: "Optional.")
 
-      expect(html).to include %(<p id="address_name_error" class="label text-error">Name can&#39;t be blank</p>)
+      expect(Nokogiri::HTML(html).at_css("p#address_name_error").text).to eq "Name can't be blank"
       expect(html).not_to include "Optional."
     end
 
