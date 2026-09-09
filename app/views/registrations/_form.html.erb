@@ -1,5 +1,5 @@
 <%= form_with(model: [group, event, registration], class: "contents") do |form| %>
-  <% fields = capture do %>
+  <%= form.fields do %>
     <fieldset class="fieldset">
       <legend class="fieldset-legend">Registration details</legend>
 
@@ -7,9 +7,6 @@
       <%= form.field :status,    as: :select, choices: registration_statuses %>
     </fieldset>
   <% end %>
-
-  <%= render "shared/errors", form: form %>
-  <%= fields %>
 
   <div class="inline">
     <%= form.submit class: "btn btn-primary" %>

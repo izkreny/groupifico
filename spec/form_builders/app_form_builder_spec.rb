@@ -38,7 +38,7 @@ RSpec.describe AppFormBuilder do
 
       html = field_for(address, :name, hint: "Optional.")
 
-      expect(Nokogiri::HTML(html).at_css("p#address_name_error").text).to eq "Name can't be blank"
+      expect(Nokogiri::HTML(html).at_css("p.validator-hint").text).to eq "Name can't be blank"
       expect(html).not_to include "Optional."
     end
 
@@ -144,6 +144,20 @@ RSpec.describe AppFormBuilder do
       group.errors.add(:base, "Something is off")
 
       expect(builder_for(group).unattached_error_messages).to eq [ "Something is off" ]
+    end
+
+    # A `belongs_to` failure is keyed on the association, so a control drawn for the foreign key
+    # answers for it: without this the message goes to the summary while the select it refers to
+    # sits unmarked on the page.
+    it "treats a foreign-key field as covering its association's error" do
+      registration = Registration.new
+      registration.valid?
+      form = builder_for(registration)
+
+      form.field :member_id, as: :select, choices: []
+
+      expect(registration.errors[:member]).to be_present
+      expect(form.unattached_error_messages).not_to include "Member must exist"
     end
   end
 end

@@ -6,7 +6,7 @@
   <p class="my-5">Name your group and give us your email address. We will send you a link that creates both.</p>
 
   <%= form_with model: @sign_up, url: sign_up_url, class: "contents" do |form| %>
-    <% fields = capture do %>
+    <%= form.fields do %>
       <fieldset class="fieldset">
         <legend class="fieldset-legend">Your group</legend>
 
@@ -16,9 +16,6 @@
               autocomplete: "username", placeholder: "Enter your email address" %>
       </fieldset>
     <% end %>
-
-    <%= render "shared/errors", form: form %>
-    <%= fields %>
 
     <div class="inline">
       <%= form.submit "Email me a link to start it", class: "btn btn-primary" %>

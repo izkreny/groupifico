@@ -31,6 +31,15 @@ RSpec.describe "A form field's errors", type: :system do
       click_button "Update Address"
     end
 
+    # `.validator-hint` is `visibility: hidden` until the `~ .validator-hint` sibling rule reveals
+    # it, so the note can be present, correctly coloured and invisible all at once. Capybara's
+    # default of `visible: true` is what makes this the one assertion that fails on that, and the
+    # colour comparison below cannot: an unrevealed note inherits a colour that already differs
+    # from the label's.
+    it "reveals the message rather than merely rendering it" do
+      expect(page).to have_css "#address_name_error"
+    end
+
     it "colours the message apart from the label above it" do
       colour_of = ->(selector) { page.evaluate_script "getComputedStyle(document.querySelector(arguments[0])).color", selector }
 

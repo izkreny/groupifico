@@ -6,9 +6,9 @@ class AppFormBuilder < ActionView::Helpers::FormBuilder
   # `as:` names the field helper that draws the control; `choices:` and `prompt:` reach a `:select`,
   # whose html options sit in a different positional argument than every other helper's.
   def field(attribute, as: :text_field, label: nil, hint: nil, choices: nil, prompt: nil, **options)
-    drawn << attribute
+    drawn.concat error_keys(attribute)
 
-    messages = object.errors.full_messages_for(attribute)
+    messages = error_keys(attribute).flat_map { object.errors.full_messages_for(it) }
     invalid  = messages.any?
     note     = invalid ? messages.to_sentence : hint
     note_id  = field_id(attribute, invalid ? :error : :hint)
@@ -18,6 +18,16 @@ class AppFormBuilder < ActionView::Helpers::FormBuilder
       control(as, attribute, options, choices:, prompt:, invalid:, describedby: (note_id if note.present?)),
       note_tag(note, note_id, invalid:)
     ].compact
+  end
+
+  # The summary reads what the fields drew, so the fields have to render first and appear second.
+  # That ordering is the whole reason this method exists rather than each template capturing its
+  # own fieldset: eight templates each holding the invariant is eight chances to flatten it back to
+  # the obvious order, which empties `drawn` and repeats every field error in the summary.
+  def fields(&)
+    captured = @template.capture(&)
+
+    @template.safe_join [ @template.render("shared/errors", form: self), captured ]
   end
 
   # Recorded so `shared/_errors` can carry the messages no field drew. A nested form draws its
@@ -40,6 +50,17 @@ class AppFormBuilder < ActionView::Helpers::FormBuilder
   private
     def drawn
       @drawn ||= []
+    end
+
+    # A `belongs_to` failure is keyed on the association, never on its foreign key, so a control
+    # drawn for `:member_id` answers for `:member` too. Without this a missing `Registration#member`
+    # renders in the summary while the select it belongs to sits unmarked, which is the case
+    # `RegistrationsController#new_registration_params` lets through on purpose so the model can
+    # refuse it.
+    def error_keys(attribute)
+      association = attribute.to_s.delete_suffix("_id")
+
+      association == attribute.to_s ? [ attribute ] : [ attribute, association.to_sym ]
     end
 
     # daisyUI's `validator` component is what colours a server-rejected control, and the control

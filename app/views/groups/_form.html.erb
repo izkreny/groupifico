@@ -1,5 +1,5 @@
 <%= form_with(model: group, class: "contents") do |form| %>
-  <% fields = capture do %>
+  <%= form.fields do %>
     <fieldset class="fieldset">
       <legend class="fieldset-legend">Group details</legend>
 
@@ -11,9 +11,6 @@
       <% end %>
     </fieldset>
   <% end %>
-
-  <%= render "shared/errors", form: form %>
-  <%= fields %>
 
   <div class="inline">
     <%= form.submit class: "btn btn-primary" %>

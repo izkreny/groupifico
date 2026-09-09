@@ -1,14 +1,11 @@
 <%= form_with(model: address, class: "contents") do |form| %>
-  <% fields = capture do %>
+  <%= form.fields do %>
     <fieldset class="fieldset">
       <legend class="fieldset-legend">Address details</legend>
 
       <%= render "form_fields", form: form %>
     </fieldset>
   <% end %>
-
-  <%= render "shared/errors", form: form %>
-  <%= fields %>
 
   <div class="inline">
     <%= form.submit class: "btn btn-primary" %>

@@ -1,14 +1,11 @@
 <%= form_with(model: user, class: "contents") do |form| %>
-  <% fields = capture do %>
+  <%= form.fields do %>
     <fieldset class="fieldset">
       <legend class="fieldset-legend">Account details</legend>
 
       <%= form.field :email, as: :email_field %>
     </fieldset>
   <% end %>
-
-  <%= render "shared/errors", form: form %>
-  <%= fields %>
 
   <div class="inline">
     <%= form.submit class: "btn btn-primary" %>

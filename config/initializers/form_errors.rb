@@ -4,8 +4,9 @@ Rails.application.config.action_view.field_error_proc = ->(html_tag, _instance) 
 # `ActiveModelInstanceTag` routes the label and the control through that proc separately, so one
 # rejected attribute yields two wrappers. Both sit inside the field's own vertical layout and break
 # it, and neither is what marks the control invalid: `AppFormBuilder#field` does that with
-# `aria-invalid`, `aria-describedby` and daisyUI's `-error` colour, which a screen reader can read
-# and a wrapper div cannot.
+# `aria-invalid` and `aria-describedby`, which a screen reader can read and a wrapper div cannot,
+# and daisyUI's `validator` component reads that same `aria-invalid` for the colour. No class names
+# the error state.
 #
 # This is a deviation, and worth naming as one. Rails' validations guide documents *customising*
 # this proc as the way to change how errors are presented, so rendering the message from here is

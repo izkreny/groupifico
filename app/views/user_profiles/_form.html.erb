@@ -1,5 +1,5 @@
 <%= form_with(model: user_profile, class: "contents") do |form| %>
-  <% fields = capture do %>
+  <%= form.fields do %>
     <fieldset class="fieldset">
       <legend class="fieldset-legend">Profile details</legend>
 
@@ -8,9 +8,6 @@
       <%= form.field :mobile_phone, as: :telephone_field %>
     </fieldset>
   <% end %>
-
-  <%= render "shared/errors", form: form %>
-  <%= fields %>
 
   <div class="inline">
     <%= form.submit class: "btn btn-primary" %>
