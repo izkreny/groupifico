@@ -16,13 +16,10 @@
   "start_url": "/",
   "display": "standalone",
   "scope": "/",
-  "description": "Groupifico.",
-  <%# Both copy the light theme's compiled `base-100`. A manifest is parsed by the operating
-      system rather than painted by the page, so it cannot reference a daisyUI semantic class and
-      cannot switch on the device preference either - `light` is the `--default` theme, so its
-      value is the one that belongs here. Hex rather than the `oklch()` the stylesheet carries,
-      because manifest parsers across Android and iOS are not something this repository has
-      checked. #257 owns the next value, when the organic theme replaces the stock palette. %>
-  "theme_color": "#ffffff",
-  "background_color": "#ffffff"
+  <%# No `theme_color` and no `background_color`, both of which the manifest spec makes optional.
+      A manifest carries one value and cannot switch on the device preference, so any colour named
+      here paints the launch surface and the OS chrome in one theme while the page under it paints
+      whichever theme the device asked for. Omitting them leaves the browser to pick, which is the
+      only way this file follows the two themes rather than contradicting one of them. %>
+  "description": "Groupifico."
 }
