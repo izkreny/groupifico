@@ -95,6 +95,75 @@ RSpec.describe "Groups", type: :request do
         expect(response).to have_http_status :not_found
       end
     end
+
+    # Which of the shell's controls a given reader is offered. This is the layer that answers it,
+    # per the duplication rule in `.agents/testing.md`: `spec/system/group_shell_spec.rb` asserts
+    # that the chrome paints and that its controls behave, and never which reader sees what.
+    #
+    # Asserted on the `aria-label`, which is each control's accessible name and the only stable
+    # thing about an icon-only button: there is no text to match and the SVG path is the wrong
+    # thing to couple to.
+    describe "the shell's controls" do
+      it "offers the pencil to an owner" do
+        member = create(:member, :owner)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(response.body).to include 'aria-label="Edit group"'
+      end
+
+      # `GroupPolicy#edit?` is the owner's alone - an administrator is refused all three group
+      # writes, which is the split `can_manage?` cannot express - so the control is absent rather
+      # than disabled, per #235's second acceptance criterion.
+      it "offers no pencil to an administrator, who may not edit the group" do
+        member = create(:member, :administrator)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(response.body).not_to include 'aria-label="Edit group"'
+      end
+
+      it "offers the switcher chevron to a reader with a second group" do
+        member = create(:member)
+        create(:member, user: member.user, group: create(:group))
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(response.body).to include 'aria-label="Switch group"'
+      end
+
+      it "offers no switcher chevron to a reader with one group" do
+        member = create(:member)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(response.body).not_to include 'aria-label="Switch group"'
+      end
+
+      # A group they have left is not a group they can switch to, so it must not raise the count
+      # that decides whether the chevron appears either. Same leak `user.current_groups` closes for
+      # the index, asked of the shell instead.
+      it "offers no switcher chevron for a group the reader has left" do
+        member = create(:member)
+        create(:member, :inactive, user: member.user, group: create(:group))
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(response.body).not_to include 'aria-label="Switch group"'
+      end
+
+      it "offers no chrome at all to a signed-out visitor" do
+        get new_session_path
+
+        expect(response.body).not_to include 'aria-label="Me"'
+        expect(response.body).not_to include 'class="dock'
+      end
+    end
   end
 
   describe "GET /groups/new" do

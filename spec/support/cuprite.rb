@@ -5,6 +5,16 @@ require "capybara/cuprite"
 # and the README do not name.
 Capybara.save_path = Rails.root.join("tmp/capybara")
 
+# The shell #244 builds is icon-only controls - three tabs, a switcher chevron, a pencil, a back
+# chevron, an avatar - and an `aria-label` is the whole of each one's name. Without this, a spec
+# reaching them has to fall back to a CSS selector, which is what `.agents/testing.md` asks specs
+# not to do: `click_button "Switch group"` says what a person does and `find("button[aria-label=…]")`
+# says how the markup is built.
+#
+# It only widens what a locator matches - id, name, value, title and text still match first - so no
+# existing spec changes meaning by it.
+Capybara.enable_aria_label = true
+
 Capybara.register_driver :chromium do |app|
   Capybara::Cuprite::Driver.new(app, browser_path: Chromium.path, window_size: [ 1400, 1400 ],
     # Cuprite's default is 5 seconds, which is Capybara's default wait plus nothing. A cold
