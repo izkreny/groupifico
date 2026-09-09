@@ -27,7 +27,25 @@ class Group < ApplicationRecord
   # TODO: add order by `counter_cache` aka Adress field `events_count`
   has_many :events_addresses, -> { distinct }, through: :events, source: :address
 
-  enum :group_type, %i[ general choir band ], default: :choir, validate: true
+  enum :group_type, %i[ general choir band ], validate: true
+
+  # Taken from the domain the request arrived on rather than from a fixed value, so a group started
+  # on `chorifico.com` is a choir and one started anywhere else is general. `Brand` owns the mapping
+  # and `ApplicationController` puts the answer in `Current`.
+  #
+  # A callback rather than a callable `enum default:`, which the enum would accept: an attribute's
+  # Proc default resolves on first read and memoizes, so a record built in one request and first
+  # read in another would answer for whichever brand were current at the read. A `before_validation`
+  # runs at a defined point inside `save`, so that gap does not exist. ADR 0006 has the evidence.
+  #
+  # `||=` is what lets a submitted type win over the domain, and `on: :create` is what keeps the
+  # callback off an existing group. Both are needed, and `null: false` substitutes for neither:
+  # that constrains the persisted column, while this reads the in-memory attribute, which mass
+  # assignment can blank first - `:group_type` is a permitted param and `EnumType#cast` turns a
+  # submitted blank into nil. Without the condition, editing a choir from an unbranded domain with
+  # that field blank retyped it to general and answered 303, where the enum's own inclusion check
+  # should have refused it.
+  before_validation -> { self[:group_type] ||= Current.brand.group_type }, on: :create
 
   validates_associated :address
   validates :name, presence: true, length: { maximum: 250 }

@@ -9,6 +9,11 @@ class ApplicationController < ActionController::Base
   # This application has no `current_user`; the acting user is reached through `Current.session`.
   authorize :user, through: -> { Current.user }
 
+  # Set here rather than in the two controllers that create groups, because `SignUp.redeem!` is a
+  # class method with no request in reach: threading the domain down to it would put an argument
+  # through the transaction that finishes a sign-up. One `before_action` covers both routes.
+  before_action { Current.brand = Brand.new(request.domain) }
+
   # Raises ActionPolicy::UnauthorizedAction when an action completes without an authorize! call.
   # It counts authorize! only: authorized_scope bumps a separate counter and does not satisfy this
   # guard, which is why #172 enables verify_authorized_scoped only: :index alongside it.

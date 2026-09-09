@@ -25,9 +25,14 @@ def populate_empty_database
   # Make Faker always produce same results aka enable deterministic output
   Faker::Config.random = Random.new(666)
 
-  # Create groups with unique members in each group
-  groups = FactoryBot.create_list(:group, NUMBER_OF_GROUPS, :with_all_attributes) do |group|
-    FactoryBot.create_list(:member, NUMBER_OF_MEMBERS_PER_GROUP - 1, :with_all_attributes, group: group)
+  # Create groups with unique members in each group. Seeded as if started on `chorifico.com`, so
+  # development data looks like the domain the product is being built for rather than carrying the
+  # unbranded default: `Brand` answers the type, exactly as it does for a real request, instead of
+  # a literal type being named here.
+  groups = Current.set(brand: Brand.new("chorifico.com")) do
+    FactoryBot.create_list(:group, NUMBER_OF_GROUPS, :with_all_attributes) do |group|
+      FactoryBot.create_list(:member, NUMBER_OF_MEMBERS_PER_GROUP - 1, :with_all_attributes, group: group)
+    end
   end
 
   # Create one member that belongs to each group

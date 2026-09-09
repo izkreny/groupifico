@@ -169,6 +169,37 @@ RSpec.describe "SignUpConfirmations", type: :request do
       end
     end
 
+    # The route that matters most at beta: a new user reaches a group through the confirmation and
+    # never through the group form. `SignUp.redeem!` builds the group with no type of its own, so
+    # what it gets is whatever the domain the link was opened on implies.
+    context "when typing the group from the domain the link was opened on" do
+      it "types the group general on an unbranded host" do
+        get sign_up_confirmation_path(token: SignUp.mint(email: "starter@example.com", group_name: "Chamber Choir"))
+
+        post sign_up_confirmation_path
+
+        expect(Group.sole.group_type).to eq("general")
+      end
+
+      it "types the group a choir on chorifico.com" do
+        host! "chorifico.com"
+        get sign_up_confirmation_path(token: SignUp.mint(email: "starter@example.com", group_name: "Chamber Choir"))
+
+        post sign_up_confirmation_path
+
+        expect(Group.sole.group_type).to eq("choir")
+      end
+
+      it "types the group a choir on a subdomain of chorifico.com" do
+        host! "www.chorifico.com"
+        get sign_up_confirmation_path(token: SignUp.mint(email: "starter@example.com", group_name: "Chamber Choir"))
+
+        post sign_up_confirmation_path
+
+        expect(Group.sole.group_type).to eq("choir")
+      end
+    end
+
     context "when already signed in" do
       it "redirects to the root page without creating a group" do
         sign_in_as(create(:user))

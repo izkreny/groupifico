@@ -24,7 +24,43 @@ RSpec.describe Group, type: :model do
   end
 
   describe "(enums)" do
-    it { is_expected.to define_enum_for(:group_type).with_values(general: 0, choir: 1, band: 2).with_default(:choir).validating }
+    it { is_expected.to define_enum_for(:group_type).with_values(general: 0, choir: 1, band: 2).validating }
+
+    # Hand-rolled rather than `with_default`, which asserts a value and so passes just as happily
+    # against a fixed `default: :general`. What matters is that the value tracks the brand, and
+    # only a pair of examples under different brands can say that.
+    #
+    # Each one validates, because the type is settled in a `before_validation` rather than by an
+    # enum default: an unvalidated `Group.new` carries no type at all.
+    describe "the group_type taken from the brand" do
+      it "is general when no brand has been resolved" do
+        group = build(:group)
+
+        group.valid?
+
+        expect(group.group_type).to eq("general")
+      end
+
+      it "is choir under the chorifico.com brand" do
+        Current.set(brand: Brand.new("chorifico.com")) do
+          group = build(:group)
+
+          group.valid?
+
+          expect(group.group_type).to eq("choir")
+        end
+      end
+
+      it "yields to an explicitly given type" do
+        Current.set(brand: Brand.new("chorifico.com")) do
+          group = build(:group, group_type: :band)
+
+          group.valid?
+
+          expect(group.group_type).to eq("band")
+        end
+      end
+    end
   end
 
   describe "(validations)" do
