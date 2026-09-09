@@ -26,4 +26,20 @@ RSpec.describe Brand, type: :model do
       expect(described_class.new("ChoRifico.COM").group_type).to eq("choir")
     end
   end
+
+  describe "#name" do
+    # Every domain answers with the platform's own name until #223 gives the branded ones theirs;
+    # the value is here rather than in the layout because the chrome wants it three times.
+    it "is Groupifico for a domain that carries no brand" do
+      expect(described_class.new("example.com").name).to eq("Groupifico")
+    end
+
+    it "is Groupifico for the chorifico.com domain too, until #223 lands" do
+      expect(described_class.new("chorifico.com").name).to eq("Groupifico")
+    end
+
+    it "is Groupifico when there is no domain at all" do
+      expect(described_class.new(nil).name).to eq("Groupifico")
+    end
+  end
 end

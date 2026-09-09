@@ -15,6 +15,11 @@ class Brand
   # answer wherever the domain says nothing - which is why `Group` no longer defaults to `choir`.
   UNBRANDED_GROUP_TYPE = "general"
 
+  # The platform's canonical name, which every domain answers with until #223 gives the branded
+  # ones their own. Not folded into `GROUP_TYPES`: that map's absent key means "general", where an
+  # absent key here would have to mean "Groupifico", and one map cannot carry two defaults.
+  UNBRANDED_NAME = "Groupifico"
+
   # `nil` is an ordinary argument rather than something to guard against: `request.domain` answers
   # nil for a bare IP, and `Current.brand`'s default constructs one with nothing at all.
   #
@@ -32,5 +37,12 @@ class Brand
 
   def group_type
     GROUP_TYPES.fetch(@domain, UNBRANDED_GROUP_TYPE)
+  end
+
+  # The name the chrome shows. Here rather than in the layout because the layout wants it three
+  # times - the document title, the `application-name` meta and the header on screens that have no
+  # group - and #223 swaps it per domain from a map of the same shape as `GROUP_TYPES` above.
+  def name
+    UNBRANDED_NAME
   end
 end
