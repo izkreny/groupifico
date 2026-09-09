@@ -1,15 +1,15 @@
 <%= form_with(model: [group, event, registration], class: "contents") do |form| %>
-  <%= render "shared/errors", object: registration %>
+  <% fields = capture do %>
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend">Registration details</legend>
 
-  <fieldset class="fieldset">
-    <legend class="fieldset-legend">Registration details</legend>
+      <%= form.field :member_id, as: :select, choices: member_choices(members_available(group, event)) %>
+      <%= form.field :status,    as: :select, choices: registration_statuses %>
+    </fieldset>
+  <% end %>
 
-    <%= form.label :member_id, class: "label" %>
-    <%= form.collection_select :member_id, members_available(group, event), :id, :full_name, {}, class: "select w-full" %>
-
-    <%= form.label :status, class: "label" %>
-    <%= form.select :status, registration_statuses, {}, class: "select w-full" %>
-  </fieldset>
+  <%= render "shared/errors", form: form %>
+  <%= fields %>
 
   <div class="inline">
     <%= form.submit class: "btn btn-primary" %>

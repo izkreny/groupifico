@@ -1,18 +1,16 @@
 <%= form_with(model: user_profile, class: "contents") do |form| %>
-  <%= render "shared/errors", object: user_profile %>
+  <% fields = capture do %>
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend">Profile details</legend>
 
-  <fieldset class="fieldset">
-    <legend class="fieldset-legend">Profile details</legend>
+      <%= form.field :first_name %>
+      <%= form.field :last_name %>
+      <%= form.field :mobile_phone, as: :telephone_field %>
+    </fieldset>
+  <% end %>
 
-    <%= form.label      :first_name, class: "label" %>
-    <%= form.text_field :first_name, class: "input w-full" %>
-
-    <%= form.label      :last_name, class: "label" %>
-    <%= form.text_field :last_name, class: "input w-full" %>
-
-    <%= form.label           :mobile_phone, class: "label" %>
-    <%= form.telephone_field :mobile_phone, class: "input w-full" %>
-  </fieldset>
+  <%= render "shared/errors", form: form %>
+  <%= fields %>
 
   <div class="inline">
     <%= form.submit class: "btn btn-primary" %>
