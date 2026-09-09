@@ -1,0 +1,48 @@
+<%# locals: (id:, memberships:, current_group:) %>
+<%#
+  The sheet the header's chevron opens, drawn as a top-placed modal because frame 2d puts it over
+  the screen rather than on a route of its own. A real `<dialog>`, so it takes the top layer, traps
+  focus and closes on Escape without any of that being written here - and so axe reads a modal
+  rather than a div impersonating one.
+
+  Rows carry no `dom_id`: this is a navigation list, not a record listing, and `group_<id>` in the
+  markup is what `spec/requests/groups_spec.rb` asserts the absence of elsewhere.
+
+  Rendered only for a reader with more than one group, so it is never an empty overlay.
+%>
+<dialog id="<%= id %>" class="modal modal-top" data-group-switcher-target="dialog">
+  <div class="modal-box max-w-[40rem] mx-auto rounded-t-none">
+    <h2 class="text-shell mb-3">Your groups</h2>
+
+    <ul class="menu w-full px-0">
+      <% memberships.each do |membership| %>
+        <li>
+          <%= link_to group_path(membership.group), class: [ "flex-col items-start gap-0.5", "menu-active" => membership.group == current_group ] do %>
+            <span class="flex items-center gap-2">
+              <span class="text-row-title"><%= membership.group.name %></span>
+              <% if membership.owner? %>
+                <span class="badge badge-sm">owner</span>
+              <% end %>
+              <% if membership.paused? %>
+                <span class="badge badge-ghost badge-sm">paused</span>
+              <% end %>
+            </span>
+            <span class="text-meta opacity-70">
+              <% if (event = membership.group.next_event) %>
+                Next: <%= event.name %>, <%= l event.starts_at, format: :short %>
+              <% else %>
+                No event coming up
+              <% end %>
+            </span>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  </div>
+
+  <%# A form rather than a button with script: submitting a `method="dialog"` form is what closes a
+      dialog natively, so clicking the backdrop needs nothing from Stimulus. %>
+  <form method="dialog" class="modal-backdrop">
+    <button>Close</button>
+  </form>
+</dialog>

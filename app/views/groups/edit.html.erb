@@ -1,7 +1,11 @@
-<% content_for :title, "Editing group" %>
+<% content_for :title, "Edit group" %>
 
-<div class="md:w-2/3 w-full">
-  <h1 class="font-bold text-4xl">Editing group</h1>
+<%# The shell's pushed-screen title. #247 redesigns the rest of this screen; the header is here so
+    the back chevron and the title row are exercised by something before that row lands. %>
+<%= render "shared/page_header", title: "Group" %>
+
+<div class="w-full">
+  <h1 class="text-record"><%= @group.name %></h1>
 
   <%= render "form", group: @group %>
 

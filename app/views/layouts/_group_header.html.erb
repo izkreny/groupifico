@@ -1,0 +1,61 @@
+<%# locals: (brand_name:, group: nil, initials: nil, editable: false, switcher_id: nil, back_path: nil, tabs: false, section: nil) %>
+<%#
+  The shell's one header row. Strict locals rather than instance variables, so the only file in the
+  shell that reads one is the layout that renders this.
+
+  The leading 20px slot carries either the group mark or a back chevron and is present either way,
+  which is what makes every title start at the same x: a pushed screen swaps the dot for the
+  chevron and moves nothing.
+%>
+<div class="navbar bg-base-100 border-b border-base-content/5 min-h-0 gap-2.5 px-4 py-3">
+  <span class="flex-none grid w-5 h-5 place-items-center">
+    <% if back_path %>
+      <%= link_to back_path, class: "text-primary", aria: { label: "Back" } do %>
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M15.75 19.5 8.25 12l7.5-7.5" />
+        </svg>
+      <% end %>
+    <% elsif group %>
+      <span class="bg-primary block w-2.5 h-2.5 rounded-full" aria-hidden="true"></span>
+    <% end %>
+  </span>
+
+  <span class="text-shell sm:text-hero truncate"><%= group ? group.name : brand_name %></span>
+
+  <% if switcher_id %>
+    <button type="button" class="btn btn-ghost btn-circle btn-sm text-primary flex-none"
+            aria-label="Switch group" aria-haspopup="dialog" aria-expanded="false"
+            aria-controls="<%= switcher_id %>"
+            data-action="group-switcher#open" data-group-switcher-target="opener">
+      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+      </svg>
+    </button>
+  <% end %>
+
+  <% if editable %>
+    <%= link_to edit_group_path(group), class: "btn btn-ghost btn-circle btn-sm text-primary flex-none", aria: { label: "Edit group" } do %>
+      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+      </svg>
+    <% end %>
+  <% end %>
+
+  <span class="navbar-end gap-4">
+    <%# From 640px up the tabs sit here beside the avatar; below it the layout draws the same
+        partial as the dock at the foot, and exactly one of the two is ever visible. %>
+    <% if tabs %>
+      <span class="max-sm:hidden flex gap-4">
+        <%= render "layouts/group_tabs", group: group, section: section %>
+      </span>
+    <% end %>
+
+    <% if initials %>
+      <%= link_to user_profile_path, class: "avatar avatar-placeholder", aria: { label: "Me" } do %>
+        <span class="bg-base-300 text-base-content w-8 sm:w-9 rounded-full">
+          <span class="text-card-fact"><%= initials %></span>
+        </span>
+      <% end %>
+    <% end %>
+  </span>
+</div>

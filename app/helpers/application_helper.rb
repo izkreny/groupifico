@@ -22,4 +22,25 @@ module ApplicationHelper
   def shell_tabs?(group)
     group.present? && shell_section.present? && FORM_ACTIONS.exclude?(action_name)
   end
+
+  # Where each tab leads, and so also where a pushed screen's back chevron goes: a section's root
+  # is the screen its tab points at, which is what makes "back" mean "up to this section" rather
+  # than "wherever the browser was".
+  SECTION_ROOTS = {
+    home: %w[ groups show ], events: %w[ events index ], members: %w[ members index ]
+  }.freeze
+
+  # A pushed screen is anything inside a group that is not a section root: an event, a member, a
+  # roster, and every form. Derived rather than declared for the same reason `shell_section` is.
+  def pushed_screen?
+    shell_section.present? && SECTION_ROOTS[shell_section] != [ controller_name, action_name ]
+  end
+
+  def section_root_path(group)
+    case shell_section
+    when :home    then group_path(group)
+    when :events  then group_events_path(group)
+    when :members then group_members_path(group)
+    end
+  end
 end

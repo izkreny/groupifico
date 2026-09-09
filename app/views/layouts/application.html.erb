@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="<%= I18n.locale %>">
   <head>
-    <title><%= content_for(:title) || "Groupifico" %></title>
+    <title><%= content_for(:title) || Current.brand.name %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Groupifico">
+    <meta name="application-name" content="<%= Current.brand.name %>">
     <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
@@ -20,12 +20,55 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body>
-    <%= render "layouts/navigation" %>
-    <%= render "layouts/flash" %>
+  <%#
+    The shell. This is the one file in it that reads a controller instance variable: `@group` until
+    #227 puts a group on `Current`, and `persisted?` rather than `present?` because `groups#new`
+    and a failed `create` both carry an unsaved `Group.new` holding whatever was typed. Everything
+    below takes what it needs as a strict local, so no partial here asks the controller anything.
 
-    <main class="container mx-auto mt-28 px-5 flex">
-      <%= yield %>
-    </main>
+    Whether the tabs paint is decided once, here, and both placements are told rather than each
+    asking - the header draws them beside the avatar from 640px up, the dock draws them below it.
+  %>
+  <% group = @group if @group&.persisted? %>
+  <% memberships = Current.user.current_memberships.includes(:roles, :group).to_a if group %>
+  <% switcher_id = "group-switcher" if memberships&.many? %>
+  <% tabs = shell_tabs?(group) %>
+
+  <body>
+    <%# One column, capped and centred from 640px up and full-bleed below it. The header sits inside
+        it rather than above it, which is what keeps the group name and a pushed screen's title on
+        the same x at every width. %>
+    <div class="w-full max-w-[40rem] mx-auto min-h-dvh flex flex-col <%= "max-sm:pb-20" if tabs %>">
+      <div data-controller="group-switcher">
+        <%= render "layouts/group_header",
+              brand_name: Current.brand.name,
+              group: group,
+              initials: (Current.user.profile.initials if authenticated?),
+              editable: (group.present? && allowed_to?(:edit?, group)),
+              switcher_id: switcher_id,
+              back_path: (section_root_path(group) if group && pushed_screen?),
+              tabs: tabs,
+              section: shell_section %>
+
+        <% if switcher_id %>
+          <%= render "layouts/group_switcher", id: switcher_id, memberships: memberships, current_group: group %>
+        <% end %>
+      </div>
+
+      <%# Under the header and above the content, per #244's sixth criterion. %>
+      <div class="px-4 pt-3"><%= render "layouts/flash" %></div>
+
+      <main class="px-4 py-3 grow">
+        <%= yield %>
+      </main>
+    </div>
+
+    <%# The header's three links again, as the dock below 640px: `sm:hidden` rather than a second
+        partial. Outside the capped column, because the dock is fixed to the viewport's foot. %>
+    <% if tabs %>
+      <nav class="dock sm:hidden" aria-label="Group sections">
+        <%= render "layouts/group_tabs", group: group, section: shell_section, in_dock: true %>
+      </nav>
+    <% end %>
   </body>
 </html>

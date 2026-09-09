@@ -78,4 +78,11 @@ class Group < ApplicationRecord
   def owned_by_anyone_but?(member)
     members.active.joins(:roles).where(roles: { name: Role::OWNER }).where.not(id: member.id).exists?
   end
+
+  # What the switcher shows under each group's name, so a reader choosing between groups sees the
+  # thing they came for rather than only a name. Here rather than in a helper because "the next
+  # event" is a fact about the group, and `Event.upcoming` is already the scope that decides which.
+  def next_event
+    events.upcoming.order(:starts_at).first
+  end
 end

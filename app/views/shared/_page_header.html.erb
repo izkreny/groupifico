@@ -1,0 +1,18 @@
+<%# locals: (title:) %>
+<%#
+  A pushed screen's title, under the shell's header. The back chevron is not here: it sits in the
+  header's own leading slot, and this row reproduces that slot empty so both start at the same x -
+  which is the whole of what "every title starts at the same x" asks for.
+
+  No horizontal padding of its own: this renders inside the layout's `main`, which carries the same
+  `px-4` the header does, so the two agree by sharing the column rather than by matching numbers.
+  The `gap-2.5` and `w-5` are `layouts/_group_header`'s gap and mark slot; change either and change
+  both.
+
+  The title is the section noun - "Event", "Member", "New group" - and never the record's name,
+  which is the body's first heading.
+%>
+<div class="flex items-center gap-2.5">
+  <span class="flex-none w-5" aria-hidden="true"></span>
+  <h1 class="text-shell sm:text-hero truncate"><%= title %></h1>
+</div>
