@@ -40,7 +40,7 @@ The field's three tags are built with the template's own tag helpers inside the 
 
 ## Verification
 
-- [ ] `bin/ci`
+- `bin/ci`
 
 What those gates cannot see: whether the field matches frame 9h2 as drawn. The error's position, size and colour against the wireframe is the owner's judgement on the rendered screen, and the same holds for the summary alert reading as the same component the flash uses. `be_accessible` proves the input and its message are associated and labelled; it says nothing about whether they look like the frame.
 
