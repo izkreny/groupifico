@@ -15,26 +15,26 @@ class AppFormBuilder < ActionView::Helpers::FormBuilder
   end
 
   private
-    # `input-error` and its siblings are what daisyUI colours a server-rejected control with. The
-    # `validator` component is not the pattern here: it is driven by the browser's own constraint
-    # API, which never sees an error the server found.
-    #
-    # Both class names are spelled out rather than composed from `component`. Tailwind finds the
-    # utilities it compiles by scanning source for literal class names, so an interpolated
-    # `"#{component}-error"` reaches the markup and reaches no stylesheet: the control renders
-    # carrying a class that paints nothing.
+    # daisyUI's `validator` component is what colours a server-rejected control, and the control
+    # carries it unconditionally. Its selector is not only `:user-invalid`, which would need a
+    # person to have typed something: it also matches
+    # `.validator[aria-invalid]:not([aria-invalid="false"])`, so the `aria-invalid` set below is
+    # what drives it, and a sibling `~ .validator-hint` is revealed by the same rule. That is why
+    # no `-error` class is composed here for either the control or the note - nothing about the
+    # error state is expressed in a class name at all, which also leaves nothing for Tailwind's
+    # literal-class-name scanning to miss.
     def control(as, attribute, invalid:, describedby:)
-      component, error = as == :text_area ? [ "textarea", "textarea-error" ] : [ "input", "input-error" ]
+      component = as == :text_area ? "textarea" : "input"
 
       public_send as, attribute,
-        class: [ component, "w-full", (error if invalid) ],
+        class: [ component, "w-full", "validator" ],
         aria: { invalid: ("true" if invalid), describedby: describedby }.compact
     end
 
     def note_tag(text, id, invalid:)
       return if text.blank?
 
-      @template.tag.p text, id: id, class: [ "label", ("text-error" if invalid) ]
+      @template.tag.p text, id: id, class: (invalid ? "validator-hint" : "label")
     end
 
     def note_id(attribute, invalid)
