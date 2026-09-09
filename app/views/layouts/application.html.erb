@@ -30,6 +30,11 @@
     asking - the header draws them beside the avatar from 640px up, the dock draws them below it.
   %>
   <% group = @group if @group&.persisted? %>
+  <%# `name_in_database`, not `name`: a failed `update` re-renders `edit` on the persisted record
+      with the rejected attributes still assigned, so `name` there is whatever was typed - blank
+      included - and the header would rename the group the save just refused to rename, while the
+      switcher beside it loads its own row and keeps the stored name. RF2. %>
+  <% group_name = group.name_in_database if group %>
   <% memberships = Current.user.current_memberships.includes(:roles, :group).to_a if group %>
   <% switcher_id = "group-switcher" if memberships&.many? %>
   <% tabs = shell_tabs?(group) %>
@@ -43,6 +48,7 @@
         <%= render "layouts/group_header",
               brand_name: Current.brand.name,
               group: group,
+              group_name: group_name,
               initials: (Current.user.profile.initials if authenticated?),
               editable: (group.present? && allowed_to?(:edit?, group)),
               switcher_id: switcher_id,

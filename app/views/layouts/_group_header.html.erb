@@ -1,4 +1,4 @@
-<%# locals: (brand_name:, group: nil, initials: nil, editable: false, switcher_id: nil, back_path: nil, tabs: false, section: nil) %>
+<%# locals: (brand_name:, group: nil, group_name: nil, initials: nil, editable: false, switcher_id: nil, back_path: nil, tabs: false, section: nil) %>
 <%#
   The shell's one header row. Strict locals rather than instance variables, so the only file in the
   shell that reads one is the layout that renders this.
@@ -20,7 +20,7 @@
     <% end %>
   </span>
 
-  <span class="text-shell sm:text-hero truncate"><%= group ? group.name : brand_name %></span>
+  <span class="text-shell sm:text-hero truncate"><%= group ? group_name : brand_name %></span>
 
   <% if switcher_id %>
     <button type="button" class="btn btn-ghost btn-circle btn-sm text-primary flex-none"
