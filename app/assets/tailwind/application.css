@@ -9,3 +9,20 @@
     light --default,
     dark --prefersdark;
 }
+
+/* The type ladder #244 asks for, named by role rather than by size so a screen row never spells a
+   number and #257 can retune a rung without a sweep. Tailwind's own scale supplies four of these
+   sizes and no utility for 11, 13, 22 or 25, which is why the ladder is declared rather than
+   assembled out of `text-xs` and friends - and why it is the one custom token this application
+   adds on top of daisyUI's defaults. The `--text-*` namespace adds to Tailwind's scale rather
+   than replacing it, so `text-sm` and the rest still resolve. */
+@theme {
+  --text-record: 25px;
+  --text-hero: 22px;
+  --text-shell: 20px;
+  --text-row-title: 16px;
+  --text-fact: 14px;
+  --text-card-fact: 13px;
+  --text-meta: 12px;
+  --text-hint: 11px;
+}
