@@ -78,7 +78,9 @@ The cost is stated plainly: `Brand` today carries one attribute and its body is 
 
 ## Consequences
 
-**`general` is now what an unbranded arrival gets**, and the enum's fixed `choir` default is gone. A group created on `localhost`, on a bare IP, or on any domain not in the mapping is `general`. `db/seeds.rb` builds through the factory and names no type, so seeded groups are `general` too; nothing asserts their type and generic sample groups are better described that way, so neither the seeds nor the factory compensates.
+**`general` is now what an unbranded arrival gets**, and the enum's fixed `choir` default is gone. A group created on `localhost`, on a bare IP, or on any domain not in the mapping is `general`.
+
+**`db/seeds.rb` seeds as if started on `chorifico.com`**, so development data is choirs rather than the unbranded default - the product is being built for a choir domain, and sample data that did not look like it would mislead every screen it is read on. It does that by wrapping the group creation in `Current.set(brand: Brand.new("chorifico.com"))` rather than naming a type: the seeds then exercise the same rule a request does, and a seed file naming `choir` directly would keep saying `choir` after the mapping changed.
 
 **`build_stubbed(:group).group_type` is `nil`, and the factories are deliberately unchanged.** `build_stubbed` neither validates nor writes, so the callback never runs; `build(:group)` is valid and `create(:group)` is `general`, because the callback runs inside `valid?` and nothing reaches the `null: false` column without passing it. Naming a type in the factory would close the hole and cost more than it saves: every factory-built group would then carry an explicit type, `||=` would never fire, and the request specs would stop proving the brand rule. A schema default would break the rule outright, per the decision above. So an unvalidated group having no type is left as a documented fact, which is what this paragraph is.
 
