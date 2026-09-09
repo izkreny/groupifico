@@ -20,7 +20,7 @@ The `app/assets/tailwind/daisyui-theme.mjs` file stays. It is the vendored plugi
 
 A sweep of `app/views/`, `app/helpers/`, `app/javascript/` and `app/assets/stylesheets/` for hex, `rgb()`, `hsl()` and Tailwind's own palette scales returns nothing. The third acceptance criterion holds across every ERB template as written.
 
-One file is outside that answer and the sweep's regex could not see it: `app/views/pwa/manifest.json.erb` carries `"theme_color": "red"` and `"background_color": "red"`, Rails' scaffold defaults. It is a view by location, but a web app manifest is parsed by the operating system rather than painted by the page, so it cannot reference `bg-base-100` and has to hold a literal. This plan treats it as outside the criterion and changes nothing there; the value it should hold is the organic theme's to decide, in #257. Recorded as an open question rather than settled silently, because it is the one place the criterion's wording and its intent disagree.
+One file is outside that answer and the sweep's regex could not see it: `app/views/pwa/manifest.json.erb` carries `"theme_color": "red"` and `"background_color": "red"`, Rails' scaffold defaults. It is a view by location, but a web app manifest is parsed by the operating system rather than painted by the page, so it cannot reference `bg-base-100` and has to hold a literal. It is the one place the criterion's wording and its intent disagree, so it went up as an open question rather than being settled silently; `## Settled` below carries the answer and the step list carries the work.
 
 ## The spec
 
@@ -41,6 +41,7 @@ A theme assertion that only measures paint is unfalsifiable, because a silently 
 - Watch the helper fail: assert dark, stub the emulation out, and see the `colorScheme` expectation go red rather than the example passing in light.
 - Add `spec/system/groups_index_spec.rb`, signing in as a member and asserting on the index in both themes that `.btn-primary` paints, that the root's `color-scheme` is the one requested, and that the page is accessible.
 - Run the light example after the dark one and confirm it is not inheriting the emulation from its predecessor.
+- Replace the two `red` literals in `app/views/pwa/manifest.json.erb` with the light theme's compiled `base-100`, naming in an ERB comment the token it copies and that #257 owns the next value.
 - Run `bin/ci`.
 
 ## Verification
@@ -54,8 +55,8 @@ What the gate cannot see: the built stylesheet is gitignored, so no check compar
 
 ## Open questions
 
-- `app/views/pwa/manifest.json.erb` holds `"theme_color": "red"` and `"background_color": "red"`. This branch leaves both alone on the grounds that a manifest cannot carry a semantic class and that the value belongs to #257. Is that the right home, or should this row at least replace `red` with the compiled `base-100`?
+None.
 
 ## Settled
 
-None yet.
+- `app/views/pwa/manifest.json.erb` holds `"theme_color": "red"` and `"background_color": "red"`, and the plan proposed leaving both to #257 on the grounds that a manifest cannot carry a semantic class. Decided: replace them now with `base-100`, the owner's answer being to use that token, or `--color-error` where the context is an error - and neither key is. It goes in as the light theme's compiled value, because `light` is the `--default` theme and a manifest has no way to switch on the device preference. Hex rather than the `oklch()` the stylesheet uses, since a manifest is parsed by the operating system and `oklch()` support across Android and iOS is not something this branch can verify.
