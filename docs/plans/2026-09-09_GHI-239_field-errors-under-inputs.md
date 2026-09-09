@@ -6,9 +6,9 @@ Implementation plan for [#239](https://github.com/izkreny/groupifico/issues/239)
 
 ## Approach
 
-One `AppFormBuilder < ActionView::Helpers::FormBuilder` in `app/form_builders/`, exposing a single `field` method that draws a label, an input, and one slot beneath the input. The slot holds the attribute's error when it has one and the field's hint when it does not, because frame 9h renders the hint in exactly the position frame 9h2 renders the error, in the same size and weight, with only the colour differing. Two lines never appear at once, so the slot is one element rather than two.
+One `AppFormBuilder < ActionView::Helpers::FormBuilder` in `app/form_builders/`, exposing a single `field` method that draws a label, a control, and one slot beneath the control. The slot holds the attribute's error when it has one and the field's hint when it does not, because a field shows at most one line there and the wireframes put both in that position - frame 9h the hint, frame 9h2 the error.
 
-Every form already renders `shared/_errors` above its fieldset, so that partial is where the summary alert lands, and each of the eight forms picks it up without being edited. The address fields partial is the one field consumer this issue converts; the group, event, member, registration and account rows convert their own fields in their own issues.
+`shared/_errors` above the fieldset is the summary alert, and every one of the eight forms draws its fields through the builder.
 
 ## What Rails already provides, and what has to be turned off
 
@@ -42,15 +42,20 @@ The field's three tags are built with the template's own tag helpers inside the 
 
 - `bin/ci`
 
-What those gates cannot see: whether the field matches frame 9h2 as drawn. The error's position, size and colour against the wireframe is the owner's judgement on the rendered screen, and the same holds for the summary alert reading as the same component the flash uses. `be_accessible` proves the input and its message are associated and labelled; it says nothing about whether they look like the frame.
+What those gates cannot see: whether the field reads well on the rendered screen. Its position, size and colour are daisyUI's defaults and are not judged against a frame, per the `## Wireframe fidelity` note on the issue, so what is left for the owner is whether the copy and the states are right. `be_accessible` proves the input and its message are associated and labelled; it says nothing about how they read.
 
 The accessibility and paint assertions are watched failing before the fix, on the pre-change markup, per the repository's testing conventions.
 
 ## Open questions
 
 - The summary alert in frame 9h2 carries a warning triangle. The icon helper arrives with #238, which is not a blocker of this issue, so the alert ships text-only here. Should #238 add the icon when it lands, or should this issue wait for it?
-- Until each form row converts its own fields, a form whose *own* attribute fails validation shows the summary alert with nothing highlighted, because the per-message list is gone and only the address subfields render inline errors. Options: convert the remaining seven forms' fields here, widening this diff into files #248, #249, #252, #253 and #255 own; or accept the interim state, which the epic's decomposition already implies.
 
 ## Settled
 
-None yet.
+**Do the wireframes settle styling?** No. They settle what a screen contains, what it says and how it behaves; every size, gap, weight and colour comes from default daisyUI, and nothing is overridden to match a frame. Decided by the owner on 2026-09-09 for the whole beta milestone, and recorded on every redesign issue as `## Wireframe fidelity`.
+
+**Which daisyUI component renders a server-rejected field?** `validator` and `validator-hint`, unmodified. Its selector carries `.validator[aria-invalid]:not([aria-invalid="false"])` alongside `:user-invalid`, so the `aria-invalid` the builder already set for accessibility drives it, and no `-error` class is composed anywhere.
+
+**Do the remaining seven forms convert here, or wait for their own issues?** Here. Leaving them was a regression: their own attributes' errors had no surface at all once the full-messages list was gone. Decided by the owner on 2026-09-09, answering RF1.
+
+**What shows an error that has no field?** The summary alert. A per-field pattern cannot render `errors[:base]`, or `Group#group_type`, which has no control by design - so the builder records what it drew and the summary carries the rest.
