@@ -2,9 +2,10 @@
 
 @source not "./daisyui{,*}.mjs";
 
-@plugin "./daisyui.mjs";
-
-/* Optional for custom themes – Docs: https://daisyui.com/docs/themes/#how-to-add-a-new-custom-theme */
-@plugin "./daisyui-theme.mjs"{
-  /* custom theme here */
+/* Written out rather than left to daisyUI's own default, which is these same two themes: the pair
+   this application ships on is a decision, and #257 replaces this list with the organic theme. */
+@plugin "./daisyui.mjs" {
+  themes:
+    light --default,
+    dark --prefersdark;
 }
