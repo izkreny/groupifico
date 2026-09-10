@@ -4,10 +4,9 @@ require "rails_helper"
 # different positional argument, so neither is evidence for the other. This page is where the
 # app's own `errors.add(:status, ...)` fires: its sole owner going inactive.
 RSpec.describe "The member edit page", type: :system do
-  let(:member) { create(:member, :owner, :with_all_attributes) }
-
   context "when a submission is rejected" do
     before do
+      member = create(:member, :owner, :with_all_attributes)
       sign_in_as member.user
 
       visit edit_group_member_path(member.group, member)
