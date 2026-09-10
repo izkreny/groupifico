@@ -20,34 +20,25 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <%#
-    The shell. This is the one file in it that reads a controller instance variable: `@group` until
-    #227 puts a group on `Current`, and `persisted?` rather than `present?` because `groups#new`
-    and a failed `create` both carry an unsaved `Group.new` holding whatever was typed. Everything
-    below takes what it needs as a strict local, so no partial here asks the controller anything.
-
-    Whether the tabs paint is decided once, here, and both placements are told rather than each
-    asking - the header draws them beside the avatar from 640px up, the dock draws them below it.
-  %>
+  <%# `@group` until #227 puts a group on `Current`, and `persisted?` rather than `present?`
+      because `groups#new` and a failed `create` both carry an unsaved `Group.new` holding
+      whatever was typed. %>
   <% group = @group if @group&.persisted? %>
   <%# `name_in_database`, not `name`: a failed `update` re-renders `edit` on the persisted record
       with the rejected attributes still assigned, so `name` there is whatever was typed - blank
       included - and the header would rename the group the save just refused to rename, while the
-      switcher beside it loads its own row and keeps the stored name. RF2. %>
+      switcher beside it loads its own row and keeps the stored name. %>
   <% group_name = group.name_in_database if group %>
   <% memberships = Current.user.current_memberships.includes(:roles, :group).to_a if group %>
   <% switcher_id = "group-switcher" if memberships&.many? %>
   <% tabs = shell_tabs?(group) %>
 
   <body>
-    <%# One column, capped and centred from 640px up and full-bleed below it. The header sits inside
-        it rather than above it, which is what keeps the group name and a pushed screen's title on
-        the same x at every width. %>
     <div class="w-full max-w-[40rem] mx-auto min-h-dvh flex flex-col <%= "max-sm:pb-20" if tabs %>">
       <%# The controller is attached only where there is a switcher for it to hold. Bare, it
           connects on every screen with no dialog to find, and `Context#connect` catches the
           missing-target error into `application.handleError` - so nothing breaks visibly and most
-          page loads write a JavaScript error to the console, burying any real one. RF5. %>
+          page loads write a JavaScript error to the console, burying any real one. %>
       <%= tag.div data: (switcher_id ? { controller: "group-switcher" } : {}) do %>
         <%= render "layouts/header",
               brand_name: Current.brand.name,
@@ -65,7 +56,6 @@
         <% end %>
       <% end %>
 
-      <%# Under the header and above the content, per #244's sixth criterion. %>
       <div class="px-4 pt-3"><%= render "layouts/flash" %></div>
 
       <main class="px-4 py-3 grow">
@@ -73,8 +63,8 @@
       </main>
     </div>
 
-    <%# The header's three links again, as the dock below 640px: `sm:hidden` rather than a second
-        partial. Outside the capped column, because the dock is fixed to the viewport's foot. %>
+    <%# The column's `max-sm:pb-20` above is what keeps this off the content; change either and
+        change both. %>
     <% if tabs %>
       <nav class="dock sm:hidden" aria-label="Group sections">
         <%= render "layouts/group_tabs", group: group, section: shell_section, in_dock: true %>

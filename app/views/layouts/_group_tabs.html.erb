@@ -1,11 +1,9 @@
 <%# locals: (group:, section:, in_dock: false) %>
 <%#
-  The three tabs, rendered twice from one partial: as the dock's children below 640px and inside the
-  header above it. `in_dock` is what tells them apart, because `dock-active` draws the dock's own
-  indicator bar and has nothing to mark in the header, where the colour carries it alone.
+  `in_dock` is what tells the two placements apart: `dock-active` draws the dock's own indicator
+  bar and has nothing to mark in the header, where the colour carries it alone.
 
-  Icon-only, so each link states its own name: `aria-label` is the whole of what a screen reader
-  gets here, and axe is the gate that says so.
+  Icon-only, so `aria-label` is the whole of each link's name and axe is the gate that says so.
 %>
 <% [
      [ :home,    "Home",    group_path(group)         ],

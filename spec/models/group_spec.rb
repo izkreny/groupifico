@@ -172,8 +172,7 @@ RSpec.describe Group, type: :model do
     end
   end
 
-  # RF6. Both of the method's decisions get an example: the filter, and the ordering. Times are
-  # frozen so "upcoming" cannot depend on how long the suite takes to reach this file.
+  # Times are frozen so "upcoming" cannot depend on how long the suite takes to reach this file.
   describe "#next_event" do
     it "is the soonest of the group's upcoming events" do
       freeze_time do

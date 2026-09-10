@@ -48,13 +48,9 @@ class UserProfile < ApplicationRecord
     end
   end
 
-  # What the shell's avatar shows. Derived from `full_name` rather than from the two columns, so a
-  # profile with neither name falls back to the email local-part exactly as the name does instead
-  # of rendering an empty circle.
-  #
-  # Two initials at most, taken from the outer two words rather than the first two: the columns are
-  # first and last, so a `first_name` of "Anna Maria" is the only way a third word arrives, and the
-  # surname is still the last word.
+  # The outer two words rather than the first two: the columns are first and last, so a
+  # `first_name` of "Anna Maria" is the only way a third word arrives and the surname is still the
+  # last word.
   def initials
     words = full_name.split
     [ words.first, (words.last if words.many?) ].compact.map { it[0].upcase }.join

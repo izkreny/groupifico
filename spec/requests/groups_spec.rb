@@ -159,9 +159,8 @@ RSpec.describe "Groups", type: :request do
     end
   end
 
-  # RF2. A failed `update` re-renders `edit` on the persisted record with the rejected attributes
-  # still assigned, so the header reads a name the save refused. Here rather than in the system
-  # spec because it is which text the response carries, not what the browser adds.
+  # A failed `update` re-renders `edit` on the persisted record with the rejected attributes still
+  # assigned, so the header would otherwise read a name the save refused.
   describe "the shell's header after a refused rename" do
     it "keeps the stored group name" do
       member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))

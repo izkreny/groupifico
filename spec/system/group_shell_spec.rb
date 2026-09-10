@@ -44,9 +44,8 @@ RSpec.describe "The group shell", type: :system do
     expect(page).to be_accessible
   end
 
-  # The two placements are one partial rendered twice, and `sm:hidden` against `max-sm:hidden` is
-  # the whole of what tells them apart. Nothing below the browser can see that: both sets are in
-  # the markup at every width, so a request spec finds two of each tab whatever the viewport.
+  # Nothing below the browser can see which placement paints: both sets are in the markup at every
+  # width, so a request spec finds two of each tab whatever the viewport.
   it "shows the tabs as the dock below the breakpoint" do
     member = create(:member, group: create(:group))
     sign_in_as member.user
@@ -93,9 +92,8 @@ RSpec.describe "The group shell", type: :system do
     expect(page).to have_current_path group_members_path(member.group)
   end
 
-  # The Events tab stays marked for its whole stack, which is what `SHELL_SECTIONS` mapping
-  # `registrations` onto `:events` buys. Asserted on the rendered page rather than on the helper:
-  # the helper spec proves the mapping, this proves the mapping reaches the markup.
+  # Asserted on the rendered page rather than on the helper: the helper spec proves the mapping,
+  # this proves the mapping reaches the markup.
   it "keeps the Events tab marked once inside that section" do
     member = create(:member, group: create(:group))
     sign_in_as member.user

@@ -1,14 +1,10 @@
 <%# locals: (id:, memberships:, current_group:) %>
 <%#
-  The sheet the header's chevron opens, drawn as a top-placed modal because frame 2d puts it over
-  the screen rather than on a route of its own. A real `<dialog>`, so it takes the top layer, traps
-  focus and closes on Escape without any of that being written here - and so axe reads a modal
-  rather than a div impersonating one.
+  A real `<dialog>`, so the top layer, focus trapping and Escape are the element's own behaviour
+  rather than script, and axe reads a modal rather than a div impersonating one.
 
-  Rows carry no `dom_id`: this is a navigation list, not a record listing, and `group_<id>` in the
-  markup is what `spec/requests/groups_spec.rb` asserts the absence of elsewhere.
-
-  Rendered only for a reader with more than one group, so it is never an empty overlay.
+  Rows carry no `dom_id`: `spec/requests/groups_spec.rb` asserts the absence of `group_<id>` in the
+  markup elsewhere.
 %>
 <dialog id="<%= id %>" class="modal modal-top" data-group-switcher-target="dialog">
   <div class="modal-box max-w-[40rem] mx-auto rounded-t-none">
@@ -40,8 +36,8 @@
     </ul>
   </div>
 
-  <%# A form rather than a button with script: submitting a `method="dialog"` form is what closes a
-      dialog natively, so clicking the backdrop needs nothing from Stimulus. %>
+  <%# Submitting a `method="dialog"` form is what closes a dialog natively, so clicking the
+      backdrop needs nothing from Stimulus. %>
   <form method="dialog" class="modal-backdrop">
     <button>Close</button>
   </form>

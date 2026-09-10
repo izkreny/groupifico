@@ -20,9 +20,7 @@ RSpec.describe ApplicationHelper, type: :helper do
       expect(helper.shell_section).to eq :events
     end
 
-    # The roster of an event is reached through the Events tab and never leaves it, so a
-    # registration screen answers for the section above it rather than for itself. This is the one
-    # mapping that is not the controller's own name, and the reason the map exists at all.
+    # The one mapping that is not the controller's own name, and the reason the map exists at all.
     it "is events inside the registrations controller, since a roster belongs to its event" do
       allow(helper).to receive(:controller_name).and_return("registrations")
 
@@ -84,8 +82,6 @@ RSpec.describe ApplicationHelper, type: :helper do
     end
   end
 
-  # RF7. These two decide whether a back chevron appears and where it leads, which is the visible
-  # consequence nothing was exercising.
   describe "#pushed_screen?" do
     it "is false on the group home, which the Home tab points at" do
       allow(helper).to receive_messages(controller_name: "groups", action_name: "show")
