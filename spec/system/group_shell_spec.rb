@@ -12,7 +12,8 @@ require "rails_helper"
 # The paint targets are the group mark and the avatar rather than the header or the dock. Both of
 # those carry `bg-base-100`, which in light is `oklch(100% 0 0)` - the same colour as the surface
 # behind them - so a correctly painted header scores 1.0 and reads as painting nothing, exactly as
-# `body` does. The mark is `bg-primary` over that surface and the avatar `bg-base-300` over it, so
+# `body` does. The mark is a `status status-primary` over that surface and the avatar
+# `bg-base-300` over it, so
 # both are things the matcher can actually judge; the text on the dock is measured against its own
 # surface by `be_accessible`, which is the layer that reads text contrast.
 RSpec.describe "The group shell", type: :system do
@@ -25,7 +26,7 @@ RSpec.describe "The group shell", type: :system do
     visit group_path(member.group)
 
     expect(rendered_colour_scheme).to eq "light"
-    expect(page).to paint ".navbar .bg-primary"
+    expect(page).to paint "header .status"
     expect(page).to paint ".avatar > span"
     expect(page).to be_accessible
   end
@@ -39,7 +40,7 @@ RSpec.describe "The group shell", type: :system do
     visit group_path(member.group)
 
     expect(rendered_colour_scheme).to eq "dark"
-    expect(page).to paint ".navbar .bg-primary"
+    expect(page).to paint "header .status"
     expect(page).to paint ".avatar > span"
     expect(page).to be_accessible
   end
