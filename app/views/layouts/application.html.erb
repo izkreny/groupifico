@@ -20,9 +20,11 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <%# `@group` until #227 puts a group on `Current`, and `persisted?` rather than `present?`
-      because `groups#new` and a failed `create` both carry an unsaved `Group.new` holding
-      whatever was typed. %>
+  <%# `@group` rather than `Current.group`, which `GroupScoped` assigns from `params[:group_id]`
+      and so is nil on every screen `GroupsController` serves - `groups#show` and `groups#edit`
+      among them, the two this header exists for. `persisted?` rather than `present?` because
+      `groups#new` and a failed `create` both carry an unsaved `Group.new` holding whatever was
+      typed. %>
   <% group = @group if @group&.persisted? %>
   <%# `name_in_database`, not `name`: a failed `update` re-renders `edit` on the persisted record
       with the rejected attributes still assigned, so `name` there is whatever was typed - blank
