@@ -1,0 +1,26 @@
+<%# locals: (id:, url:, label:, title:, body:, dismiss:) %>
+<div data-controller="dialog" data-action="submit->dialog#open turbo:before-cache@document->dialog#close">
+  <%= button_to label, url, method: :delete, class: "btn btn-error",
+        form: { id: "#{id}_form" }, aria: { haspopup: "dialog", controls: id } %>
+
+  <dialog id="<%= id %>" class="modal modal-bottom sm:modal-middle"
+          aria-labelledby="<%= id %>_title" aria-describedby="<%= id %>_body"
+          data-dialog-target="sheet">
+    <div class="modal-box">
+      <h3 id="<%= id %>_title" class="text-lg font-bold"><%= title %></h3>
+      <p id="<%= id %>_body" class="py-4"><%= body %></p>
+
+      <div class="modal-action">
+        <form method="dialog">
+          <button class="btn btn-sm"><%= dismiss %></button>
+        </form>
+
+        <button form="<%= id %>_form" class="btn btn-sm btn-error"><%= label %></button>
+      </div>
+    </div>
+
+    <form method="dialog" class="modal-backdrop">
+      <button>close</button>
+    </form>
+  </dialog>
+</div>

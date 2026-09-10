@@ -7,6 +7,12 @@
 
   <div class="flex flex-wrap gap-2">
     <%= link_to "Edit this user", edit_user_path, class: "btn btn-ghost" %>
-    <%= button_to "Destroy this user", user_path, method: :delete, class: "btn btn-error", data: { turbo_confirm: "Are you sure?" } %>
+    <%= render "shared/confirm_sheet",
+          id: dom_id(@user, :confirm_delete),
+          url: user_path,
+          label: "Delete my account",
+          title: "Delete your account?",
+          body: "You leave every group, and every registration you made goes with you. This can't be undone.",
+          dismiss: "Keep my account" %>
   </div>
 </div>

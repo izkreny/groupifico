@@ -1,0 +1,114 @@
+require "rails_helper"
+
+# The sheet is one partial rendered by four screens, so it is covered once here rather than in each
+# screen's own file. The group is the subject because its delete is the plainest of the four: no
+# typed word, and the record's absence afterwards is a single query.
+#
+# What no request spec can reach is the whole of what this file asserts. That a `<dialog>` opens at
+# all, that Escape and a backdrop click close it, and that a dismissed sheet leaves the record alone
+# are claims about a browser; who may delete a group is `spec/requests/groups_spec.rb`'s, and per the
+# duplication rule in `.agents/testing.md` it does not come back here.
+RSpec.describe "The confirm sheet", type: :system do
+  include ActionView::RecordIdentifier
+
+  # The trigger is the delete form's own submit button, which is what makes the sheet an
+  # enhancement rather than the only route: with JavaScript off the click posts the delete straight
+  # away, exactly as `turbo_confirm` degraded. No driver here runs with scripting off, so this is
+  # the markup that carries the claim rather than the claim itself.
+  it "renders the trigger as the delete form's own submit button" do
+    member = create(:member, :owner)
+    sign_in_as member.user
+
+    visit group_path(member.group)
+
+    form = "##{dom_id(member.group, :confirm_delete)}_form"
+    expect(page).to have_css "#{form}[action='#{group_path(member.group)}'][method='post']", visible: :all
+    expect(page).to have_css "#{form} input[name='_method'][value='delete']", visible: :all
+    expect(page).to have_css "#{form} button[type='submit']", text: "Delete group"
+  end
+
+  context "when the destructive control has opened it" do
+    let(:member) { create(:member, :owner) }
+    let(:group)  { member.group }
+
+    before do
+      sign_in_as member.user
+
+      visit group_path(group)
+      within("##{dom_id(group, :confirm_delete)}_form") { click_button "Delete group" }
+    end
+
+    # `.btn-error` rather than `.modal-box`, for the reason `spec/system/groups_index_spec.rb`
+    # states: light `base-100` is `oklch(100% 0 0)`, identical to the surface the matcher
+    # composites against, so the box scores 1.0 and reads as painting nothing.
+    it "paints the sheet" do
+      expect(page).to have_css "dialog[open]"
+      expect(page).to paint ".modal-action .btn-error"
+    end
+
+    it "has no accessibility violations" do
+      expect(page).to be_accessible
+    end
+
+    # `be_accessible` does not cover this and was watched passing with `aria-labelledby` removed:
+    # axe's `aria-dialog-name` rule is tagged `best-practice`, which is outside the cumulative WCAG
+    # tags `spec/support/axe.rb` runs. So the reference is resolved here instead of asserted, which
+    # is what makes a dropped attribute, a typo'd id and a moved title all fail.
+    it "names the sheet by its title" do
+      name = page.evaluate_script(<<~JAVASCRIPT)
+        (function() {
+          const sheet = document.querySelector("dialog[open]");
+          const id = sheet && sheet.getAttribute("aria-labelledby");
+          const label = id && document.getElementById(id);
+          return label && label.textContent.trim();
+        })()
+      JAVASCRIPT
+
+      expect(name).to eq "Delete this group?"
+    end
+
+    it "keeps the group when the secondary is used" do
+      within(".modal-action") { click_button "Keep group" }
+
+      expect(page).to have_no_css "dialog[open]"
+      expect(Group.where(id: group.id)).to exist
+    end
+
+    it "keeps the group when Escape is pressed" do
+      find("dialog[open]").send_keys(:escape)
+
+      expect(page).to have_no_css "dialog[open]"
+      expect(Group.where(id: group.id)).to exist
+    end
+
+    # A viewport corner rather than the backdrop's centre, which the centred box sits over: the
+    # backdrop stretches across the whole modal grid cell and the box shares that cell.
+    #
+    # Ferrum's mouse rather than `find(...).click(x:, y:)`, which Cuprite delivers as no click at
+    # all here - watched, with a listener on the button, reporting an empty event list and the sheet
+    # still open, while the same coordinates through the mouse close it. That is what the opening
+    # `have_css` pays for: a raw click does no waiting of its own.
+    #
+    # The marker is what stops this passing for the wrong reason, and it was watched doing exactly
+    # that: a backdrop form with no `method="dialog"` submits a GET to the current URL instead, and
+    # a sheet gone because Turbo swapped the body satisfies every other assertion here. It goes on
+    # the element rather than on `window`, which a Turbo visit leaves standing - watched too.
+    it "keeps the group when the backdrop is clicked" do
+      expect(page).to have_css "dialog[open]"
+      page.execute_script "document.querySelector('dialog').dataset.sameSheet = 'yes'"
+
+      page.driver.browser.mouse.click(x: 4, y: 4)
+
+      expect(page).to have_no_css "dialog[open]"
+      expect(page).to have_css "dialog[data-same-sheet='yes']", visible: :all
+      expect(Group.where(id: group.id)).to exist
+    end
+
+    it "deletes the group and lands on the index when the primary is used" do
+      within(".modal-action") { click_button "Delete group" }
+
+      expect(page).to have_current_path groups_path
+      expect(Group.where(id: group.id)).not_to exist
+    end
+  end
+end
