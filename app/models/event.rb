@@ -63,6 +63,21 @@ class Event < ApplicationRecord
   enum :category, %i[ other rehearsal gig ], default: :other, validate: true
 
   validates_associated :address, :manager
+
+  # The guarantee the `Current.member` default gave up. Deriving the creator from the event's own
+  # group made a cross-group creator structurally impossible; reading it from `Current` moves that
+  # to the caller's discipline, and the foreign key only proves the member row exists. So the model
+  # states the rule itself, the way `EventsController#event_params` already states it for
+  # `manager_id` and `address_id`.
+  #
+  # `allow_nil` leaves the absent case to `belongs_to`, which already answers "must exist"; without
+  # it an event created outside a request collects that error twice under two different wordings.
+  # The lambda takes the record because Rails calls an `inclusion` delimiter with it - a zero-arity
+  # one raises `ArgumentError` - and `group&.` because the callback runs ahead of the group
+  # presence check. `Member.none` rather than `[]` so a groupless event refuses every creator
+  # instead of raising.
+  validates :creator, inclusion: { in: ->(event) { event.group&.members || Member.none } }, allow_nil: true
+
   validates :name, :starts_at, presence: true
   validates :name, length: { maximum: 250 }
   validates :description, length: { maximum: 25_000 }

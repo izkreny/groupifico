@@ -77,6 +77,37 @@ RSpec.describe Event, type: :model do
         expect(event.errors[:creator]).to include "must exist"
       end
 
+      # The guarantee the `Current.member` default gave up, restored in the model. No route reaches
+      # this - `EventsController#create` builds through `@group.events.new` under `GroupScoped`, so
+      # the event's group and `Current.group` always agree - which is why it is asserted here
+      # rather than through a request.
+      it "refuses a creator who belongs to another group" do
+        group    = create(:group)
+        outsider = create(:member)
+
+        event = build(:event, group:, creator: outsider)
+
+        expect(event).to be_invalid
+        expect(event.errors[:creator]).to include "is not included in the list"
+      end
+
+      it "accepts a creator who belongs to the event's group" do
+        member = create(:member)
+
+        event = build(:event, group: member.group, creator: member)
+
+        expect(event).to be_valid
+      end
+
+      it "refuses a creator when the event has no group at all" do
+        member = create(:member)
+
+        event = build(:event, group: nil, creator: member)
+
+        expect(event).to be_invalid
+        expect(event.errors[:creator]).to include "is not included in the list"
+      end
+
       it "refuses a persisted event whose creator has been destroyed, rather than reassigning it" do
         event = create(:event)
         actor = create(:member, group: event.group)
