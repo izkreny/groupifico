@@ -163,6 +163,50 @@ RSpec.describe "The group shell", type: :system do
     expect(truncated?(".navbar span.truncate")).to be false
   end
 
+  # The flip is the whole of what the Stimulus controller does beyond `showModal`, and nothing
+  # below the browser can see it: both chevrons are in the markup at every state, and which one
+  # shows is a `hidden` attribute the controller writes.
+  #
+  # The assertions read that attribute rather than Capybara visibility, because `showModal` makes
+  # everything outside the dialog inert and the header's own chevron then reads as not visible
+  # however the attribute stands. `visible: :all` is what lets the selector see it at all.
+  #
+  # Watched failing against `hidden = false`, which is what the controller used to do: `<svg>` is
+  # not an `HTMLElement`, so `hidden` is not one of its IDL attributes and the assignment sets a
+  # plain JS property while `hidden="true"` stays in the markup.
+  it "points the header's chevron up while the sheet is open" do
+    member = create(:member, group: create(:group, name: "Riverside Choir"))
+    create(:member, user: member.user, group: create(:group, name: "Harbour Band"))
+    sign_in_as member.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_path(member.group)
+    click_button "Switch group"
+
+    expect(page).to have_css "[aria-label='Switch group'][aria-expanded='true']"
+    expect(page).to have_css "[data-group-switcher-target='opened']:not([hidden])", visible: :all
+    expect(page).to have_css "[data-group-switcher-target='closed'][hidden]", visible: :all
+  end
+
+  # Dismissed with Escape rather than a control, because the listener is on the dialog's own
+  # `close` event: this is the path a reader takes when they never touch the button again. What
+  # this example is really about is that the listener fires at all, which `aria-expanded` is the
+  # honest witness for - a chevron assertion here passes against a controller that never moved
+  # either attribute, so the mechanism itself is the example above's to catch.
+  it "points it back down when the sheet is dismissed" do
+    member = create(:member, group: create(:group, name: "Riverside Choir"))
+    create(:member, user: member.user, group: create(:group, name: "Harbour Band"))
+    sign_in_as member.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_path(member.group)
+    click_button "Switch group"
+    find("body").send_keys :escape
+
+    expect(page).to have_css "[aria-label='Switch group'][aria-expanded='false']"
+    expect(page).to have_css "[data-group-switcher-target='opened'][hidden]", visible: :all
+  end
+
   it "paints a pushed screen, whose back chevron leads up to the section" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
     sign_in_as member.user

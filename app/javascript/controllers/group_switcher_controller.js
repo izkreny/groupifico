@@ -1,37 +1,40 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Heroicons outline chevron-up and chevron-down. Literals rather than whole icons swapped in: the
-// button carries the accessible name, and replacing its contents would take the name with it.
-// #238's icon helper is where these stop being literals.
-const UP = "m4.5 15.75 7.5-7.5 7.5 7.5"
-const DOWN = "m19.5 8.25-7.5 7.5-7.5-7.5"
-
 // Only the opening needs script: Escape, the backdrop's `method="dialog"` form and holding focus
 // are all `<dialog>`'s own behaviour, which is why the close is heard as the dialog's own event
 // rather than wired to a button.
+//
+// Both chevrons are rendered and one is hidden, so flipping the header's is an attribute toggle
+// rather than a path rewrite - `IconsHelper` owns which glyph each meaning draws, and a `d`
+// attribute written here would be a second copy of that.
+//
+// `toggleAttribute` rather than the `hidden` property, because these are `<svg>` elements and
+// `hidden` is an `HTMLElement` IDL attribute: `svg.hidden = false` sets a plain JS property and
+// leaves `hidden="true"` in the markup. Measured over the DevTools Protocol - `"hidden" in svg`
+// answers false and the attribute survives the assignment, where `toggleAttribute` removes it.
 export default class extends Controller {
-  static targets = ["dialog", "opener"]
+  static targets = ["dialog", "opener", "closed", "opened"]
 
   connect() {
-    this.dialogTarget.addEventListener("close", this.pointChevronDown)
+    this.dialogTarget.addEventListener("close", this.showClosedChevron)
   }
 
   disconnect() {
-    this.dialogTarget.removeEventListener("close", this.pointChevronDown)
+    this.dialogTarget.removeEventListener("close", this.showClosedChevron)
   }
 
   open() {
     this.dialogTarget.showModal()
-    this.openerTarget.setAttribute("aria-expanded", "true")
-    this.chevron.setAttribute("d", UP)
+    this.pointChevron({ open: true })
   }
 
-  pointChevronDown = () => {
-    this.openerTarget.setAttribute("aria-expanded", "false")
-    this.chevron.setAttribute("d", DOWN)
+  showClosedChevron = () => {
+    this.pointChevron({ open: false })
   }
 
-  get chevron() {
-    return this.openerTarget.querySelector("path")
+  pointChevron({ open }) {
+    this.openerTarget.setAttribute("aria-expanded", String(open))
+    this.closedTarget.toggleAttribute("hidden", open)
+    this.openedTarget.toggleAttribute("hidden", !open)
   }
 }
