@@ -56,6 +56,8 @@ The accessibility and paint assertions are watched failing before the fix, on th
 
 **Which daisyUI component renders a server-rejected field?** `validator` and `validator-hint`, unmodified. Its selector carries `.validator[aria-invalid]:not([aria-invalid="false"])` alongside `:user-invalid`, so the `aria-invalid` the builder already set for accessibility drives it, and no `-error` class is composed anywhere.
 
+**Which controls carry the `validator` class?** Only a control the server rejected. The same rule set also carries `:user-valid` and `:user-invalid`, so applying it everywhere switched on the browser's own constraint colouring: a valid field turned success-green once touched, and a blurred empty `required` field turned error-red carrying no message. Decided by the owner on 2026-09-10, answering RF11; default daisyUI governs styling values rather than obliging every behaviour a component can be made to do.
+
 **Do the remaining seven forms convert here, or wait for their own issues?** Here. Leaving them was a regression: their own attributes' errors had no surface at all once the full-messages list was gone. Decided by the owner on 2026-09-09, answering RF1.
 
 **What shows an error that has no field?** The summary alert. A per-field pattern cannot render `errors[:base]`, or `Group#group_type`, which has no control by design - so the builder records what it drew and the summary carries the rest.
