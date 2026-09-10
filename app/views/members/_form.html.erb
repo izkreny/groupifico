@@ -1,12 +1,11 @@
 <%= form_with(model: [group, member], class: "contents") do |form| %>
-  <%= render "shared/errors", object: member %>
+  <%= form.with_error_summary do %>
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend">Member details</legend>
 
-  <fieldset class="fieldset">
-    <legend class="fieldset-legend">Member details</legend>
-
-    <%= form.label  :status, class: "label" %>
-    <%= form.select :status, member_statuses, {}, class: "select w-full" %>
-  </fieldset>
+      <%= form.field :status, as: :select, choices: member_statuses %>
+    </fieldset>
+  <% end %>
 
   <div class="inline">
     <%= form.submit class: "btn btn-primary" %>

@@ -225,6 +225,19 @@ RSpec.describe "Groups", type: :request do
         expect(Member.count).to eq member_count
         expect(response).to have_http_status :unprocessable_content
       end
+
+      # `group_type` has no control on the group form - it is set from the hostname - so a per-field
+      # error pattern has nowhere to put its message and the summary is the only thing that can
+      # carry it. Without that, the reader was told to fix the highlighted fields with nothing
+      # highlighted anywhere on the page.
+      it "names an error whose attribute the form draws no field for" do
+        sign_in_as(create(:user))
+
+        post groups_path, params: { group: { name: "Choraliers", group_type: "orchestra" } }
+
+        expect(response).to have_http_status :unprocessable_content
+        expect(page_text(response.body)).to include "Group type is not included in the list"
+      end
     end
 
     # The suite's default host is `www.example.com`, which carries no brand, so the first example

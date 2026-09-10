@@ -1,11 +1,11 @@
 <%= form_with(model: address, class: "contents") do |form| %>
-  <%= render "shared/errors", object: address %>
+  <%= form.with_error_summary do %>
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend">Address details</legend>
 
-  <fieldset class="fieldset">
-    <legend class="fieldset-legend">Address details</legend>
-
-    <%= render "form_fields", form: form %>
-  </fieldset>
+      <%= render "form_fields", form: form %>
+    </fieldset>
+  <% end %>
 
   <div class="inline">
     <%= form.submit class: "btn btn-primary" %>

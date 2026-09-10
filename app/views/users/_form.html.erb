@@ -1,12 +1,11 @@
 <%= form_with(model: user, class: "contents") do |form| %>
-  <%= render "shared/errors", object: user %>
+  <%= form.with_error_summary do %>
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend">Account details</legend>
 
-  <fieldset class="fieldset">
-    <legend class="fieldset-legend">Account details</legend>
-
-    <%= form.label       :email, class: "label" %>
-    <%= form.email_field :email, class: "input w-full" %>
-  </fieldset>
+      <%= form.field :email, as: :email_field %>
+    </fieldset>
+  <% end %>
 
   <div class="inline">
     <%= form.submit class: "btn btn-primary" %>
