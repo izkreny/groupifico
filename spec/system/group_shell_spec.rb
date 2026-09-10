@@ -225,6 +225,7 @@ RSpec.describe "The group shell", type: :system do
     visit group_path(member.group)
 
     expect(gap_after_text("header span.truncate", "[aria-label='Switch group']")).to eq 10
+    expect(gap_to_row_end("[aria-label='Me']", "header")).to eq 0
   end
 
   it "paints a pushed screen, whose back chevron leads up to the section" do

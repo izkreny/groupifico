@@ -147,16 +147,20 @@ RSpec.describe "Groups", type: :request do
       # `menu-active` colours the reader's current group and says nothing to a screen reader, so
       # the row carries `aria-current` too. Asserted because an accessibility semantic nothing
       # reads is one nothing keeps.
+      #
+      # The assertion names the row rather than counting the attribute: presence and a count of one
+      # are both invariant under marking the wrong group, which is the one mutation the attribute
+      # exists to prevent. Watched failing with the comparison inverted, which marked "Harbour
+      # Band" as current while the reader was in "Riverside Choir".
       it "marks the reader's current group in the switcher" do
         member = create(:member, group: create(:group, name: "Riverside Choir"))
-        other = create(:member, user: member.user, group: create(:group, name: "Harbour Band"))
+        create(:member, user: member.user, group: create(:group, name: "Harbour Band"))
         sign_in_as(member.user)
 
         get group_path(member.group)
 
-        expect(response.body).to include %(aria-current="true")
-        expect(response.body.scan(%(aria-current="true")).count).to eq 1
-        expect(response.body).to include group_path(other.group)
+        marked = Nokogiri::HTML(response.body).css(%(a[aria-current="true"]))
+        expect(marked.map { it[:href] }).to eq [ group_path(member.group) ]
       end
 
       # A group they have left is not a group they can switch to, so it must not raise the count
