@@ -9,7 +9,8 @@ class MembersController < ApplicationController
   # act on rather than a fault, so it gets a message instead of a 500.
   rescue_from ActiveRecord::RecordNotDestroyed, with: :refuse_ownerless_group
 
-  before_action :set_group
+  include GroupScoped
+
   before_action :set_member, only: %i[ show edit update destroy ]
 
   def index
@@ -72,10 +73,6 @@ class MembersController < ApplicationController
   end
 
   private
-    def set_group
-      @group = Group.find(params.expect(:group_id))
-    end
-
     def set_member
       @member = @group.members.find(params.expect(:id))
     end

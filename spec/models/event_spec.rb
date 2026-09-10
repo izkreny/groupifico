@@ -25,9 +25,10 @@ RSpec.describe Event, type: :model do
     end
 
     describe "creator with a ':default' option" do
-      it "fills the creator with the acting user's membership of the event's group" do
+      it "fills the creator with the acting member" do
         member = create(:member)
         Current.session = member.user.sessions.create!
+        Current.group   = member.group
 
         event = build(:event, group: member.group, creator: nil)
 
@@ -39,6 +40,7 @@ RSpec.describe Event, type: :model do
         member  = create(:member)
         another = create(:member, group: member.group)
         Current.session = member.user.sessions.create!
+        Current.group   = member.group
 
         event = build(:event, group: member.group, creator: another)
 
@@ -47,13 +49,29 @@ RSpec.describe Event, type: :model do
       end
 
       # A member of some other group rather than a member of none: an unscoped lookup would find
-      # this one and hand another group's member the event, which is the whole substance of
-      # deriving the creator from `group` and the mutation `create(:user)` alone could not catch.
+      # this one and hand another group's member the event. `Current.group` is set to the event's
+      # group so the example still fails for the reason it names rather than because nothing was
+      # acting at all, which the example below covers separately.
       it "is invalid when the acting user's only membership is in another group" do
         outsider = create(:member)
+        group    = create(:group)
         Current.session = outsider.user.sessions.create!
+        Current.group   = group
 
-        event = build(:event, creator: nil)
+        event = build(:event, group:, creator: nil)
+
+        expect(event).to be_invalid
+        expect(event.errors[:creator]).to include "must exist"
+      end
+
+      # The console, the job and `db/seeds.rb`: no request has named a group, so there is no acting
+      # member to fill in and the required association refuses rather than guessing one from the
+      # event's own group.
+      it "is invalid when no group is being acted in" do
+        member = create(:member)
+        Current.session = member.user.sessions.create!
+
+        event = build(:event, group: member.group, creator: nil)
 
         expect(event).to be_invalid
         expect(event.errors[:creator]).to include "must exist"
@@ -64,6 +82,7 @@ RSpec.describe Event, type: :model do
         actor = create(:member, group: event.group)
         event.creator.destroy!
         Current.session = actor.user.sessions.create!
+        Current.group   = event.group
 
         expect(event.reload).to be_invalid
         expect(event.errors[:creator]).to include "must exist"
