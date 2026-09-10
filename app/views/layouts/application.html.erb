@@ -49,7 +49,7 @@
           missing-target error into `application.handleError` - so nothing breaks visibly and most
           page loads write a JavaScript error to the console, burying any real one. RF5. %>
       <%= tag.div data: (switcher_id ? { controller: "group-switcher" } : {}) do %>
-        <%= render "layouts/group_header",
+        <%= render "layouts/header",
               brand_name: Current.brand.name,
               group: group,
               group_name: group_name,
