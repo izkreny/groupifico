@@ -4,9 +4,9 @@ require "rails_helper"
 # aria pair and that the summary reads what it reads are asserted in
 # `spec/requests/addresses_spec.rb`, which CI runs; per the duplication rule in
 # `.agents/testing.md` they do not come back here. What is left is the part no request spec can
-# see: whether daisyUI's `validator` actually paints from `aria-invalid`. Nothing in the markup
-# names the error state, so a rule that stopped matching would leave every request-layer assertion
-# green while the reader saw an unmarked field.
+# see: whether daisyUI's `validator` actually paints from `aria-invalid`. The class is present in
+# the markup and carries no colour of its own - the rule behind it does - so a rule that stopped
+# matching would leave every request-layer assertion green while the reader saw an unmarked field.
 #
 # `paint` is deliberately absent from the note: it composites an element's own *background* over
 # its ancestor's, and the note has none, so it scores 1 for a message that reads perfectly well.
