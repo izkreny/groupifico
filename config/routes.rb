@@ -44,6 +44,9 @@ Rails.application.routes.draw do
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
+  # The icon browser the `rails_icons` generator would mount unconditionally. It lists every synced glyph and answers to anyone, so it is development-only here.
+  mount RailsIcons::Engine, at: "/rails_icons" if Rails.env.development?
+
   # Defines the root path route ("/")
   root "groups#index"
 end

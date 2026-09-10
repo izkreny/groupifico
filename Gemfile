@@ -16,6 +16,8 @@ gem "turbo-rails"
 gem "stimulus-rails"
 # Use Tailwind CSS [https://github.com/rails/tailwindcss-rails]
 gem "tailwindcss-rails"
+# Heroicons, synced into the app and rendered inline [https://github.com/Rails-Designer/rails_icons]
+gem "rails_icons", "~> 1.9"
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 gem "jbuilder"
 
