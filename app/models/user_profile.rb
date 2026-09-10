@@ -47,4 +47,12 @@ class UserProfile < ApplicationRecord
       user.email.split("@").first
     end
   end
+
+  # The outer two words rather than the first two: the columns are first and last, so a
+  # `first_name` of "Anna Maria" is the only way a third word arrives and the surname is still the
+  # last word.
+  def initials
+    words = full_name.split
+    [ words.first, (words.last if words.many?) ].compact.map { it[0].upcase }.join
+  end
 end

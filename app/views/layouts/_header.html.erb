@@ -1,0 +1,57 @@
+<%# locals: (brand_name:, group: nil, group_name: nil, initials: nil, editable: false, switcher_id: nil, back_path: nil, tabs: false, section: nil) %>
+<%# The leading 20px slot is present whether it holds the group mark or a back chevron: that is
+    what makes every title start at the same x, and `shared/_page_header` reproduces it empty. %>
+<header class="navbar bg-base-100 border-b border-base-content/5 min-h-0 gap-2.5 px-4 py-3">
+  <span class="flex-none grid w-5 h-5 place-items-center">
+    <% if back_path %>
+      <%= link_to back_path, class: "text-primary", aria: { label: "Back" } do %>
+        <%= icon :back, class: "size-5" %>
+      <% end %>
+    <% elsif group %>
+      <span class="status status-primary" aria-hidden="true"></span>
+    <% end %>
+  </span>
+
+  <span class="text-shell sm:text-hero truncate min-w-0"><%= group ? group_name : brand_name %></span>
+
+  <% if switcher_id %>
+    <button type="button" class="btn btn-ghost btn-circle btn-sm text-primary flex-none"
+            aria-label="Switch group" aria-haspopup="dialog" aria-expanded="false"
+            aria-controls="<%= switcher_id %>"
+            data-action="group-switcher#open" data-group-switcher-target="opener">
+      <%= icon :disclose, class: "size-4", data: { group_switcher_target: "closed" } %>
+      <%= icon :close_panel, class: "size-4", hidden: true, data: { group_switcher_target: "opened" } %>
+    </button>
+  <% end %>
+
+  <% if editable %>
+    <%= link_to edit_group_path(group), class: "btn btn-ghost btn-circle btn-sm text-primary flex-none", aria: { label: "Edit group" } do %>
+      <%= icon :edit, class: "size-4" %>
+    <% end %>
+  <% end %>
+
+  <%# The slack sits here rather than on the name, so the switcher chevron and the pencil stay
+      against the name they belong to and only the avatar and the tabs are pushed right. %>
+  <span class="grow"></span>
+
+  <span class="flex-none flex items-center gap-4">
+    <%# `max-sm:hidden` against the layout's dock `sm:hidden`: one partial, and exactly one
+        placement visible at any width. %>
+    <% if tabs %>
+      <span class="max-sm:hidden flex gap-4">
+        <%= render "layouts/group_tabs", group: group, section: section %>
+      </span>
+    <% end %>
+
+    <% if initials %>
+      <%# A `div` rather than a `span`, because `.avatar > div` and `.avatar-placeholder > div`
+          are how daisyUI names the box: the first gives it `aspect-ratio: 1/1` and the second
+          centres what is inside it, and neither selector matches anything else. %>
+      <%= link_to user_profile_path, class: "avatar avatar-placeholder", aria: { label: "Me" } do %>
+        <div class="bg-base-300 text-base-content w-8 rounded-full">
+          <span class="text-card-fact"><%= initials %></span>
+        </div>
+      <% end %>
+    <% end %>
+  </span>
+</header>

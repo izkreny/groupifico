@@ -1,0 +1,21 @@
+<%# locals: (group:, section:, in_dock: false) %>
+<%#
+  `in_dock` is what tells the two placements apart: `dock-active` draws the dock's own indicator
+  bar and has nothing to mark in the header, where the colour carries it alone.
+
+  Icon-only, so `aria-label` is the whole of each link's name and axe is the gate that says so.
+  The three section names are `IconsHelper::ICONS` meanings as they stand, which is why `icon`
+  takes `name` directly rather than a glyph looked up here.
+%>
+<% [
+     [ :home,    "Home",    group_path(group)         ],
+     [ :events,  "Events",  group_events_path(group)  ],
+     [ :members, "Members", group_members_path(group) ]
+   ].each do |name, label, path| %>
+  <% current = name == section %>
+  <%= link_to path,
+        class: [ "text-primary" => current, "text-base-content/60" => !current, "dock-active" => (current && in_dock) ],
+        aria: { label: label, current: ("page" if current) } do %>
+    <%= icon name, class: "size-5" %>
+  <% end %>
+<% end %>

@@ -75,6 +75,7 @@ RSpec.configure do |config|
   config.include HtmlHelper, type: :request
   config.include SystemAuthenticationHelper, type: :system
   config.include ColourSchemeHelper, type: :system
+  config.include ViewportHelper, type: :system
   # `freeze_time` and `travel_to`, which `.agents/testing.md` requires of anything time-dependent.
   config.include ActiveSupport::Testing::TimeHelpers
 

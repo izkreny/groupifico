@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="<%= I18n.locale %>">
   <head>
-    <title><%= content_for(:title) || "Groupifico" %></title>
+    <title><%= content_for(:title) || Current.brand.name %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Groupifico">
+    <meta name="application-name" content="<%= Current.brand.name %>">
     <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
@@ -20,12 +20,57 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body>
-    <%= render "layouts/navigation" %>
-    <%= render "layouts/flash" %>
+  <%# `@group` rather than `Current.group`, which `GroupScoped` assigns from `params[:group_id]`
+      and so is nil on every screen `GroupsController` serves - `groups#show` and `groups#edit`
+      among them, the two this header exists for. `persisted?` rather than `present?` because
+      `groups#new` and a failed `create` both carry an unsaved `Group.new` holding whatever was
+      typed. %>
+  <% group = @group if @group&.persisted? %>
+  <%# `name_in_database`, not `name`: a failed `update` re-renders `edit` on the persisted record
+      with the rejected attributes still assigned, so `name` there is whatever was typed - blank
+      included - and the header would rename the group the save just refused to rename, while the
+      switcher beside it loads its own row and keeps the stored name. %>
+  <% group_name = group.name_in_database if group %>
+  <% memberships = Current.user.current_memberships.includes(:roles, :group).to_a if group %>
+  <% switcher_id = "group-switcher" if memberships&.many? %>
+  <% tabs = shell_tabs?(group) %>
 
-    <main class="container mx-auto mt-28 px-5 flex">
-      <%= yield %>
-    </main>
+  <body>
+    <div class="w-full max-w-[40rem] mx-auto min-h-dvh flex flex-col <%= "max-sm:pb-20" if tabs %>">
+      <%# The controller is attached only where there is a switcher for it to hold. Bare, it
+          connects on every screen with no dialog to find, and `Context#connect` catches the
+          missing-target error into `application.handleError` - so nothing breaks visibly and most
+          page loads write a JavaScript error to the console, burying any real one. %>
+      <%= tag.div data: (switcher_id ? { controller: "group-switcher" } : {}) do %>
+        <%= render "layouts/header",
+              brand_name: Current.brand.name,
+              group: group,
+              group_name: group_name,
+              initials: (Current.user.profile.initials if authenticated?),
+              editable: (group.present? && allowed_to?(:edit?, group)),
+              switcher_id: switcher_id,
+              back_path: (section_root_path(group) if group && pushed_screen?),
+              tabs: tabs,
+              section: shell_section %>
+
+        <% if switcher_id %>
+          <%= render "layouts/group_switcher", id: switcher_id, memberships: memberships, current_group: group %>
+        <% end %>
+      <% end %>
+
+      <div class="px-4 pt-3"><%= render "layouts/flash" %></div>
+
+      <main class="px-4 py-3 grow">
+        <%= yield %>
+      </main>
+    </div>
+
+    <%# The column's `max-sm:pb-20` above is what keeps this off the content; change either and
+        change both. %>
+    <% if tabs %>
+      <nav class="dock sm:hidden" aria-label="Group sections">
+        <%= render "layouts/group_tabs", group: group, section: shell_section, in_dock: true %>
+      </nav>
+    <% end %>
   </body>
 </html>

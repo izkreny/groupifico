@@ -9,6 +9,21 @@ RSpec.describe "Sessions", type: :request do
         expect(response.body).to include('type="email"')
         expect(response.body).not_to include('type="password"')
       end
+
+      # Criterion 8: the shell's chrome belongs to a reader inside a group, and this is the
+      # signed-out screen it must stay off. The header row itself renders on every screen.
+      it "carries none of the shell's chrome" do
+        get new_session_path
+
+        expect(response.body).not_to include 'aria-label="Me"'
+        expect(response.body).not_to include 'class="dock'
+      end
+
+      it "offers a route to sign-up" do
+        get new_session_path
+
+        expect(response.body).to include new_sign_up_path
+      end
     end
 
     context "when already signed in" do

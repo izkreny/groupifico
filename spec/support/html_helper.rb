@@ -6,4 +6,19 @@ module HtmlHelper
   def page_text(body)
     Nokogiri::HTML(body).css("body").text.squish
   end
+
+  # Every top-level heading the page renders, rather than the first: a pushed screen carries the
+  # shell's title row and the record's own name, and matching a class to tell them apart is what
+  # the rule above says not to do.
+  def headings(body)
+    Nokogiri::HTML(body).css("h1").map { it.text.squish }
+  end
+
+  # The shell's header row, reached by its landmark rather than by `navbar`, for the same reason:
+  # the class is a daisyUI component name and the landmark is what the row means. `css` rather than
+  # `at_css` so a body carrying no header answers "" and fails the expectation, where `at_css`
+  # would raise inside the helper and point at it instead of at the missing row.
+  def header_text(body)
+    Nokogiri::HTML(body).css("header").text.squish
+  end
 end

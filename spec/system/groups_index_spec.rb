@@ -6,17 +6,23 @@ require "rails_helper"
 # markup is identical under both, and the whole difference lives in the compiled stylesheet.
 #
 # Each example states its own preference rather than one of them relying on the driver reset, so
-# the pair passes under either order, as `config.order = :random` requires.
+# the pair passes under either order, as `config.order = :random` requires. Both also state a
+# width, for the same reason: an example that names none answers for whichever side of the shell's
+# breakpoint the driver's own window happens to be on.
 RSpec.describe "The groups index", type: :system do
   it "paints in light when the device prefers light" do
     member = create(:member)
     sign_in_as member.user
     prefer_colour_scheme :light
+    resize_to ViewportHelper::MOBILE
 
     visit groups_path
 
     expect(rendered_colour_scheme).to eq "light"
     expect(page).to paint ".btn-primary"
+    # The avatar is what the paint matcher can judge on this screen: `bg-base-300` over the page's
+    # own surface, where the header itself carries `bg-base-100` and would composite to 1.0.
+    expect(page).to paint ".avatar > div"
     expect(page).to be_accessible
   end
 
@@ -29,6 +35,7 @@ RSpec.describe "The groups index", type: :system do
     member = create(:member)
     sign_in_as member.user
     prefer_colour_scheme :dark
+    resize_to ViewportHelper::MOBILE
 
     visit groups_path
 

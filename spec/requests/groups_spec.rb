@@ -95,6 +95,104 @@ RSpec.describe "Groups", type: :request do
         expect(response).to have_http_status :not_found
       end
     end
+
+    # Which of the shell's controls a given reader is offered. This is the layer that answers it,
+    # per the duplication rule in `.agents/testing.md`: `spec/system/group_shell_spec.rb` asserts
+    # that the chrome paints and that its controls behave, and never which reader sees what.
+    #
+    # Asserted on the `aria-label`, which is each control's accessible name and the only stable
+    # thing about an icon-only button: there is no text to match and the SVG path is the wrong
+    # thing to couple to.
+    describe "the shell's controls" do
+      it "offers the pencil to an owner" do
+        member = create(:member, :owner)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(response.body).to include 'aria-label="Edit group"'
+      end
+
+      # `GroupPolicy#edit?` is the owner's alone - an administrator is refused all three group
+      # writes, which is the split `can_manage?` cannot express - so the control is absent rather
+      # than disabled, per #235's second acceptance criterion.
+      it "offers no pencil to an administrator, who may not edit the group" do
+        member = create(:member, :administrator)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(response.body).not_to include 'aria-label="Edit group"'
+      end
+
+      it "offers the switcher chevron to a reader with a second group" do
+        member = create(:member)
+        create(:member, user: member.user, group: create(:group))
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(response.body).to include 'aria-label="Switch group"'
+      end
+
+      it "offers no switcher chevron to a reader with one group" do
+        member = create(:member)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(response.body).not_to include 'aria-label="Switch group"'
+      end
+
+      # `menu-active` colours the reader's current group and says nothing to a screen reader, so
+      # the row carries `aria-current` too. Asserted because an accessibility semantic nothing
+      # reads is one nothing keeps.
+      #
+      # The assertion names the row rather than counting the attribute: presence and a count of one
+      # are both invariant under marking the wrong group, which is the one mutation the attribute
+      # exists to prevent. Watched failing with the comparison inverted, which marked "Harbour
+      # Band" as current while the reader was in "Riverside Choir".
+      it "marks the reader's current group in the switcher" do
+        member = create(:member, group: create(:group, name: "Riverside Choir"))
+        create(:member, user: member.user, group: create(:group, name: "Harbour Band"))
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        marked = Nokogiri::HTML(response.body).css(%(a[aria-current="true"]))
+        expect(marked.map { it[:href] }).to eq [ group_path(member.group) ]
+      end
+
+      # A group they have left is not a group they can switch to, so it must not raise the count
+      # that decides whether the chevron appears either. Same leak `user.current_groups` closes for
+      # the index, asked of the shell instead.
+      it "offers no switcher chevron for a group the reader has left" do
+        member = create(:member)
+        create(:member, :inactive, user: member.user, group: create(:group))
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(response.body).not_to include 'aria-label="Switch group"'
+      end
+    end
+  end
+
+  # A failed `update` re-renders `edit` on the persisted record with the rejected attributes still
+  # assigned, so the header and the screen's own heading would otherwise read a name the save
+  # refused. Watched failing in both directions, one assertion each: against `name` in the layout
+  # the header row loses the name, and against `name` in `groups/edit` no heading carries it.
+  describe "the shell's header and the screen's heading after a refused rename" do
+    it "keeps the stored group name in both" do
+      member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+      sign_in_as(member.user)
+
+      patch group_path(member.group), params: { group: { name: "" } }
+
+      expect(response).to have_http_status :unprocessable_content
+      expect(header_text(response.body)).to include "Riverside Choir"
+      expect(headings(response.body)).to include "Riverside Choir"
+    end
   end
 
   describe "GET /groups/new" do
