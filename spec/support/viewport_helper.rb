@@ -21,4 +21,22 @@ module ViewportHelper
       })()
     JS
   end
+
+  # The gap in px between where text actually ends and the next element begins. Measured off a
+  # `Range` over the text rather than off its element's box, because a flex `gap` holds two boxes
+  # the same distance apart however wide they are: a box stretched past its own text leaves the
+  # reader a hole and the box measurement none. `truncated?` cannot see it either, since
+  # `scrollWidth > clientWidth` is false whether a box hugs its text or stretches past it.
+  def gap_after_text(text_selector, next_selector)
+    page.evaluate_script(<<~JS)
+      (() => {
+        const el = document.querySelector("#{text_selector}");
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const text = range.getBoundingClientRect();
+        const next = document.querySelector("#{next_selector}").getBoundingClientRect();
+        return Math.round(next.left - text.right);
+      })()
+    JS
+  end
 end

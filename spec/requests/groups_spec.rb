@@ -144,6 +144,21 @@ RSpec.describe "Groups", type: :request do
         expect(response.body).not_to include 'aria-label="Switch group"'
       end
 
+      # `menu-active` colours the reader's current group and says nothing to a screen reader, so
+      # the row carries `aria-current` too. Asserted because an accessibility semantic nothing
+      # reads is one nothing keeps.
+      it "marks the reader's current group in the switcher" do
+        member = create(:member, group: create(:group, name: "Riverside Choir"))
+        other = create(:member, user: member.user, group: create(:group, name: "Harbour Band"))
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(response.body).to include %(aria-current="true")
+        expect(response.body.scan(%(aria-current="true")).count).to eq 1
+        expect(response.body).to include group_path(other.group)
+      end
+
       # A group they have left is not a group they can switch to, so it must not raise the count
       # that decides whether the chevron appears either. Same leak `user.current_groups` closes for
       # the index, asked of the shell instead.

@@ -193,7 +193,7 @@ RSpec.describe "The group shell", type: :system do
   # All three assertions earn their place against a different mutation: `aria-expanded` catches a
   # listener that never fires, `opened[hidden]` catches one that leaves the sheet's own chevron up,
   # and `closed:not([hidden])` catches one that hides both and leaves the button with no glyph at
-  # all. The last was missing until a review pass asked which example caught the unhide half.
+  # all.
   it "points it back down when the sheet is dismissed" do
     member = create(:member, group: create(:group, name: "Riverside Choir"))
     create(:member, user: member.user, group: create(:group, name: "Harbour Band"))
@@ -207,6 +207,24 @@ RSpec.describe "The group shell", type: :system do
     expect(page).to have_css "[aria-label='Switch group'][aria-expanded='false']"
     expect(page).to have_css "[data-group-switcher-target='opened'][hidden]", visible: :all
     expect(page).to have_css "[data-group-switcher-target='closed']:not([hidden])", visible: :all
+  end
+
+  # The header's flex slack has been wrong twice: once reserving half the row, once stretching the
+  # name's box past its text so the controls sat at the far end of it. Neither is visible to
+  # `truncated?`, whose `scrollWidth > clientWidth` is false either way, so this measures the gap
+  # between the name and the chevron instead. `gap-2.5` on the row is 10px.
+  #
+  # Watched failing against the pre-fix markup - `grow` on the name and no spacer - which answered
+  # 79px at this width.
+  it "keeps the switcher chevron beside the name rather than at the far end of the row" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    create(:member, user: member.user, group: create(:group, name: "Harbour Band"))
+    sign_in_as member.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_path(member.group)
+
+    expect(gap_after_text("header span.truncate", "[aria-label='Switch group']")).to eq 10
   end
 
   it "paints a pushed screen, whose back chevron leads up to the section" do
