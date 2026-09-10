@@ -140,6 +140,9 @@ RSpec.describe AppFormBuilder do
 
     # `validates_associated` leaves "Address is invalid" on the parent while the address's own
     # fields say what is actually wrong, so a nested form counts as covering its association.
+    # `accepts_nested_attributes_for` adds a second key for the same failure, `:"address.name"`,
+    # which the nested field has already drawn: measured on this record, the parent's error keys are
+    # `[:"address.name", :address]`.
     it "treats a nested form as covering its association" do
       group = Group.new(name: "Choir", address: Address.new)
       group.valid?
@@ -148,6 +151,7 @@ RSpec.describe AppFormBuilder do
       form.fields_for(:address) { |nested| nested.field :name }
 
       expect(form.unattached_error_messages).not_to include "Address is invalid"
+      expect(form.unattached_error_messages).not_to include "Address name can't be blank"
     end
 
     it "carries a base error, which can never have a field of its own" do

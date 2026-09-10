@@ -44,12 +44,20 @@ class AppFormBuilder < ActionView::Helpers::FormBuilder
   # `Group#group_type`, and a `belongs_to` presence failure like `Event#group`. Before this existed
   # each of those was rendered by the old full-messages list and then silently vanished.
   def unattached_error_messages
-    object.errors.reject { |error| drawn.include?(error.attribute) }.map(&:full_message)
+    object.errors.reject { covered? it.attribute }.map(&:full_message)
   end
 
   private
     def drawn
       @drawn ||= []
+    end
+
+    # `accepts_nested_attributes_for` copies each child error onto the parent under a compound key,
+    # `:"address.name"`, so an exact match against `drawn` classes a message the nested field has
+    # already drawn as unattached and repeats it in the summary. The association's name is the part
+    # that says who drew it, and a plain attribute has no `.` to split on.
+    def covered?(attribute)
+      drawn.include? attribute.to_s.split(".").first.to_sym
     end
 
     # A `belongs_to` failure is keyed on the association, never on its foreign key, so a control
