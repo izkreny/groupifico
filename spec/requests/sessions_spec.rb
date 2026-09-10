@@ -19,6 +19,14 @@ RSpec.describe "Sessions", type: :request do
         expect(response.body).not_to include 'aria-label="Me"'
         expect(response.body).not_to include 'class="dock'
       end
+
+      # Deleting `layouts/_navigation` took the only "Start a group" link with it, so this form is
+      # the one place a signed-out visitor can still reach sign-up.
+      it "offers a route to sign-up" do
+        get new_session_path
+
+        expect(response.body).to include new_sign_up_path
+      end
     end
 
     context "when already signed in" do

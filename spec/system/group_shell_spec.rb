@@ -114,7 +114,20 @@ RSpec.describe "The group shell", type: :system do
 
     visit group_path(member.group)
     click_button "Switch group"
-    click_link "Harbour Band"
+
+    # Wait for the sheet to finish sliding in before clicking into it. `[open]` is set the instant
+    # `showModal()` runs and the dialog's opacity is already 1, but `.modal-top > .modal-box`
+    # carries `translate: 0 -100%` and animates to `translate: 0` over about 300ms - so the row is
+    # "visible" to Capybara while it is still off-screen, and a click at those coordinates hits
+    # nothing or the row above.
+    #
+    # Measured over the DevTools Protocol rather than guessed: sampling every frame from
+    # `showModal()`, the computed `translate` ran `0px -100%` -> `0px -82%` -> `0px -25%` -> `0px`,
+    # and `elementFromPoint` at the second row's centre answered `none` for the first ~100ms.
+    # Without this the example failed twice in twelve runs, always as "expected /groups/1 to equal
+    # /groups/2" - the click landing on the current group, whose row navigates nowhere.
+    expect(page).to have_css "#group-switcher .modal-box", style: { "translate" => "0px" }
+    within("#group-switcher") { click_link "Harbour Band" }
 
     expect(page).to have_current_path group_path(other.group)
   end
@@ -131,7 +144,7 @@ RSpec.describe "The group shell", type: :system do
     visit group_path(member.group)
     click_button "Switch group"
 
-    expect(page).to have_css "#group-switcher"
+    expect(page).to have_css "#group-switcher[open]"
     expect(page.evaluate_script("document.querySelector('#group-switcher').matches(':modal')")).to be true
   end
 

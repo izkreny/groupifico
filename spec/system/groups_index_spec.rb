@@ -6,12 +6,15 @@ require "rails_helper"
 # markup is identical under both, and the whole difference lives in the compiled stylesheet.
 #
 # Each example states its own preference rather than one of them relying on the driver reset, so
-# the pair passes under either order, as `config.order = :random` requires.
+# the pair passes under either order, as `config.order = :random` requires. Both also state a
+# width, for the same reason and because #244's shell moves its tabs across a 640px breakpoint: an
+# example that names no width answers for whichever side the driver's own window happens to be on.
 RSpec.describe "The groups index", type: :system do
   it "paints in light when the device prefers light" do
     member = create(:member)
     sign_in_as member.user
     prefer_colour_scheme :light
+    resize_to ViewportHelper::MOBILE
 
     visit groups_path
 
@@ -20,7 +23,8 @@ RSpec.describe "The groups index", type: :system do
     # #244's shell heads this screen with the brand and the reader's avatar and no group, since
     # tabs belong to a group and the index sits above them. The avatar is what the paint matcher
     # can judge here: `bg-base-300` over the page's own surface, where the header itself carries
-    # `bg-base-100` and would composite to 1.0. RF9 moved this in from the shell's own spec.
+    # `bg-base-100` and would composite to 1.0. RF9 moved this in from the shell's own spec, and
+    # RF12 brought the width it was made at with it.
     expect(page).to paint ".avatar > span"
     expect(page).to be_accessible
   end
@@ -34,6 +38,7 @@ RSpec.describe "The groups index", type: :system do
     member = create(:member)
     sign_in_as member.user
     prefer_colour_scheme :dark
+    resize_to ViewportHelper::MOBILE
 
     visit groups_path
 
