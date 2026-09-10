@@ -27,21 +27,6 @@ module ViewportHelper
   # the same distance apart however wide they are: a box stretched past its own text leaves the
   # reader a hole and the box measurement none. `truncated?` cannot see it either, since
   # `scrollWidth > clientWidth` is false whether a box hugs its text or stretches past it.
-  # The px between an element's right edge and the right inner edge of its container - 0 where the
-  # element sits at the end of the row. A flex `gap` cannot answer this either: remove the slack
-  # and every gap in the row stays what it was while the whole group packs left.
-  def gap_to_row_end(selector, container_selector)
-    page.evaluate_script(<<~JS)
-      (() => {
-        const el = document.querySelector("#{selector}").getBoundingClientRect();
-        const box = document.querySelector("#{container_selector}");
-        const rect = box.getBoundingClientRect();
-        const pad = parseFloat(getComputedStyle(box).paddingRight);
-        return Math.round(rect.right - pad - el.right);
-      })()
-    JS
-  end
-
   def gap_after_text(text_selector, next_selector)
     page.evaluate_script(<<~JS)
       (() => {
@@ -51,6 +36,22 @@ module ViewportHelper
         const text = range.getBoundingClientRect();
         const next = document.querySelector("#{next_selector}").getBoundingClientRect();
         return Math.round(next.left - text.right);
+      })()
+    JS
+  end
+
+  # The px between an element's right edge and the right inner edge of its container - 0 where the
+  # element sits at the end of the row. Neither measurement above answers this: remove the slack
+  # that pushes the element there and every gap in the row stays what it was while the whole group
+  # packs left.
+  def gap_to_row_end(selector, container_selector)
+    page.evaluate_script(<<~JS)
+      (() => {
+        const el = document.querySelector("#{selector}").getBoundingClientRect();
+        const box = document.querySelector("#{container_selector}");
+        const rect = box.getBoundingClientRect();
+        const pad = parseFloat(getComputedStyle(box).paddingRight);
+        return Math.round(rect.right - pad - el.right);
       })()
     JS
   end

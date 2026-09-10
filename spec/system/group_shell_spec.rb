@@ -216,7 +216,7 @@ RSpec.describe "The group shell", type: :system do
   #
   # Watched failing against the pre-fix markup - `grow` on the name and no spacer - which answered
   # 79px at this width.
-  it "keeps the switcher chevron beside the name rather than at the far end of the row" do
+  it "keeps the name's controls beside it and the avatar at the row's end" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
     create(:member, user: member.user, group: create(:group, name: "Harbour Band"))
     sign_in_as member.user
