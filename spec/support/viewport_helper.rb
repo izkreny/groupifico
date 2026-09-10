@@ -10,4 +10,15 @@ module ViewportHelper
   def resize_to(viewport)
     page.driver.resize(*viewport)
   end
+
+  # Whether text is cut off by `truncate` is geometry rather than markup: the element carries the
+  # whole string either way, so only the browser can answer it.
+  def truncated?(selector)
+    page.evaluate_script(<<~JS)
+      (() => {
+        const el = document.querySelector("#{selector}");
+        return el.scrollWidth > el.clientWidth + 1;
+      })()
+    JS
+  end
 end

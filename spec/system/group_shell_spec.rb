@@ -146,6 +146,22 @@ RSpec.describe "The group shell", type: :system do
     expect(page.evaluate_script("document.querySelector('#group-switcher').matches(':modal')")).to be true
   end
 
+  # Whether the name fits is geometry, which nothing below the browser can measure: the markup is
+  # the same string at every width, so a request spec sees a full name however little room it has.
+  # Watched failing against `navbar-end`, which reserves half the row: 225px of box for 265px of
+  # name.
+  it "leaves the group's name the room the trailing controls are not using" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Community Choir"))
+    create(:member, user: member.user, group: create(:group, name: "Harbour Band"))
+    sign_in_as member.user
+    resize_to ViewportHelper::DESKTOP
+
+    visit group_path(member.group)
+
+    expect(page).to have_text "Riverside Community Choir"
+    expect(truncated?(".navbar span.truncate")).to be false
+  end
+
   it "paints a pushed screen, whose back chevron leads up to the section" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
     sign_in_as member.user

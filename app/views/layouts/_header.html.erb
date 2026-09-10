@@ -14,7 +14,7 @@
     <% end %>
   </span>
 
-  <span class="text-shell sm:text-hero truncate"><%= group ? group_name : brand_name %></span>
+  <span class="text-shell sm:text-hero truncate grow min-w-0"><%= group ? group_name : brand_name %></span>
 
   <% if switcher_id %>
     <button type="button" class="btn btn-ghost btn-circle btn-sm text-primary flex-none"
@@ -35,7 +35,7 @@
     <% end %>
   <% end %>
 
-  <span class="navbar-end gap-4">
+  <span class="flex-none flex items-center gap-4">
     <%# `max-sm:hidden` against the layout's dock `sm:hidden`: one partial, and exactly one
         placement visible at any width. %>
     <% if tabs %>
