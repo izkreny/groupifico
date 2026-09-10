@@ -2,13 +2,17 @@
 <% messages = form.unattached_error_messages %>
 
 <% if form.object.errors.any? %>
-  <div id="error_explanation" role="alert" class="alert alert-error alert-vertical mb-5">
-    <% if form.object.errors.size > messages.size %>
-      <span>Please fix the highlighted fields.</span>
-    <% end %>
+  <div id="error_explanation" role="alert" class="alert alert-error mb-5">
+    <%= icon :alert, class: "size-6 shrink-0" %>
 
-    <% messages.each do |message| %>
-      <span><%= message %></span>
-    <% end %>
+    <div class="flex flex-col">
+      <% if form.object.errors.size > messages.size %>
+        <span>Please fix the highlighted fields.</span>
+      <% end %>
+
+      <% messages.each do |message| %>
+        <span><%= message %></span>
+      <% end %>
+    </div>
   </div>
 <% end %>
