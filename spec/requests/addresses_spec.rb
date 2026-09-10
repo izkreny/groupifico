@@ -203,22 +203,22 @@ RSpec.describe "Addresses", type: :request do
         expect(response).to have_http_status :unprocessable_content
       end
 
-      # The one CI-run layer that sees the field pattern's markup. `spec/system` is excluded from
-      # every GitHub Actions job per `.agents/gh-solo.md`, so an edit renaming this id or dropping
-      # the aria pair would otherwise reach `main` with four green checks. The ids are the ones
-      # #239 promises the request specs keep asserting, #178's among them.
+      # The one layer that ties the aria pair to the control that failed. `spec/system` is excluded
+      # from every GitHub Actions job per `.agents/gh-solo.md`, so an edit dropping the pair or
+      # renaming the note's id would otherwise reach `main` with four green checks. The ids are the
+      # ones #239 promises the request specs keep asserting, #178's among them.
       #
-      # Parsed rather than matched as a string, so the assertion ties both attributes to the
-      # control that failed rather than to the body as a whole, and survives the classes around
-      # the value changing.
-      it "names the failed field's error, and points its own control at it" do
+      # The message's own text belongs to `spec/form_builders/app_form_builder_spec.rb`, which
+      # asserts it in "replaces the hint with the error"; that layer runs in the `test` job too, so
+      # repeating the text here would only make one edit fail in two places.
+      it "points the failed control at its own error message" do
         member  = create(:member, :owner, :with_all_attributes)
         sign_in_as(member.user)
 
         patch address_path(member.group.address), params: { address: { name: "" } }
         control = Nokogiri::HTML(response.body).at_css("input#address_name")
 
-        expect(Nokogiri::HTML(response.body).at_css("p#address_name_error").text).to eq "Name can't be blank"
+        expect(Nokogiri::HTML(response.body).at_css("p#address_name_error")).to be_present
         expect(control["aria-invalid"]).to eq "true"
         expect(control["aria-describedby"]).to eq "address_name_error"
       end
