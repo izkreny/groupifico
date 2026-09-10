@@ -175,4 +175,20 @@ RSpec.describe AppFormBuilder do
       expect(form.unattached_error_messages).not_to include "Member must exist"
     end
   end
+
+  # `fields` is Rails' own, `fields(scope = nil, model: nil, **options)`, and this builder is
+  # installed application-wide by `default_form_builder`, so a method of that name here takes the
+  # framework's version out of every template in the application. Nothing in the diff would say so:
+  # the call raises `ArgumentError` at render time and only in the template that made it. The name
+  # is `address_attributes` rather than `address` because `Group` accepts nested attributes for it,
+  # which is Rails' own routing of the scope and part of what has to survive.
+  describe "#fields" do
+    it "leaves Rails' own scoped-fields call reachable" do
+      view = ApplicationController.new.tap { it.request = ActionDispatch::TestRequest.create }.view_context
+
+      html = view.form_with(model: Group.new(address: Address.new), url: "/groups") { |form| form.fields(:address) { |nested| nested.text_field :name } }
+
+      expect(html).to include %(name="group[address_attributes][name]")
+    end
+  end
 end

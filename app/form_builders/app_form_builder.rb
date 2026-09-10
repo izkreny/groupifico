@@ -24,7 +24,10 @@ class AppFormBuilder < ActionView::Helpers::FormBuilder
   # That ordering is the whole reason this method exists rather than each template capturing its
   # own fieldset: eight templates each holding the invariant is eight chances to flatten it back to
   # the obvious order, which empties `drawn` and repeats every field error in the summary.
-  def fields(&)
+  #
+  # Named for what it adds rather than for what it wraps, because `fields` is Rails' own method on
+  # `FormBuilder` and this builder is installed application-wide.
+  def with_error_summary(&)
     captured = @template.capture(&)
 
     @template.safe_join [ @template.render("shared/errors", form: self), captured ]

@@ -1,5 +1,5 @@
 <%= form_with(model: [group, event], class: "contents") do |form| %>
-  <%= form.fields do %>
+  <%= form.with_error_summary do %>
     <fieldset class="fieldset">
       <legend class="fieldset-legend">Event details</legend>
 
