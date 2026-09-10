@@ -23,4 +23,11 @@ export default class extends Controller {
     event.preventDefault()
     this.sheetTarget.showModal()
   }
+
+  // A reader who opens the sheet and then presses Back leaves the page with `<dialog open>` in it,
+  // and Turbo caches that snapshot on the way out: Forward serves it back with no request, so the
+  // panel returns opened by nobody and outside the top layer, where Escape no longer dismisses it.
+  close() {
+    this.sheetTarget.close()
+  }
 }

@@ -1,5 +1,5 @@
 <%# locals: (id:, url:, label:, title:, body:, dismiss:) %>
-<div data-controller="dialog" data-action="submit->dialog#open">
+<div data-controller="dialog" data-action="submit->dialog#open turbo:before-cache@document->dialog#close">
   <%= button_to label, url, method: :delete, class: "btn btn-error",
         form: { id: "#{id}_form" }, data: { dialog_target: "trigger" } %>
 
