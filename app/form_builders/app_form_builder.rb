@@ -63,14 +63,18 @@ class AppFormBuilder < ActionView::Helpers::FormBuilder
       association == attribute.to_s ? [ attribute ] : [ attribute, association.to_sym ]
     end
 
-    # daisyUI's `validator` component is what colours a server-rejected control, and the control
-    # carries it unconditionally. Its selector is not only `:user-invalid`, which would need a
-    # person to have typed something: it also matches
-    # `.validator[aria-invalid]:not([aria-invalid="false"])`, so the `aria-invalid` set below is
-    # what drives it, and a sibling `~ .validator-hint` is revealed by the same rule. That is why
-    # no `-error` class is composed here for either the control or the note - nothing about the
-    # error state is expressed in a class name at all, which also leaves nothing for Tailwind's
-    # literal-class-name scanning to miss.
+    # daisyUI's `validator` component is what colours a server-rejected control, and it is applied
+    # only to a control the server rejected. Its selector matches
+    # `.validator[aria-invalid]:not([aria-invalid="false"])`, which is the server-rendered case and
+    # the reason the component works here at all; a sibling `~ .validator-hint` is revealed by the
+    # same rule.
+    #
+    # The same rule set also carries `:user-valid` and `:user-invalid`, so applying the class
+    # unconditionally switched on the browser's own constraint colouring across every form: a valid
+    # field turned success-green once touched, and a blurred empty `required` field turned
+    # error-red carrying no message at all. That second state is worse than no colour, so the class
+    # is conditional. Decided by the owner on 2026-09-10; default daisyUI governs styling *values*
+    # rather than obliging every behaviour a component can be made to do.
     #
     # A caller's own `class:` and `aria:` are composed with these rather than replaced by them: an
     # earlier revision merged ours last, which silently dropped whichever of the two a caller had
@@ -78,7 +82,7 @@ class AppFormBuilder < ActionView::Helpers::FormBuilder
     def control(as, attribute, options, choices:, prompt:, invalid:, describedby:)
       component  = COMPONENTS.fetch(as, "input")
       html       = options.except(:class, :aria).merge(
-        class: [ component, "w-full", "validator", options[:class] ],
+        class: [ component, "w-full", ("validator" if invalid), options[:class] ],
         aria: { invalid: ("true" if invalid), describedby: }.compact.merge(options[:aria] || {})
       )
 

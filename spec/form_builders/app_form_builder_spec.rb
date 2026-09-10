@@ -57,9 +57,20 @@ RSpec.describe AppFormBuilder do
     # `autofocus`, `placeholder` and `autocomplete` - so it is back, with the defect RF2 actually
     # named fixed: the earlier revision merged its own options last and dropped a caller's.
     it "composes a caller's class with its own rather than replacing it" do
-      html = field_for(build(:address), :name, class: "h-24")
+      address = build(:address, name: nil)
+      address.valid?
+
+      html = field_for(address, :name, class: "h-24")
 
       expect(Nokogiri::HTML(html).at_css("input")["class"].split).to include "input", "validator", "h-24"
+    end
+
+    # `validator` also drives daisyUI's `:user-valid`/`:user-invalid` colouring, so a control the
+    # server did not reject must not carry it.
+    it "leaves the validator class off a control the server accepted" do
+      html = field_for(build(:address), :name)
+
+      expect(Nokogiri::HTML(html).at_css("input")["class"].split).not_to include "validator"
     end
 
     it "keeps its own aria-describedby when the caller passes an aria hash" do
