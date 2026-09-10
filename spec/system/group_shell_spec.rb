@@ -12,10 +12,9 @@ require "rails_helper"
 # The paint targets are the group mark and the avatar rather than the header or the dock. Both of
 # those carry `bg-base-100`, which in light is `oklch(100% 0 0)` - the same colour as the surface
 # behind them - so a correctly painted header scores 1.0 and reads as painting nothing, exactly as
-# `body` does. The mark is a `status status-primary` over that surface and the avatar
-# `bg-base-300` over it, so
-# both are things the matcher can actually judge; the text on the dock is measured against its own
-# surface by `be_accessible`, which is the layer that reads text contrast.
+# `body` does. The mark is a `status status-primary` over that surface and the avatar is
+# `bg-base-300` over it, so both are things the matcher can actually judge; the text on the dock is
+# measured against its own surface by `be_accessible`, which is the layer that reads text contrast.
 RSpec.describe "The group shell", type: :system do
   it "paints the group mark and the avatar in light, with no accessibility violations" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
@@ -189,10 +188,12 @@ RSpec.describe "The group shell", type: :system do
   end
 
   # Dismissed with Escape rather than a control, because the listener is on the dialog's own
-  # `close` event: this is the path a reader takes when they never touch the button again. What
-  # this example is really about is that the listener fires at all, which `aria-expanded` is the
-  # honest witness for - a chevron assertion here passes against a controller that never moved
-  # either attribute, so the mechanism itself is the example above's to catch.
+  # `close` event: this is the path a reader takes when they never touch the button again.
+  #
+  # All three assertions earn their place against a different mutation: `aria-expanded` catches a
+  # listener that never fires, `opened[hidden]` catches one that leaves the sheet's own chevron up,
+  # and `closed:not([hidden])` catches one that hides both and leaves the button with no glyph at
+  # all. The last was missing until a review pass asked which example caught the unhide half.
   it "points it back down when the sheet is dismissed" do
     member = create(:member, group: create(:group, name: "Riverside Choir"))
     create(:member, user: member.user, group: create(:group, name: "Harbour Band"))
@@ -205,6 +206,7 @@ RSpec.describe "The group shell", type: :system do
 
     expect(page).to have_css "[aria-label='Switch group'][aria-expanded='false']"
     expect(page).to have_css "[data-group-switcher-target='opened'][hidden]", visible: :all
+    expect(page).to have_css "[data-group-switcher-target='closed']:not([hidden])", visible: :all
   end
 
   it "paints a pushed screen, whose back chevron leads up to the section" do
