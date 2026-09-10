@@ -4,28 +4,12 @@ require "rails_helper"
 # screen's own file. The group is the subject because its delete is the plainest of the four: no
 # typed word, and the record's absence afterwards is a single query.
 #
-# What no request spec can reach is the whole of what this file asserts. That a `<dialog>` opens at
-# all, that Escape and a backdrop click close it, and that a dismissed sheet leaves the record alone
-# are claims about a browser; who may delete a group is `spec/requests/groups_spec.rb`'s, and per the
-# duplication rule in `.agents/testing.md` it does not come back here.
+# Every example here is a claim about a browser: that a `<dialog>` opens at all, that Escape and a
+# backdrop click close it, and that a dismissed sheet leaves the record alone. Who may delete a
+# group, and the markup that carries the no-JavaScript path, are both `spec/requests/groups_spec.rb`'s,
+# and per the duplication rule in `.agents/testing.md` neither comes back here.
 RSpec.describe "The confirm sheet", type: :system do
   include ActionView::RecordIdentifier
-
-  # The trigger is the delete form's own submit button, which is what makes the sheet an
-  # enhancement rather than the only route: with JavaScript off the click posts the delete straight
-  # away, exactly as `turbo_confirm` degraded. No driver here runs with scripting off, so this is
-  # the markup that carries the claim rather than the claim itself.
-  it "renders the trigger as the delete form's own submit button" do
-    member = create(:member, :owner)
-    sign_in_as member.user
-
-    visit group_path(member.group)
-
-    form = "##{dom_id(member.group, :confirm_delete)}_form"
-    expect(page).to have_css "#{form}[action='#{group_path(member.group)}'][method='post']", visible: :all
-    expect(page).to have_css "#{form} input[name='_method'][value='delete']", visible: :all
-    expect(page).to have_css "#{form} button[type='submit']", text: "Delete group"
-  end
 
   context "when the destructive control has opened it" do
     let(:member) { create(:member, :owner) }
