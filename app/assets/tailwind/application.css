@@ -10,8 +10,8 @@
     dark --prefersdark;
 }
 
-/* Tailwind's own scale has no size for 11, 13, 22 or 25, so those four rungs cannot be spelled
-   with `text-xs` and friends. #257 retunes the ladder for the organic theme.
+/* Tailwind's own scale has no size for 13, 22 or 25, so those three rungs cannot be spelled with
+   `text-xs` and friends. #257 retunes the ladder for the organic theme.
 
    In `rem` for the reason Tailwind's own scale is: `px` is absolute, so a reader who raises the
    browser's default font size scales every daisyUI component and none of these. Measured over the
@@ -22,8 +22,6 @@
   --text-hero: 1.375rem;        /* 22px */
   --text-shell: 1.25rem;        /* 20px */
   --text-row-title: 1rem;       /* 16px */
-  --text-fact: 0.875rem;        /* 14px */
   --text-card-fact: 0.8125rem;  /* 13px */
   --text-meta: 0.75rem;         /* 12px */
-  --text-hint: 0.6875rem;       /* 11px */
 }
