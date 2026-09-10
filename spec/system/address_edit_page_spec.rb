@@ -51,6 +51,15 @@ RSpec.describe "The address edit page", type: :system do
       expect(page).to paint "#error_explanation"
     end
 
+    # An inline `<svg>` with a class Tailwind never compiled still has the class in the markup, so
+    # the size is read off the box the browser drew rather than off the attribute. `shrink-0` is
+    # what a long message would otherwise squash, and neither is visible to a request spec.
+    it "draws the warning triangle beside the message at its full width" do
+      triangle = page.evaluate_script "document.querySelector('#error_explanation svg').getBoundingClientRect().width"
+
+      expect(triangle).to be_within(0.5).of(24)
+    end
+
     # A literal the reader typed, so a form re-rendered from the record rather than from the
     # submitted params fails here. Reading the stored city back instead would pass either way.
     it "keeps what the reader typed in the fields that passed" do

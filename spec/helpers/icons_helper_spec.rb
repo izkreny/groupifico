@@ -16,6 +16,13 @@ RSpec.describe IconsHelper, type: :helper do
       expect(helper.icon(:back)).to include('stroke-width="2.5"')
     end
 
+    # Restoring the gem's own `size-6` default would pass here and paint nothing: it lives in Ruby,
+    # where Tailwind's source scanner never reads it, so the class reaches the markup and the
+    # stylesheet has no rule behind it. A call site states its size instead, in the template.
+    it "sizes nothing by default, leaving the size to the markup Tailwind actually scans" do
+      expect(helper.icon(:where)).not_to include("class=")
+    end
+
     it "hides the glyph from assistive technology when nothing labels it" do
       expect(helper.icon(:where)).to include('aria-hidden="true"')
       expect(helper.icon(:where)).not_to include("aria-label")
