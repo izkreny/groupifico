@@ -174,12 +174,12 @@ RSpec.describe Group, type: :model do
 
   # Times are frozen so "upcoming" cannot depend on how long the suite takes to reach this file.
   describe "#next_event" do
-    it "is the soonest of the group's upcoming events" do
+    it "is the soonest of the group's confirmed upcoming events" do
       freeze_time do
         group = create(:group)
         creator = create(:member, group:)
-        create(:event, group:, creator:, starts_at: 10.days.from_now, ends_at: 10.days.from_now + 1.hour)
-        soonest = create(:event, group:, creator:, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 1.hour)
+        create(:event, group:, creator:, status: :confirmed, starts_at: 10.days.from_now, ends_at: 10.days.from_now + 1.hour)
+        soonest = create(:event, group:, creator:, status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 1.hour)
 
         expect(group.next_event).to eq soonest
       end
@@ -189,7 +189,28 @@ RSpec.describe Group, type: :model do
       freeze_time do
         group = create(:group)
         creator = create(:member, group:)
-        create(:event, group:, creator:, starts_at: 2.days.ago, ends_at: 2.days.ago + 1.hour)
+        create(:event, group:, creator:, status: :confirmed, starts_at: 2.days.ago, ends_at: 2.days.ago + 1.hour)
+
+        expect(group.next_event).to be_nil
+      end
+    end
+
+    it "ignores a canceled event, however soon it starts" do
+      freeze_time do
+        group = create(:group)
+        creator = create(:member, group:)
+        create(:event, group:, creator:, status: :canceled, starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour)
+        confirmed = create(:event, group:, creator:, status: :confirmed, starts_at: 5.days.from_now, ends_at: 5.days.from_now + 1.hour)
+
+        expect(group.next_event).to eq confirmed
+      end
+    end
+
+    it "ignores an event nobody has confirmed yet" do
+      freeze_time do
+        group = create(:group)
+        creator = create(:member, group:)
+        create(:event, group:, creator:, status: :unconfirmed, starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour)
 
         expect(group.next_event).to be_nil
       end
