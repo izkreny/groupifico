@@ -9,6 +9,16 @@ RSpec.describe "Sessions", type: :request do
         expect(response.body).to include('type="email"')
         expect(response.body).not_to include('type="password"')
       end
+
+      # RF10, moved here from `spec/requests/groups_spec.rb`, where it sat under a describe naming
+      # a route it does not issue. #244's eighth criterion: the shell's chrome belongs to a reader
+      # inside a group, and this is the signed-out screen it must stay off.
+      it "carries none of the shell's chrome" do
+        get new_session_path
+
+        expect(response.body).not_to include 'aria-label="Me"'
+        expect(response.body).not_to include 'class="dock'
+      end
     end
 
     context "when already signed in" do

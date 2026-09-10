@@ -156,13 +156,6 @@ RSpec.describe "Groups", type: :request do
 
         expect(response.body).not_to include 'aria-label="Switch group"'
       end
-
-      it "offers no chrome at all to a signed-out visitor" do
-        get new_session_path
-
-        expect(response.body).not_to include 'aria-label="Me"'
-        expect(response.body).not_to include 'class="dock'
-      end
     end
   end
 

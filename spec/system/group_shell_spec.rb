@@ -149,16 +149,4 @@ RSpec.describe "The group shell", type: :system do
 
     expect(page).to have_current_path group_path(member.group)
   end
-
-  it "stays accessible on the groups index, where there is no group to head the shell with" do
-    member = create(:member, group: create(:group))
-    sign_in_as member.user
-    prefer_colour_scheme :light
-    resize_to ViewportHelper::MOBILE
-
-    visit groups_path
-
-    expect(page).to paint ".avatar > span"
-    expect(page).to be_accessible
-  end
 end

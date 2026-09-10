@@ -17,6 +17,11 @@ RSpec.describe "The groups index", type: :system do
 
     expect(rendered_colour_scheme).to eq "light"
     expect(page).to paint ".btn-primary"
+    # #244's shell heads this screen with the brand and the reader's avatar and no group, since
+    # tabs belong to a group and the index sits above them. The avatar is what the paint matcher
+    # can judge here: `bg-base-300` over the page's own surface, where the header itself carries
+    # `bg-base-100` and would composite to 1.0. RF9 moved this in from the shell's own spec.
+    expect(page).to paint ".avatar > span"
     expect(page).to be_accessible
   end
 
