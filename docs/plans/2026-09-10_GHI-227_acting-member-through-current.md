@@ -10,7 +10,7 @@ Implementation plan for [#227](https://github.com/izkreny/groupifico/issues/227)
 
 The assignment lives in one new concern, `app/controllers/concerns/group_scoped.rb`, because `EventsController`, `MembersController` and `RegistrationsController` carry a byte-identical `set_group` today. Including it deletes two copies of that method rather than adding a layer over three distinct ones.
 
-`Event`'s `creator` default then reads `Current.member` instead of deriving the membership from the event's own group. That is the whole behaviour change the issue asks for, and it is a change of route rather than of result: both expressions answer "this user's membership of this group", and every controller that creates an event now sets `Current.group` to the group the event is being created in.
+`Event`'s `creator` default then reads `Current.member` instead of deriving the membership from the event's own group. **This does change behaviour**, in two places, and the issue's original "changes no behaviour" claim was wrong. Inside a request the result is identical, because every controller that creates an event is nested under the group it is created in. Outside one - a console, a job, `db/seeds.rb` - the old lambda filled the creator from the event's own group and the new one answers nil, so the required association refuses the save. And the guarantee the old derivation carried structurally, that a creator belongs to the event's group, is now stated as a validation rather than lost.
 
 ## Why `member` is not memoized
 
@@ -48,10 +48,13 @@ The instruction alongside the command was to implement this everywhere it is use
 - Change `Event`'s `creator` default to `-> { Current.member if new_record? }` and rewrite the comment above it: the `new_record?` paragraph stays and is still load-bearing, the paragraph explaining why it does *not* read `Current.member` is replaced, and the safe-navigation paragraph goes with the two `&.` it explains.
 - Update the four `creator` examples in `spec/models/event_spec.rb` to set `Current.group` alongside `Current.session`, and make the "another group" example set `Current.group` to the event's group so it still fails for the reason it names rather than because `Current.group` is nil.
 - Add one example to `spec/models/event_spec.rb` proving the creator is `nil` when `Current.group` is unset, which is the console, job and seeds case the old lambda answered from `group` and this one cannot.
+- Added in the review round, on RF1: `validates :creator, inclusion: { in: ->(event) { event.group&.members } }, allow_nil: true` on `Event`, restoring in the model the cross-group guarantee the default gave up, with the two refusal examples and the same-group control.
 
 ## Verification
 
 - `bin/ci`
+
+The behaviour this branch does change is stated under *Approach* rather than left to be inferred, and each half of it is asserted: the out-of-request case by "is invalid when no group is being acted in", and the cross-group refusal by the two RF1 examples.
 
 What those gates cannot see: criterion 4, that `AddressesController` leaves `Current.group` and `Current.member` nil. A request spec cannot assert it, because the executor resets `Current` before the example reads it, so any such assertion passes whether the concern is included or not. It is satisfied by construction - the controller does not include `GroupScoped` - and the diff is the evidence. `spec/models/current_spec.rb` covers the half that is testable, that `member` is nil with no group.
 
