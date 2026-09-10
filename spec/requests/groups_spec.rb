@@ -144,6 +144,31 @@ RSpec.describe "Groups", type: :request do
         expect(response.body).not_to include 'aria-label="Switch group"'
       end
 
+      # `Group#next_event` has model coverage and its only caller had none, so the criterion it
+      # exists for - a switcher row showing the thing a reader came for - was asserted nowhere.
+      # Here rather than in the system spec because it is which text the response carries.
+      it "shows a group's next confirmed event under its name in the switcher" do
+        member = create(:member, group: create(:group, name: "Riverside Choir"))
+        create(:member, user: member.user, group: create(:group, name: "Harbour Band"))
+        create(:event, group: member.group, creator: member, status: :confirmed,
+                       name: "Spring concert", starts_at: 3.days.from_now, ends_at: 3.days.from_now + 1.hour)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(page_text(response.body)).to include "Next: Spring concert"
+      end
+
+      it "says so in the switcher when a group has no event coming up" do
+        member = create(:member, group: create(:group, name: "Riverside Choir"))
+        create(:member, user: member.user, group: create(:group, name: "Harbour Band"))
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(page_text(response.body)).to include "No event coming up"
+      end
+
       # A group they have left is not a group they can switch to, so it must not raise the count
       # that decides whether the chevron appears either. Same leak `user.current_groups` closes for
       # the index, asked of the shell instead.
