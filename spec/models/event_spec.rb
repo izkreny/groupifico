@@ -77,10 +77,24 @@ RSpec.describe Event, type: :model do
         expect(event.errors[:creator]).to include "must exist"
       end
 
-      # The guarantee the `Current.member` default gave up, restored in the model. No route reaches
-      # this - `EventsController#create` builds through `@group.events.new` under `GroupScoped`, so
-      # the event's group and `Current.group` always agree - which is why it is asserted here
-      # rather than through a request.
+      it "refuses a persisted event whose creator has been destroyed, rather than reassigning it" do
+        event = create(:event)
+        actor = create(:member, group: event.group)
+        event.creator.destroy!
+        Current.session = actor.user.sessions.create!
+        Current.group   = event.group
+
+        expect(event.reload).to be_invalid
+        expect(event.errors[:creator]).to include "must exist"
+      end
+    end
+
+    # The guarantee the `Current.member` default gave up, restored in the model. Each example here
+    # assigns `creator` explicitly and sets no `Current`, so the default never runs: what is under
+    # test is the validation, not the fill. No route reaches a mismatch - `EventsController#create`
+    # builds through `@group.events.new` under `GroupScoped`, so the event's group and
+    # `Current.group` always agree - which is why it is asserted here rather than through a request.
+    describe "creator with an inclusion validation" do
       it "refuses a creator who belongs to another group" do
         group    = create(:group)
         outsider = create(:member)
@@ -106,17 +120,6 @@ RSpec.describe Event, type: :model do
 
         expect(event).to be_invalid
         expect(event.errors[:creator]).to include "is not included in the list"
-      end
-
-      it "refuses a persisted event whose creator has been destroyed, rather than reassigning it" do
-        event = create(:event)
-        actor = create(:member, group: event.group)
-        event.creator.destroy!
-        Current.session = actor.user.sessions.create!
-        Current.group   = event.group
-
-        expect(event.reload).to be_invalid
-        expect(event.errors[:creator]).to include "must exist"
       end
     end
   end

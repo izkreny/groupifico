@@ -48,7 +48,7 @@ The instruction alongside the command was to implement this everywhere it is use
 - Change `Event`'s `creator` default to `-> { Current.member if new_record? }` and rewrite the comment above it: the `new_record?` paragraph stays and is still load-bearing, the paragraph explaining why it does *not* read `Current.member` is replaced, and the safe-navigation paragraph goes with the two `&.` it explains.
 - Update the four `creator` examples in `spec/models/event_spec.rb` to set `Current.group` alongside `Current.session`, and make the "another group" example set `Current.group` to the event's group so it still fails for the reason it names rather than because `Current.group` is nil.
 - Add one example to `spec/models/event_spec.rb` proving the creator is `nil` when `Current.group` is unset, which is the console, job and seeds case the old lambda answered from `group` and this one cannot.
-- Added in the review round, on RF1: `validates :creator, inclusion: { in: ->(event) { event.group&.members } }, allow_nil: true` on `Event`, restoring in the model the cross-group guarantee the default gave up, with the two refusal examples and the same-group control.
+- Added in the review round, on RF1: `validates :creator, inclusion: { in: ->(event) { event.group&.members || Member.none } }, allow_nil: true` on `Event`, restoring in the model the cross-group guarantee the default gave up, with the two refusal examples and the same-group control. The `|| Member.none` fallback is load-bearing: without it a groupless event hands the validator nil and `include?` raises.
 
 ## Verification
 
