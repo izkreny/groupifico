@@ -161,8 +161,8 @@ RSpec.describe "Groups", type: :request do
 
   # A failed `update` re-renders `edit` on the persisted record with the rejected attributes still
   # assigned, so the header and the screen's own heading would otherwise read a name the save
-  # refused. Watched failing in both directions: against `name` in the layout the stored name is
-  # absent from the page, and against `name` in `groups/edit` no heading carries it.
+  # refused. Watched failing in both directions, one assertion each: against `name` in the layout
+  # the header row loses the name, and against `name` in `groups/edit` no heading carries it.
   describe "the shell's header and the screen's heading after a refused rename" do
     it "keeps the stored group name in both" do
       member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
@@ -171,7 +171,7 @@ RSpec.describe "Groups", type: :request do
       patch group_path(member.group), params: { group: { name: "" } }
 
       expect(response).to have_http_status :unprocessable_content
-      expect(page_text(response.body)).to include "Riverside Choir"
+      expect(header_text(response.body)).to include "Riverside Choir"
       expect(headings(response.body)).to include "Riverside Choir"
     end
   end

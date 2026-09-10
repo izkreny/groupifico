@@ -13,4 +13,10 @@ module HtmlHelper
   def headings(body)
     Nokogiri::HTML(body).css("h1").map { it.text.squish }
   end
+
+  # The shell's header row, reached by its landmark rather than by `navbar`, for the same reason:
+  # the class is a daisyUI component name and the landmark is what the row means.
+  def header_text(body)
+    Nokogiri::HTML(body).at_css("header").text.squish
+  end
 end

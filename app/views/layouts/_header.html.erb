@@ -1,7 +1,7 @@
 <%# locals: (brand_name:, group: nil, group_name: nil, initials: nil, editable: false, switcher_id: nil, back_path: nil, tabs: false, section: nil) %>
 <%# The leading 20px slot is present whether it holds the group mark or a back chevron: that is
     what makes every title start at the same x, and `shared/_page_header` reproduces it empty. %>
-<div class="navbar bg-base-100 border-b border-base-content/5 min-h-0 gap-2.5 px-4 py-3">
+<header class="navbar bg-base-100 border-b border-base-content/5 min-h-0 gap-2.5 px-4 py-3">
   <span class="flex-none grid w-5 h-5 place-items-center">
     <% if back_path %>
       <%= link_to back_path, class: "text-primary", aria: { label: "Back" } do %>
@@ -52,4 +52,4 @@
       <% end %>
     <% end %>
   </span>
-</div>
+</header>
