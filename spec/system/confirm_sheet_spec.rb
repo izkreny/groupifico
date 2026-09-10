@@ -11,6 +11,59 @@ require "rails_helper"
 RSpec.describe "The confirm sheet", type: :system do
   include ActionView::RecordIdentifier
 
+  # The two helpers the history example needs. Arrival is setup rather than the behaviour under
+  # test, and the recording is what makes that example deterministic: the restored panel is
+  # transient, so a client-side read after the fact races it in both directions - watched flaking
+  # on a one-shot read, and watched passing wrongly on `have_no_css`, which waits it out. Taking
+  # the observation in the browser at `turbo:render` removes the timing from the assertion, and
+  # `window` survives a Turbo restore, so the record is still there to read.
+  def arrive_at_the_sheet_through_the_index(group)
+    visit groups_path
+    click_link "Show"
+    within("##{dom_id(group, :confirm_delete)}_form") { click_button "Delete group" }
+    expect(page).to have_css "dialog[open]"
+  end
+
+  def record_what_gets_cached
+    page.execute_script <<~JAVASCRIPT
+      window.cachedWithSheetOpen = null
+      document.addEventListener("turbo:before-cache", () => {
+        window.cachedWithSheetOpen = !!document.querySelector("dialog[open]")
+      })
+    JAVASCRIPT
+  end
+
+  # Outside the opened context deliberately: the promise has to be on the trigger *before* it is
+  # used, and an example that opens the sheet first cannot tell a connect-time assignment from an
+  # open-time one - watched passing with both `setAttribute` calls moved into `open`.
+  it "has the trigger promise the sheet before it is used" do
+    member = create(:member, :owner)
+    sign_in_as member.user
+
+    visit group_path(member.group)
+
+    trigger = find("##{dom_id(member.group, :confirm_delete)}_form button")
+    expect(trigger["aria-haspopup"]).to eq "dialog"
+    expect(trigger["aria-controls"]).to eq dom_id(member.group, :confirm_delete)
+  end
+
+  # Asserted where the guard does its work rather than on the restored page. Turbo serves a
+  # restored snapshot with no request, so a snapshot cached with `<dialog open>` comes back as a
+  # panel nobody opened, outside the top layer where Escape no longer dismisses it. Measured across
+  # six runs, `turbo:before-cache` reports `false` with the binding and `true` without it every
+  # time, where reading the restored page instead lands between two render cycles.
+  it "does not leave the sheet open in the page Turbo caches" do
+    member = create(:member, :owner)
+    sign_in_as member.user
+    arrive_at_the_sheet_through_the_index(member.group)
+    record_what_gets_cached
+
+    page.go_back
+    expect(page).to have_link "New group"
+
+    expect(page.evaluate_script("window.cachedWithSheetOpen")).to be false
+  end
+
   context "when the destructive control has opened it" do
     let(:member) { create(:member, :owner) }
     let(:group)  { member.group }
@@ -34,14 +87,6 @@ RSpec.describe "The confirm sheet", type: :system do
       expect(page).to be_accessible
     end
 
-    # The pair is set by the controller, so it exists only where a dialog can actually open. Its
-    # absence is what a reader without JavaScript gets, and no driver here can be run that way.
-    it "has the trigger promise the sheet it opens" do
-      trigger = find("##{dom_id(group, :confirm_delete)}_form button")
-
-      expect(trigger["aria-haspopup"]).to eq "dialog"
-      expect(trigger["aria-controls"]).to eq dom_id(group, :confirm_delete)
-    end
 
     # `be_accessible` does not cover this and was watched passing with `aria-labelledby` removed:
     # axe's `aria-dialog-name` rule is tagged `best-practice`, which is outside the cumulative WCAG
