@@ -11,19 +11,11 @@ require "rails_helper"
 RSpec.describe "The confirm sheet", type: :system do
   include ActionView::RecordIdentifier
 
-  # The two helpers the history example needs. Arrival is setup rather than the behaviour under
-  # test, and the recording is what makes that example deterministic: the restored panel is
-  # transient, so a client-side read after the fact races it in both directions - watched flaking
-  # on a one-shot read, and watched passing wrongly on `have_no_css`, which waits it out. Taking
-  # the observation in the browser at `turbo:render` removes the timing from the assertion, and
-  # `window` survives a Turbo restore, so the record is still there to read.
-  def arrive_at_the_sheet_through_the_index(group)
-    visit groups_path
-    click_link "Show"
-    within("##{dom_id(group, :confirm_delete)}_form") { click_button "Delete group" }
-    expect(page).to have_css "dialog[open]"
-  end
-
+  # What makes the history example deterministic: the restored panel is transient, so a read taken
+  # after the fact races it in both directions - watched flaking on a one-shot read, and watched
+  # passing wrongly on `have_no_css`, which waits it out. Registering on `turbo:before-cache`
+  # instead moves the observation to the moment the guard exists to act on, which is the one the
+  # traces put it at, and `window` survives the navigation, so the record is there to read.
   def record_what_gets_cached
     page.execute_script <<~JAVASCRIPT
       window.cachedWithSheetOpen = null
@@ -55,7 +47,10 @@ RSpec.describe "The confirm sheet", type: :system do
   it "does not leave the sheet open in the page Turbo caches" do
     member = create(:member, :owner)
     sign_in_as member.user
-    arrive_at_the_sheet_through_the_index(member.group)
+    visit groups_path
+    click_link "Show"
+    within("##{dom_id(member.group, :confirm_delete)}_form") { click_button "Delete group" }
+    expect(page).to have_css "dialog[open]"
     record_what_gets_cached
 
     page.go_back
@@ -86,7 +81,6 @@ RSpec.describe "The confirm sheet", type: :system do
     it "has no accessibility violations" do
       expect(page).to be_accessible
     end
-
 
     # `be_accessible` does not cover this and was watched passing with `aria-labelledby` removed:
     # axe's `aria-dialog-name` rule is tagged `best-practice`, which is outside the cumulative WCAG
