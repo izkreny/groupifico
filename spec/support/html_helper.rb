@@ -15,8 +15,10 @@ module HtmlHelper
   end
 
   # The shell's header row, reached by its landmark rather than by `navbar`, for the same reason:
-  # the class is a daisyUI component name and the landmark is what the row means.
+  # the class is a daisyUI component name and the landmark is what the row means. `css` rather than
+  # `at_css` so a body carrying no header answers "" and fails the expectation, where `at_css`
+  # would raise inside the helper and point at it instead of at the missing row.
   def header_text(body)
-    Nokogiri::HTML(body).at_css("header").text.squish
+    Nokogiri::HTML(body).css("header").text.squish
   end
 end
