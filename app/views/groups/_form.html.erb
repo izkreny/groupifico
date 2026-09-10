@@ -1,19 +1,16 @@
 <%= form_with(model: group, class: "contents") do |form| %>
-  <%= render "shared/errors", object: group %>
+  <%= form.with_error_summary do %>
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend">Group details</legend>
 
-  <fieldset class="fieldset">
-    <legend class="fieldset-legend">Group details</legend>
+      <%= form.field :name %>
+      <%= form.field :description, as: :text_area %>
 
-    <%= form.label      :name, class: "label" %>
-    <%= form.text_field :name, class: "input w-full" %>
-
-    <%= form.label     :description, class: "label" %>
-    <%= form.text_area :description, class: "textarea w-full" %>
-
-    <%= form.fields_for :address do |address_form| %>
-      <%= render "addresses/form_fields", form: address_form %>
-    <% end %>
-  </fieldset>
+      <%= form.fields_for :address do |address_form| %>
+        <%= render "addresses/form_fields", form: address_form %>
+      <% end %>
+    </fieldset>
+  <% end %>
 
   <div class="inline">
     <%= form.submit class: "btn btn-primary" %>

@@ -1,0 +1,74 @@
+require "rails_helper"
+
+# Only what a browser adds. That the error element carries its id, that the control carries the
+# aria pair and that the summary reads what it reads are asserted in
+# `spec/requests/addresses_spec.rb`, which CI runs; per the duplication rule in
+# `.agents/testing.md` they do not come back here. What is left is the part no request spec can
+# see: whether daisyUI's `validator` actually paints from `aria-invalid`. The class is present in
+# the markup and carries no colour of its own - the rule behind it does - so a rule that stopped
+# matching would leave every request-layer assertion green while the reader saw an unmarked field.
+#
+# `paint` is deliberately absent from the note: it composites an element's own *background* over
+# its ancestor's, and the note has none, so it scores 1 for a message that reads perfectly well.
+# The colour comparisons are what cover the note and the control instead.
+RSpec.describe "The address edit page", type: :system do
+  # `:with_all_attributes` reaches the address through the traits that already name it: member's
+  # associates `group, :with_all_attributes` and group's associates `address, :with_all_attributes`.
+  let(:member) { create(:member, :owner, :with_all_attributes) }
+
+  context "when a submission is rejected" do
+    before do
+      sign_in_as member.user
+
+      visit edit_address_path(member.group.address)
+      fill_in "address_name", with: ""
+      fill_in "address_city", with: "Springfield"
+      click_button "Update Address"
+    end
+
+    # `.validator-hint` is `visibility: hidden` until the `~ .validator-hint` sibling rule reveals
+    # it, so the note can be present, correctly coloured and invisible all at once. Capybara's
+    # default of `visible: true` is what makes this the one assertion that fails on that, and the
+    # colour comparison below cannot: an unrevealed note inherits a colour that already differs
+    # from the label's.
+    it "reveals the message rather than merely rendering it" do
+      expect(page).to have_css "#address_name_error"
+    end
+
+    it "colours the message apart from the label above it" do
+      colour_of = ->(selector) { page.evaluate_script "getComputedStyle(document.querySelector(arguments[0])).color", selector }
+
+      expect(colour_of["#address_name_error"]).not_to eq colour_of["label[for='address_name']"]
+    end
+
+    it "colours the failed control's border apart from a control that passed" do
+      border_of = ->(id) { page.evaluate_script "getComputedStyle(document.getElementById(arguments[0])).borderTopColor", id }
+
+      expect(border_of["address_name"]).not_to eq border_of["address_city"]
+    end
+
+    it "paints the summary alert above the fields" do
+      expect(page).to paint "#error_explanation"
+    end
+
+    # An inline `<svg>` with a class Tailwind never compiled still has the class in the markup, so
+    # the size is read off the box the browser drew rather than off the attribute - which is the
+    # one thing no request spec can see. The icon's `shrink-0` is not covered: this page's messages
+    # are short enough that nothing competes with the glyph for width.
+    it "draws the warning triangle beside the message at its full width" do
+      triangle = page.evaluate_script "document.querySelector('#error_explanation svg').getBoundingClientRect().width"
+
+      expect(triangle).to be_within(0.5).of(24)
+    end
+
+    # A literal the reader typed, so a form re-rendered from the record rather than from the
+    # submitted params fails here. Reading the stored city back instead would pass either way.
+    it "keeps what the reader typed in the fields that passed" do
+      expect(page).to have_field "address_city", with: "Springfield"
+    end
+
+    it "has no accessibility violations" do
+      expect(page).to be_accessible
+    end
+  end
+end

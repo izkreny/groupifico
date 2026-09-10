@@ -1,53 +1,39 @@
 <%= form_with(model: [group, event], class: "contents") do |form| %>
-  <%= render "shared/errors", object: event %>
+  <%= form.with_error_summary do %>
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend">Event details</legend>
 
-  <fieldset class="fieldset">
-    <legend class="fieldset-legend">Event details</legend>
+      <%= form.field :name %>
+      <%= form.field :description, as: :text_area %>
+      <%= form.field :starts_at,   as: :datetime_field %>
+      <%= form.field :ends_at,     as: :datetime_field %>
+      <%= form.field :status,      as: :select, choices: event_statuses %>
+      <%= form.field :category,    as: :select, choices: event_categories %>
+      <%= form.field :manager_id,  as: :select, choices: member_choices(event.group.members) %>
 
-    <%= form.label      :name, class: "label" %>
-    <%= form.text_field :name, class: "input w-full" %>
+      <% if event.group.addresses.present? %>
+        <div class="divider"></div>
+        <strong>
+          <%= event.address&.persisted? ? "Change address:" : "Select existing address:" %>
+        </strong>
 
-    <%= form.label     :description, class: "label" %>
-    <%= form.text_area :description, class: "textarea w-full" %>
-
-    <%= form.label          :starts_at, class: "label" %>
-    <%= form.datetime_field :starts_at, class: "input w-full" %>
-
-    <%= form.label          :ends_at, class: "label" %>
-    <%= form.datetime_field :ends_at, class: "input w-full" %>
-
-    <%= form.label  :status, class: "label" %>
-    <%= form.select :status, event_statuses, {}, class: "select w-full" %>
-
-    <%= form.label  :category, class: "label" %>
-    <%= form.select :category, event_categories, {}, class: "select w-full" %>
-
-    <%= form.label             :manager_id, class: "label" %>
-    <%= form.collection_select :manager_id, event.group.members, :id, :full_name, {}, class: "select w-full" %>
-
-    <% if event.group.addresses.present? %>
-      <div class="divider"></div>
-      <strong>
-        <%= event.address&.persisted? ? "Change address:" : "Select existing address:" %>
-      </strong>
-
-      <%= form.label             :address_id, class: "label" %>
-      <%= form.collection_select :address_id, event.group.addresses, :id, :name, { prompt: true }, class: "select w-full" %>
-    <% end %>
-
-    <% if event.address&.persisted? %>
-      <div class="mt-2">
-        <%= link_to "Edit '#{event.address.name}' address", edit_address_path(event.address), target: "_blank", class: "link link-hover" %>
-      </div>
-    <% else %>
-      <div class="divider"></div>
-      <strong>Create new address:</strong>
-
-      <%= form.fields_for :address do |address_form| %>
-        <%= render "addresses/form_fields", form: address_form %>
+        <%= form.field :address_id, as: :select, choices: address_choices(event.group.addresses), prompt: true %>
       <% end %>
-    <% end %>
-  </fieldset>
+
+      <% if event.address&.persisted? %>
+        <div class="mt-2">
+          <%= link_to "Edit '#{event.address.name}' address", edit_address_path(event.address), target: "_blank", class: "link link-hover" %>
+        </div>
+      <% else %>
+        <div class="divider"></div>
+        <strong>Create new address:</strong>
+
+        <%= form.fields_for :address do |address_form| %>
+          <%= render "addresses/form_fields", form: address_form %>
+        <% end %>
+      <% end %>
+    </fieldset>
+  <% end %>
 
   <div class="inline">
     <%= form.submit class: "btn btn-primary" %>

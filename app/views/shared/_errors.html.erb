@@ -1,11 +1,18 @@
-<% if object.errors.any? %>
-  <div id="error_explanation" role="alert" class="alert alert-error alert-vertical mt-3">
-    <h2>Oops! Something went wrong. Please correct the following <%= pluralize(object.errors.count, "error") %>:</h2>
+<%# locals: (form:) %>
+<% messages = form.unattached_error_messages %>
 
-    <ul class="list-disc ml-6">
-      <% object.errors.each do |error| %>
-        <li><%= error.full_message %></li>
+<% if form.object.errors.any? %>
+  <div id="error_explanation" role="alert" class="alert alert-error mb-5">
+    <%= icon :alert, class: "size-6 shrink-0" %>
+
+    <div class="flex flex-col">
+      <% if form.object.errors.size > messages.size %>
+        <span>Please fix the highlighted fields.</span>
       <% end %>
-    </ul>
+
+      <% messages.each do |message| %>
+        <span><%= message %></span>
+      <% end %>
+    </div>
   </div>
 <% end %>
