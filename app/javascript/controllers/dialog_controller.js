@@ -15,10 +15,4 @@ export default class extends Controller {
     event.preventDefault()
     this.sheetTarget.showModal()
   }
-
-  // Confirming redirects with the sheet still open, so the snapshot Turbo caches on the way out
-  // would come back on a back navigation as a panel nobody opened.
-  close() {
-    this.sheetTarget.close()
-  }
 }
