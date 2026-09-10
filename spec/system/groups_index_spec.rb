@@ -22,7 +22,7 @@ RSpec.describe "The groups index", type: :system do
     expect(page).to paint ".btn-primary"
     # The avatar is what the paint matcher can judge on this screen: `bg-base-300` over the page's
     # own surface, where the header itself carries `bg-base-100` and would composite to 1.0.
-    expect(page).to paint ".avatar > span"
+    expect(page).to paint ".avatar > div"
     expect(page).to be_accessible
   end
 

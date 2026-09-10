@@ -26,7 +26,7 @@ RSpec.describe "The group shell", type: :system do
 
     expect(rendered_colour_scheme).to eq "light"
     expect(page).to paint "header .status"
-    expect(page).to paint ".avatar > span"
+    expect(page).to paint ".avatar > div"
     expect(page).to be_accessible
   end
 
@@ -40,7 +40,7 @@ RSpec.describe "The group shell", type: :system do
 
     expect(rendered_colour_scheme).to eq "dark"
     expect(page).to paint "header .status"
-    expect(page).to paint ".avatar > span"
+    expect(page).to paint ".avatar > div"
     expect(page).to be_accessible
   end
 
@@ -216,7 +216,7 @@ RSpec.describe "The group shell", type: :system do
     resize_to ViewportHelper::MOBILE
 
     visit edit_group_path(member.group)
-    expect(page).to paint ".avatar > span"
+    expect(page).to paint ".avatar > div"
     expect(page).to be_accessible
 
     click_link "Back"

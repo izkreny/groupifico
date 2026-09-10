@@ -78,11 +78,4 @@ class Group < ApplicationRecord
   def owned_by_anyone_but?(member)
     members.active.joins(:roles).where(roles: { name: Role::OWNER }).where.not(id: member.id).exists?
   end
-
-  # `confirmed` alone: an unconfirmed event is not yet a commitment and a canceled one is not an
-  # event, so neither belongs under a group's name. `status` defaults to `unconfirmed`, so a newly
-  # created event stays out of here until somebody confirms it.
-  def next_event
-    events.confirmed.upcoming.order(:starts_at).first
-  end
 end

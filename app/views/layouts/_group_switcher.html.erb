@@ -5,6 +5,10 @@
 
   Rows carry no `dom_id`: `spec/requests/groups_spec.rb` asserts the absence of `group_<id>` in the
   markup elsewhere.
+
+  One line per group, which is what `menu` draws: its row is a grid with `grid-auto-flow: column`,
+  so a `flex-col` on the anchor is inert and a second span becomes a second column rather than a
+  second line. The badges are the only thing beside the name.
 %>
 <dialog id="<%= id %>" class="modal modal-top" data-group-switcher-target="dialog">
   <div class="modal-box max-w-[40rem] mx-auto">
@@ -13,23 +17,16 @@
     <ul class="menu w-full px-0">
       <% memberships.each do |membership| %>
         <li>
-          <%= link_to group_path(membership.group), class: [ "flex-col items-start gap-0.5", "menu-active" => membership.group == current_group ] do %>
-            <span class="flex items-center gap-2">
-              <span class="text-row-title"><%= membership.group.name %></span>
-              <% if membership.owner? %>
-                <span class="badge badge-sm">owner</span>
-              <% end %>
-              <% if membership.paused? %>
-                <span class="badge badge-ghost badge-sm">paused</span>
-              <% end %>
-            </span>
-            <span class="text-meta opacity-70">
-              <% if (event = membership.group.next_event) %>
-                Next: <%= event.name %>, <%= l event.starts_at, format: :short %>
-              <% else %>
-                No event coming up
-              <% end %>
-            </span>
+          <%= link_to group_path(membership.group),
+                class: { "menu-active" => membership.group == current_group },
+                aria: { current: ("true" if membership.group == current_group) } do %>
+            <span class="text-row-title"><%= membership.group.name %></span>
+            <% if membership.owner? %>
+              <span class="badge badge-sm">owner</span>
+            <% end %>
+            <% if membership.paused? %>
+              <span class="badge badge-ghost badge-sm">paused</span>
+            <% end %>
           <% end %>
         </li>
       <% end %>
