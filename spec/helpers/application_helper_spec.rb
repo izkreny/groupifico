@@ -87,13 +87,22 @@ RSpec.describe ApplicationHelper, type: :helper do
   # RF7. These two decide whether a back chevron appears and where it leads, which is the visible
   # consequence nothing was exercising.
   describe "#pushed_screen?" do
-    it "is false on each section's own root, which a tab points at" do
-      %w[ groups/show events/index members/index ].each do |root|
-        controller, action = root.split("/")
-        allow(helper).to receive_messages(controller_name: controller, action_name: action)
+    it "is false on the group home, which the Home tab points at" do
+      allow(helper).to receive_messages(controller_name: "groups", action_name: "show")
 
-        expect(helper.pushed_screen?).to be(false), "expected #{root} not to be a pushed screen"
-      end
+      expect(helper.pushed_screen?).to be false
+    end
+
+    it "is false on the events list, which the Events tab points at" do
+      allow(helper).to receive_messages(controller_name: "events", action_name: "index")
+
+      expect(helper.pushed_screen?).to be false
+    end
+
+    it "is false on the members list, which the Members tab points at" do
+      allow(helper).to receive_messages(controller_name: "members", action_name: "index")
+
+      expect(helper.pushed_screen?).to be false
     end
 
     it "is true on a detail screen" do
@@ -126,21 +135,21 @@ RSpec.describe ApplicationHelper, type: :helper do
 
   describe "#section_root_path" do
     it "leads to the group home from the Home section" do
-      group = create(:group)
+      group = build_stubbed(:group)
       allow(helper).to receive(:controller_name).and_return("groups")
 
       expect(helper.section_root_path(group)).to eq helper.group_path(group)
     end
 
     it "leads to the events list from anywhere in the Events section" do
-      group = create(:group)
+      group = build_stubbed(:group)
       allow(helper).to receive(:controller_name).and_return("registrations")
 
       expect(helper.section_root_path(group)).to eq helper.group_events_path(group)
     end
 
     it "leads to the members list from the Members section" do
-      group = create(:group)
+      group = build_stubbed(:group)
       allow(helper).to receive(:controller_name).and_return("members")
 
       expect(helper.section_root_path(group)).to eq helper.group_members_path(group)
@@ -149,7 +158,7 @@ RSpec.describe ApplicationHelper, type: :helper do
     it "is nothing outside a group" do
       allow(helper).to receive(:controller_name).and_return("user_profiles")
 
-      expect(helper.section_root_path(create(:group))).to be_nil
+      expect(helper.section_root_path(build_stubbed(:group))).to be_nil
     end
   end
 end

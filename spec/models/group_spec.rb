@@ -179,11 +179,10 @@ RSpec.describe Group, type: :model do
       freeze_time do
         group = create(:group)
         creator = create(:member, group:)
-        later = create(:event, group:, creator:, starts_at: 10.days.from_now, ends_at: 10.days.from_now + 1.hour)
+        create(:event, group:, creator:, starts_at: 10.days.from_now, ends_at: 10.days.from_now + 1.hour)
         soonest = create(:event, group:, creator:, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 1.hour)
 
         expect(group.next_event).to eq soonest
-        expect(group.next_event).not_to eq later
       end
     end
 
