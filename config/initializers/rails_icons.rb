@@ -14,3 +14,10 @@ RailsIcons.configure do |config|
 end
 
 # Sprite mode is deliberately off - `config.default_sprite_location` is left unset - because inline SVG is what lets `currentColor` and the theme's semantic classes colour an icon.
+
+# The engine prepends `/rails_icons/sprite.svg` to the application's routes in every environment, so the `Rails.env.development?` guard on the mount in `config/routes.rb` cannot reach it and a route drawn in that file cannot shadow it. This prepend can, because it is registered while `config/initializers` load and the engine's own runs `after: :load_config_initializers`.
+unless Rails.env.development?
+  Rails.application.routes.prepend do
+    get "/rails_icons/sprite.svg", to: proc { raise ActionController::RoutingError, "Not Found" }
+  end
+end
