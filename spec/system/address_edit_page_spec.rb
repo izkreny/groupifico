@@ -52,8 +52,9 @@ RSpec.describe "The address edit page", type: :system do
     end
 
     # An inline `<svg>` with a class Tailwind never compiled still has the class in the markup, so
-    # the size is read off the box the browser drew rather than off the attribute. `shrink-0` is
-    # what a long message would otherwise squash, and neither is visible to a request spec.
+    # the size is read off the box the browser drew rather than off the attribute - which is the
+    # one thing no request spec can see. The icon's `shrink-0` is not covered: this page's messages
+    # are short enough that nothing competes with the glyph for width.
     it "draws the warning triangle beside the message at its full width" do
       triangle = page.evaluate_script "document.querySelector('#error_explanation svg').getBoundingClientRect().width"
 
