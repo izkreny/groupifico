@@ -35,8 +35,8 @@ Both, rather than making `@group` a reader over `Current.group`. Criterion 3 kee
 
 The instruction alongside the command was to implement this everywhere it is used in current form. Two sites are candidates and neither is taken in this branch:
 
-- **`ApplicationPolicy#membership` (`application_policy.rb:58`)** asks the same question with `Member.find_by(group: group_for(record), user: user)`. The issue already puts it out of scope, and three facts make it a change of behaviour rather than a swap. `GroupsController#set_group` reads `params.expect(:id)`, so `Current.group` is nil on every `GroupPolicy` check that runs the pre-checks and `show?`, `edit?`, `update?` and `destroy?` on a group would all answer 404. Every policy spec supplies `context: { user: actor.user }` and sets neither `Current.session` nor `Current.group`, so the whole `spec/policies` tree would fail. And the policy's group comes from the record while `Current.group` comes from the URL: they agree today only because the nested controllers scope every lookup through `@group`, which is a property of the callers rather than of the policy. This is the finding the owner asked to be told about, and it is an open question below rather than a step.
-- **`GroupsController#set_group`** is not the same form: it finds by `:id`, and a group is not nested under a group. The concern cannot absorb it. Whether `GroupsController` should nonetheless set `Current.group` is the first thing the policy question above turns on, so it is asked in the same place.
+- **`ApplicationPolicy#membership` (`application_policy.rb:58`)** asks the same question with `Member.find_by(group: group_for(record), user: user)`. The issue already puts it out of scope, and three facts make it a change of behaviour rather than a swap. `GroupsController#set_group` reads `params.expect(:id)`, so `Current.group` is nil on every `GroupPolicy` check that runs the pre-checks and `show?`, `edit?`, `update?` and `destroy?` on a group would all answer 404. Every policy spec supplies `context: { user: actor.user }` and sets neither `Current.session` nor `Current.group`, so the whole `spec/policies` tree would fail. And the policy's group comes from the record while `Current.group` comes from the URL: they agree today only because the nested controllers scope every lookup through `@group`, which is a property of the callers rather than of the policy. This is the finding the owner asked to be told about; the owner settled it, and the decision is under `## Settled`.
+- **`GroupsController#set_group`** is not the same form: it finds by `:id`, and a group is not nested under a group. The concern cannot absorb it. Whether `GroupsController` should nonetheless set `Current.group` turns on the policy question above, and was settled with it.
 
 ## Steps
 
@@ -57,13 +57,13 @@ What those gates cannot see: criterion 4, that `AddressesController` leaves `Cur
 
 Two checks are watched failing before they are trusted. The new "creator is nil when `Current.group` is unset" example is run against the old derived lambda, where it passes for the wrong reason, and must go red only once the lambda changes. The "another group" example is run with `Current.group` deliberately unset, where it passes vacuously, before the group is set and it starts proving the scoping again.
 
-The behaviour claim itself - that the same member is recorded on create as today - is proved by `spec/requests/events_spec.rb`, which creates events through the real controller stack and is untouched by this branch.
+The behaviour claim itself - that the same member is recorded on create as today - is proved by `spec/requests/events_spec.rb`, which creates events through the real controller stack. Its assertion is untouched by this branch; only the comment above it changes, because that comment named `Current.user` as what the default reads.
 
 ## Open questions
 
-- Should `ApplicationPolicy#membership` read `Current.member`? Doing so needs `GroupsController` to set `Current.group` from `params[:id]` and needs every policy spec to set `Current.session` and `Current.group` instead of passing a bare `user:` context, and it moves the policy's group from the record to the URL. Worth a follow-up issue, or worth dropping.
-- Should `GroupsController` set `Current.group` regardless, so the attribute means "the group this request is about" rather than "the group this request is nested under"? It is a one-line change here and it is what the question above depends on, but it is not in the issue's criteria.
+None.
 
 ## Settled
 
-None yet.
+- **Should `ApplicationPolicy#membership` read `Current.member`?** No, and not as a follow-up either. `spec/policies/` never mentions `Current`: all 111 examples across its six files are built on a bare `let(:context) { { user: actor.user } }`. They can be, because `ApplicationPolicy` derives the group from the record through `group_for` and so can be asked about any record in isolation. Reading `Current.member` would make every policy depend on a controller having set an ambient variable first, which is not an editing cost to those specs but the loss of the property they exist to test. The duplicate `Member.find_by` buys that isolation and stays.
+- **Should `GroupsController` set `Current.group` from `params[:id]`?** No. The concern cannot absorb it - that controller finds by `:id`, on four of its six actions - so it would be a bare line in its own `set_group`, and nothing in that controller reads `Current.member`. Its only justification was being step one of the question above, which is dropped, so the assignment would have no reader. `Current.group` and `Current.member` are for where they are convenient and correct, not for everywhere the question is asked.
