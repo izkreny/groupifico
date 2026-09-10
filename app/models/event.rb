@@ -37,21 +37,24 @@ class Event < ApplicationRecord
   belongs_to :address, optional: true, touch: true
   accepts_nested_attributes_for :address, reject_if: -> { it.values.all?(&:empty?) }
 
-  # Derived from the event's own group rather than from a `Current.member`, which only the
-  # controllers that set it could answer and which would read `nil` under every other: `group` is
-  # already on the record by the time the default's `before_validation` runs.
+  # The acting membership, asked once. `Current.member` is the application's answer to "which
+  # member is acting in this group", so this reads it rather than deriving a second answer from the
+  # event's own group - a route change, not a result change: every controller that creates an event
+  # is nested under the group it is created in, and `GroupScoped` sets `Current.group` from that
+  # same segment of the URL.
+  #
+  # Outside a request there is no acting member and the lambda answers nil, which the required
+  # association then refuses. That is the console, the job and `db/seeds.rb`, and each of them
+  # already names its creator: an event nobody created is a record with no author, not a default
+  # worth guessing.
   #
   # `new_record?` keeps it a create-time fill. The callback is unconditional and writes whatever
   # the lambda returns whenever the reader is nil, so without the guard a saved event whose creator
   # row had been destroyed would be handed to whoever validated it next. With it that write is a
   # harmless nil and the required association refuses the save, which is what such an event did
   # before this default existed.
-  #
-  # Both safe navigations earn their place: `group&.` because the callback runs ahead of the group
-  # presence check, so `Event.new.valid?` would otherwise raise instead of collecting its errors,
-  # and `members&.` because `nil&.members.find_by` raises on `find_by` rather than short-circuiting.
   belongs_to :creator, class_name: "Member", foreign_key: "creator_id", inverse_of: :created_events,
-    default: -> { group&.members&.find_by(user: Current.user) if new_record? }
+    default: -> { Current.member if new_record? }
   belongs_to :manager, class_name: "Member", foreign_key: "manager_id", inverse_of: :managed_events, optional: true
   has_many :registrations, dependent: :destroy
   has_many :attendees, through: :registrations, source: :member
@@ -60,6 +63,22 @@ class Event < ApplicationRecord
   enum :category, %i[ other rehearsal gig ], default: :other, validate: true
 
   validates_associated :address, :manager
+
+  # The guarantee the `Current.member` default gave up. Deriving the creator from the event's own
+  # group made a cross-group creator structurally impossible; reading it from `Current` moves that
+  # to the caller's discipline, and the database says nothing at all - `events.creator_id` carries
+  # no foreign key, only `address_id` and `group_id` do. So the model states the rule itself, the
+  # way `EventsController#event_params` already states it for `manager_id` and `address_id`.
+  #
+  # `allow_nil` leaves the absent case to `belongs_to`, which already answers "must exist"; without
+  # it an event created outside a request collects that error twice under two different wordings.
+  # The lambda takes the record because Rails calls an `inclusion` delimiter with it - a zero-arity
+  # one raises `ArgumentError` - and `group&.` because the callback runs ahead of the group
+  # presence check. The fallback is what stops `group&.members` answering nil and the validator
+  # sending `include?` to it; `Member.none` rather than `[]` only because it keeps the expression
+  # one relation throughout, both being empty and neither raising.
+  validates :creator, inclusion: { in: ->(event) { event.group&.members || Member.none } }, allow_nil: true
+
   validates :name, :starts_at, presence: true
   validates :name, length: { maximum: 250 }
   validates :description, length: { maximum: 25_000 }

@@ -1,5 +1,6 @@
 class RegistrationsController < ApplicationController
-  before_action :set_group
+  include GroupScoped
+
   before_action :set_event
   before_action :set_registration, only: %i[ show edit update destroy ]
 
@@ -64,10 +65,6 @@ class RegistrationsController < ApplicationController
   end
 
   private
-    def set_group
-      @group = Group.find(params.expect(:group_id))
-    end
-
     def set_event
       @event = @group.events.find(params.expect(:event_id))
     end

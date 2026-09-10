@@ -1,5 +1,6 @@
 class EventsController < ApplicationController
-  before_action :set_group
+  include GroupScoped
+
   before_action :set_event, only: %i[ show duplicate edit update destroy ]
 
   def index
@@ -73,10 +74,6 @@ class EventsController < ApplicationController
   end
 
   private
-    def set_group
-      @group = Group.find(params.expect(:group_id))
-    end
-
     def set_event
       @event = @group.events.find(params.expect(:id))
     end

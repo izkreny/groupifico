@@ -304,8 +304,9 @@ RSpec.describe "Events", type: :request do
 
     context "when signed in as an events administrator" do
       # The creator assertion belongs here rather than only in the model spec: the default reads
-      # `Current.user`, and only a real request proves the session is resumed before the create
-      # runs. A reordering that left it unset would pass every model spec.
+      # `Current.member`, which needs both the session resumed and `GroupScoped` having assigned
+      # `Current.group`, and only a real request proves the two happen before the create runs. A
+      # reordering that left either unset would pass every model spec.
       it "creates the event with the signed-in member as its creator" do
         creator = create(:member, :active, :events_administrator)
         sign_in_as(creator.user)
