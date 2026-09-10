@@ -7,10 +7,10 @@ require "rails_helper"
 RSpec.describe AppFormBuilder do
   # `form_with` is what installs the builder in production, so the fields are drawn through it here
   # too rather than by constructing the builder with a hand-made template.
-  def field_for(address, attribute, **options)
+  def field_for(record, attribute, **options)
     view = ApplicationController.new.tap { it.request = ActionDispatch::TestRequest.create }.view_context
 
-    view.form_with(model: address, url: "/addresses/1") { |form| form.field(attribute, **options) }
+    view.form_with(model: record, url: "/x") { |form| form.field(attribute, **options) }
   end
 
   describe "#field" do
@@ -105,6 +105,38 @@ RSpec.describe AppFormBuilder do
       expect(select["class"].split).to include "select", "validator"
       expect(select["aria-invalid"]).to eq "true"
       expect(select["aria-describedby"]).to eq "address_name_error"
+    end
+
+    # `#unattached_error_messages`'s "treats a foreign-key field as covering its association's
+    # error" is the summary half of this rule, and this is the half the reader sees. Without it, a
+    # `drawn` entry with no marked control leaves the summary saying "Please fix the highlighted
+    # fields." with nothing highlighted, which is worse than the state the rule replaced.
+    it "marks the foreign-key control the association's error refers to" do
+      registration = Registration.new
+      registration.valid?
+
+      html   = field_for(registration, :member_id, as: :select, choices: [])
+      select = Nokogiri::HTML(html).at_css("select")
+
+      expect(select["class"].split).to include "validator"
+      expect(select["aria-invalid"]).to eq "true"
+      expect(select["aria-describedby"]).to eq "registration_member_id_error"
+      expect(Nokogiri::HTML(html).at_css("p#registration_member_id_error").text).to eq "Member must exist"
+    end
+
+    # `validates_associated` files its failure on the same key with type `:invalid`, and the nested
+    # form's own fields say which of the child's attributes is wrong. A foreign-key select claiming
+    # that message marks a control the reader deliberately left on its prompt, and the events form
+    # renders both that select and the nested fieldset at once.
+    it "leaves an association's own validation failure to the fields that own it" do
+      event = Event.new(name: "Rehearsal", group: Group.new(name: "Choir", group_type: "choir"), address: Address.new)
+      event.valid?
+
+      select = Nokogiri::HTML(field_for(event, :address_id, as: :select, choices: [])).at_css("select")
+
+      expect(event.errors.where(:address, :invalid)).to be_present
+      expect(select["class"].split).not_to include "validator"
+      expect(select["aria-invalid"]).to be_nil
     end
   end
 

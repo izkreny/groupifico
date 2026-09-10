@@ -6,10 +6,12 @@ class AppFormBuilder < ActionView::Helpers::FormBuilder
   # `as:` names the field helper that draws the control; `choices:` and `prompt:` reach a `:select`,
   # whose html options sit in a different positional argument than every other helper's.
   def field(attribute, as: :text_field, label: nil, hint: nil, choices: nil, prompt: nil, **options)
-    drawn.concat error_keys(attribute)
-
-    messages = error_keys(attribute).flat_map { object.errors.full_messages_for(it) }
+    absent   = absent_association(attribute)
+    messages = object.errors.full_messages_for(attribute) + absence_messages(absent)
     invalid  = messages.any?
+
+    drawn << attribute
+    drawn << absent if absent
     note     = invalid ? messages.to_sentence : hint
     note_id  = field_id(attribute, invalid ? :error : :hint)
 
@@ -63,15 +65,28 @@ class AppFormBuilder < ActionView::Helpers::FormBuilder
       drawn.include? attribute.to_s.split(".").first.to_sym
     end
 
-    # A `belongs_to` failure is keyed on the association, never on its foreign key, so a control
+    # A missing `belongs_to` is keyed on the association, never on its foreign key, so a control
     # drawn for `:member_id` answers for `:member` too. Without this a missing `Registration#member`
     # renders in the summary while the select it belongs to sits unmarked, which is the case
     # `RegistrationsController#new_registration_params` lets through on purpose so the model can
     # refuse it.
-    def error_keys(attribute)
+    #
+    # It answers for the association's *absence* alone. `validates_associated` files its failure on
+    # the same key with type `:invalid`, and that one belongs to the nested form's own fields, which
+    # say which of the child's attributes is wrong; claiming it here marks a select the reader
+    # deliberately left on its prompt and puts "Address is invalid" under it. Measured on `Event`:
+    # a missing `belongs_to` is `:blank`, an association failing its own validations is `:invalid`.
+    def absent_association(attribute)
       association = attribute.to_s.delete_suffix("_id")
+      return if association == attribute.to_s
 
-      association == attribute.to_s ? [ attribute ] : [ attribute, association.to_sym ]
+      association.to_sym if object.errors.where(association.to_sym, :blank).any?
+    end
+
+    def absence_messages(association)
+      return [] unless association
+
+      object.errors.where(association, :blank).map(&:full_message)
     end
 
     # daisyUI's `validator` component is what colours a server-rejected control, and it is applied
