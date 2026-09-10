@@ -34,6 +34,15 @@ RSpec.describe "The confirm sheet", type: :system do
       expect(page).to be_accessible
     end
 
+    # The pair is set by the controller, so it exists only where a dialog can actually open. Its
+    # absence is what a reader without JavaScript gets, and no driver here can be run that way.
+    it "has the trigger promise the sheet it opens" do
+      trigger = find("##{dom_id(group, :confirm_delete)}_form button")
+
+      expect(trigger["aria-haspopup"]).to eq "dialog"
+      expect(trigger["aria-controls"]).to eq dom_id(group, :confirm_delete)
+    end
+
     # `be_accessible` does not cover this and was watched passing with `aria-labelledby` removed:
     # axe's `aria-dialog-name` rule is tagged `best-practice`, which is outside the cumulative WCAG
     # tags `spec/support/axe.rb` runs. So the reference is resolved here instead of asserted, which

@@ -1,7 +1,7 @@
 <%# locals: (id:, url:, label:, title:, body:, dismiss:) %>
 <div data-controller="dialog" data-action="submit->dialog#open">
   <%= button_to label, url, method: :delete, class: "btn btn-error",
-        form: { id: "#{id}_form" }, aria: { haspopup: "dialog", controls: id } %>
+        form: { id: "#{id}_form" }, data: { dialog_target: "trigger" } %>
 
   <dialog id="<%= id %>" class="modal modal-bottom sm:modal-middle"
           aria-labelledby="<%= id %>_title" aria-describedby="<%= id %>_body"
