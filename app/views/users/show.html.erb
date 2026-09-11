@@ -11,10 +11,7 @@
     <div role="alert" class="alert alert-error mb-5" id="solely_owned_groups">
       <%= icon :alert, class: "size-6 shrink-0" %>
 
-      <span>
-        You still own <%= solely_owned_groups.map(&:name).to_sentence %>.
-        Give another member the owner role first.
-      </span>
+      <span><%= solely_owned_groups_message(solely_owned_groups) %></span>
     </div>
   <% end %>
 

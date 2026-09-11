@@ -48,8 +48,7 @@ class UsersController < ApplicationController
 
     def refuse_ownerless_groups
       redirect_to user_path,
-        alert: "You still own #{@user.solely_owned_groups.map(&:name).to_sentence}. " \
-               "Give another member the owner role first.",
+        alert: helpers.solely_owned_groups_message(@user.solely_owned_groups),
         status: :see_other
     end
 

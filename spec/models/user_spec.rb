@@ -60,6 +60,13 @@ RSpec.describe User, type: :model do
       expect(member.user.solely_owned_groups).to contain_exactly(member.group)
     end
 
+    it "answers every group the user owns alone, because each one has to be handed over" do
+      member = create(:member, :owner)
+      second = create(:member, :owner, user: member.user)
+
+      expect(member.user.solely_owned_groups).to contain_exactly(member.group, second.group)
+    end
+
     it "omits a group with a second active owner" do
       member = create(:member, :owner)
       create(:member, :owner, group: member.group)
