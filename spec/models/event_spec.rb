@@ -302,6 +302,44 @@ RSpec.describe Event, type: :model do
     end
   end
 
+  describe "#answer_counts" do
+    it "counts every status but reserved, with a zero for the ones nobody holds" do
+      event = create(:event)
+      create(:registration, event:, member: create(:member, group: event.group), status: :yes)
+      create(:registration, event:, member: create(:member, group: event.group), status: :yes)
+      create(:registration, event:, member: create(:member, group: event.group), status: :invited)
+      create(:registration, event:, member: create(:member, group: event.group), status: :reserved)
+
+      expect(event.answer_counts).to eq("invited" => 1, "yes" => 2, "maybe" => 0, "no" => 0)
+    end
+
+    it "is every count zero for an event whose registrations are all reserved" do
+      event = create(:event)
+      create(:registration, event:, member: create(:member, group: event.group), status: :reserved)
+
+      expect(event.answer_counts.values.sum).to be_zero
+    end
+  end
+
+  describe "#registration_for(member)" do
+    it "is the named member's own registration" do
+      event = create(:event)
+      reader = create(:member, group: event.group)
+      create(:registration, event:, member: create(:member, group: event.group))
+      own = create(:registration, event:, member: reader)
+
+      expect(event.registration_for(reader)).to eq own
+    end
+
+    it "is nil for a member with no registration on the event, and for no member at all" do
+      event = create(:event)
+      create(:registration, event:, member: create(:member, group: event.group))
+
+      expect(event.registration_for(create(:member, group: event.group))).to be_nil
+      expect(event.registration_for(nil)).to be_nil
+    end
+  end
+
   describe "#duplicate" do
     let(:event)            { create(:event, status: :confirmed) }
     let(:duplicated_event) { event.duplicate }
