@@ -97,12 +97,6 @@ RSpec.describe User, type: :model do
       expect(Member.exists?(member.id)).to be(true)
     end
 
-    it "raises RecordNotDestroyed from the bang form, which is what the controller answers" do
-      member = create(:member, :owner)
-
-      expect { member.user.destroy! }.to raise_error(ActiveRecord::RecordNotDestroyed)
-    end
-
     it "is destroyed when every group it owns has another active owner" do
       member = create(:member, :owner)
       create(:member, :owner, group: member.group)

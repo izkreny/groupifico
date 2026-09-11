@@ -18,6 +18,23 @@ RSpec.describe "User", type: :request do
 
         expect(response).to have_http_status :ok
       end
+
+      it "names each group the reader is the only active owner of" do
+        member = create(:member, :owner)
+        sign_in_as(member.user)
+
+        get user_path
+
+        expect(response.body).to include("You still own #{member.group.name}.")
+      end
+
+      it "says nothing where the reader owns no group alone" do
+        sign_in_as(create(:member).user)
+
+        get user_path
+
+        expect(response.body).not_to include("You still own")
+      end
     end
   end
 
@@ -110,25 +127,6 @@ RSpec.describe "User", type: :request do
 
         expect(response).to redirect_to user_path
       end
-    end
-  end
-
-  describe "GET /user (the block naming the groups still owned)" do
-    it "names each group the reader is the only active owner of" do
-      member = create(:member, :owner)
-      sign_in_as(member.user)
-
-      get user_path
-
-      expect(response.body).to include("You still own #{member.group.name}.")
-    end
-
-    it "says nothing where the reader owns no group alone" do
-      sign_in_as(create(:member).user)
-
-      get user_path
-
-      expect(response.body).not_to include("You still own")
     end
   end
 end
