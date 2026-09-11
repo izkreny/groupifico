@@ -44,7 +44,8 @@ RSpec.describe "Events", type: :request do
     end
 
     # Times are frozen because the card states the distance to the event in words, so "in 2 days"
-    # would otherwise depend on how long the suite takes to reach this file.
+    # would otherwise depend on how long the suite takes to reach this file. What the freeze does
+    # not do is decide which hour it stops at, which is `confirmed_event`'s job below.
     context "when the group has a next event" do
       # The hero card, one row beneath it and the reader's own answer row: the three pieces the
       # event card partials draw, asserted here rather than in a view spec because what a reader
@@ -660,8 +661,12 @@ RSpec.describe "Events", type: :request do
   end
 
   # The card states its own copy, so the examples above need an event with a fixed name, place and
-  # hour rather than the factory's random ones. `status:` is named because the base factory leaves
-  # it at the model default, `unconfirmed`, which `Group#next_event` deliberately excludes.
+  # offset rather than the factory's random ones. `status:` is named because the base factory
+  # leaves it at the model default, `unconfirmed`, which `Group#next_event` deliberately excludes.
+  #
+  # The offset is exact, never an hour of its own day. The kicker rounds the distance to the
+  # nearest day, so an event pinned to 19:00 is "in 2 days" or "in 3 days" depending on the hour
+  # the suite starts at, and `freeze_time` cannot help: it stops the clock rather than setting it.
   def confirmed_event(member, days:, name: "Autumn concert", category: :other)
     create(:event,
       group: member.group,
@@ -670,7 +675,7 @@ RSpec.describe "Events", type: :request do
       category: category,
       status: :confirmed,
       address: create(:address, name: "Community Hall"),
-      starts_at: days.days.from_now.change(hour: 19),
-      ends_at: days.days.from_now.change(hour: 21))
+      starts_at: days.days.from_now,
+      ends_at: days.days.from_now + 2.hours)
   end
 end
