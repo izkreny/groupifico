@@ -1,15 +1,37 @@
-<div id="<%= dom_id group %>" class="w-full sm:w-auto my-5 space-y-5">
-  <ul>
-    <li>
-      <strong><%= group.name.upcase %></strong>
-      (<%= group.group_type %>)
-      <br>
-      <%= group.address&.name %>
-      <br>
-      <%= link_to "Members", group_members_path(group) %>
-      |
-      <%= link_to "Events", group_events_path(group) %>
-    </li>
-  </ul>
-  <p><%= group.description %></p>
-</div>
+<%# locals: (group:, membership: nil) %>
+<%#
+  One group on the index. The whole card is the link rather than a control inside it, so the tap
+  target is the thing a finger aims at.
+
+  The tags say what the reader *is* in this group, never what they may do: an administrator carries
+  none, because a capability is not a standing. `membership` arrives as a local because the index
+  loads the reader's memberships once - a card that looked its own up would cost a query each.
+
+  Two independent `if`s rather than an `if`/`elsif`, matching `layouts/_group_switcher`: owner and
+  paused are separate facts, and a group with a second active owner lets the first pause and hold
+  both. An `elsif` there told such a reader they own the group and never that they are paused.
+
+  `bg-base-200` is not decoration: a bare `card` paints `base-100`, the same colour as the page
+  behind it, so the card has no edge at all - `spec/system/groups_index_spec.rb` scores it exactly
+  1.0 without this. `base-200` is daisyUI's own colour for a raised surface, and it is what
+  `events/_next_up` already tints its hero with.
+%>
+<%= link_to group_path(group), id: dom_id(group), class: "card card-sm bg-base-200" do %>
+  <div class="card-body gap-1">
+    <h2 class="card-title text-row-title">
+      <%= group.name %>
+
+      <% if membership&.owner? %>
+        <span class="badge badge-sm">owner</span>
+      <% end %>
+
+      <% if membership&.paused? %>
+        <span class="badge badge-ghost badge-sm">paused</span>
+      <% end %>
+    </h2>
+
+    <p class="text-meta">
+      <%= pluralize group.current_members.count, "member" %><%= EventsHelper::DOT %><%= next_event_line group %>
+    </p>
+  </div>
+<% end %>

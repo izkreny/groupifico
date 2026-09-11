@@ -43,4 +43,32 @@ RSpec.describe "The groups index", type: :system do
     expect(page).to paint ".btn-primary"
     expect(page).to be_accessible
   end
+
+  # The card is `bg-base-200` over the page's own `base-100`, so it is a surface the matcher can
+  # judge, and the tag sits on the card. Neither is in the two examples above, whose subject is the
+  # theme reaching the page at all rather than this screen's own furniture.
+  it "paints a card and the tag on it" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    sign_in_as member.user
+    prefer_colour_scheme :light
+    resize_to ViewportHelper::MOBILE
+
+    visit groups_path
+
+    expect(page).to paint ".card"
+    expect(page).to paint ".badge"
+  end
+
+  # A Turbo navigation. The whole card is the link, so this also proves the tap target is the card
+  # rather than something inside it: a click at the meta line's text has to land on the group.
+  it "lands on the group when its card is used" do
+    member = create(:member, group: create(:group, name: "Riverside Choir"))
+    sign_in_as member.user
+    resize_to ViewportHelper::MOBILE
+
+    visit groups_path
+    click_link "Riverside Choir"
+
+    expect(page).to have_current_path group_path(member.group)
+  end
 end

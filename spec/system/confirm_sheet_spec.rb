@@ -32,7 +32,7 @@ RSpec.describe "The confirm sheet", type: :system do
     member = create(:member, :owner)
     sign_in_as member.user
 
-    visit group_path(member.group)
+    visit edit_group_path(member.group)
 
     trigger = find("##{dom_id(member.group, :confirm_delete)}_form button")
     expect(trigger["aria-haspopup"]).to eq "dialog"
@@ -47,14 +47,14 @@ RSpec.describe "The confirm sheet", type: :system do
   it "does not leave the sheet open in the page Turbo caches" do
     member = create(:member, :owner)
     sign_in_as member.user
-    visit groups_path
-    click_link "Show"
+    visit group_path(member.group)
+    click_link "Edit group"
     within("##{dom_id(member.group, :confirm_delete)}_form") { click_button "Delete group" }
     expect(page).to have_css "dialog[open]"
     record_what_gets_cached
 
     page.go_back
-    expect(page).to have_link "New group"
+    expect(page).to have_text "Nothing in the diary"
 
     expect(page.evaluate_script("window.cachedWithSheetOpen")).to be false
   end
@@ -66,7 +66,7 @@ RSpec.describe "The confirm sheet", type: :system do
     before do
       sign_in_as member.user
 
-      visit group_path(group)
+      visit edit_group_path(group)
       within("##{dom_id(group, :confirm_delete)}_form") { click_button "Delete group" }
     end
 
