@@ -26,7 +26,7 @@ RSpec.describe AppFormBuilder do
     it "renders the hint under the input when the attribute has no errors" do
       html = field_for(build(:address), :name, hint: "Optional. Shown to members of your groups.")
 
-      expect(html).to include %(<p id="address_name_hint" class="label">Optional. Shown to members of your groups.</p>)
+      expect(html).to include %(<p id="address_name_hint" class="label whitespace-normal">Optional. Shown to members of your groups.</p>)
     end
 
     it "points the input at the hint it rendered" do
@@ -183,7 +183,7 @@ RSpec.describe AppFormBuilder do
     it "renders the hint under the group when the attribute has no errors" do
       html = segmented_for(Group.new, :group_type, choices: [ [ "Choir", "choir" ] ], hint: "Changeable later.")
 
-      expect(html).to include %(<p id="group_group_type_hint" class="label">Changeable later.</p>)
+      expect(html).to include %(<p id="group_group_type_hint" class="label whitespace-normal">Changeable later.</p>)
     end
 
     # The reveal rule matches a preceding sibling, and a single radio is not one, so the class has
