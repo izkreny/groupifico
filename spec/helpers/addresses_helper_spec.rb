@@ -10,6 +10,26 @@ RSpec.describe AddressesHelper, type: :helper do
     end
   end
 
+  describe "#address_summary" do
+    it "reads as one line: the street, then the postcode and city" do
+      address = build_stubbed(:address, street_name: "Obala", building_number: "14", postal_code: "10000", city: "Zagreb")
+
+      expect(helper.address_summary(address)).to eq "Obala 14, 10000 Zagreb"
+    end
+
+    it "opens on the city rather than on a comma when the street is unwritten" do
+      address = build_stubbed(:address, street_name: nil, building_number: nil, postal_code: "10000", city: "Zagreb")
+
+      expect(helper.address_summary(address)).to eq "10000 Zagreb"
+    end
+
+    it "is empty for an address that is a name and nothing else" do
+      address = build_stubbed(:address, street_name: nil, building_number: nil, postal_code: nil, city: nil)
+
+      expect(helper.address_summary(address)).to eq ""
+    end
+  end
+
   describe "#address_map_url" do
     it "searches on the coordinates where the record carries them" do
       address = build_stubbed(:address, name: "Village Hall", latitude: 51.5, longitude: -0.12)

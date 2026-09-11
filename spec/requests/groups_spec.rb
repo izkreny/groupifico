@@ -380,6 +380,57 @@ RSpec.describe "Groups", type: :request do
 
         expect(response).to have_http_status :ok
       end
+
+      it "offers the three types as one control, in the order the wireframe fixes" do
+        sign_in_as(create(:user))
+
+        get new_group_path
+        radios = Nokogiri::HTML(response.body).css("input[name='group[group_type]']")
+
+        expect(radios.map { it["value"] }).to eq %w[ choir band general ]
+        expect(radios.map { it["aria-label"] }).to eq %w[ Choir Band General ]
+      end
+
+      # The hostname's answer, shown rather than merely applied on save. The suite's default host
+      # carries no brand, so `general` here is `Brand`'s fallback and the branded case is below.
+      it "preselects the type the hostname implies" do
+        sign_in_as(create(:user))
+
+        get new_group_path
+        checked = Nokogiri::HTML(response.body).css("input[name='group[group_type]'][checked]")
+
+        expect(checked.map { it["value"] }).to eq [ "general" ]
+      end
+
+      it "preselects the choir on a branded host" do
+        host! "chorifico.com"
+        sign_in_as(create(:user))
+
+        get new_group_path
+        checked = Nokogiri::HTML(response.body).css("input[name='group[group_type]'][checked]")
+
+        expect(checked.map { it["value"] }).to eq [ "choir" ]
+      end
+
+      # The one pushed screen outside any group, so the chevron the shell draws for a section root
+      # has no group to resolve against and leads to the index instead.
+      it "carries a pushed screen's chrome, leading back to the groups index" do
+        sign_in_as(create(:user))
+
+        get new_group_path
+        document = Nokogiri::HTML(response.body)
+
+        expect(headings(response.body)).to include "New group"
+        expect(document.at_css("header a[aria-label='Back']")["href"]).to eq groups_path
+      end
+
+      it "offers no back chevron on the index it leads to" do
+        sign_in_as(create(:user))
+
+        get groups_path
+
+        expect(Nokogiri::HTML(response.body).css("header a[aria-label='Back']")).to be_empty
+      end
     end
   end
 
@@ -423,6 +474,65 @@ RSpec.describe "Groups", type: :request do
         get edit_group_path(member.group)
 
         expect(response).to have_http_status :ok
+      end
+
+      it "states the type rather than offering it, since it is set once" do
+        member = create(:member, :active, :owner, group: create(:group, group_type: :choir))
+        sign_in_as(member.user)
+
+        get edit_group_path(member.group)
+
+        expect(page_text(response.body)).to include "Choir — set when the group was created"
+        expect(Nokogiri::HTML(response.body).css("input[name='group[group_type]']")).to be_empty
+      end
+
+      # Frame 2f's rule: a saved place lives on its own route, so this form says where it is and
+      # the pencil is the way to change it.
+      it "summarises a saved address and sends the pencil to its own route" do
+        address = create(:address, name: "Community Hall", street_name: "Obala", building_number: "14", postal_code: "10000", city: "Zagreb")
+        member  = create(:member, :active, :owner, group: create(:group, address: address))
+        sign_in_as(member.user)
+
+        get edit_group_path(member.group)
+        document = Nokogiri::HTML(response.body)
+
+        expect(page_text(response.body)).to include "Community Hall Obala 14, 10000 Zagreb"
+        expect(document.at_css("a[aria-label='Correct address']")["href"]).to eq edit_address_path(address)
+        expect(document.css("[id^='group_address_attributes_']")).to be_empty
+      end
+
+      # The three the block asks for and no more: starting a group is not the moment to ask for a
+      # state code or a pair of coordinates, and #255 finishes the address screens.
+      it "writes the address inline for a group that never named a place" do
+        member = create(:member, :active, :owner)
+        sign_in_as(member.user)
+
+        get edit_group_path(member.group)
+        document = Nokogiri::HTML(response.body)
+
+        expect(document.css("[id^='group_address_attributes_']").map { it["id"] })
+          .to eq %w[ group_address_attributes_name group_address_attributes_street_name group_address_attributes_building_number group_address_attributes_city ]
+        expect(document.css("a[aria-label='Correct address']")).to be_empty
+      end
+
+      it "offers the delete to an owner who may destroy the group" do
+        member = create(:member, :active, :owner)
+        sign_in_as(member.user)
+
+        get edit_group_path(member.group)
+
+        expect(page_text(response.body)).to include "Delete group"
+      end
+
+      # The distinction the gate exists for: `edit?` is a read and admitted them, `destroy?` is a
+      # write the status pre-check refuses, so the form opens without a control they cannot use.
+      it "offers no delete to a paused owner, who is refused every write" do
+        member = create(:member, :paused, :owner)
+        sign_in_as(member.user)
+
+        get edit_group_path(member.group)
+
+        expect(page_text(response.body)).not_to include "Delete group"
       end
 
       # The confirm sheet's trigger is the delete form's own submit button, which is what makes the
@@ -510,17 +620,32 @@ RSpec.describe "Groups", type: :request do
         expect(response).to have_http_status :unprocessable_content
       end
 
-      # `group_type` has no control on the group form - it is set from the hostname - so a per-field
-      # error pattern has nowhere to put its message and the summary is the only thing that can
-      # carry it. Without that, the reader was told to fix the highlighted fields with nothing
-      # highlighted anywhere on the page.
-      it "names an error whose attribute the form draws no field for" do
+      # `reject_if` drops an address nobody typed into, so without the seeding in `create` the
+      # refused screen loses the whole "Where you meet" block the reader left. The typed case
+      # passes either way, which is why this one is the example.
+      it "redraws the address block when the refusal came with nothing typed in it" do
+        sign_in_as(create(:user))
+
+        post groups_path, params: { group: { name: "" } }
+
+        expect(Nokogiri::HTML(response.body).css("[id^='group_address_attributes_']").map { it["id"] })
+          .to eq %w[ group_address_attributes_name group_address_attributes_street_name group_address_attributes_building_number group_address_attributes_city ]
+      end
+
+      # The segmented control is what this message now hangs on, and the `aria-describedby` is the
+      # whole of the claim: the summary saying "fix the highlighted fields" is only true if the
+      # field it means is the one carrying the message. Before the control existed there was
+      # nowhere to put it and the summary carried the text itself.
+      it "puts a refused type under the control that offered it" do
         sign_in_as(create(:user))
 
         post groups_path, params: { group: { name: "Choraliers", group_type: "orchestra" } }
+        document = Nokogiri::HTML(response.body)
 
         expect(response).to have_http_status :unprocessable_content
-        expect(page_text(response.body)).to include "Group type is not included in the list"
+        expect(document.at_css("#group_group_type_error").text).to include "Group type is not included in the list"
+        expect(document.css("input[name='group[group_type]']").map { it["aria-describedby"] }.uniq)
+          .to eq [ "group_group_type_error" ]
       end
     end
 
@@ -672,6 +797,18 @@ RSpec.describe "Groups", type: :request do
 
         expect(response.body).to include "You are not allowed to do that."
       end
+    end
+
+    # The refusal's own half of the seeding `create` does: a group that never named a place has no
+    # address to draw the block from, and this action renders `edit`.
+    it "redraws the address block when a refused update came from a group with no place" do
+      member = create(:member, :active, :owner)
+      sign_in_as(member.user)
+
+      patch group_path(member.group), params: { group: { name: "" } }
+
+      expect(Nokogiri::HTML(response.body).css("[id^='group_address_attributes_']").map { it["id"] })
+        .to eq %w[ group_address_attributes_name group_address_attributes_street_name group_address_attributes_building_number group_address_attributes_city ]
     end
 
     # The case that was missing when the `on: :create` condition was briefly dropped: the callback

@@ -86,31 +86,31 @@ RSpec.describe ApplicationHelper, type: :helper do
     it "is false on the group home, which the Home tab points at" do
       allow(helper).to receive_messages(controller_name: "groups", action_name: "show")
 
-      expect(helper.pushed_screen?).to be false
+      expect(helper.pushed_screen?(build_stubbed(:group))).to be false
     end
 
     it "is false on the events list, which the Events tab points at" do
       allow(helper).to receive_messages(controller_name: "events", action_name: "index")
 
-      expect(helper.pushed_screen?).to be false
+      expect(helper.pushed_screen?(build_stubbed(:group))).to be false
     end
 
     it "is false on the members list, which the Members tab points at" do
       allow(helper).to receive_messages(controller_name: "members", action_name: "index")
 
-      expect(helper.pushed_screen?).to be false
+      expect(helper.pushed_screen?(build_stubbed(:group))).to be false
     end
 
     it "is true on a detail screen" do
       allow(helper).to receive_messages(controller_name: "events", action_name: "show")
 
-      expect(helper.pushed_screen?).to be true
+      expect(helper.pushed_screen?(build_stubbed(:group))).to be true
     end
 
     it "is true on a form" do
       allow(helper).to receive_messages(controller_name: "members", action_name: "edit")
 
-      expect(helper.pushed_screen?).to be true
+      expect(helper.pushed_screen?(build_stubbed(:group))).to be true
     end
 
     # A roster is pushed and still answers for Events, so this is the one case where the two
@@ -118,14 +118,29 @@ RSpec.describe ApplicationHelper, type: :helper do
     it "is true on a roster, which answers for the Events section" do
       allow(helper).to receive_messages(controller_name: "registrations", action_name: "index")
 
-      expect(helper.pushed_screen?).to be true
+      expect(helper.pushed_screen?(build_stubbed(:group))).to be true
       expect(helper.shell_section).to eq :events
     end
 
     it "is false outside a group, where there is no section to be pushed from" do
       allow(helper).to receive_messages(controller_name: "user_profiles", action_name: "show")
 
-      expect(helper.pushed_screen?).to be false
+      expect(helper.pushed_screen?(build_stubbed(:group))).to be false
+    end
+
+    # The new group form and the groups index are the same controller, the same section and the
+    # same absent group, so the action is the only thing that separates a pushed screen from the
+    # root it is pushed from.
+    it "is true on the new group form, the one pushed screen outside a group" do
+      allow(helper).to receive_messages(controller_name: "groups", action_name: "new")
+
+      expect(helper.pushed_screen?(nil)).to be true
+    end
+
+    it "is false on the groups index, which is the Home section's root without a group" do
+      allow(helper).to receive_messages(controller_name: "groups", action_name: "index")
+
+      expect(helper.pushed_screen?(nil)).to be false
     end
   end
 
@@ -155,6 +170,12 @@ RSpec.describe ApplicationHelper, type: :helper do
       allow(helper).to receive(:controller_name).and_return("user_profiles")
 
       expect(helper.section_root_path(build_stubbed(:group))).to be_nil
+    end
+
+    it "leads to the groups index from the Home section when there is no group" do
+      allow(helper).to receive(:controller_name).and_return("groups")
+
+      expect(helper.section_root_path(nil)).to eq helper.groups_path
     end
   end
 end

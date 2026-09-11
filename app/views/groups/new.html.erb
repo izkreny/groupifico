@@ -1,9 +1,9 @@
 <% content_for :title, "New group" %>
 
-<div class="md:w-2/3 w-full">
-  <h1 class="font-bold text-4xl">New group</h1>
+<%# The one pushed screen outside any group, so the header's leading slot holds a back chevron the
+    layout resolves to the groups index rather than to a group's home. %>
+<%= render "shared/page_header", title: "New group" %>
 
+<div class="w-full">
   <%= render "form", group: @group %>
-
-  <%= link_to "Back to groups", groups_path, class: "btn btn-ghost" %>
 </div>

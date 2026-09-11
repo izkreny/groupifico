@@ -23,7 +23,7 @@ RSpec.describe "Refusing a paused member", type: :system do
   it "lands on the root page rather than the form that refused the edit" do
     visit edit_group_path(member.group)
     fill_in "group_name", with: "Renamed"
-    click_button "Update Group"
+    click_button "Save changes"
 
     expect(page).to have_current_path root_path
   end
@@ -31,7 +31,7 @@ RSpec.describe "Refusing a paused member", type: :system do
   it "paints the alert, rather than merely rendering it" do
     visit edit_group_path(member.group)
     fill_in "group_name", with: "Renamed"
-    click_button "Update Group"
+    click_button "Save changes"
 
     expect(page).to have_css "#alert"
     expect(page).to paint "#alert"
