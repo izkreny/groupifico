@@ -18,14 +18,14 @@ module EventsHelper
   # `Time.zone`, which `starts_at` already answers in.
   def event_schedule_range(event)
     if event.same_day?
-      "#{event_schedule_start(event)}#{RANGE}#{event.ends_at.strftime(TIME_FORMAT)}"
+      "#{day_and_time(event.starts_at)}#{RANGE}#{event.ends_at.strftime(TIME_FORMAT)}"
     else
-      "#{event_schedule_start(event)}#{SEPARATOR}#{event_schedule_start(event, event.ends_at)}"
+      "#{day_and_time(event.starts_at)}#{SEPARATOR}#{day_and_time(event.ends_at)}"
     end
   end
 
-  def event_schedule_start(event, at = event.starts_at)
-    "#{at.strftime(DATE_FORMAT)}#{DOT}#{at.strftime(TIME_FORMAT)}"
+  def event_schedule_start(event)
+    day_and_time(event.starts_at)
   end
 
   # Status and category on one line, the way every hero card and detail screen draws them. The
@@ -54,4 +54,12 @@ module EventsHelper
   def event_categories
     Event.categories.keys
   end
+
+  private
+    # The day and the clock time of one instant, which is a whole reading on a compact row and
+    # half of one in a range. Private because no view states an instant: a view states an event,
+    # and which end of it the two readings above decide.
+    def day_and_time(at)
+      "#{at.strftime(DATE_FORMAT)}#{DOT}#{at.strftime(TIME_FORMAT)}"
+    end
 end
