@@ -77,38 +77,53 @@ RSpec.describe "The events list", type: :system do
     expect(registration.reload).to be_yes
   end
 
-  # The select is this screen's title and its filter at once, so two things about it need a
-  # browser: that the pill paints as a surface of its own over the page, which no class assertion
-  # can tell from a pill that compiled to nothing, and that changing it navigates - the control
-  # carries no submit button, so a `change` that reaches no listener leaves the reader on the
-  # upcoming list with the past option showing.
-  it "paints the select and lands on the past list when it is chosen" do
+  # The select is this screen's title as well as its filter, so whether it paints as a surface of
+  # its own is what tells a pill from one whose classes compiled to nothing.
+  it "paints the select" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
     next_event_for(member)
-    create(:event,
-      group: member.group,
-      creator: member,
-      name: "Spring concert",
-      status: :confirmed,
-      starts_at: 9.days.ago,
-      ends_at: 9.days.ago + 2.hours)
     sign_in_as member.user
     resize_to ViewportHelper::MOBILE
 
     visit group_events_path(member.group)
 
     expect(page).to paint "select"
+    expect(page).to be_accessible
+  end
 
+  # The control carries no submit button, so changing it is the whole of the navigation: a `change`
+  # that reaches no listener leaves the reader on the upcoming list with the past option showing,
+  # and nothing but a browser can tell those two apart.
+  it "lands on the past list when the select is changed" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    next_event_for(member)
+    past_event_for(member)
+    sign_in_as member.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_events_path(member.group)
     select "Past events", from: "Which events to show"
 
     expect(page).to have_current_path group_events_path(member.group, scope: "past")
-    expect(page).to have_content "Spring concert"
+    expect(page).to have_text "Spring concert"
     expect(page).to be_accessible
   end
 
   # Whether the page scrolls sideways, which is the one overflow a reader on a phone notices first.
   def overflowing?
     page.evaluate_script("document.documentElement.scrollWidth > document.documentElement.clientWidth")
+  end
+
+  # The other list needs something on it, and only its name is read: a concert that ended a week
+  # ago is past by `ends_at` as well as by `starts_at`, which is the column `Event.past` asks about.
+  def past_event_for(member)
+    create(:event,
+      group: member.group,
+      creator: member,
+      name: "Spring concert",
+      status: :concluded,
+      starts_at: 9.days.ago,
+      ends_at: 9.days.ago + 2.hours)
   end
 
   # The card states its own copy, so an event here has a fixed name, place and hour rather than the
