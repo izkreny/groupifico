@@ -12,7 +12,10 @@ class GroupsController < ApplicationController
   end
 
   def new
-    @group         = Group.new
+    # The type the hostname implies, preselected rather than merely defaulted: `Group`'s
+    # `before_validation` would answer the same on save, but only the form can show the reader
+    # which answer it is about to give them.
+    @group         = Group.new(group_type: Current.brand.group_type)
     @group.address = Address.new
 
     authorize! @group

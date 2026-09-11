@@ -1,18 +1,69 @@
+<%# locals: (group:) %>
 <%= form_with(model: group, class: "contents") do |form| %>
   <%= form.with_error_summary do %>
     <fieldset class="fieldset">
       <legend class="fieldset-legend">Group details</legend>
 
       <%= form.field :name %>
-      <%= form.field :description, as: :text_area %>
 
-      <%= form.fields_for :address do |address_form| %>
-        <%= render "addresses/form_fields", form: address_form %>
+      <%# The type is chosen once and then stated. A group started on a branded hostname is that
+          brand's type by default, and `Group`'s `before_validation` is `on: :create`, so an edit
+          submitting nothing for it is what keeps the stored type. A disabled control would say
+          the same thing and still be a control the reader tries to use.
+
+          `group_type_in_database` for the reason the heading above gives, and one this screen can
+          reach on its own: a refused update re-renders on the record with the submitted attributes
+          assigned, and a blank type among them is exactly what the refusal was about. Reading the
+          assigned value would state a type the group does not have, or none at all. %>
+      <% if group.persisted? %>
+        <div class="fieldset">
+          <p class="label">Type</p>
+          <p><%= group.group_type_in_database.capitalize %> — set when the group was created</p>
+        </div>
+      <% else %>
+        <%= form.segmented_field :group_type,
+              label: "Type",
+              choices: group_type_choices,
+              hint: "Your first group took its type from the hostname; a second group can be any type." %>
+      <% end %>
+
+      <%= form.field :description, as: :text_area %>
+    </fieldset>
+
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend">Where you meet</legend>
+
+      <%# Frame 2f's rule: a saved place lives on its own route, so this form states it and the
+          pencil leads to the one screen that edits it. An unsaved one has no route to lead to, so
+          it is still written here - which is both a new group and a group that never named one. %>
+      <% if group.address&.persisted? %>
+        <div class="card card-border bg-base-100">
+          <div class="card-body">
+            <div class="flex items-center gap-2">
+              <span class="grow min-w-0 truncate"><%= group.address.name %></span>
+
+              <%= link_to edit_address_path(group.address), class: "btn btn-ghost btn-circle btn-sm text-primary flex-none", aria: { label: "Correct address" } do %>
+                <%= icon :edit, class: "size-4" %>
+              <% end %>
+            </div>
+
+            <p><%= address_summary(group.address) %></p>
+          </div>
+        </div>
+      <% else %>
+        <%= form.fields_for :address do |address_form| %>
+          <%= render "addresses/form_fields", form: address_form %>
+        <% end %>
+
+        <% unless group.persisted? %>
+          <p class="label">you become owner on save</p>
+        <% end %>
       <% end %>
     </fieldset>
   <% end %>
 
-  <div class="inline">
-    <%= form.submit class: "btn btn-primary" %>
+  <div class="flex flex-wrap items-center gap-2 mt-4">
+    <%= link_to "Cancel", (group.persisted? ? group_path(group) : groups_path), class: "btn btn-ghost" %>
+    <%= form.submit (group.persisted? ? "Save changes" : "Create group"), class: "btn btn-primary" %>
   </div>
 <% end %>
