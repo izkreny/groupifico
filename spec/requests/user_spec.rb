@@ -104,7 +104,7 @@ RSpec.describe "User", type: :request do
         expect(response).to redirect_to user_path
       end
 
-      it "refuses while the reader is a group's only active owner, and says which group" do
+      it "refuses while the reader is a group's only active owner, and says nothing happened" do
         member = create(:member, :owner)
         sign_in_as(member.user)
 
@@ -112,9 +112,7 @@ RSpec.describe "User", type: :request do
           .not_to change(User, :count)
 
         expect(response).to redirect_to user_path
-        expect(flash[:alert]).to eq(
-          "You still own #{member.group.name}. Give another member the owner role first."
-        )
+        expect(flash[:alert]).to eq "Your account was not deleted."
       end
 
       it "destroys the user when every group they own has another active owner" do

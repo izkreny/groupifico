@@ -3,6 +3,10 @@ class UsersController < ApplicationController
   # active owner of a group. It surfaces here as RecordNotDestroyed, and it is a refusal the reader
   # can act on - hand the owner role over first - rather than a fault, so it gets a message instead
   # of a 500. `MembersController` answers the same invariant from the group's end.
+  #
+  # Which groups those are is the account screen's to say, not the flash's: the block there names
+  # them whenever they exist, so the reader has already read it once before pressing delete and
+  # reads it again underneath this. The flash says only that nothing happened.
   rescue_from ActiveRecord::RecordNotDestroyed, with: :refuse_ownerless_groups
 
   # Permanent, all four. Each reaches its record through `set_user`, which answers `Current.user`,
@@ -48,7 +52,7 @@ class UsersController < ApplicationController
 
     def refuse_ownerless_groups
       redirect_to user_path,
-        alert: helpers.solely_owned_groups_message(@user.solely_owned_groups),
+        alert: "Your account was not deleted.",
         status: :see_other
     end
 
