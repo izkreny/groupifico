@@ -1,15 +1,26 @@
-<div id="<%= dom_id group %>" class="w-full sm:w-auto my-5 space-y-5">
-  <ul>
-    <li>
-      <strong><%= group.name.upcase %></strong>
-      (<%= group.group_type %>)
-      <br>
-      <%= group.address&.name %>
-      <br>
-      <%= link_to "Members", group_members_path(group) %>
-      |
-      <%= link_to "Events", group_events_path(group) %>
-    </li>
-  </ul>
-  <p><%= group.description %></p>
-</div>
+<%# locals: (group:, membership: nil) %>
+<%#
+  One group on the index. The whole card is the link rather than a control inside it, so the tap
+  target is the thing a finger aims at.
+
+  The tag says what the reader *is* in this group, never what they may do: an administrator carries
+  none, because a capability is not a standing. `membership` arrives as a local because the index
+  loads the reader's memberships once - a card that looked its own up would cost a query each.
+%>
+<%= link_to group_path(group), id: dom_id(group), class: "card card-sm bg-base-200" do %>
+  <div class="card-body gap-1">
+    <h2 class="card-title text-row-title">
+      <%= group.name %>
+
+      <% if membership&.owner? %>
+        <span class="badge badge-sm">owner</span>
+      <% elsif membership&.paused? %>
+        <span class="badge badge-sm badge-ghost">paused</span>
+      <% end %>
+    </h2>
+
+    <p class="text-meta">
+      <%= pluralize group.current_members.count, "member" %><%= EventsHelper::DOT %><%= next_event_line group %>
+    </p>
+  </div>
+<% end %>
