@@ -157,8 +157,9 @@ What the gate cannot see: whether these screens read like the frames. `bin/ci` p
 
 ## Open questions
 
-- The first and eighth acceptance criteria contradict each other. The first says neither public page links to the other; the eighth says every existing authentication request spec stays green untouched. `spec/requests/sessions_spec.rb`'s "offers a route to sign-up" example asserts the link the first criterion removes, so one of the two has to give. This row takes the first, inverts that example rather than deleting it, and adds the mirror on the sign-up form — which is the request layer asserting the criterion instead of contradicting it. The eighth criterion therefore cannot be ticked truthfully and will hold the merge gate until the issue is edited to exempt that one example.
+None.
 
 ## Settled
 
-None yet.
+- The first and eighth acceptance criteria contradicted each other: the first says neither public page links to the other, the eighth says every existing authentication request spec stays green untouched, and `spec/requests/sessions_spec.rb`'s "offers a route to sign-up" example asserts the link the first removes. Decided by izkreny on the review thread: the first is true and the row acts on it. So that example is inverted rather than deleted, the mirror lands on the sign-up form, and the eighth criterion is rewritten on #245 to exempt the one example its sibling invalidates.
+- Whether the shared `<head>` should have been extracted at all, given that `app/views/layouts/application.html.erb` is outside the file set #245's technical notes claim. Decided by izkreny on the review thread: the extraction stays, and the issue's ownership line is updated to match what the branch actually changed. The alternative was a second copy of every application-wide tag in the head, which drifts the first time one of them moves.
