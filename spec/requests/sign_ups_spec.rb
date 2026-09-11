@@ -9,6 +9,14 @@ RSpec.describe "SignUps", type: :request do
         expect(response.body).to include('name="sign_up[group_name]"')
         expect(response.body).to include('name="sign_up[email]"')
       end
+
+      # The mirror of `spec/requests/sessions_spec.rb`'s, which carries why criterion 1 on #245
+      # wants neither direction.
+      it "offers no route to sign-in" do
+        get new_sign_up_path
+
+        expect(response.body).not_to include new_session_path
+      end
     end
 
     context "when already signed in" do

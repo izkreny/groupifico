@@ -1,17 +1,14 @@
-<% content_for :title, "Finish starting your group" %>
+<% content_for :title, "Create your group" %>
 
-<div class="mx-auto md:w-2/3 w-full">
-  <h1 class="font-bold text-4xl">Finish starting your group</h1>
-
-  <p class="my-5">
-    You are about to create <strong><%= @sign_up.group_name %></strong> and an account for
-    <strong><%= @sign_up.email %></strong>.
-    If either is not what you asked for, close this page: the link you followed was not sent to you.
-  </p>
-
-  <p class="my-5">Press the button and both exist, with you as the group's owner. The link you followed works once, so this finishes it.</p>
+<div class="flex flex-col gap-5">
+  <%# "group" rather than the group's type. Frame 10b reads "create your choir Riverside Choir",
+      but `SignUp` carries no type until #137 puts the hostname's own on it. %>
+  <h1 class="text-record">Sign in as <%= @sign_up.email %> and create your group <%= @sign_up.group_name %></h1>
 
   <div class="inline">
-    <%= button_to "Create the group", sign_up_confirmation_path, class: "btn btn-primary" %>
+    <%= button_to "Sign in and create group", sign_up_confirmation_path, class: "btn btn-primary" %>
   </div>
+
+  <%# `sign_ins/show` carries why this is copy rather than a link. %>
+  <p class="label">Not you? Just close this page</p>
 </div>

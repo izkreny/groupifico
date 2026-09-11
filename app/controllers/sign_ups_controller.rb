@@ -5,6 +5,9 @@ class SignUpsController < ApplicationController
   # route does not reach it.
   skip_verify_authorized only: %i[ new create ]
 
+  # The signed-out shell; `SessionsController` carries why it is a line here rather than a concern.
+  layout "entry"
+
   # The answer to a submitted address, whether or not an account holds it. `POST /sign_up` writes
   # nothing at all, so there is nothing here for a duplicate to answer differently about. The
   # expiry is stated in the email rather than here, where it would be a second copy of one fact.

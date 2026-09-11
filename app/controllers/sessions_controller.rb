@@ -14,6 +14,12 @@ class SessionsController < ApplicationController
   # an exemption nobody chose for it. Same reason `allow_unauthenticated_access` names its own.
   skip_verify_authorized only: %i[ new create destroy ]
 
+  # The signed-out shell, which carries the brand and the flash and none of the group chrome.
+  # Declared here rather than in a concern shared by the four entry controllers, because each of
+  # them already declares its own `allow_unauthenticated_access` and `refuse_authenticated` and one
+  # line is not an abstraction. `destroy` inherits it and never renders it: it redirects.
+  layout "entry"
+
   # The answer to a submitted address, whether or not an account holds it. It names the invitation
   # and not starting a group because somebody who reaches this form believes they already have an
   # account; ADR 0004's `Identical answers, including the clock` has why. The expiry is stated in

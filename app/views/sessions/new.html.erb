@@ -1,17 +1,25 @@
-<div class="mx-auto md:w-2/3 w-full">
-  <h1 class="font-bold text-4xl">Sign in</h1>
+<% content_for :title, "Sign in" %>
 
-  <p class="my-5">Give us your email address and we will send you a link that signs you in.</p>
+<%# `display: contents` on the form, so its fieldset and its submit are flex items of the stack
+    below and take its gap - the same reason every other form in this application carries it. %>
+<div class="flex flex-col gap-5">
+  <h1 class="text-record">Sign in</h1>
 
   <%= form_with url: session_url, class: "contents" do |form| %>
-    <div class="my-5">
-      <%= form.email_field :email, required: true, autofocus: true, autocomplete: "username", placeholder: "Enter your email address", value: params[:email], class: "input w-full" %>
-    </div>
+    <%# Not `AppFormBuilder#field`: this form has no model, so the builder's `object.errors` read
+        has nothing to read. The label and the control carry the classes that helper would emit. %>
+    <fieldset class="fieldset">
+      <%= form.label :email, "Email", class: "label" %>
+      <%# `value: params[:email]` is #208's invitation link, which opens this form with the address
+          already in it. A redirect carries no params, so every flashed state renders it empty. %>
+      <%= form.email_field :email, required: true, autofocus: true, autocomplete: "username",
+            placeholder: "you@example.com", value: params[:email], class: "input w-full" %>
+    </fieldset>
 
     <div class="inline">
       <%= form.submit "Email me a sign-in link", class: "btn btn-primary" %>
     </div>
   <% end %>
 
-  <p class="my-5">No account yet? <%= link_to "Start a group", new_sign_up_path, class: "link" %>.</p>
+  <p class="label">No passwords. The link in the mail signs you in on this device.</p>
 </div>
