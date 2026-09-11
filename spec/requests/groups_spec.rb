@@ -96,6 +96,26 @@ RSpec.describe "Groups", type: :request do
       end
     end
 
+    context "when signed in as an owner" do
+      # The confirm sheet's trigger is the delete form's own submit button, which is what makes the
+      # sheet an enhancement rather than the only route: with JavaScript off the click posts the
+      # delete straight away. The markup carries that claim, so it is asserted here rather than in
+      # `spec/system/confirm_sheet_spec.rb` - `.rspec` keeps the system suite out of the runner's
+      # own run, and this is the one gate a CI job sees.
+      it "renders the delete as the trigger's own form" do
+        member = create(:member, :owner)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        body = Nokogiri::HTML(response.body)
+        form = "form##{ActionView::RecordIdentifier.dom_id(member.group, :confirm_delete)}_form"
+        expect(body.at_css("#{form}[action='#{group_path(member.group)}'][method='post']")).to be_present
+        expect(body.at_css("#{form} input[name='_method'][value='delete']")).to be_present
+        expect(body.at_css("#{form} button[type='submit']").text.strip).to eq "Delete group"
+      end
+    end
+
     # Which of the shell's controls a given reader is offered. This is the layer that answers it,
     # per the duplication rule in `.agents/testing.md`: `spec/system/group_shell_spec.rb` asserts
     # that the chrome paints and that its controls behave, and never which reader sees what.

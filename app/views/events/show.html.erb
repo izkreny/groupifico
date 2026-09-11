@@ -9,6 +9,12 @@
     <%= link_to "Edit this event", edit_group_event_path(@group, @event), class: "btn btn-ghost" %>
     <%= link_to "Duplicate this event", duplicate_group_event_path(@group, @event), class: "btn btn-ghost" %>
     <%= link_to "Back to events", group_events_path(@group), class: "btn btn-ghost" %>
-    <%= button_to "Destroy this event", group_event_path(@group, @event), method: :delete, class: "btn btn-error", data: { turbo_confirm: "Are you sure?" } %>
+    <%= render "shared/confirm_sheet",
+          id: dom_id(@event, :confirm_delete),
+          url: group_event_path(@group, @event),
+          label: "Delete event",
+          title: "Delete this event?",
+          body: "Every registration for it goes too. This can't be undone.",
+          dismiss: "Keep event" %>
   </div>
 </div>
