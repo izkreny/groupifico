@@ -454,6 +454,18 @@ RSpec.describe "Groups", type: :request do
         expect(response).to have_http_status :unprocessable_content
       end
 
+      # `reject_if` drops an address nobody typed into, so without the seeding in `create` the
+      # refused screen loses the whole "Where you meet" block the reader left. The typed case
+      # passes either way, which is why this one is the example.
+      it "redraws the address block when the refusal came with nothing typed in it" do
+        sign_in_as(create(:user))
+
+        post groups_path, params: { group: { name: "" } }
+
+        expect(Nokogiri::HTML(response.body).css("[id^='group_address_attributes_']").map { it["id"] })
+          .to eq %w[ group_address_attributes_name group_address_attributes_street_name group_address_attributes_building_number group_address_attributes_city ]
+      end
+
       # The segmented control is what this message now hangs on, and the `aria-describedby` is the
       # whole of the claim: the summary saying "fix the highlighted fields" is only true if the
       # field it means is the one carrying the message. Before the control existed there was

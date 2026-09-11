@@ -34,6 +34,11 @@ class GroupsController < ApplicationController
       redirect_to group_path(@group),
         notice: "Group was successfully created."
     else
+      # The same seeding `new` and `edit` do, because this renders `new`. Without it a refused save
+      # sends the reader back to a screen missing the block they left: `reject_if` drops an address
+      # nobody typed into, so `@group.address` is nil and the form draws no "Where you meet" at all.
+      @group.address ||= Address.new
+
       render :new, status: :unprocessable_content
     end
   end
