@@ -37,7 +37,10 @@
           pencil leads to the one screen that edits it. An unsaved one has no route to lead to, so
           it is still written here - which is both a new group and a group that never named one. %>
       <% if group.address&.persisted? %>
-        <div class="card card-border bg-base-100">
+        <%# `base-200` rather than `base-100`, which is the surface the page already is: a card in
+            the page's own colour is delimited by nothing a person can see, and the paint matcher
+            scores it 1.0 for exactly that reason. daisyUI names `base-200` the raised surface. %>
+        <div class="card bg-base-200">
           <div class="card-body">
             <div class="flex items-center gap-2">
               <span class="grow min-w-0 truncate"><%= group.address.name %></span>
