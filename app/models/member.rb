@@ -42,6 +42,11 @@ class Member < ApplicationRecord
 
   enum :status, %i[ active paused inactive ], default: :active, validate: true
 
+  # The roles join, in one place, because both ends of the ownership invariant ask it: the group,
+  # for whether anyone else still owns it, and the user, for which groups would be left without an
+  # owner. Two spellings of one join are two places a later role change has to find.
+  scope :owners, -> { joins(:roles).where(roles: { name: Role::OWNER }) }
+
   # A group is never left without an owner, whoever is asking - the last owner acting on themselves
   # included, which is why this is here and not in a policy. `dependent: :destroy` rather than
   # `delete_all` on the roles above is what this costs: `delete_all` skips callbacks by definition,
