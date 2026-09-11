@@ -214,6 +214,33 @@ RSpec.describe Event, type: :model do
     end
   end
 
+  # The complement of `.past`, so the pair is asserted as a partition rather than as two lists that
+  # happen to look right: every event the group has falls in exactly one of them.
+  describe ".unfinished" do
+    it "returns the events that start in the future and the ones already running" do
+      create(:event, :from_the_past)
+      future_event = create(:event, :from_the_future)
+      ongoing_event = create(:event, :ongoing)
+
+      expect(described_class.unfinished).to contain_exactly(future_event, ongoing_event)
+    end
+
+    it "returns an empty array when every event has ended" do
+      create(:event, :from_the_past)
+
+      expect(described_class.unfinished).to be_empty
+    end
+
+    it "leaves no event on neither list, and none on both" do
+      create(:event, :from_the_past)
+      create(:event, :from_the_future)
+      create(:event, :ongoing)
+
+      expect(described_class.unfinished.ids + described_class.past.ids).to match_array described_class.ids
+      expect(described_class.unfinished.ids & described_class.past.ids).to be_empty
+    end
+  end
+
   describe ".past" do
     before do
       create(:event, :ongoing)

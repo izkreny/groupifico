@@ -256,6 +256,34 @@ RSpec.describe "Events", type: :request do
       end
     end
 
+    # The gap the two scopes left between them. A reader opening the tab during their own rehearsal
+    # is the case, so the event is confirmed and the hero is the row that has to not swallow it:
+    # `Group#next_event` is `confirmed.upcoming`, which an event already under way is not, so it
+    # draws as a row and the delimited id is what says so.
+    context "when an event is under way" do
+      it "keeps it on the upcoming list and off the past one" do
+        member = create(:member, :active)
+        running = create(:event, group: member.group, creator: member, status: :confirmed,
+          starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group)
+
+        expect(response.body).to include %(id="#{ActionView::RecordIdentifier.dom_id(running)}")
+      end
+
+      it "keeps it off the past list" do
+        member = create(:member, :active)
+        running = create(:event, group: member.group, creator: member, status: :confirmed,
+          starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group, scope: "past")
+
+        expect(response.body).not_to include %(id="#{ActionView::RecordIdentifier.dom_id(running)}")
+      end
+    end
+
     # The empty state, one sentence per list, asserted both ways round: the positive alone was
     # satisfied by a screen carrying both sentences, and the negative alone by a screen carrying
     # neither. Swapping the two literals reddens both examples, which is the mutation the pair
