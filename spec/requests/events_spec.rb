@@ -78,6 +78,24 @@ RSpec.describe "Events", type: :request do
         end
       end
 
+      # The row's own answer is an icon and nothing else, so what it carries is the icon's name.
+      it "shows the reader's answer as an icon on a compact row, and nothing where there is none" do
+        freeze_time do
+          member = create(:member, :active)
+          confirmed_event(member, days: 2)
+          answered_row = confirmed_event(member, days: 5)
+          asked_row = confirmed_event(member, days: 7)
+          create(:registration, event: answered_row, member:, status: :maybe)
+          create(:registration, event: asked_row, member:, status: :invited)
+          sign_in_as(member.user)
+
+          get group_events_path(member.group)
+
+          expect(response.body).to include "your answer: maybe"
+          expect(response.body).not_to include "your answer: invited"
+        end
+      end
+
       it "leaves the pills out for a paused member, who may not write an answer" do
         freeze_time do
           member = create(:member, :paused)
