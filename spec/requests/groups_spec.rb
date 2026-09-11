@@ -633,6 +633,18 @@ RSpec.describe "Groups", type: :request do
       end
     end
 
+    # The refusal's own half of the seeding `create` does: a group that never named a place has no
+    # address to draw the block from, and this action renders `edit`.
+    it "redraws the address block when a refused update came from a group with no place" do
+      member = create(:member, :active, :owner)
+      sign_in_as(member.user)
+
+      patch group_path(member.group), params: { group: { name: "" } }
+
+      expect(Nokogiri::HTML(response.body).css("[id^='group_address_attributes_']").map { it["id"] })
+        .to eq %w[ group_address_attributes_name group_address_attributes_street_name group_address_attributes_building_number group_address_attributes_city ]
+    end
+
     # The case that was missing when the `on: :create` condition was briefly dropped: the callback
     # then ran on update too, so a blank submitted type was filled from the editing domain instead
     # of being refused, and a choir silently became general.

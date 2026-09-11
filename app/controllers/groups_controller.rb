@@ -51,6 +51,10 @@ class GroupsController < ApplicationController
         notice: "Group was successfully updated.",
         status: :see_other
     else
+      # The same reason `create` seeds it: this renders `edit`, and a group that never named a
+      # place arrives here with no address to draw the block from.
+      @group.address ||= Address.new
+
       render :edit, status: :unprocessable_content
     end
   end
