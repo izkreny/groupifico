@@ -86,7 +86,7 @@ RSpec.describe User, type: :model do
       member = create(:member, :owner)
 
       expect(member.user.destroy).to be(false)
-      expect(User.exists?(member.user_id)).to be(true)
+      expect(described_class.exists?(member.user_id)).to be(true)
       expect(Member.exists?(member.id)).to be(true)
     end
 
@@ -100,13 +100,13 @@ RSpec.describe User, type: :model do
       member = create(:member, :owner)
       create(:member, :owner, group: member.group)
 
-      expect { member.user.destroy }.to change(User, :count).by(-1)
+      expect { member.user.destroy }.to change(described_class, :count).by(-1)
     end
 
     it "is destroyed when it owns no group at all" do
       user = create(:member).user
 
-      expect { user.destroy }.to change(User, :count).by(-1)
+      expect { user.destroy }.to change(described_class, :count).by(-1)
     end
   end
 
