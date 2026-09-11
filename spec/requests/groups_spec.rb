@@ -59,7 +59,9 @@ RSpec.describe "Groups", type: :request do
       # only that they own the group.
       it "tags a paused owner with both" do
         group = create(:group)
-        create(:member, :owner, group:) # the active owner that lets the reader below pause
+        # Not what permits the paused owner below - the record is inserted paused, past a guard
+        # declared `on: :update` - but what makes the state one a real group can be in.
+        create(:member, :owner, group:)
         member = create(:member, :paused, :owner, group:)
         sign_in_as(member.user)
 
