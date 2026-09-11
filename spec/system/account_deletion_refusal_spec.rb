@@ -1,7 +1,7 @@
 require "rails_helper"
 
-# Only what a browser adds. That the refusal redirects, that the account survives it, that the
-# alert's text names the group and that the account screen carries the block are all proven in
+# Only what a browser adds. That the refusal redirects, that the account survives it, what the
+# alert says and that the account screen's block names the group are all proven in
 # `spec/requests/user_spec.rb`, and per the duplication rule in `.agents/testing.md` none of them
 # comes back here.
 #
