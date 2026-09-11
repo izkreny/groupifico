@@ -1,19 +1,37 @@
-<% content_for :title, "Showing group" %>
+<% content_for :title, @group.name %>
 
-<div class="md:w-2/3 w-full">
-  <h1 class="font-bold text-4xl">Showing group</h1>
+<%#
+  The group's home. The name, the mark, the switcher and the pencil are all the shell's, drawn by
+  `layouts/_header`, so this screen starts at the hero and never repeats the title.
+%>
+<% if @next_event %>
+  <div class="flex flex-col gap-3">
+    <%= render "events/next_up", event: @next_event, registration: @next_event.registration_for(@membership) %>
 
-  <%= render @group %>
-
-  <div class="flex flex-wrap gap-2">
-    <%= link_to "Edit this group", edit_group_path(@group), class: "btn btn-ghost" %>
-    <%= link_to "Back to groups", groups_path, class: "btn btn-ghost" %>
-    <%= render "shared/confirm_sheet",
-          id: dom_id(@group, :confirm_delete),
-          url: group_path(@group),
-          label: "Delete group",
-          title: "Delete this group?",
-          body: "Every member, event and registration goes with it. This can't be undone.",
-          dismiss: "Keep group" %>
+    <%= link_to group_events_path(@group), class: "link link-hover inline-flex items-center gap-1 text-card-fact" do %>
+      See all events<%= icon :go_to, class: "size-4" %>
+    <% end %>
   </div>
-</div>
+<% else %>
+  <div class="flex flex-col items-start gap-3 py-10">
+    <h2 class="text-record">Nothing in the diary</h2>
+
+    <%# Asked here rather than at the top of the template, so the populated branch pays for neither
+        the built event nor the policy resolution behind it. `EventPolicy#create?` is asked of a new
+        event rather than of the group, because that is the record the rule is written against; a
+        refused reader gets no control rather than a disabled one. %>
+    <% if allowed_to?(:create?, @group.events.new) %>
+      <p>Add your first rehearsal and everyone gets asked whether they&rsquo;re coming.</p>
+
+      <%= link_to new_group_event_path(@group), class: "btn btn-primary" do %>
+        <%= icon :new, class: "size-4" %>New event
+      <% end %>
+    <% end %>
+
+    <%# The invite route arrives with #208, so the call to action is text until it exists: a link
+        that lands nowhere is worse than a sentence that asks for one. %>
+    <% if @group.current_members.one? %>
+      <p class="mt-4 rounded-box bg-base-200 p-4 text-meta">It&rsquo;s just you in here so far. Invite the others</p>
+    <% end %>
+  </div>
+<% end %>

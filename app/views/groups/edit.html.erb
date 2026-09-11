@@ -10,9 +10,10 @@
   <%= render "form", group: @group %>
 
   <%# Alone at the bottom, below the form rather than inside it: the sheet's trigger is a
-      `button_to`, and a form cannot hold another. `destroy?` rather than the `edit?` that admitted
-      the reader here, which is the whole distinction for a paused owner - allowed the form,
-      refused every write on it. %>
+      `button_to`, and a form cannot hold another. #247 moved the control off the group home and
+      left where it sits here to this issue. `destroy?` rather than the `edit?` that admitted the
+      reader, which is the whole distinction for a paused owner - allowed the form, refused every
+      write on it. %>
   <% if allowed_to?(:destroy?, @group) %>
     <div class="mt-10">
       <%= render "shared/confirm_sheet",

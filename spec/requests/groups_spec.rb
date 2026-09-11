@@ -30,6 +30,86 @@ RSpec.describe "Groups", type: :request do
         expect(response.body).not_to include(ActionView::RecordIdentifier.dom_id(other_group))
       end
     end
+
+    # What a card says about the reader's standing and about the group. Which reader sees what is
+    # this layer's question throughout, per the duplication rule in `.agents/testing.md`;
+    # `spec/system/groups_index_spec.rb` only asserts that the cards paint and lead anywhere.
+    describe "a group's card" do
+      it "tags the reader who owns the group" do
+        member = create(:member, :owner)
+        sign_in_as(member.user)
+
+        get groups_path
+
+        expect(response.body).to include ">owner<"
+      end
+
+      it "tags the reader whose membership is paused" do
+        member = create(:member, :paused)
+        sign_in_as(member.user)
+
+        get groups_path
+
+        expect(response.body).to include ">paused<"
+      end
+
+      # Owner and paused are separate facts, and a group with a second active owner lets the first
+      # pause and hold both - `Member#group_keeps_an_active_owner` permits it. Neither example above
+      # reaches the combination, and an `if`/`elsif` passes both of them while telling such a reader
+      # only that they own the group.
+      it "tags a paused owner with both" do
+        group = create(:group)
+        # Not what permits the paused owner below - the record is inserted paused, past a guard
+        # declared `on: :update` - but what makes the state one a real group can be in.
+        create(:member, :owner, group:)
+        member = create(:member, :paused, :owner, group:)
+        sign_in_as(member.user)
+
+        get groups_path
+
+        expect(response.body).to include ">owner<"
+        expect(response.body).to include ">paused<"
+      end
+
+      # An administrator administers members, which is a capability rather than a standing, and the
+      # card says what the reader is. Watched failing against a tag drawn from `can_manage?`.
+      it "tags an administrator with neither" do
+        member = create(:member, :administrator)
+        sign_in_as(member.user)
+
+        get groups_path
+
+        expect(response.body).not_to include ">owner<"
+        expect(response.body).not_to include ">paused<"
+      end
+
+      # The reader is named as the event's creator deliberately: the event factory's `creator` is a
+      # member of the same group, so letting it build its own would add a third person to a count
+      # this example is about.
+      it "counts the group's people and names the day it next meets" do
+        freeze_time do
+          member = create(:member, group: create(:group))
+          create(:member, group: member.group)
+          create(:member, :inactive, group: member.group) # has left, so is not one of the people
+          create(:event, group: member.group, creator: member, status: :confirmed,
+            starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+          sign_in_as(member.user)
+
+          get groups_path
+
+          expect(response.body).to include "2 members · next: #{2.days.from_now.strftime('%a %-d %b')}"
+        end
+      end
+
+      it "says nothing is scheduled for a group with no upcoming event" do
+        member = create(:member)
+        sign_in_as(member.user)
+
+        get groups_path
+
+        expect(response.body).to include "1 member · nothing scheduled"
+      end
+    end
   end
 
   describe "GET /groups/:id" do
@@ -96,23 +176,91 @@ RSpec.describe "Groups", type: :request do
       end
     end
 
-    context "when signed in as an owner" do
-      # The confirm sheet's trigger is the delete form's own submit button, which is what makes the
-      # sheet an enhancement rather than the only route: with JavaScript off the click posts the
-      # delete straight away. The markup carries that claim, so it is asserted here rather than in
-      # `spec/system/confirm_sheet_spec.rb` - `.rspec` keeps the system suite out of the runner's
-      # own run, and this is the one gate a CI job sees.
-      it "renders the delete as the trigger's own form" do
+    # The home's two states, and which controls each offers whom. `spec/system/group_home_spec.rb`
+    # asserts that they paint and that "See all events" lands; none of that comes back here.
+    describe "the group home" do
+      it "leads with the next event and a way into the whole list" do
+        member = create(:member, group: create(:group))
+        event = create(:event, group: member.group, name: "Tuesday rehearsal", status: :confirmed,
+          starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(response.body).to include "Tuesday rehearsal"
+        expect(response.body).to include "Next up"
+        expect(response.body).to include group_events_path(member.group)
+      end
+
+      # The answer row is `events/_rsvp`'s, and which of its states it draws is
+      # `spec/requests/events_spec.rb`'s question. What belongs here is that this screen hands the
+      # partial the reader's own registration at all: without `@membership`, `registration_for`
+      # gets nil and an invited reader is never asked.
+      it "asks the reader for their own answer" do
+        member = create(:member, group: create(:group))
+        event = create(:event, group: member.group, creator: member, status: :confirmed,
+          starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        create(:registration, event:, member:, status: :invited)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(response.body).to include "Are you coming?"
+      end
+
+      it "shows the first-run screen to an owner whose group has no events" do
         member = create(:member, :owner)
         sign_in_as(member.user)
 
         get group_path(member.group)
 
-        body = Nokogiri::HTML(response.body)
-        form = "form##{ActionView::RecordIdentifier.dom_id(member.group, :confirm_delete)}_form"
-        expect(body.at_css("#{form}[action='#{group_path(member.group)}'][method='post']")).to be_present
-        expect(body.at_css("#{form} input[name='_method'][value='delete']")).to be_present
-        expect(body.at_css("#{form} button[type='submit']").text.strip).to eq "Delete group"
+        expect(response.body).to include "Nothing in the diary"
+        expect(response.body).to include "Add your first rehearsal"
+        expect(response.body).to include new_group_event_path(member.group)
+      end
+
+      # `EventPolicy#create?` is `can_manage?(:events)`, which a plain member does not hold, so the
+      # call to action is absent rather than disabled - the epic's rule for every refused control.
+      # The heading stays: an empty diary is a fact about the group, not a permission.
+      it "offers a plain member the empty heading and nothing to press" do
+        member = create(:member)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(response.body).to include "Nothing in the diary"
+        expect(response.body).not_to include "Add your first rehearsal"
+        expect(response.body).not_to include new_group_event_path(member.group)
+      end
+
+      it "tells the group's only member that nobody else is there yet" do
+        member = create(:member, :owner)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(response.body).to include "just you in here so far"
+      end
+
+      it "says nothing of the kind once a second person has joined" do
+        member = create(:member, :owner)
+        create(:member, group: member.group)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(response.body).not_to include "just you in here so far"
+      end
+
+      it "has lost the scaffold's heading and its button row" do
+        member = create(:member, :owner)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(response.body).not_to include "Showing group"
+        expect(response.body).not_to include "Destroy this group"
+        expect(response.body).not_to include "Back to groups"
       end
     end
 
@@ -385,6 +533,24 @@ RSpec.describe "Groups", type: :request do
         get edit_group_path(member.group)
 
         expect(page_text(response.body)).not_to include "Delete group"
+      end
+
+      # The confirm sheet's trigger is the delete form's own submit button, which is what makes the
+      # sheet an enhancement rather than the only route: with JavaScript off the click posts the
+      # delete straight away. The markup carries that claim, so it is asserted here rather than in
+      # `spec/system/confirm_sheet_spec.rb` - `.rspec` keeps the system suite out of the runner's
+      # own run, and this is the one gate a CI job sees.
+      it "renders the delete as the trigger's own form" do
+        member = create(:member, :owner)
+        sign_in_as(member.user)
+
+        get edit_group_path(member.group)
+
+        body = Nokogiri::HTML(response.body)
+        form = "form##{ActionView::RecordIdentifier.dom_id(member.group, :confirm_delete)}_form"
+        expect(body.at_css("#{form}[action='#{group_path(member.group)}'][method='post']")).to be_present
+        expect(body.at_css("#{form} input[name='_method'][value='delete']")).to be_present
+        expect(body.at_css("#{form} button[type='submit']").text.strip).to eq "Delete group"
       end
     end
 

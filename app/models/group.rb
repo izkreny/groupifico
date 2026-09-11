@@ -23,6 +23,12 @@ class Group < ApplicationRecord
   belongs_to :address, optional: true, touch: true
   accepts_nested_attributes_for :address, reject_if: -> { it.values.all?(&:empty?) }
   has_many :members, dependent: :destroy
+  # The group's people, which is what a screen means by "6 members". `members` is everyone who ever
+  # joined, `inactive` included, and somebody who has left is not one of the group's people: a count
+  # taken from it disagrees with the roster the same reader can open. The mirror image of
+  # `User#current_memberships`, asked of the group instead of the user.
+  has_many :current_members, -> { where.not(status: :inactive) },
+    class_name: "Member", inverse_of: :group, dependent: nil
   has_many :events, dependent: :destroy
   # TODO: add order by `counter_cache` aka Adress field `events_count`
   has_many :events_addresses, -> { distinct }, through: :events, source: :address
