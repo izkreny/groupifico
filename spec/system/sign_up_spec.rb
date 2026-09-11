@@ -17,6 +17,17 @@ RSpec.describe "Creating a group", type: :system do
       expect(page).to paint "input[type=submit]"
     end
 
+    # The one entry screen whose copy still goes through `AppFormBuilder#note_tag`, which renders
+    # its hint with daisyUI's `label` - the nowrap component every other screen here had taken off
+    # it. The group-name hint fits today, 281px of text in 358px, so this guards the mechanism
+    # rather than a live defect. `spec/system/sign_in_page_spec.rb` carries why no other matcher
+    # sees it.
+    it "does not scroll sideways at phone width" do
+      resize_to ViewportHelper::MOBILE
+
+      expect(horizontal_overflow).to eq 0
+    end
+
     # The screen with the most to get wrong: two labelled controls, and a hint the form builder
     # wires to its field through `aria-describedby`.
     it "has no accessibility violations" do
@@ -59,10 +70,16 @@ RSpec.describe "Creating a group", type: :system do
 
     # The one navigation in this flow a request spec cannot make: the button spends the link and
     # lands on the group it just created.
+    #
+    # The shape of the path rather than `group_path(Group.sole)`, which is an argument and so is
+    # read once, before `have_current_path` starts retrying: a click that returns before
+    # `SignUp.redeem!` commits would raise `RecordNotFound` where the matcher would have waited.
+    # Which group it is belongs to `spec/requests/sign_up_confirmations_spec.rb`, which already
+    # asserts the redirect names it.
     it "lands on the new group" do
       click_button "Sign in and create group"
 
-      expect(page).to have_current_path group_path(Group.sole)
+      expect(page).to have_current_path %r{\A/groups/\d+\z}
     end
   end
 end
