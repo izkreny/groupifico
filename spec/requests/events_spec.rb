@@ -42,6 +42,88 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include(ActionView::RecordIdentifier.dom_id(other_event))
       end
     end
+
+    # Times are frozen because the card states the distance to the event in words, so "in 2 days"
+    # would otherwise depend on how long the suite takes to reach this file.
+    context "when the group has a next event" do
+      # The hero card, one row beneath it and the reader's own answer row: the three pieces the
+      # event card partials draw, asserted here rather than in a view spec because what a reader
+      # sees on this screen is the response's own text.
+      it "draws the hero card, a row beneath it and the question for an invited owner" do
+        freeze_time do
+          owner = create(:member, :owner)
+          next_up = confirmed_event(owner, name: "Tuesday rehearsal", category: :rehearsal, days: 2)
+          later = confirmed_event(owner, name: "Sunday service", days: 5)
+          create(:registration, event: next_up, member: owner, status: :invited)
+          sign_in_as(owner.user)
+
+          get group_events_path(owner.group)
+
+          expect(response.body).to include "Next up · in 2 days", "Tuesday rehearsal", "Confirmed rehearsal", "Are you coming?"
+          expect(response.body).to include ActionView::RecordIdentifier.dom_id(later)
+        end
+      end
+
+      it "draws the answer, the counts and the names for a plain member who has answered" do
+        freeze_time do
+          member = create(:member, :active, user: create(:user, :with_full_profile, first_name: "Carla", last_name: "Dean"))
+          next_up = confirmed_event(member, days: 2)
+          create(:registration, event: next_up, member:, status: :yes)
+          sign_in_as(member.user)
+
+          get group_events_path(member.group)
+
+          expect(response.body).to include "Your answer:", "no reply", "Carla Dean said yes"
+          expect(response.body).not_to include "Are you coming?"
+        end
+      end
+
+      it "leaves the pills out for a paused member, who may not write an answer" do
+        freeze_time do
+          member = create(:member, :paused)
+          next_up = confirmed_event(member, days: 2)
+          create(:registration, event: next_up, member:, status: :invited)
+          sign_in_as(member.user)
+
+          get group_events_path(member.group)
+
+          expect(response.body).to include "Next up · in 2 days"
+          expect(response.body).not_to include "Are you coming?"
+        end
+      end
+
+      it "draws no count tags while every registration is still reserved" do
+        freeze_time do
+          owner = create(:member, :owner)
+          next_up = confirmed_event(owner, days: 2)
+          create(:registration, event: next_up, member: owner, status: :reserved)
+          sign_in_as(owner.user)
+
+          get group_events_path(owner.group)
+
+          expect(response.body).to include "Next up · in 2 days"
+          expect(response.body).not_to include "no reply"
+        end
+      end
+    end
+
+    context "when the group's only upcoming event is unconfirmed" do
+      # What a wrong filter looks like from the reader's side: an unconfirmed event is not a
+      # commitment, so no card is drawn at all. A model spec cannot show this - `#next_event`
+      # answering the wrong record and the card being drawn anyway are the same thing there.
+      it "draws no hero card" do
+        freeze_time do
+          owner = create(:member, :owner)
+          create(:event, group: owner.group, creator: owner, status: :unconfirmed,
+            starts_at: 2.days.from_now, ends_at: 2.days.from_now + 1.hour)
+          sign_in_as(owner.user)
+
+          get group_events_path(owner.group)
+
+          expect(response.body).not_to include "Next up"
+        end
+      end
+    end
   end
 
   describe "GET /groups/:group_id/events/:id" do
@@ -557,5 +639,20 @@ RSpec.describe "Events", type: :request do
 
       expect(response).to have_http_status :not_found
     end
+  end
+
+  # The card states its own copy, so the examples above need an event with a fixed name, place and
+  # hour rather than the factory's random ones. `status:` is named because the base factory leaves
+  # it at the model default, `unconfirmed`, which `Group#next_event` deliberately excludes.
+  def confirmed_event(member, days:, name: "Autumn concert", category: :other)
+    create(:event,
+      group: member.group,
+      creator: member,
+      name: name,
+      category: category,
+      status: :confirmed,
+      address: create(:address, name: "Community Hall"),
+      starts_at: days.days.from_now.change(hour: 19),
+      ends_at: days.days.from_now.change(hour: 21))
   end
 end

@@ -6,20 +6,22 @@
     <%= link_to "New event", new_group_event_path(@group), class: "btn btn-primary" %>
   </div>
 
-  <div id="events" class="min-w-full divide-y divide-base-300 space-y-5">
-    <% if @events.any? %>
-      <% @events.each do |event| %>
-        <div class="flex flex-col sm:flex-row justify-between items-center pb-5 sm:pb-0">
-          <%= render event %>
-          <div class="w-full sm:w-auto flex flex-col sm:flex-row space-x-2 space-y-2">
-            <%= link_to "Show", group_event_path(@group, event), class: "btn btn-ghost" %>
-            <%= link_to "Edit", edit_group_event_path(@group, event), class: "btn btn-ghost" %>
-            <%= link_to "Duplicate", duplicate_group_event_path(@group, event), class: "btn btn-ghost" %>
-            <%= button_to "Destroy", group_event_path(@group, event), method: :delete, class: "btn btn-error", data: { turbo_confirm: "Are you sure?" } %>
-          </div>
-        </div>
-      <% end %>
-    <% else %>
+  <%# Asked once: `Current.member` is derived rather than memoized, so every call is a query. %>
+  <% reader = Current.member %>
+
+  <% if @next_event %>
+    <%= render "events/next_up", event: @next_event, registration: @next_event.registration_for(reader) %>
+  <% end %>
+
+  <div id="events">
+    <% rows = @events.reject { it.id == @next_event&.id } %>
+    <% if rows.any? %>
+      <ul class="list">
+        <% rows.each do |event| %>
+          <%= render "events/row", event: event, registration: event.registration_for(reader) %>
+        <% end %>
+      </ul>
+    <% elsif @next_event.nil? %>
       <p class="text-center my-10">No events found.</p>
     <% end %>
   </div>
