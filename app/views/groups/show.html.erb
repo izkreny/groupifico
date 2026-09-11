@@ -3,12 +3,7 @@
 <%#
   The group's home. The name, the mark, the switcher and the pencil are all the shell's, drawn by
   `layouts/_header`, so this screen starts at the hero and never repeats the title.
-
-  `EventPolicy#create?` is asked of a new event rather than of the group, because that is the record
-  the rule is written against; a refused reader gets no control rather than a disabled one.
 %>
-<% may_add_event = allowed_to?(:create?, @group.events.new) %>
-
 <% if @next_event %>
   <div class="flex flex-col gap-3">
     <%= render "events/next_up", event: @next_event, registration: @next_event.registration_for(@membership) %>
@@ -21,7 +16,11 @@
   <div class="flex flex-col items-start gap-3 py-10">
     <h2 class="text-record">Nothing in the diary</h2>
 
-    <% if may_add_event %>
+    <%# Asked here rather than at the top of the template, so the populated branch pays for neither
+        the built event nor the policy resolution behind it. `EventPolicy#create?` is asked of a new
+        event rather than of the group, because that is the record the rule is written against; a
+        refused reader gets no control rather than a disabled one. %>
+    <% if allowed_to?(:create?, @group.events.new) %>
       <p>Add your first rehearsal and everyone gets asked whether they&rsquo;re coming.</p>
 
       <%= link_to new_group_event_path(@group), class: "btn btn-primary" do %>
