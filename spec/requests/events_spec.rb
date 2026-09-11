@@ -79,21 +79,21 @@ RSpec.describe "Events", type: :request do
       end
 
       # The row's own answer is an icon and nothing else, so what it carries is the icon's name.
+      # The clock is left alone here, unlike the examples around it: this one asserts no copy that
+      # states a distance in time, and every event it creates is upcoming at whatever hour it runs.
       it "shows the reader's answer as an icon on a compact row, and nothing where there is none" do
-        freeze_time do
-          member = create(:member, :active)
-          confirmed_event(member, days: 2)
-          answered_row = confirmed_event(member, days: 5)
-          asked_row = confirmed_event(member, days: 7)
-          create(:registration, event: answered_row, member:, status: :maybe)
-          create(:registration, event: asked_row, member:, status: :invited)
-          sign_in_as(member.user)
+        member = create(:member, :active)
+        confirmed_event(member, days: 2)
+        answered_row = confirmed_event(member, days: 5)
+        asked_row = confirmed_event(member, days: 7)
+        create(:registration, event: answered_row, member:, status: :maybe)
+        create(:registration, event: asked_row, member:, status: :invited)
+        sign_in_as(member.user)
 
-          get group_events_path(member.group)
+        get group_events_path(member.group)
 
-          expect(response.body).to include "your answer: maybe"
-          expect(response.body).not_to include "your answer: invited"
-        end
+        expect(response.body).to include "your answer: maybe"
+        expect(response.body).not_to include "your answer: invited"
       end
 
       it "leaves the pills out for a paused member, who may not write an answer" do
