@@ -67,7 +67,7 @@ Each pill is a `button_to` to `group_event_registration_path` with `registration
 
 ## Verification
 
-- [ ] `bin/ci`
+- `bin/ci`
 
 What those gates cannot see: whether the hero reads as a hero next to the rows it competes with, since default daisyUI settles the styling and the frames' sizes were never decisions; whether the maps URL opens the right application on a phone, which no driver here can try; and whether the "said yes" line stays readable for an event a dozen people answered, which the frames only draw with two names.
 
