@@ -1,14 +1,19 @@
-<div class="mx-auto md:w-2/3 w-full">
-  <h1 class="font-bold text-4xl">Finish signing in</h1>
+<% content_for :title, "Sign in" %>
 
-  <p class="my-5">
-    You are about to sign in as <strong><%= @sign_in_token.user.email %></strong>.
-    If that is not your address, close this page: the link you followed was not sent to you.
-  </p>
-
-  <p class="my-5">Press the button to sign in. The link you followed works once, so this finishes it.</p>
+<div class="flex flex-col gap-5">
+  <%# The account is named so a link somebody else sent you is recognisable, which is the whole
+      reason this GET renders a page instead of signing anybody in. %>
+  <h1 class="text-record break-words">Sign in as <%= @sign_in_token.user.email %></h1>
 
   <div class="inline">
     <%= button_to "Sign in", sign_in_path, class: "btn btn-primary" %>
   </div>
+
+  <%# Copy, not a route: closing the page leaves the link unspent until it expires, so there is
+      nowhere for a link here to lead.
+
+      `text-meta` rather than daisyUI's `label`; `sessions/new` carries the measurement. %>
+  <p class="text-meta">Not you? Just close this page</p>
+
+  <p class="text-meta">Opening the link did nothing yet. Only this button signs you in, and the link then stops working.</p>
 </div>

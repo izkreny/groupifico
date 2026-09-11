@@ -1,26 +1,24 @@
-<% content_for :title, "Start a group" %>
+<% content_for :title, "Create a group" %>
 
-<div class="mx-auto md:w-2/3 w-full">
-  <h1 class="font-bold text-4xl">Start a group</h1>
-
-  <p class="my-5">Name your group and give us your email address. We will send you a link that creates both.</p>
+<div class="flex flex-col gap-5">
+  <h1 class="text-record">Create a group</h1>
 
   <%= form_with model: @sign_up, url: sign_up_url, class: "contents" do |form| %>
     <%= form.with_error_summary do %>
+      <%# No `fieldset-legend`. It read "Your group", which was true while the fieldset held only
+          the group's name; with the address first it would label the email as part of the group,
+          and frame 9b draws no legend at all. %>
       <fieldset class="fieldset">
-        <legend class="fieldset-legend">Your group</legend>
-
-        <%= form.field :group_name, label: "Group name", required: true, autofocus: true,
-              placeholder: "Enter a name for your group" %>
-        <%= form.field :email, as: :email_field, label: "Email address", required: true,
-              autocomplete: "username", placeholder: "Enter your email address" %>
+        <%= form.field :email, as: :email_field, label: "Your email", required: true, autofocus: true,
+              autocomplete: "username", placeholder: "you@example.com" %>
+        <%= form.field :group_name, label: "Group name", required: true,
+              placeholder: "Riverside Choir",
+              hint: "You become its owner. Rename it later on Edit group." %>
       </fieldset>
     <% end %>
 
     <div class="inline">
-      <%= form.submit "Email me a link to start it", class: "btn btn-primary" %>
+      <%= form.submit "Send my confirmation link", class: "btn btn-primary" %>
     </div>
   <% end %>
-
-  <p class="my-5">Already have an account? <%= link_to "Log in", new_session_path, class: "link" %>.</p>
 </div>

@@ -40,6 +40,15 @@ module ViewportHelper
     JS
   end
 
+  # How far past the viewport the page can be scrolled sideways, in px, and 0 for a page that fits.
+  # Read off `documentElement` rather than off any element, which is the whole point: a nowrap
+  # flex item keeps a box inside the column while its text runs past the screen, so every box
+  # measurement above reports the page as clean and only the document's own scroll width knows.
+  # Measured on #245, where daisyUI's `label` on a sentence overflowed 390px by 79px.
+  def horizontal_overflow
+    page.evaluate_script("document.documentElement.scrollWidth - document.documentElement.clientWidth")
+  end
+
   # The px between an element's right edge and the right inner edge of its container - 0 where the
   # element sits at the end of the row. Neither measurement above answers this: remove the slack
   # that pushes the element there and every gap in the row stays what it was while the whole group

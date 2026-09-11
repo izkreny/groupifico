@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="<%= I18n.locale %>">
+  <head>
+    <%= render "layouts/head" %>
+  </head>
+
+  <body>
+    <%# `max-w-[40rem]` is the column `layouts/application` carries; change either and change both.
+        One application has one column width, so a reader who signs in does not watch the page
+        change shape. Tailwind 4 has no named `max-w-*` at 40rem, which is why it is an arbitrary
+        value here as it is there. %>
+    <div class="w-full max-w-[40rem] mx-auto min-h-dvh flex flex-col">
+      <%# A `p` rather than a heading: every screen inside carries its own `h1`, and a masthead
+          that competed with it would leave the page with two. %>
+      <header class="px-4 py-3">
+        <p class="text-hero"><%= Current.brand.name %></p>
+        <%# Choir vocabulary on a brand that also serves bands. #223 gives the branded domains
+            their own copy; until then every domain gets this line, which is what #245 asked for. %>
+        <p class="text-meta">Who's coming to rehearsal.</p>
+      </header>
+
+      <div class="px-4 pt-3"><%= render "layouts/flash" %></div>
+
+      <main class="px-4 py-3 grow">
+        <%= yield %>
+      </main>
+    </div>
+  </body>
+</html>

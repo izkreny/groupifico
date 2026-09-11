@@ -24,4 +24,44 @@ RSpec.describe "Authentication", type: :system do
     # NegationMatcherAfterVisit` exists to catch. It caught this line.
     expect(page).to have_current_path root_path
   end
+
+  # The one screen in this flow nothing under `spec/system` had asserted about. The examples above
+  # pass through it on their way to the root, which proves the button submits and says nothing
+  # about whether a reader can see it: `spec/system/sign_in_page_spec.rb` carries why a class the
+  # stylesheet never compiled leaves a control in the DOM with its label intact.
+  describe "the page the emailed sign-in link opens" do
+    let(:link) { sign_in_path(token: SignInToken.mint(create(:member).user)) }
+
+    before do
+      visit link
+    end
+
+    it "paints the button that spends the link" do
+      expect(page).to paint ".btn-primary"
+    end
+
+    # What catches the failure no other layer reaches on this screen: the heading names an address,
+    # and the only control is a `button_to` whose form has no label of its own.
+    it "has no accessibility violations" do
+      expect(page).to be_accessible
+    end
+
+    # The screen that carries the longest sentence in the flow, and the one the overflow this
+    # guards against bit hardest: 304px past a 390px viewport. `spec/system/sign_in_page_spec.rb`
+    # carries why no other matcher sees it, and why the width is stated before the page is opened
+    # rather than after.
+    #
+    # The address is a literal, and a long one, rather than the factory's. An email has no break
+    # opportunity in it, so whether this heading fits is decided by how long the address is - and
+    # the factory's sequence makes that depend on how many users the examples before this one
+    # happened to create, which is a guard that passes or fails by running order.
+    it "does not scroll sideways at phone width" do
+      user = create(:user, email: "kassandra.wetherington.blythe@example.com")
+
+      resize_to ViewportHelper::MOBILE
+      visit sign_in_path(token: SignInToken.mint(user))
+
+      expect(horizontal_overflow).to eq 0
+    end
+  end
 end

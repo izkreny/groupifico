@@ -14,6 +14,8 @@ class SessionsController < ApplicationController
   # an exemption nobody chose for it. Same reason `allow_unauthenticated_access` names its own.
   skip_verify_authorized only: %i[ new create destroy ]
 
+  layout "entry"
+
   # The answer to a submitted address, whether or not an account holds it. It names the invitation
   # and not starting a group because somebody who reaches this form believes they already have an
   # account; ADR 0004's `Identical answers, including the clock` has why. The expiry is stated in

@@ -19,10 +19,15 @@ RSpec.describe "Sessions", type: :request do
         expect(response.body).not_to include 'class="dock'
       end
 
-      it "offers a route to sign-up" do
+      # Criterion 1 on #245: the two public pages never link to each other. #244 put a link here
+      # when it removed the navbar, and said the redesign of this file would own the question;
+      # this is the redesign, and the answer is that somebody who reaches a sign-in form believes
+      # they already have an account - ADR 0004's identical-answers rule is what tells them what
+      # to do instead, in the notice the submission flashes back.
+      it "offers no route to sign-up" do
         get new_session_path
 
-        expect(response.body).to include new_sign_up_path
+        expect(response.body).not_to include new_sign_up_path
       end
     end
 
