@@ -313,6 +313,12 @@ RSpec.describe Event, type: :model do
       expect(event.answer_counts).to eq("invited" => 1, "yes" => 2, "maybe" => 0, "no" => 0)
     end
 
+    # The card draws the tags in this order and reads no set of its own, so the order is part of
+    # what this method answers.
+    it "puts the three answers first and the unanswered tally last" do
+      expect(create(:event).answer_counts.keys).to eq %w[ yes maybe no invited ]
+    end
+
     it "is every count zero for an event whose registrations are all reserved" do
       event = create(:event)
       create(:registration, event:, member: create(:member, group: event.group), status: :reserved)

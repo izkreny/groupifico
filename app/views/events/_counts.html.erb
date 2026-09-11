@@ -1,16 +1,16 @@
 <%# locals: (event:) %>
 <%#
-  The four tags every reader sees, in the legend's order. `invited` is the "no reply" tally and
-  `reserved` is not a tally at all, which `Event#answer_counts` already decides; an event nobody
-  has been asked about therefore sums to zero here and draws nothing.
+  Every tag the tally carries, in the order it carries them, so the counted statuses stay the
+  model's business alone. `invited` is the one whose label is not its own name: the legend calls
+  that tally "no reply", and an event nobody has been asked about sums to zero and draws nothing.
 %>
 <% counts = event.answer_counts %>
 <% if counts.values.any?(&:positive?) %>
   <div class="flex flex-wrap gap-2">
-    <% { "yes" => "yes", "maybe" => "maybe", "no" => "no", "invited" => "no reply" }.each do |status, meaning| %>
+    <% counts.each do |status, count| %>
       <span class="badge badge-sm gap-1">
-        <%= icon status, label: meaning, class: "size-3.5" %>
-        <%= counts[status] %>
+        <%= icon status, label: (status == "invited" ? "no reply" : status), class: "size-3.5" %>
+        <%= count %>
       </span>
     <% end %>
   </div>
