@@ -97,17 +97,36 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include "your answer: invited"
       end
 
+      # The pills themselves rather than the copy above them: three forms, one target, one value
+      # each, and the reader's own answer lit. Without this the header carried both the positive
+      # and the negative assertion, so a card with no pills under it read as correct.
+      # The clock is left alone, as in the row example: nothing here reads it.
+      it "draws the three pills as forms writing the reader's own registration" do
+        member = create(:member, :active)
+        next_up = confirmed_event(member, days: 2)
+        registration = create(:registration, event: next_up, member:, status: :maybe)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group)
+
+        expect(response.body).to include %(action="#{group_event_registration_path(member.group, next_up, registration)}")
+        expect(response.body).to include %(name="_method" value="patch")
+        expect(response.body).to include %(name="registration[status]" value="yes"), %(name="registration[status]" value="maybe"), %(name="registration[status]" value="no")
+        expect(response.body).to include "join-item btn btn-sm btn-primary"
+      end
+
       it "leaves the pills out for a paused member, who may not write an answer" do
         freeze_time do
           member = create(:member, :paused)
           next_up = confirmed_event(member, days: 2)
-          create(:registration, event: next_up, member:, status: :invited)
+          registration = create(:registration, event: next_up, member:, status: :invited)
           sign_in_as(member.user)
 
           get group_events_path(member.group)
 
           expect(response.body).to include "Next up · in 2 days"
           expect(response.body).not_to include "Are you coming?"
+          expect(response.body).not_to include %(action="#{group_event_registration_path(member.group, next_up, registration)}")
         end
       end
 
