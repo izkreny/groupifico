@@ -6,7 +6,6 @@
     <%= link_to "New event", new_group_event_path(@group), class: "btn btn-primary" %>
   </div>
 
-  <%# Asked once: `Current.member` is derived rather than memoized, so every call is a query. %>
   <% reader = Current.member %>
 
   <% if @next_event %>
