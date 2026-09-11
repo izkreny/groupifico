@@ -22,6 +22,33 @@ class AppFormBuilder < ActionView::Helpers::FormBuilder
     ].compact
   end
 
+  # One attribute's values as a single control, drawn as daisyUI's `join` of radio buttons. Not a
+  # case of `field`'s `as:`: that path draws one `<label for>` naming one control, where a radio
+  # group is named by a `<legend>` over a `<fieldset>` and each radio carries its own name. The
+  # rest of a field's anatomy is reused rather than reimplemented - the one note slot, the error
+  # winning it, and the registration in `drawn` that keeps the message off the summary.
+  #
+  # The `validator` class goes on the group rather than on a radio, for the reason its stylesheet
+  # gives: the rule that reveals `.validator-hint` matches a *preceding sibling*, and no single
+  # radio is one. `aria-invalid` stays on the controls, which is where it means something, and
+  # daisyUI's `:has()` branch is what carries it up to the group.
+  def segmented_field(attribute, choices:, label: nil, hint: nil)
+    messages = object.errors.full_messages_for(attribute)
+    invalid  = messages.any?
+
+    drawn << attribute
+    note    = invalid ? messages.to_sentence : hint
+    note_id = field_id(attribute, invalid ? :error : :hint)
+
+    @template.tag.fieldset class: "fieldset" do
+      @template.safe_join [
+        @template.tag.legend(label || object.class.human_attribute_name(attribute), class: "label"),
+        segments(attribute, choices, invalid:, describedby: (note_id if note.present?)),
+        note_tag(note, note_id, invalid:)
+      ].compact
+    end
+  end
+
   # The summary reads what the fields drew, so the fields have to render first and appear second.
   # That ordering is the whole reason this method exists rather than each template capturing its
   # own fieldset: eight templates each holding the invariant is eight chances to flatten it back to
@@ -45,9 +72,9 @@ class AppFormBuilder < ActionView::Helpers::FormBuilder
   end
 
   # Every message whose attribute nothing on this form drew, which is what a per-field pattern
-  # cannot show by construction: `errors[:base]`, an attribute with no control of its own such as
-  # `Group#group_type`, and a `belongs_to` presence failure like `Event#group`. Before this existed
-  # each of those was rendered by the old full-messages list and then silently vanished.
+  # cannot show by construction: `errors[:base]`, an attribute a given form draws no control for,
+  # and a `belongs_to` presence failure like `Event#group`. Before this existed each of those was
+  # rendered by the old full-messages list and then silently vanished.
   def unattached_error_messages
     object.errors.reject { covered? it.attribute }.map(&:full_message)
   end
@@ -118,6 +145,19 @@ class AppFormBuilder < ActionView::Helpers::FormBuilder
         select attribute, choices, { prompt: }.compact, html
       else
         public_send as, attribute, html
+      end
+    end
+
+    # `aria-label` on each radio rather than a `<label for>` beside it, which is daisyUI's own
+    # syntax for the joined form: the button face *is* the input, so a second element carrying the
+    # text would draw the word twice.
+    def segments(attribute, choices, invalid:, describedby:)
+      @template.tag.div class: [ "join", ("validator" if invalid) ] do
+        @template.safe_join(choices.map { |text, value|
+          radio_button attribute, value,
+            class: "join-item btn",
+            aria: { label: text, invalid: ("true" if invalid), describedby: }.compact
+        })
       end
     end
 

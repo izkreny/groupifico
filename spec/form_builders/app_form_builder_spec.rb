@@ -13,6 +13,15 @@ RSpec.describe AppFormBuilder do
     view.form_with(model: record, url: "/x") { |form| form.field(attribute, **options) }
   end
 
+  # The builder itself rather than what it rendered, for the assertions about what it recorded.
+  def builder_for(record)
+    view = ApplicationController.new.tap { it.request = ActionDispatch::TestRequest.create }.view_context
+    captured = nil
+    view.form_with(model: record, url: "/x") { |form| captured = form and nil }
+
+    captured
+  end
+
   describe "#field" do
     it "renders the hint under the input when the attribute has no errors" do
       html = field_for(build(:address), :name, hint: "Optional. Shown to members of your groups.")
@@ -140,15 +149,72 @@ RSpec.describe AppFormBuilder do
     end
   end
 
-  describe "#unattached_error_messages" do
-    def builder_for(record)
+  describe "#segmented_field" do
+    def segmented_for(record, attribute, **options)
       view = ApplicationController.new.tap { it.request = ActionDispatch::TestRequest.create }.view_context
-      captured = nil
-      view.form_with(model: record, url: "/x") { |form| captured = form and nil }
 
-      captured
+      view.form_with(model: record, url: "/x") { |form| form.segmented_field(attribute, **options) }
     end
 
+    it "names the group with a legend rather than labelling any one radio" do
+      html = segmented_for(Group.new, :group_type, choices: [ [ "Choir", "choir" ] ], label: "Type")
+
+      expect(html).to include %(<legend class="label">Type</legend>)
+      expect(html).not_to include "<label"
+    end
+
+    # The button face is the input, so the word has to reach the accessibility tree through the
+    # control itself. Without it the segment is a nameless radio.
+    it "names each radio with the choice it stands for" do
+      html = segmented_for(Group.new, :group_type, choices: [ [ "Choir", "choir" ], [ "Band", "band" ] ], label: "Type")
+      radios = Nokogiri::HTML5.fragment(html).css("input[type=radio]")
+
+      expect(radios.map { it["aria-label"] }).to eq [ "Choir", "Band" ]
+      expect(radios.map { it["value"] }).to eq [ "choir", "band" ]
+    end
+
+    it "checks the radio the record already answers with" do
+      html = segmented_for(Group.new(group_type: "band"), :group_type, choices: [ [ "Choir", "choir" ], [ "Band", "band" ] ])
+      checked = Nokogiri::HTML5.fragment(html).css("input[type=radio][checked]")
+
+      expect(checked.map { it["value"] }).to eq [ "band" ]
+    end
+
+    it "renders the hint under the group when the attribute has no errors" do
+      html = segmented_for(Group.new, :group_type, choices: [ [ "Choir", "choir" ] ], hint: "Changeable later.")
+
+      expect(html).to include %(<p id="group_group_type_hint" class="label">Changeable later.</p>)
+    end
+
+    # The reveal rule matches a preceding sibling, and a single radio is not one, so the class has
+    # to sit on the group while the attribute stays on the controls.
+    it "marks the group invalid and the radios with it, and replaces the hint with the message" do
+      group = Group.new(name: "Choir")
+      group.group_type = "orchestra"
+      group.valid?
+
+      html = segmented_for(group, :group_type, choices: [ [ "Choir", "choir" ] ], hint: "Changeable later.")
+      fragment = Nokogiri::HTML5.fragment(html)
+
+      expect(fragment.at_css("div.join")["class"]).to include "validator"
+      expect(fragment.at_css("input[type=radio]")["aria-invalid"]).to eq "true"
+      expect(fragment.at_css("input[type=radio]")["aria-describedby"]).to eq "group_group_type_error"
+      expect(html).to include %(<p id="group_group_type_error" class="validator-hint">Group type is not included in the list</p>)
+    end
+
+    it "keeps the message off the summary, because the group is a control that drew it" do
+      group = Group.new(name: "Choir")
+      group.group_type = "orchestra"
+      group.valid?
+      form = builder_for(group)
+
+      form.segmented_field :group_type, choices: [ [ "Choir", "choir" ] ]
+
+      expect(form.unattached_error_messages).not_to include "Group type is not included in the list"
+    end
+  end
+
+  describe "#unattached_error_messages" do
     it "carries a message whose attribute no field drew" do
       group = Group.new(name: "Choir")
       group.group_type = "orchestra"
