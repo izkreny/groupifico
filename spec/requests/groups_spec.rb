@@ -174,6 +174,22 @@ RSpec.describe "Groups", type: :request do
         expect(response.body).to include group_events_path(member.group)
       end
 
+      # The answer row is `events/_rsvp`'s, and which of its states it draws is
+      # `spec/requests/events_spec.rb`'s question. What belongs here is that this screen hands the
+      # partial the reader's own registration at all: without `@membership`, `registration_for`
+      # gets nil and an invited reader is never asked.
+      it "asks the reader for their own answer" do
+        member = create(:member, group: create(:group))
+        event = create(:event, group: member.group, creator: member, status: :confirmed,
+          starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        create(:registration, event:, member:, status: :invited)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(response.body).to include "Are you coming?"
+      end
+
       it "shows the first-run screen to an owner whose group has no events" do
         member = create(:member, :owner)
         sign_in_as(member.user)
