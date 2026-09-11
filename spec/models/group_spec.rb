@@ -203,6 +203,17 @@ RSpec.describe Group, type: :model do
     end
   end
 
+  describe "#current_members" do
+    it "counts an active and a paused member, and not one who has left" do
+      group = create(:group)
+      create(:member, :active, group:)
+      create(:member, :paused, group:)
+      create(:member, :inactive, group:)
+
+      expect(group.current_members.count).to eq 2
+    end
+  end
+
   describe "#owned_by_anyone_but?" do
     it "answers false when the named member is the group's only owner" do
       group = create(:group)
