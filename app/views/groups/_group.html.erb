@@ -6,6 +6,11 @@
   The tag says what the reader *is* in this group, never what they may do: an administrator carries
   none, because a capability is not a standing. `membership` arrives as a local because the index
   loads the reader's memberships once - a card that looked its own up would cost a query each.
+
+  `bg-base-200` is not decoration: a bare `card` paints `base-100`, the same colour as the page
+  behind it, so the card has no edge at all - `spec/system/groups_index_spec.rb` scores it exactly
+  1.0 without this. `base-200` is daisyUI's own colour for a raised surface, and it is what
+  `events/_next_up` already tints its hero with.
 %>
 <%= link_to group_path(group), id: dom_id(group), class: "card card-sm bg-base-200" do %>
   <div class="card-body gap-1">
