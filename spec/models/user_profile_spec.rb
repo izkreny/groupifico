@@ -48,4 +48,33 @@ RSpec.describe UserProfile, type: :model do
       end
     end
   end
+
+  describe "#initials" do
+    it "takes the first letter of each of both names" do
+      expect(build(:user_profile, first_name: "Nick", last_name: "Cave").initials).to eq "NC"
+    end
+
+    it "takes one letter when only one name is present" do
+      expect(build(:user_profile, first_name: "Nick", last_name: nil).initials).to eq "N"
+    end
+
+    # The shell's avatar is the reader's only mark in the header, so a profile with neither name
+    # has to show something rather than an empty circle - and it shows the same fallback the name
+    # does, which is what makes the two agree.
+    it "falls back to the email local-part when neither name is present" do
+      nameless = build(:user_profile, first_name: nil, last_name: nil, user: build(:user, email: "username@domain"))
+
+      expect(nameless.initials).to eq "U"
+    end
+
+    # `first_name` is one column, so a middle name arrives inside it and the surname is still the
+    # last word. Two letters at most, from the ends rather than from the first two words.
+    it "takes the outer two letters when a name carries a middle word" do
+      expect(build(:user_profile, first_name: "Anna Maria", last_name: "Cave").initials).to eq "AC"
+    end
+
+    it "upcases a name typed in lower case" do
+      expect(build(:user_profile, first_name: "nick", last_name: "cave").initials).to eq "NC"
+    end
+  end
 end

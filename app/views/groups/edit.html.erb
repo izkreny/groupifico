@@ -1,7 +1,11 @@
-<% content_for :title, "Editing group" %>
+<% content_for :title, "Edit group" %>
 
-<div class="md:w-2/3 w-full">
-  <h1 class="font-bold text-4xl">Editing group</h1>
+<%= render "shared/page_header", title: "Group" %>
+
+<div class="w-full">
+  <%# `name_in_database` for the reason the layout gives: a refused rename leaves the typed name
+      assigned, and this heading is the screen's own record title. %>
+  <h1 class="text-record"><%= @group.name_in_database %></h1>
 
   <%= render "form", group: @group %>
 

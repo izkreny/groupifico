@@ -1,0 +1,41 @@
+<%# locals: (id:, memberships:, current_group:) %>
+<%#
+  A real `<dialog>`, so the top layer, focus trapping and Escape are the element's own behaviour
+  rather than script, and axe reads a modal rather than a div impersonating one.
+
+  Rows carry no `dom_id`: `spec/requests/groups_spec.rb` asserts the absence of `group_<id>` in the
+  markup elsewhere.
+
+  One line per group, which is what `menu` draws: its row is a grid with `grid-auto-flow: column`,
+  so a `flex-col` on the anchor is inert and a second span becomes a second column rather than a
+  second line. The badges are the only thing beside the name.
+%>
+<dialog id="<%= id %>" class="modal modal-top" data-group-switcher-target="dialog">
+  <div class="modal-box max-w-[40rem] mx-auto">
+    <h2 class="text-shell mb-3">Your groups</h2>
+
+    <ul class="menu w-full px-0">
+      <% memberships.each do |membership| %>
+        <li>
+          <%= link_to group_path(membership.group),
+                class: { "menu-active" => membership.group == current_group },
+                aria: { current: ("true" if membership.group == current_group) } do %>
+            <span class="text-row-title"><%= membership.group.name %></span>
+            <% if membership.owner? %>
+              <span class="badge badge-sm">owner</span>
+            <% end %>
+            <% if membership.paused? %>
+              <span class="badge badge-ghost badge-sm">paused</span>
+            <% end %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  </div>
+
+  <%# Submitting a `method="dialog"` form is what closes a dialog natively, so clicking the
+      backdrop needs nothing from Stimulus. %>
+  <form method="dialog" class="modal-backdrop">
+    <button>Close</button>
+  </form>
+</dialog>
