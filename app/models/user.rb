@@ -54,12 +54,12 @@ class User < ApplicationRecord
   before_destroy :ensure_no_group_loses_its_only_owner, prepend: true
 
   # Asked of the user rather than of the member, because the refusal has to name every group the
-  # account would orphan and a member sees one group at a time. `active` and the owner role are what
-  # `Group#owned_by_anyone_but?` counts on the other side, so the two ends agree on who an owner is.
+  # account would orphan and a member sees one group at a time. One statement rather than the
+  # group's own predicate per membership, which is the same question asked N times; `Member.owners`
+  # is what keeps both ends counting the same owners.
   def solely_owned_groups
-    members.active.joins(:roles).where(roles: { name: Role::OWNER }).includes(:group)
-      .reject { it.group.owned_by_anyone_but?(it) }
-      .map(&:group)
+    Group.where(id: members.active.owners.select(:group_id))
+      .where.not(id: Member.active.owners.where.not(user_id: id).select(:group_id))
   end
 
   private
