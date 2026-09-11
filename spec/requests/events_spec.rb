@@ -100,6 +100,10 @@ RSpec.describe "Events", type: :request do
       # The pills themselves rather than the copy above them: three forms, one target, one value
       # each, and the reader's own answer lit. Without this the header carried both the positive
       # and the negative assertion, so a card with no pills under it read as correct.
+      #
+      # The lit pill is matched through to its own hidden value rather than by the class alone,
+      # which any of the three carrying it would satisfy - so inverting the condition that lights
+      # it lights the other two and this still reddens.
       # The clock is left alone, as in the row example: nothing here reads it.
       it "draws the three pills as forms writing the reader's own registration" do
         member = create(:member, :active)
@@ -112,7 +116,7 @@ RSpec.describe "Events", type: :request do
         expect(response.body).to include %(action="#{group_event_registration_path(member.group, next_up, registration)}")
         expect(response.body).to include %(name="_method" value="patch")
         expect(response.body).to include %(name="registration[status]" value="yes"), %(name="registration[status]" value="maybe"), %(name="registration[status]" value="no")
-        expect(response.body).to include "join-item btn btn-sm btn-primary"
+        expect(response.body).to match %r{btn-primary[^>]*>\s*Maybe\s*</button><input type="hidden" name="registration\[status\]" value="maybe"}
       end
 
       it "leaves the pills out for a paused member, who may not write an answer" do
