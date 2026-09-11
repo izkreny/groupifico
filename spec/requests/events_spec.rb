@@ -65,16 +65,21 @@ RSpec.describe "Events", type: :request do
       # `:from_the_future` rather than the bare factory, whose `starts_at` is a random point in a
       # year either side of today: this list shows the upcoming events, so half of those rolls put
       # the event this example is looking for on the other list.
+      #
+      # `status:` is named on top of the trait, which rolls its own: a confirmed roll makes the
+      # event `Group#next_event`, and it then draws as the hero rather than as a row. And the match
+      # carries `id="` so the hero could not satisfy it if it did - `dom_id` alone is a substring
+      # of the hero's `next_up_event_N`, which is what let the roll go unnoticed.
       it "lists only events from groups the acting user belongs to" do
         member = create(:member, :active)
-        own_event = create(:event, :from_the_future, group: member.group, creator: member)
-        other_event = create(:event, :from_the_future)
+        own_event = create(:event, :from_the_future, status: :unconfirmed, group: member.group, creator: member)
+        other_event = create(:event, :from_the_future, status: :unconfirmed)
         sign_in_as(member.user)
 
         get group_events_path(member.group)
 
-        expect(response.body).to include(ActionView::RecordIdentifier.dom_id(own_event))
-        expect(response.body).not_to include(ActionView::RecordIdentifier.dom_id(other_event))
+        expect(response.body).to include %(id="#{ActionView::RecordIdentifier.dom_id(own_event)}")
+        expect(response.body).not_to include %(id="#{ActionView::RecordIdentifier.dom_id(other_event)}")
       end
     end
 
