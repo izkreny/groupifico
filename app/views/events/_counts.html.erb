@@ -2,7 +2,13 @@
 <%#
   Every tag the tally carries, in the order it carries them, so the counted statuses stay the
   model's business alone. `invited` is the one whose label is not its own name: the legend calls
-  that tally "no reply", and an event nobody has been asked about sums to zero and draws nothing.
+  that tally "no reply".
+
+  An event nobody has been asked about sums to zero, because `reserved` is the one status
+  `Event#answer_counts` leaves out, and says so in words instead: a card drawing nothing there
+  reads as a card that failed to load the answers rather than as one with no answers to show. An
+  event with no registrations at all still draws nothing, since "0 on the list" is not a fact
+  worth a line.
 %>
 <% counts = event.answer_counts %>
 <% if counts.values.any?(&:positive?) %>
@@ -14,4 +20,6 @@
       </span>
     <% end %>
   </div>
+<% elsif (waiting = event.registrations.size).positive? %>
+  <p class="text-card-fact">Nobody asked yet · <%= waiting %> on the list</p>
 <% end %>

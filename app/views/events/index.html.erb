@@ -1,15 +1,43 @@
 <% content_for :title, "Events" %>
 
-<div class="w-full">
-  <div class="flex justify-between items-center">
-    <h1 class="font-bold text-4xl"><%= link_to @group.name, group_path(@group) %> Events</h1>
-    <%= link_to "New event", new_group_event_path(@group), class: "btn btn-primary" %>
+<%#
+  The group's events. The shell's header already carries the group's name, so this screen's own
+  title is which of the two lists is open - and because that is also the choice on offer, the title
+  is the select rather than a heading above one.
+%>
+<div class="flex flex-col gap-3">
+  <div class="flex items-center justify-between gap-2.5">
+    <%# No visible label, because the select states the current list as its own value and a word
+        above it would say the same thing twice. `aria-label` is then the whole of its accessible
+        name, and `be_accessible` is the gate that says so.
+
+        `w-auto` against the component's own 320px, so the pill hugs its value the way the frames
+        draw it; the type rung is the frames' too, which put this control and a compact row's title
+        on the same one. %>
+    <%= form_with url: group_events_path(@group), method: :get, data: { controller: "form" } do %>
+      <%= select_tag :scope,
+            options_for_select([ [ "Upcoming events", "upcoming" ], [ "Past events", "past" ] ], @past ? "past" : "upcoming"),
+            class: "select select-ghost bg-base-200 rounded-full w-auto text-row-title",
+            aria: { label: "Which events to show" },
+            data: { action: "change->form#submit" } %>
+    <% end %>
+
+    <%# Asked of a new event rather than of the group, because that is the record `EventPolicy`
+        writes the rule against. A refused reader gets no button rather than a disabled one. %>
+    <% if allowed_to?(:create?, @group.events.new) %>
+      <%= link_to new_group_event_path(@group), class: "btn btn-primary btn-sm" do %>
+        <%= icon :new, class: "size-4" %>New
+      <% end %>
+    <% end %>
   </div>
 
   <% reader = Current.member %>
+  <% next_registration = @next_event.registration_for(reader) if @next_event %>
 
+  <%# The hero draws no answer row here: on this screen the reader's own reply sits below the list,
+      where their thumb is, rather than inside the card. The group home keeps it in the card. %>
   <% if @next_event %>
-    <%= render "events/next_up", event: @next_event, registration: @next_event.registration_for(reader) %>
+    <%= render "events/next_up", event: @next_event, registration: next_registration, answer_row: false %>
   <% end %>
 
   <div id="events">
@@ -21,7 +49,11 @@
         <% end %>
       </ul>
     <% elsif @next_event.nil? %>
-      <p class="text-center my-10">No events found.</p>
+      <p class="text-meta"><%= @past ? "No past events." : "Nothing coming up." %></p>
     <% end %>
   </div>
+
+  <% if @next_event %>
+    <%= render "events/rsvp", event: @next_event, registration: next_registration %>
+  <% end %>
 </div>

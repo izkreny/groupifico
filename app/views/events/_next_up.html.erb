@@ -1,9 +1,14 @@
-<%# locals: (event:, registration: nil) %>
+<%# locals: (event:, registration: nil, answer_row: true) %>
 <%#
   The hero card, tinted because it competes with the rows beneath it. Status, when and where are
   quiet facts: their icons and plain text colour, no accent. It renders the counts and the answer
   row itself, because the legend's matrix gives every cell that shows tags the answer row under
   them, and a screen that had to remember to render all three would be a screen that can forget.
+
+  `answer_row` is the one screen that opts out: `events/index` puts the reader's own reply below
+  the whole list rather than inside the card, so the card there states facts and asks nothing. It
+  defaults to true, which is what keeps the group home - and any later screen - on the legend
+  without saying so.
 %>
 <div id="<%= dom_id event, :next_up %>" class="card card-sm bg-base-200">
   <div class="card-body gap-2">
@@ -33,6 +38,8 @@
       <p class="text-sm"><%= said_yes %></p>
     <% end %>
 
-    <%= render "events/rsvp", event: event, registration: registration %>
+    <% if answer_row %>
+      <%= render "events/rsvp", event: event, registration: registration %>
+    <% end %>
   </div>
 </div>
