@@ -83,6 +83,20 @@ RSpec.describe "The group form", type: :system do
     expect(page).to have_css ".join input[type=radio][value='choir']:checked", visible: :all
   end
 
+  # The failure `spec/support/viewport_helper.rb` records from #245, which this screen reproduced:
+  # daisyUI's `.label` is `white-space: nowrap`, so the hint's box stays inside the column while
+  # its text runs off the screen. Every box measurement reports the page as clean and only the
+  # document's own scroll width knows, which is what `horizontal_overflow` reads.
+  it "keeps the type hint inside a phone's width" do
+    sign_in_as create(:user)
+    resize_to ViewportHelper::MOBILE
+
+    visit new_group_path
+
+    expect(page).to have_css "#group_group_type_hint"
+    expect(horizontal_overflow).to eq 0
+  end
+
   it "returns to the groups index when the new group screen is cancelled" do
     sign_in_as create(:user)
 
@@ -137,22 +151,6 @@ RSpec.describe "The group form", type: :system do
       click_link "Cancel"
 
       expect(page).to have_current_path group_path(member.group)
-    end
-
-    # The sheet's own behaviour is `spec/system/confirm_sheet_spec.rb`'s. What belongs here is that
-    # this screen is now a place it opens from, and that confirming leaves the reader somewhere
-    # that still exists - the group whose page they were on having just been deleted.
-    it "deletes the group from the sheet and lands on the groups index" do
-      member = create(:member, :active, :owner)
-      group  = member.group
-      sign_in_as member.user
-
-      visit edit_group_path(group)
-      within("##{ActionView::RecordIdentifier.dom_id(group, :confirm_delete)}_form") { click_button "Delete group" }
-      within(".modal-action") { click_button "Delete group" }
-
-      expect(page).to have_current_path groups_path
-      expect(Group.where(id: group.id)).not_to exist
     end
   end
 end

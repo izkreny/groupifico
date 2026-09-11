@@ -161,10 +161,15 @@ class AppFormBuilder < ActionView::Helpers::FormBuilder
       end
     end
 
+    # `whitespace-normal` on the hint because daisyUI's `.label` is `white-space: nowrap`, which is
+    # right for the two or three words a label holds and wrong for a sentence: the box stays inside
+    # the column while the text runs off the screen, so only `documentElement.scrollWidth` knows.
+    # Measured on #245 at 79px past a 390px phone, and again here. The error branch is left alone:
+    # `validator-hint` carries no `nowrap`.
     def note_tag(text, id, invalid:)
       return if text.blank?
 
-      @template.tag.p text, id: id, class: (invalid ? "validator-hint" : "label")
+      @template.tag.p text, id: id, class: (invalid ? "validator-hint" : "label whitespace-normal")
     end
 
     COMPONENTS = { text_area: "textarea", select: "select" }.freeze
