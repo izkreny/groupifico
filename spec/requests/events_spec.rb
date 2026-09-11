@@ -62,10 +62,13 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include %(href="#{new_group_event_path(member.group)}")
       end
 
+      # `:from_the_future` rather than the bare factory, whose `starts_at` is a random point in a
+      # year either side of today: this list shows the upcoming events, so half of those rolls put
+      # the event this example is looking for on the other list.
       it "lists only events from groups the acting user belongs to" do
         member = create(:member, :active)
-        own_event = create(:event, group: member.group, creator: member)
-        other_event = create(:event)
+        own_event = create(:event, :from_the_future, group: member.group, creator: member)
+        other_event = create(:event, :from_the_future)
         sign_in_as(member.user)
 
         get group_events_path(member.group)
