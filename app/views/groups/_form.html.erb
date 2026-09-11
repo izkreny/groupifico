@@ -54,8 +54,15 @@
           </div>
         </div>
       <% else %>
+        <%# Three fields rather than `addresses/form_fields`, which draws the record's whole shape
+            down to the coordinates. Starting a group is not the moment to ask for all of it, and
+            #255 finishes the address screens; the rest of the record is written there. Street and
+            number are two columns and one thing a person types, so they read as one pair here. %>
         <%= form.fields_for :address do |address_form| %>
-          <%= render "addresses/form_fields", form: address_form %>
+          <%= address_form.field :name %>
+          <%= address_form.field :street_name %>
+          <%= address_form.field :building_number %>
+          <%= address_form.field :city %>
         <% end %>
 
         <% unless group.persisted? %>

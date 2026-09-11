@@ -353,6 +353,8 @@ RSpec.describe "Groups", type: :request do
         expect(document.css("[id^='group_address_attributes_']")).to be_empty
       end
 
+      # The three the block asks for and no more: starting a group is not the moment to ask for a
+      # state code or a pair of coordinates, and #255 finishes the address screens.
       it "writes the address inline for a group that never named a place" do
         member = create(:member, :active, :owner)
         sign_in_as(member.user)
@@ -360,7 +362,8 @@ RSpec.describe "Groups", type: :request do
         get edit_group_path(member.group)
         document = Nokogiri::HTML(response.body)
 
-        expect(document.css("[id^='group_address_attributes_']")).not_to be_empty
+        expect(document.css("[id^='group_address_attributes_']").map { it["id"] })
+          .to eq %w[ group_address_attributes_name group_address_attributes_street_name group_address_attributes_building_number group_address_attributes_city ]
         expect(document.css("a[aria-label='Correct address']")).to be_empty
       end
 
