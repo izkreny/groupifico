@@ -24,15 +24,31 @@ module ApplicationHelper
     home: %w[ groups show ], events: %w[ events index ], members: %w[ members index ]
   }.freeze
 
-  def pushed_screen?
-    shell_section.present? && SECTION_ROOTS[shell_section] != [ controller_name, action_name ]
+  # `groups#new` is the one pushed screen outside any group, so the Home section has a second root:
+  # with no group to show, the index is what the back chevron leads up to. The group is what tells
+  # the two apart, which is why both helpers below are asked for it. Without the distinction,
+  # `groups#index` answers pushed too and draws a chevron pointing at itself - masked until now
+  # only by the layout refusing to ask for a back target without a group.
+  GROUPLESS_HOME_ROOT = %w[ groups index ].freeze
+
+  def pushed_screen?(group)
+    return false if shell_section.blank?
+
+    section_root(group) != [ controller_name, action_name ]
   end
 
   def section_root_path(group)
     case shell_section
-    when :home    then group_path(group)
+    when :home    then group ? group_path(group) : groups_path
     when :events  then group_events_path(group)
     when :members then group_members_path(group)
     end
   end
+
+  private
+    def section_root(group)
+      return GROUPLESS_HOME_ROOT if shell_section == :home && group.nil?
+
+      SECTION_ROOTS[shell_section]
+    end
 end
