@@ -1,0 +1,38 @@
+<%# locals: (event:, registration: nil) %>
+<%#
+  The hero card, tinted because it competes with the rows beneath it. Status, when and where are
+  quiet facts: their icons and plain text colour, no accent. It renders the counts and the answer
+  row itself, because the legend's matrix gives every cell that shows tags the answer row under
+  them, and a screen that had to remember to render all three would be a screen that can forget.
+%>
+<div id="<%= dom_id event, :next_up %>" class="card card-sm bg-base-200">
+  <div class="card-body gap-2">
+    <p class="text-xs">Next up · in <%= time_ago_in_words event.starts_at %></p>
+
+    <h2 class="card-title">
+      <%= link_to event.name, group_event_path(event.group, event), class: "link link-hover" %>
+    </h2>
+
+    <p class="flex items-center gap-1">
+      <%= status_icon event, class: "size-4" %><%= event_status_line event %>
+    </p>
+
+    <p class="flex items-center gap-1">
+      <%= icon :when, class: "size-4" %><%= event_schedule_range event %>
+    </p>
+
+    <% if event.address %>
+      <p class="flex items-center gap-1">
+        <%= icon :where, class: "size-4" %><%= link_to event.address.name, address_map_url(event.address), class: "link link-hover" %>
+      </p>
+    <% end %>
+
+    <%= render "events/counts", event: event %>
+
+    <% if (said_yes = said_yes_line(event)) %>
+      <p class="text-sm"><%= said_yes %></p>
+    <% end %>
+
+    <%= render "events/rsvp", event: event, registration: registration %>
+  </div>
+</div>
