@@ -35,10 +35,12 @@ module EventsHelper
     [ event.status.capitalize, (event.category unless event.other?) ].compact.join(" ")
   end
 
-  # Who has said yes, for the hero card's one line of names. Read from the loaded registrations
-  # rather than queried, so the card costs nothing beyond the preload the screen already does.
+  # Who has said yes, for the hero card's one line of names. Queried with the names preloaded
+  # rather than read off the loaded registrations: the hero is fetched by `Group#next_event`, which
+  # no screen's preload reaches, and `Member` gets its name through `user` - so selecting in memory
+  # walked two queries per answer.
   def said_yes_line(event)
-    names = event.registrations.select(&:yes?).map { it.member.full_name }
+    names = event.registrations.yes.includes(member: :profile).map { it.member.full_name }
 
     "#{names.to_sentence} said yes" if names.any?
   end
