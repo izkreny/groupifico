@@ -30,6 +30,38 @@ RSpec.describe "Events", type: :request do
         expect(response).to have_http_status :ok
       end
 
+      # The select is the screen's title as well as its filter, so what proves the title is there
+      # is the control's own two options rather than a heading above them.
+      it "titles the screen with the select that chooses between the two lists" do
+        member = create(:member, :active)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group)
+
+        expect(response.body).to include %(name="scope"), ">Upcoming events</option>", ">Past events</option>"
+        expect(response.body).to include %(<option selected="selected" value="upcoming">)
+      end
+
+      # Who may create an event is `EventPolicy#create?`, and a refused reader gets no control
+      # rather than a disabled one - so the assertion is the route's absence, not a class.
+      it "offers the New button to a reader who may create events" do
+        owner = create(:member, :owner)
+        sign_in_as(owner.user)
+
+        get group_events_path(owner.group)
+
+        expect(response.body).to include %(href="#{new_group_event_path(owner.group)}")
+      end
+
+      it "offers a plain member no New button" do
+        member = create(:member, :active)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group)
+
+        expect(response.body).not_to include %(href="#{new_group_event_path(member.group)}")
+      end
+
       it "lists only events from groups the acting user belongs to" do
         member = create(:member, :active)
         own_event = create(:event, group: member.group, creator: member)
@@ -136,7 +168,10 @@ RSpec.describe "Events", type: :request do
         end
       end
 
-      it "draws no count tags while every registration is still reserved" do
+      # Both halves of the nobody-asked state in one example, because they are one behaviour: the
+      # tags are absent and a sentence stands where they were. The negative alone was satisfied by
+      # a card that drew nothing there at all, which is what this state used to look like.
+      it "says nobody has been asked while every registration is still reserved" do
         freeze_time do
           owner = create(:member, :owner)
           next_up = confirmed_event(owner, days: 2)
@@ -145,9 +180,50 @@ RSpec.describe "Events", type: :request do
 
           get group_events_path(owner.group)
 
-          expect(response.body).to include "Next up · in 2 days"
+          expect(response.body).to include "Next up · in 2 days", "Nobody asked yet · 1 on the list"
           expect(response.body).not_to include "no reply"
         end
+      end
+    end
+
+    # A negative offset is what makes an event past: `confirmed_event` reads `days:` as a distance
+    # from now in either direction, and an event that started nine days ago ended seven days and
+    # twenty-two hours ago, which is what `Event.past` asks about.
+    context "when the past list is asked for" do
+      it "lists the group's past events newest first, with no hero card" do
+        member = create(:member, :active)
+        confirmed_event(member, days: 2, name: "Tuesday rehearsal")
+        confirmed_event(member, days: -9, name: "Spring concert")
+        confirmed_event(member, days: -2, name: "Summer gig")
+        sign_in_as(member.user)
+
+        get group_events_path(member.group, scope: "past")
+
+        expect(response.body).to match(/Summer gig.*Spring concert/m)
+        expect(response.body).not_to include "Next up", "Tuesday rehearsal"
+      end
+
+      # The select states which list is open, so a reader who lands on the past one by a typed URL
+      # sees the control agreeing with what is under it.
+      it "shows the past option as the select's own value" do
+        member = create(:member, :active)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group, scope: "past")
+
+        expect(response.body).to include %(<option selected="selected" value="past">)
+      end
+
+      # Anything that is not "past" is the upcoming list, which is what keeps a mistyped URL a
+      # screen rather than an error.
+      it "reads an unknown scope as the upcoming list" do
+        member = create(:member, :active)
+        confirmed_event(member, days: -2, name: "Summer gig")
+        sign_in_as(member.user)
+
+        get group_events_path(member.group, scope: "sideways")
+
+        expect(response.body).not_to include "Summer gig"
       end
     end
 
