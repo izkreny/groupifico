@@ -1,4 +1,10 @@
 class UsersController < ApplicationController
+  # Deleting the account cascades every membership, so `User` refuses while the reader is the last
+  # active owner of a group. It surfaces here as RecordNotDestroyed, and it is a refusal the reader
+  # can act on - hand the owner role over first - rather than a fault, so it gets a message instead
+  # of a 500. `MembersController` answers the same invariant from the group's end.
+  rescue_from ActiveRecord::RecordNotDestroyed, with: :refuse_ownerless_groups
+
   # Permanent, all four. Each reaches its record through `set_user`, which answers `Current.user`,
   # so the record is named by the caller's own signed cookie and never by the request: a policy
   # here would have one possible input and one possible answer. That is the argument
@@ -38,6 +44,13 @@ class UsersController < ApplicationController
   private
     def set_user
       @user = Current.user
+    end
+
+    def refuse_ownerless_groups
+      redirect_to user_path,
+        alert: "You still own #{@user.solely_owned_groups.map(&:name).to_sentence}. " \
+               "Give another member the owner role first.",
+        status: :see_other
     end
 
     def user_params

@@ -86,6 +86,49 @@ RSpec.describe "User", type: :request do
         # so `user_path` can never render for them. #179 fixes the controller.
         expect(response).to redirect_to user_path
       end
+
+      it "refuses while the reader is a group's only active owner, and says which group" do
+        member = create(:member, :owner)
+        sign_in_as(member.user)
+
+        expect { delete user_path }
+          .not_to change(User, :count)
+
+        expect(response).to redirect_to user_path
+        expect(flash[:alert]).to eq(
+          "You still own #{member.group.name}. Give another member the owner role first."
+        )
+      end
+
+      it "destroys the user when every group they own has another active owner" do
+        member = create(:member, :owner)
+        create(:member, :owner, group: member.group)
+        sign_in_as(member.user)
+
+        expect { delete user_path }
+          .to change(User, :count).by(-1)
+
+        expect(response).to redirect_to user_path
+      end
+    end
+  end
+
+  describe "GET /user (the block naming the groups still owned)" do
+    it "names each group the reader is the only active owner of" do
+      member = create(:member, :owner)
+      sign_in_as(member.user)
+
+      get user_path
+
+      expect(response.body).to include("You still own #{member.group.name}.")
+    end
+
+    it "says nothing where the reader owns no group alone" do
+      sign_in_as(create(:member).user)
+
+      get user_path
+
+      expect(response.body).not_to include("You still own")
     end
   end
 end
