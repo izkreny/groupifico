@@ -88,6 +88,29 @@ class Event < ApplicationRecord
   scope :ongoing,  -> { where(starts_at: ...Time.now).where(ends_at: Time.now..) }
   scope :past,     -> { where(ends_at: ...Time.now) }
 
+  # The tallies the event card draws, in one query, with a zero for a status nobody holds so the
+  # card draws the same tags whatever the answers are. `reserved` is not among them: a place held
+  # that nobody has been asked about is the absence of an answer rather than one, and it is the one
+  # status the card never counts.
+  #
+  # Ordered here rather than in the card, answers first and everything still unanswered after, so
+  # the set of counted statuses has one home: a view spelling the same four out again would keep
+  # drawing four after a sixth status arrived.
+  def answer_counts
+    tallies = registrations.group(:status).count
+    counted = Registration::ANSWERS + (Registration.statuses.keys - Registration::ANSWERS - [ "reserved" ])
+
+    counted.index_with { tallies.fetch(it, 0) }
+  end
+
+  # Which registration belongs to the reader, read from the loaded association rather than queried,
+  # so a list that preloads `registrations` answers it for every row without a query per row. A
+  # caller with no acting member gets nil, because `registrations.member_id` is `NOT NULL` and so
+  # matches nothing.
+  def registration_for(member)
+    registrations.find { it.member_id == member&.id }
+  end
+
   # TODO: add event's time_zone context
   def same_day?
     starts_at.to_date == ends_at.to_date

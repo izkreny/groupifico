@@ -55,6 +55,13 @@ class Group < ApplicationRecord
     Address.where(id: events.select(:address_id)).or(Address.where(id: address_id))
   end
 
+  # `confirmed` alone: an unconfirmed event is not yet a commitment and a canceled one is not an
+  # event, so neither belongs under a group's name. `status` defaults to `unconfirmed`, so a newly
+  # created event stays out of here until somebody confirms it.
+  def next_event
+    events.confirmed.upcoming.order(:starts_at).first
+  end
+
   # Whoever starts a group owns it, and both routes to a group say so through here rather than
   # each assembling the same member and role. The user arrives explicitly because only one of the
   # two callers has a session to read it from: `SignUp.redeem!` is creating the account in the

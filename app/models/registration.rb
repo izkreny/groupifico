@@ -41,4 +41,11 @@ class Registration < ApplicationRecord
   ANSWERS = %w[ yes maybe no ].freeze
 
   enum :status, %i[ reserved invited yes maybe no ], default: :reserved, validate: true
+
+  # Whether this member has said anything, asked by the event card to choose between the question
+  # and the answer it draws. The two unanswered statuses are not a "no": `reserved` is a place held
+  # before anybody was asked and `invited` is a question still waiting.
+  def answered?
+    ANSWERS.include?(status)
+  end
 end

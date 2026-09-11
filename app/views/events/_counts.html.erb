@@ -1,0 +1,17 @@
+<%# locals: (event:) %>
+<%#
+  Every tag the tally carries, in the order it carries them, so the counted statuses stay the
+  model's business alone. `invited` is the one whose label is not its own name: the legend calls
+  that tally "no reply", and an event nobody has been asked about sums to zero and draws nothing.
+%>
+<% counts = event.answer_counts %>
+<% if counts.values.any?(&:positive?) %>
+  <div class="flex flex-wrap gap-2">
+    <% counts.each do |status, count| %>
+      <span class="badge badge-sm gap-1">
+        <%= icon status, label: (status == "invited" ? "no reply" : status), class: "size-3.5" %>
+        <%= count %>
+      </span>
+    <% end %>
+  </div>
+<% end %>

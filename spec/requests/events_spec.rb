@@ -42,6 +42,132 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include(ActionView::RecordIdentifier.dom_id(other_event))
       end
     end
+
+    # Times are frozen because the card states the distance to the event in words, so "in 2 days"
+    # would otherwise depend on how long the suite takes to reach this file. What the freeze does
+    # not do is decide which hour it stops at, which is `confirmed_event`'s job below.
+    context "when the group has a next event" do
+      # The hero card, one row beneath it and the reader's own answer row: the three pieces the
+      # event card partials draw, asserted here rather than in a view spec because what a reader
+      # sees on this screen is the response's own text.
+      it "draws the hero card, a row beneath it and the question for an invited owner" do
+        freeze_time do
+          owner = create(:member, :owner)
+          next_up = confirmed_event(owner, name: "Tuesday rehearsal", category: :rehearsal, days: 2)
+          later = confirmed_event(owner, name: "Sunday service", days: 5)
+          create(:registration, event: next_up, member: owner, status: :invited)
+          sign_in_as(owner.user)
+
+          get group_events_path(owner.group)
+
+          expect(response.body).to include "Next up · in 2 days", "Tuesday rehearsal", "Confirmed rehearsal", "Are you coming?"
+          expect(response.body).to include ActionView::RecordIdentifier.dom_id(later)
+        end
+      end
+
+      it "draws the answer, the counts and the names for a plain member who has answered" do
+        freeze_time do
+          member = create(:member, :active, user: create(:user, :with_full_profile, first_name: "Carla", last_name: "Dean"))
+          next_up = confirmed_event(member, days: 2)
+          create(:registration, event: next_up, member:, status: :yes)
+          sign_in_as(member.user)
+
+          get group_events_path(member.group)
+
+          expect(response.body).to include "Your answer:", "no reply", "Carla Dean said yes"
+          expect(response.body).not_to include "Are you coming?"
+        end
+      end
+
+      # The row's own answer is an icon and nothing else, so what it carries is the icon's name.
+      # The clock is left alone here, unlike the examples around it: this one asserts no copy that
+      # states a distance in time, and every event it creates is upcoming at whatever hour it runs.
+      it "shows the reader's answer as an icon on a compact row, and nothing where there is none" do
+        member = create(:member, :active)
+        confirmed_event(member, days: 2)
+        answered_row = confirmed_event(member, days: 5)
+        asked_row = confirmed_event(member, days: 7)
+        create(:registration, event: answered_row, member:, status: :maybe)
+        create(:registration, event: asked_row, member:, status: :invited)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group)
+
+        expect(response.body).to include "your answer: maybe"
+        expect(response.body).not_to include "your answer: invited"
+      end
+
+      # The pills themselves rather than the copy above them: three forms, one target, one value
+      # each, and the reader's own answer lit. Without this the header carried both the positive
+      # and the negative assertion, so a card with no pills under it read as correct.
+      #
+      # The lit pill is matched by the class and the label in one tag rather than by the class
+      # alone, which any of the three carrying it would satisfy - so inverting the condition that
+      # lights it lights the other two and this still reddens. It stops at `</button>` and claims
+      # nothing about what follows: `button_to` puts its CSRF token there, empty only because this
+      # environment has forgery protection off.
+      # The clock is left alone, as in the row example: nothing here reads it.
+      it "draws the three pills as forms writing the reader's own registration" do
+        member = create(:member, :active)
+        next_up = confirmed_event(member, days: 2)
+        registration = create(:registration, event: next_up, member:, status: :maybe)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group)
+
+        expect(response.body).to include %(action="#{group_event_registration_path(member.group, next_up, registration)}")
+        expect(response.body).to include %(name="_method" value="patch")
+        expect(response.body).to include %(name="registration[status]" value="yes"), %(name="registration[status]" value="maybe"), %(name="registration[status]" value="no")
+        expect(response.body).to match %r{btn-primary[^>]*>\s*Maybe\s*</button>}
+      end
+
+      it "leaves the pills out for a paused member, who may not write an answer" do
+        freeze_time do
+          member = create(:member, :paused)
+          next_up = confirmed_event(member, days: 2)
+          registration = create(:registration, event: next_up, member:, status: :invited)
+          sign_in_as(member.user)
+
+          get group_events_path(member.group)
+
+          expect(response.body).to include "Next up · in 2 days"
+          expect(response.body).not_to include "Are you coming?"
+          expect(response.body).not_to include %(action="#{group_event_registration_path(member.group, next_up, registration)}")
+        end
+      end
+
+      it "draws no count tags while every registration is still reserved" do
+        freeze_time do
+          owner = create(:member, :owner)
+          next_up = confirmed_event(owner, days: 2)
+          create(:registration, event: next_up, member: owner, status: :reserved)
+          sign_in_as(owner.user)
+
+          get group_events_path(owner.group)
+
+          expect(response.body).to include "Next up · in 2 days"
+          expect(response.body).not_to include "no reply"
+        end
+      end
+    end
+
+    context "when the group's only upcoming event is unconfirmed" do
+      # What a wrong filter looks like from the reader's side: an unconfirmed event is not a
+      # commitment, so no card is drawn at all. A model spec cannot show this - `#next_event`
+      # answering the wrong record and the card being drawn anyway are the same thing there.
+      it "draws no hero card" do
+        freeze_time do
+          owner = create(:member, :owner)
+          create(:event, group: owner.group, creator: owner, status: :unconfirmed,
+            starts_at: 2.days.from_now, ends_at: 2.days.from_now + 1.hour)
+          sign_in_as(owner.user)
+
+          get group_events_path(owner.group)
+
+          expect(response.body).not_to include "Next up"
+        end
+      end
+    end
   end
 
   describe "GET /groups/:group_id/events/:id" do
@@ -557,5 +683,24 @@ RSpec.describe "Events", type: :request do
 
       expect(response).to have_http_status :not_found
     end
+  end
+
+  # The card states its own copy, so the examples above need an event with a fixed name, place and
+  # offset rather than the factory's random ones. `status:` is named because the base factory
+  # leaves it at the model default, `unconfirmed`, which `Group#next_event` deliberately excludes.
+  #
+  # The offset is exact, never an hour of its own day. The kicker rounds the distance to the
+  # nearest day, so an event pinned to 19:00 is "in 2 days" or "in 3 days" depending on the hour
+  # the suite starts at, and `freeze_time` cannot help: it stops the clock rather than setting it.
+  def confirmed_event(member, days:, name: "Autumn concert", category: :other)
+    create(:event,
+      group: member.group,
+      creator: member,
+      name: name,
+      category: category,
+      status: :confirmed,
+      address: create(:address, name: "Community Hall"),
+      starts_at: days.days.from_now,
+      ends_at: days.days.from_now + 2.hours)
   end
 end

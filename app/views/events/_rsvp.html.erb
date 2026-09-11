@@ -1,0 +1,30 @@
+<%# locals: (event:, registration: nil) %>
+<%#
+  The reader's own row, in the two states that are a question or an answer. A `reserved`
+  registration draws nothing: it is a place held before anybody was asked, and the legend reads
+  that absence as the state rather than as a question waiting. No registration draws nothing
+  either, and so does one the policy will not let this reader write.
+%>
+<% asked = registration&.invited? || registration&.answered? %>
+<% if asked && allowed_to?(:update?, registration) %>
+  <div class="space-y-1">
+    <p class="text-sm"><%= registration.answered? ? "Your answer:" : "Are you coming?" %></p>
+
+    <div class="join">
+      <% Registration::ANSWERS.each do |answer| %>
+        <% current = registration.status == answer %>
+        <%= button_to group_event_registration_path(event.group, event, registration),
+              method: :patch,
+              params: { registration: { status: answer } },
+              class: "join-item btn btn-sm#{" btn-primary" if current}",
+              aria: (current ? { current: "true" } : {}) do %>
+          <%= answer.capitalize %>
+        <% end %>
+      <% end %>
+    </div>
+
+    <% unless registration.answered? %>
+      <p class="text-xs">Asked <%= time_ago_in_words(registration.updated_at) %> ago · no answer yet</p>
+    <% end %>
+  </div>
+<% end %>

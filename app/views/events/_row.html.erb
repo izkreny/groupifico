@@ -1,0 +1,23 @@
+<%# locals: (event:, registration: nil) %>
+<%#
+  The compact row: the status as its icon alone, the name, and one meta line. No count tags and no
+  answer row - the legend's matrix gives a row the reader's own reply as an icon and nothing else,
+  because the row competes with every other row beneath it.
+%>
+<li id="<%= dom_id event %>" class="list-row">
+  <%= status_icon event, label: event.status, class: "size-5" %>
+
+  <div>
+    <%= link_to event.name, group_event_path(event.group, event), class: "link link-hover" %>
+    <% if registration&.answered? %>
+      <%= status_icon registration, label: "your answer: #{registration.status}", class: "size-4 inline-block align-text-bottom" %>
+    <% end %>
+
+    <div class="text-xs">
+      <%= event_schedule_start(event) %>
+      <% if event.address %>
+        · <%= link_to event.address.name, address_map_url(event.address), class: "link link-hover" %>
+      <% end %>
+    </div>
+  </div>
+</li>

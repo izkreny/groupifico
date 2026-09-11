@@ -6,7 +6,14 @@ class EventsController < ApplicationController
   def index
     authorize! @group, to: :show?
 
-    @events = authorized_scope(@group.events) # TODO: upcoming, past, ongoing, with filters
+    # Preloaded because every row asks the event for the reader's own registration and its place,
+    # and `Event#registration_for` reads the loaded association: without this the list costs a
+    # query per row for each.
+    @events = authorized_scope(@group.events).includes(:address, :registrations) # TODO: upcoming, past, ongoing, with filters
+
+    # The group decides which event is next, not the list: the filter is `Group#next_event`'s, and
+    # picking it out of `@events` here would be that rule written a second time.
+    @next_event = @group.next_event
   end
 
   def show
