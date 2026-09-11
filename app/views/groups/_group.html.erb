@@ -3,9 +3,13 @@
   One group on the index. The whole card is the link rather than a control inside it, so the tap
   target is the thing a finger aims at.
 
-  The tag says what the reader *is* in this group, never what they may do: an administrator carries
+  The tags say what the reader *is* in this group, never what they may do: an administrator carries
   none, because a capability is not a standing. `membership` arrives as a local because the index
   loads the reader's memberships once - a card that looked its own up would cost a query each.
+
+  Two independent `if`s rather than an `if`/`elsif`, matching `layouts/_group_switcher`: owner and
+  paused are separate facts, and a group with a second active owner lets the first pause and hold
+  both. An `elsif` there told such a reader they own the group and never that they are paused.
 
   `bg-base-200` is not decoration: a bare `card` paints `base-100`, the same colour as the page
   behind it, so the card has no edge at all - `spec/system/groups_index_spec.rb` scores it exactly
@@ -19,8 +23,10 @@
 
       <% if membership&.owner? %>
         <span class="badge badge-sm">owner</span>
-      <% elsif membership&.paused? %>
-        <span class="badge badge-sm badge-ghost">paused</span>
+      <% end %>
+
+      <% if membership&.paused? %>
+        <span class="badge badge-ghost badge-sm">paused</span>
       <% end %>
     </h2>
 

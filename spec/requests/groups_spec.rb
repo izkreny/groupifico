@@ -53,6 +53,23 @@ RSpec.describe "Groups", type: :request do
         expect(response.body).to include ">paused<"
       end
 
+      # Owner and paused are separate facts, and a group with a second active owner lets the first
+      # pause and hold both - `Member#group_keeps_an_active_owner` permits it. Neither example above
+      # reaches the combination, and an `if`/`elsif` passes both of them while telling such a reader
+      # only that they own the group.
+      it "tags a paused owner with both" do
+        group = create(:group)
+        create(:member, :owner, group:)
+        member = create(:member, :owner, group:)
+        member.update!(status: :paused)
+        sign_in_as(member.user)
+
+        get groups_path
+
+        expect(response.body).to include ">owner<"
+        expect(response.body).to include ">paused<"
+      end
+
       # An administrator administers members, which is a capability rather than a standing, and the
       # card says what the reader is. Watched failing against a tag drawn from `can_manage?`.
       it "tags an administrator with neither" do
