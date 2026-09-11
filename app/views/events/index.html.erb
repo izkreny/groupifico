@@ -11,13 +11,13 @@
         above it would say the same thing twice. `aria-label` is then the whole of its accessible
         name, and `be_accessible` is the gate that says so.
 
-        `w-auto` against the component's own 320px, so the pill hugs its value the way the frames
-        draw it; the type rung is the frames' too, which put this control and a compact row's title
-        on the same one. %>
+        Its width and its type size are the component's own. The surface and the radius are not:
+        the issue asks for a pill, and both are plain utilities over a component daisyUI leaves
+        square. %>
     <%= form_with url: group_events_path(@group), method: :get, data: { controller: "form" } do %>
       <%= select_tag :scope,
             options_for_select([ [ "Upcoming events", "upcoming" ], [ "Past events", "past" ] ], @past ? "past" : "upcoming"),
-            class: "select select-ghost bg-base-200 rounded-full w-auto text-row-title",
+            class: "select select-ghost bg-base-200 rounded-full",
             aria: { label: "Which events to show" },
             data: { action: "change->form#submit" } %>
     <% end %>
