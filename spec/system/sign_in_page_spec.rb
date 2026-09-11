@@ -26,8 +26,14 @@ RSpec.describe "The sign-in page", type: :system do
   # flex item keeps its box inside the column while its text runs off the screen, so `paint` is
   # happy, axe is quiet, and the reader scrolls sideways. `ViewportHelper#horizontal_overflow`
   # carries the measurement that put this here.
+  #
+  # Resized and then visited again, never resized on a page already laid out: narrowing an open
+  # page raises a vertical scrollbar without reflowing what is under it, and the 15px gutter reads
+  # as overflow. `spec/system/groups_index_spec.rb` states its width before visiting for the same
+  # reason, and this is the order every width example in the suite keeps.
   it "does not scroll sideways at phone width" do
     resize_to ViewportHelper::MOBILE
+    visit new_session_path
 
     expect(horizontal_overflow).to eq 0
   end

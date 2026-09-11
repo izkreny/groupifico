@@ -21,9 +21,10 @@ RSpec.describe "Creating a group", type: :system do
     # its hint with daisyUI's `label` - the nowrap component every other screen here had taken off
     # it. The group-name hint fits today, 281px of text in 358px, so this guards the mechanism
     # rather than a live defect. `spec/system/sign_in_page_spec.rb` carries why no other matcher
-    # sees it.
+    # sees it, and why the width is stated before the page is opened rather than after.
     it "does not scroll sideways at phone width" do
       resize_to ViewportHelper::MOBILE
+      visit new_sign_up_path
 
       expect(horizontal_overflow).to eq 0
     end
@@ -47,8 +48,10 @@ RSpec.describe "Creating a group", type: :system do
   end
 
   describe "the page the confirmation link opens" do
+    let(:link) { sign_up_confirmation_path(token: SignUp.mint(email: "starter@example.com", group_name: "Riverside Choir")) }
+
     before do
-      visit sign_up_confirmation_path(token: SignUp.mint(email: "starter@example.com", group_name: "Riverside Choir"))
+      visit link
     end
 
     it "paints the button that creates the group" do
@@ -62,8 +65,15 @@ RSpec.describe "Creating a group", type: :system do
     # `spec/system/sign_in_page_spec.rb` carries why this is a separate assertion from the two
     # above. This screen's heading names an address and a group name, so it is the one most likely
     # to grow past the column later.
+    #
+    # Both values are literals, and long ones: an email has no break opportunity in it and a group
+    # name need not either, so this heading's fit is decided by their length and nothing else.
+    # `spec/system/authentication_spec.rb` carries why a factory's value would make the guard pass
+    # or fail by running order.
     it "does not scroll sideways at phone width" do
       resize_to ViewportHelper::MOBILE
+      visit sign_up_confirmation_path(token: SignUp.mint(
+        email: "kassandra.wetherington.blythe@example.com", group_name: "Riverside Chamber Choir"))
 
       expect(horizontal_overflow).to eq 0
     end

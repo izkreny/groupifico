@@ -3,7 +3,7 @@
 <div class="flex flex-col gap-5">
   <%# The account is named so a link somebody else sent you is recognisable, which is the whole
       reason this GET renders a page instead of signing anybody in. %>
-  <h1 class="text-record">Sign in as <%= @sign_in_token.user.email %></h1>
+  <h1 class="text-record break-words">Sign in as <%= @sign_in_token.user.email %></h1>
 
   <div class="inline">
     <%= button_to "Sign in", sign_in_path, class: "btn btn-primary" %>
