@@ -8,7 +8,6 @@ class SignInsController < ApplicationController
   # nobody chose for it - the reason `SessionsController` gives for naming its own.
   skip_verify_authorized only: %i[ show create ]
 
-  # The signed-out shell; `SessionsController` carries why it is a line here rather than a concern.
   layout "entry"
 
   # Says nothing about which of the four failures it was - unknown digest, already spent, expired,

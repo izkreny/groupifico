@@ -5,7 +5,6 @@ class SignUpConfirmationsController < ApplicationController
   # authenticated at all, so there is nobody to authorize against yet.
   skip_verify_authorized only: %i[ show create ]
 
-  # The signed-out shell; `SessionsController` carries why it is a line here rather than a concern.
   layout "entry"
 
   # Says nothing about which failure it was - unknown digest, already spent, expired, malformed -
