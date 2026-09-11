@@ -33,7 +33,7 @@ So both helpers take the group. `SECTION_ROOTS[:home]` stays `groups#show`, the 
 - Teach `ApplicationHelper#pushed_screen?` and `#section_root_path` the group-less home section, pass the group to both from `layouts/application`, and extend `spec/helpers/application_helper_spec.rb` with the `groups#new` and `groups#index` cases.
 - Add `AppFormBuilder#segmented_field`, correct the `unattached_error_messages` comment, and cover the new method in `spec/form_builders/app_form_builder_spec.rb`.
 - Add `AddressesHelper#address_summary`, the street, postcode and city of a persisted address as one line, with a helper spec.
-- Rebuild `groups/_form.html.erb`: Name, the type as a segmented control on a new group and as read-only text on a persisted one, Description, and a "Where you meet" block that is `addresses/form_fields` on a group whose address is unsaved and the summary with its pencil when it is persisted.
+- Rebuild `groups/_form.html.erb`: Name, the type as a segmented control on a new group and as read-only text on a persisted one, Description, and a "Where you meet" block that draws Name, Street and number and City on a group whose address is unsaved and the summary with its pencil when it is persisted.
 - Rebuild `groups/new.html.erb`: the "New group" title row through `shared/page_header`, the form, and Cancel to the groups index.
 - Rebuild `groups/edit.html.erb`: the form, Cancel to the group home, and `shared/confirm_sheet` for Delete group below it, gated on `allowed_to?(:destroy?, @group)`.
 - Preselect the type in `GroupsController#new`, `Group.new(group_type: Current.brand.group_type)`.
@@ -45,18 +45,17 @@ Every step that writes markup goes through the daisyUI Blueprint MCP server firs
 
 ## Verification
 
-- [ ] `bin/ci` is green
-- [ ] `bin/rspec spec/system/group_form_spec.rb` passes, and each new example is watched failing once before it is trusted
+- `bin/ci` is green
+- `bin/rspec spec/system/group_form_spec.rb` passes, and each new example is watched failing once before it is trusted
 
 `bin/ci` is the only gate the browser suite has, since nothing reports it to GitHub. What no gate here can see: whether the segmented control reads as one control to a person rather than three buttons, and whether the address summary says enough for an owner to recognise the place without opening it.
 
 ## Open questions
 
-- The first criterion names five address fields and the technical notes say to render `addresses/_form_fields` without editing it; that partial draws nine, including the two coordinates. It is rendered unedited, so `new` shows nine. #255 owns that partial and sits in the RC milestone.
-- Delete group lands on `edit` while `groups/show` still carries its own, until #247 removes it. The interim duplication is deliberate rather than overlooked, and `spec/system/confirm_sheet_spec.rb` keeps visiting the group home.
-- The submit labels become "Create group" and "Save changes", which renames the buttons `spec/system/group_refusal_spec.rb` clicks. That file is updated with them.
-- The read-only type on `edit` is text rather than a disabled control, so nothing for `group_type` is submitted on update at all. `Group`'s `before_validation` is `on: :create`, so the stored type is untouched.
+None.
 
 ## Settled
 
-None yet.
+- Which address fields the nested block draws, given that the criterion named five and `addresses/_form_fields` draws nine. It draws Name, Street and number and City; #255 finishes the address screens, and this form does not wait for it.
+- Whether Delete group appearing on `edit` while `groups/show` still carries its own is a problem before #247 removes that one. It is not; the duplication is deliberate and `spec/system/confirm_sheet_spec.rb` keeps visiting the group home.
+- Whether the submit labels should become "Create group" and "Save changes", which renames the buttons `spec/system/group_refusal_spec.rb` clicks. They should, and that file is updated with them.
