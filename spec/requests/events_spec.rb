@@ -261,7 +261,7 @@ RSpec.describe "Events", type: :request do
     # `Group#next_event` is `confirmed.upcoming`, which an event already under way is not, so it
     # draws as a row and the delimited id is what says so.
     context "when an event is under way" do
-      it "keeps it on the upcoming list and off the past one" do
+      it "keeps it on the upcoming list" do
         member = create(:member, :active)
         running = create(:event, group: member.group, creator: member, status: :confirmed,
           starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
