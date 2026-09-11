@@ -43,5 +43,14 @@ RSpec.describe "Authentication", type: :system do
     it "has no accessibility violations" do
       expect(page).to be_accessible
     end
+
+    # The screen that carries the longest sentence in the flow, and the one the overflow this
+    # guards against bit hardest: 304px past a 390px viewport. `spec/system/sign_in_page_spec.rb`
+    # carries why no other matcher sees it.
+    it "does not scroll sideways at phone width" do
+      resize_to ViewportHelper::MOBILE
+
+      expect(horizontal_overflow).to eq 0
+    end
   end
 end

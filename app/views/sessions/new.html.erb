@@ -21,5 +21,10 @@
     </div>
   <% end %>
 
-  <p class="label">No passwords. The link in the mail signs you in on this device.</p>
+  <%# `text-meta`, never daisyUI's `label`. That component is `display: flex` with
+      `white-space: nowrap`, which is right for a word beside a control and wrong for a sentence:
+      measured at 390px, this line overflowed the viewport by 79px carrying it. Only the browser
+      knows - the element's own box stays inside the column while its text runs past the edge, so
+      `getBoundingClientRect` reports nothing wrong. %>
+  <p class="text-meta">No passwords. The link in the mail signs you in on this device.</p>
 </div>

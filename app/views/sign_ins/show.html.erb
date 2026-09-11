@@ -10,8 +10,10 @@
   </div>
 
   <%# Copy, not a route: closing the page leaves the link unspent until it expires, so there is
-      nowhere for a link here to lead. %>
-  <p class="label">Not you? Just close this page</p>
+      nowhere for a link here to lead.
 
-  <p class="label">Opening the link did nothing yet. Only this button signs you in, and the link then stops working.</p>
+      `text-meta` rather than daisyUI's `label`; `sessions/new` carries the measurement. %>
+  <p class="text-meta">Not you? Just close this page</p>
+
+  <p class="text-meta">Opening the link did nothing yet. Only this button signs you in, and the link then stops working.</p>
 </div>

@@ -48,6 +48,15 @@ RSpec.describe "Creating a group", type: :system do
       expect(page).to be_accessible
     end
 
+    # `spec/system/sign_in_page_spec.rb` carries why this is a separate assertion from the two
+    # above. This screen's heading names an address and a group name, so it is the one most likely
+    # to grow past the column later.
+    it "does not scroll sideways at phone width" do
+      resize_to ViewportHelper::MOBILE
+
+      expect(horizontal_overflow).to eq 0
+    end
+
     # The one navigation in this flow a request spec cannot make: the button spends the link and
     # lands on the group it just created.
     it "lands on the new group" do

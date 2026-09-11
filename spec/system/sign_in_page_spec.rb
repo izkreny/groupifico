@@ -22,6 +22,16 @@ RSpec.describe "The sign-in page", type: :system do
     expect(page).to be_accessible
   end
 
+  # The third thing only a browser knows, and the one neither matcher above reaches: a `nowrap`
+  # flex item keeps its box inside the column while its text runs off the screen, so `paint` is
+  # happy, axe is quiet, and the reader scrolls sideways. `ViewportHelper#horizontal_overflow`
+  # carries the measurement that put this here.
+  it "does not scroll sideways at phone width" do
+    resize_to ViewportHelper::MOBILE
+
+    expect(horizontal_overflow).to eq 0
+  end
+
   # Named for what it asserts. That the answer is identical whether or not the address has an
   # account is `spec/requests/sessions_spec.rb`'s to prove, and nothing here reads the copy.
   it "paints the notice after a submission" do
