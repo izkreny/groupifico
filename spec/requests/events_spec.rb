@@ -256,6 +256,32 @@ RSpec.describe "Events", type: :request do
       end
     end
 
+    # The empty state, one sentence per list, asserted both ways round: the positive alone was
+    # satisfied by a screen carrying both sentences, and the negative alone by a screen carrying
+    # neither. Swapping the two literals reddens both examples, which is the mutation the pair
+    # exists for.
+    context "when the group has nothing on the list being asked for" do
+      it "says nothing is coming up on an empty upcoming list" do
+        member = create(:member, :active)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group)
+
+        expect(response.body).to include "Nothing coming up."
+        expect(response.body).not_to include "No past events."
+      end
+
+      it "says there are no past events on an empty past list" do
+        member = create(:member, :active)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group, scope: "past")
+
+        expect(response.body).to include "No past events."
+        expect(response.body).not_to include "Nothing coming up."
+      end
+    end
+
     context "when the group's only upcoming event is unconfirmed" do
       # What a wrong filter looks like from the reader's side: an unconfirmed event is not a
       # commitment, so no card is drawn at all. A model spec cannot show this - `#next_event`
