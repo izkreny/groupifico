@@ -46,6 +46,71 @@ RSpec.describe User, type: :model do
     end
   end
 
+  describe "#solely_owned_groups" do
+    it "answers a group whose only active owner is this user" do
+      member = create(:member, :owner)
+
+      expect(member.user.solely_owned_groups).to contain_exactly(member.group)
+    end
+
+    it "answers a group whose other owner is paused, who cannot restore themselves" do
+      member = create(:member, :owner)
+      create(:member, :owner, :paused, group: member.group)
+
+      expect(member.user.solely_owned_groups).to contain_exactly(member.group)
+    end
+
+    it "answers every group the user owns alone, because each one has to be handed over" do
+      member = create(:member, :owner)
+      second = create(:member, :owner, user: member.user)
+
+      expect(member.user.solely_owned_groups).to contain_exactly(member.group, second.group)
+    end
+
+    it "omits a group with a second active owner" do
+      member = create(:member, :owner)
+      create(:member, :owner, group: member.group)
+
+      expect(member.user.solely_owned_groups).to be_empty
+    end
+
+    it "omits a group the user belongs to without the owner role" do
+      member = create(:member)
+      create(:member, :owner, group: member.group)
+
+      expect(member.user.solely_owned_groups).to be_empty
+    end
+
+    it "omits a group the user owns from a membership that is no longer active" do
+      member = create(:member, :owner, :inactive)
+
+      expect(member.user.solely_owned_groups).to be_empty
+    end
+  end
+
+  describe "(the last owner's account)" do
+    it "refuses to be destroyed, leaving the user and every membership standing" do
+      member = create(:member, :owner)
+
+      expect(member.user.destroy).to be(false)
+      expect(described_class.exists?(member.user_id)).to be(true)
+      expect(Member.exists?(member.id)).to be(true)
+    end
+
+    it "is destroyed when every group it owns has another active owner" do
+      member = create(:member, :owner)
+      create(:member, :owner, group: member.group)
+
+      expect { member.user.destroy }.to change(described_class, :count).by(-1)
+    end
+
+    it "is destroyed when it owns no group at all" do
+      user = create(:member).user
+
+      expect { user.destroy }.to change(described_class, :count).by(-1)
+    end
+  end
+
   describe "(profile creation invariant)" do
     it "builds and persists a profile automatically when created" do
       user = create(:user)
