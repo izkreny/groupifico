@@ -61,6 +61,16 @@ Frame 4h draws a pencil on every compact row for an owner. `events/_row` omits i
 
 Frame 4n's "Invite everyone" button is row 14's by the issue's own technical notes.
 
+## The hero, when something is already running
+
+Added after the round, on the owner's decision in RF6's thread. The list now carries an event between its start and its end, and the hero went on advertising the next one, so the screen's largest element named a later event than the one the reader was at.
+
+`Group#featured_event` is `events.confirmed.unfinished.order(:starts_at).first`: `next_event` with `unfinished` in place of `upcoming`. It needs no fallback branch, because an event already running has a `starts_at` in the past and so sorts ahead of every upcoming one. Both hero sites read it, `events#index` and `groups#show`, because leaving the group home on `next_event` would recreate the same disagreement one screen over.
+
+`Group#next_event` stays as it is. The groups index card reads it through `GroupsHelper#next_event_line`, whose copy is "next: Tue 2 Sep", and a running event is not a date to look forward to.
+
+The card's kicker becomes `EventsHelper#event_kicker`, over a new `Event#ongoing?` mirroring the scope: "Next up · in 2 days" as before, or "Happening now · ends in about 2 hours" while it runs. The old line counted with `time_ago_in_words(starts_at)`, which for a started event counts the wrong way.
+
 ## Steps
 
 - Load the `daisyui-blueprint-mcp` skill, then run the Blueprint MCP sequence under one workflow id for the whole issue: setup expert, rules enforcer, and component syntax expert for `select`, `btn`, `card`, `list` and `badge`.
@@ -75,6 +85,9 @@ Frame 4n's "Invite everyone" button is row 14's by the issue's own technical not
 - Watch the new system examples fail: break the select's component class and see the paint assertion redden rather than the copy assertion.
 - Run the Blueprint quality inspector with `auditIntent: "fix_changes"` over the changed templates, and judge its findings against the `daisyui-blueprint-mcp` skill.
 - Verify the screen in headless Chromium per the `browser-verification` skill, in both themes and at both widths, reading the select's accessible name off the accessibility tree.
+- Add `Event#ongoing?`, `Group#featured_event` and `EventsHelper#event_kicker`, and point `events#index`, `groups#show` and `events/_next_up` at them.
+- Extend `spec/models/group_spec.rb` for `#featured_event`, `spec/models/event_spec.rb` for `#ongoing?` and `spec/helpers/events_helper_spec.rb` for the kicker's two readings.
+- Rewrite the running-event request example, which inverts once a running event becomes the hero, and add the one that proves the hero defers to it.
 - Run `bin/ci`.
 
 ## Verification
@@ -88,8 +101,8 @@ What these gates cannot see: whether the select is usable with JavaScript off, w
 ## Open questions
 
 - Frames 4h, 4n and 4i put the "Are you coming?" block inside the invited *row* it belongs to, not below the list for the next event, and under the literal criterion frame 4n's nobody-asked state draws no pills at all; implemented as the criterion words it, so say if the frame was the intent.
-- An event that has started and not yet ended is in neither `Event.upcoming` nor `Event.past`, so it disappears from both lists where today's unfiltered list shows it; recommend folding `Event.ongoing` into the upcoming list, left out here because the criterion names `upcoming`.
 
 ## Settled
 
-None yet.
+- An event that has started and not yet ended was in neither `Event.upcoming` nor `Event.past`, so it disappeared from both lists. Decided in RF1's thread: the upcoming list carries it, through `Event.unfinished`, which is the exact complement of `past`.
+- The hero then advertised a later event than the running one directly beneath it. Decided in RF6's thread: the hero shows the running event, with its own kicker, and both hero sites follow the same rule.
