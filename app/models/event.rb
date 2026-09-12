@@ -120,6 +120,13 @@ class Event < ApplicationRecord
     registrations.find { it.member_id == member&.id }
   end
 
+  # The `ongoing` scope asked of one record, for the card that has to word itself differently while
+  # an event is running. Mirrors the scope rather than calling it, because a card holds the event
+  # it is drawing and a query to ask whether that event is the one in its own hand is a query.
+  def ongoing?
+    starts_at.past? && ends_at.future?
+  end
+
   # TODO: add event's time_zone context
   def same_day?
     starts_at.to_date == ends_at.to_date

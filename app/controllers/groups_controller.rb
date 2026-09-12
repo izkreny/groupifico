@@ -22,7 +22,7 @@ class GroupsController < ApplicationController
     # The group decides which event is next, not the screen - the same reading `events#index` takes.
     # No preload: the hero's "said yes" line queries with the names included itself, and its counts
     # are one grouped query, so the only association a screen leaves it to load is `registrations`.
-    @next_event = @group.next_event
+    @next_event = @group.featured_event
   end
 
   def new

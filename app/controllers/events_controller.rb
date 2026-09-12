@@ -22,16 +22,14 @@ class EventsController < ApplicationController
     # happened to return, which is the same list in a different sequence on a different day.
     #
     # `unfinished` rather than `upcoming`, so the two lists partition the group's events between
-    # them: an event a group is in the middle of is still ahead of its members. `Group#next_event`
-    # keeps the narrower `upcoming`, because a hero card that counts down to an event already under
-    # way would be counting the wrong way.
+    # them: an event a group is in the middle of is still ahead of its members.
     events = authorized_scope(@group.events).includes(:address, :registrations)
     @events = @past ? events.past.order(starts_at: :desc) : events.unfinished.order(:starts_at)
 
-    # The group decides which event is next, not the list: the filter is `Group#next_event`'s, and
-    # picking it out of `@events` here would be that rule written a second time. A past list has no
-    # next event, so it is not asked for one.
-    @next_event = @group.next_event unless @past
+    # The group decides which event the hero draws, not the list: the filter is
+    # `Group#featured_event`'s, and picking it out of `@events` here would be that rule written a
+    # second time. A past list has no such event, so it is not asked for one.
+    @next_event = @group.featured_event unless @past
   end
 
   def show

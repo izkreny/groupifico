@@ -28,6 +28,18 @@ module EventsHelper
     day_and_time(event.starts_at)
   end
 
+  # The hero card's first line, which has two readings because the card now draws an event that has
+  # already begun. The countdown is `time_ago_in_words`, which measures a distance and never a
+  # direction, so pointing it at `starts_at` once the event has started counts the wrong way; while
+  # it runs, the distance worth stating is the one to the end.
+  def event_kicker(event)
+    if event.ongoing?
+      "Happening now#{DOT}ends in #{time_ago_in_words event.ends_at}"
+    else
+      "Next up#{DOT}in #{time_ago_in_words event.starts_at}"
+    end
+  end
+
   # Status and category on one line, the way every hero card and detail screen draws them. The
   # category is folded in rather than tagged separately, and `other` is the category that says
   # nothing, so it leaves the status standing alone.

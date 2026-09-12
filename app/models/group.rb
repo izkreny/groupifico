@@ -68,6 +68,18 @@ class Group < ApplicationRecord
     events.confirmed.upcoming.order(:starts_at).first
   end
 
+  # What the hero card draws: the event already running where there is one, and the soonest
+  # upcoming event otherwise. `next_event` with `unfinished` in place of `upcoming`, and no
+  # fallback branch is needed for the pair - a running event's `starts_at` is in the past, so it
+  # sorts ahead of every event that has not begun.
+  #
+  # `next_event` stays narrower rather than being widened in place, because the groups index reads
+  # it through `GroupsHelper#next_event_line` to say "next: Tue 2 Sep", and an event happening now
+  # is not a date to look forward to.
+  def featured_event
+    events.confirmed.unfinished.order(:starts_at).first
+  end
+
   # Whoever starts a group owns it, and both routes to a group say so through here rather than
   # each assembling the same member and role. The user arrives explicitly because only one of the
   # two callers has a session to read it from: `SignUp.redeem!` is creating the account in the

@@ -263,6 +263,26 @@ RSpec.describe Event, type: :model do
     end
   end
 
+  describe "#ongoing?" do
+    it "is true between the event's start and its end" do
+      freeze_time do
+        expect(build(:event, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)).to be_ongoing
+      end
+    end
+
+    it "is false before it starts" do
+      freeze_time do
+        expect(build(:event, starts_at: 1.hour.from_now, ends_at: 2.hours.from_now)).not_to be_ongoing
+      end
+    end
+
+    it "is false once it has ended" do
+      freeze_time do
+        expect(build(:event, starts_at: 2.hours.ago, ends_at: 1.hour.ago)).not_to be_ongoing
+      end
+    end
+  end
+
   describe "#same_day?" do
     context "when the event starts and ends on the same day" do
       it "returns true" do

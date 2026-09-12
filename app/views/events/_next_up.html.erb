@@ -12,7 +12,7 @@
 %>
 <div id="<%= dom_id event, :next_up %>" class="card card-sm bg-base-200">
   <div class="card-body gap-2">
-    <p class="text-xs">Next up · in <%= time_ago_in_words event.starts_at %></p>
+    <p class="text-xs"><%= event_kicker event %></p>
 
     <h2 class="card-title">
       <%= link_to event.name, group_event_path(event.group, event), class: "link link-hover" %>

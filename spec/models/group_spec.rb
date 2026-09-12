@@ -155,6 +155,52 @@ RSpec.describe Group, type: :model do
   end
 
   # Times are frozen so "upcoming" cannot depend on how long the suite takes to reach this file.
+  describe "#featured_event" do
+    it "is the event already running, ahead of one that starts sooner than it ends" do
+      freeze_time do
+        group = create(:group)
+        creator = create(:member, group:)
+        create(:event, group:, creator:, status: :confirmed, starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour)
+        running = create(:event, group:, creator:, status: :confirmed, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
+
+        expect(group.featured_event).to eq running
+      end
+    end
+
+    it "falls back to the soonest upcoming event when nothing is running" do
+      freeze_time do
+        group = create(:group)
+        creator = create(:member, group:)
+        create(:event, group:, creator:, status: :confirmed, starts_at: 10.days.from_now, ends_at: 10.days.from_now + 1.hour)
+        soonest = create(:event, group:, creator:, status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 1.hour)
+
+        expect(group.featured_event).to eq soonest
+      end
+    end
+
+    # The same `confirmed` filter `#next_event` applies, asserted here too: an event running right
+    # now is still not a commitment until somebody confirms it.
+    it "ignores an unconfirmed event, however far under way" do
+      freeze_time do
+        group = create(:group)
+        creator = create(:member, group:)
+        create(:event, group:, creator:, status: :unconfirmed, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
+
+        expect(group.featured_event).to be_nil
+      end
+    end
+
+    it "ignores an event that has ended" do
+      freeze_time do
+        group = create(:group)
+        creator = create(:member, group:)
+        create(:event, group:, creator:, status: :confirmed, starts_at: 2.days.ago, ends_at: 2.days.ago + 1.hour)
+
+        expect(group.featured_event).to be_nil
+      end
+    end
+  end
+
   describe "#next_event" do
     it "is the soonest of the group's confirmed upcoming events" do
       freeze_time do

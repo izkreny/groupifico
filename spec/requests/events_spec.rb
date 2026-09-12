@@ -256,15 +256,14 @@ RSpec.describe "Events", type: :request do
       end
     end
 
-    # The gap the two scopes left between them. A reader opening the tab during their own rehearsal
-    # is the case, so the event is confirmed and the hero is the row that has to not swallow it:
-    # `Group#next_event` is `confirmed.upcoming`, which an event already under way is not, so it
-    # draws as a row and the delimited id is what says so.
+    # The gap the two scopes left between them, and what the hero does about it. The row examples
+    # use an `unconfirmed` event so `Group#featured_event` cannot claim it for the card: what they
+    # are about is `Event.unfinished` carrying it at all, and a hero that swallowed it would make
+    # the delimited id assertion pass for the wrong reason.
     context "when an event is under way" do
       it "keeps it on the upcoming list" do
         member = create(:member, :active)
-        running = create(:event, group: member.group, creator: member, status: :confirmed,
-          starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
+        running = running_event(member, status: :unconfirmed)
         sign_in_as(member.user)
 
         get group_events_path(member.group)
@@ -274,13 +273,31 @@ RSpec.describe "Events", type: :request do
 
       it "keeps it off the past list" do
         member = create(:member, :active)
-        running = create(:event, group: member.group, creator: member, status: :confirmed,
-          starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
+        running = running_event(member, status: :unconfirmed)
         sign_in_as(member.user)
 
         get group_events_path(member.group, scope: "past")
 
         expect(response.body).not_to include %(id="#{ActionView::RecordIdentifier.dom_id(running)}")
+      end
+
+      # The screen's largest element used to name a later event than the one the reader was at.
+      # Both halves in one example because they are one behaviour: the running event takes the card
+      # and the later one is demoted to a row, and asserting either alone passes on a screen that
+      # drew both as heroes or neither.
+      it "gives the hero to the running event and leaves the later one a row" do
+        freeze_time do
+          member = create(:member, :active)
+          running = running_event(member, status: :confirmed)
+          later = confirmed_event(member, days: 1, name: "Sunday service")
+          sign_in_as(member.user)
+
+          get group_events_path(member.group)
+
+          expect(response.body).to include "Happening now · ends in about 1 hour",
+            %(id="#{ActionView::RecordIdentifier.dom_id(running, :next_up)}"), %(id="#{ActionView::RecordIdentifier.dom_id(later)}")
+          expect(response.body).not_to include "Next up ·"
+        end
       end
     end
 
@@ -842,6 +859,14 @@ RSpec.describe "Events", type: :request do
 
       expect(response).to have_http_status :not_found
     end
+  end
+
+  # An event the reader is in the middle of: started, not yet ended. `status:` is the caller's,
+  # because whether `Group#featured_event` may claim it for the hero is exactly what the examples
+  # around it differ on.
+  def running_event(member, status:)
+    create(:event, group: member.group, creator: member, status: status,
+      starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
   end
 
   # The card states its own copy, so the examples above need an event with a fixed name, place and
