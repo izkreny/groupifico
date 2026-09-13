@@ -33,7 +33,7 @@
               initials: (Current.user.profile.initials if authenticated?),
               editable: (group.present? && allowed_to?(:edit?, group)),
               switcher_id: switcher_id,
-              back_path: (section_root_path(group) if group && pushed_screen?),
+              back_path: (section_root_path(group) if pushed_screen?(group)),
               tabs: tabs,
               section: shell_section %>
 
