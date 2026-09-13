@@ -42,6 +42,16 @@ class Registration < ApplicationRecord
 
   enum :status, %i[ reserved invited yes maybe no ], default: :reserved, validate: true
 
+  # Whether a status somebody posted is one they are saying about themselves, which no record can
+  # answer because a posted status is not on the record yet. A blank counts: `reserved` is the
+  # model's default, so somebody answering without naming a status has claimed nothing.
+  #
+  # The vocabulary is this model's, so the question is too - `RegistrationsController` asks it
+  # rather than holding a second copy of `ANSWERS`.
+  def self.answer?(status)
+    status.nil? || ANSWERS.include?(status)
+  end
+
   # Whether this member has said anything, asked by the event card to choose between the question
   # and the answer it draws. The two unanswered statuses are not a "no": `reserved` is a place held
   # before anybody was asked and `invited` is a question still waiting.

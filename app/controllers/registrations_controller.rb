@@ -31,7 +31,7 @@ class RegistrationsController < ApplicationController
 
     authorize! @registration
 
-    invited = invite(invitees)
+    invited = @event.invite(invitees)
 
     if invited.any?
       redirect_to group_event_path(@group, @event),
@@ -52,7 +52,7 @@ class RegistrationsController < ApplicationController
     authorize! @registration
 
     attributes = registration_params
-    authorize! @registration, to: :manage_answers? unless answering?(attributes[:status])
+    authorize! @registration, to: :manage_answers? unless Registration.answer?(attributes[:status])
 
     if @registration.update(attributes)
       redirect_to group_event_path(@group, @event),
@@ -99,13 +99,6 @@ class RegistrationsController < ApplicationController
       @group.members.active.without_registration_for(@event).where(id: params.expect(member_ids: []))
     end
 
-    # All or nothing: a set that is refused part way through leaves no half-filled event behind.
-    def invite(members)
-      Registration.transaction do
-        members.map { @event.registrations.create!(member: it, status: :invited) }
-      end
-    end
-
     # Used on update: member_id stays out, so a registration cannot be handed to another member.
     # `update?` is decided against the record as loaded, so a permitted member_id would let a member
     # holding no role move their own registration onto somebody else and answer for them - two rows
@@ -114,15 +107,5 @@ class RegistrationsController < ApplicationController
     # keeping user_id off update.
     def registration_params
       params.expect(registration: [ :status ])
-    end
-
-    # A posted status the actor is saying about themselves. `reserved` and `invited` are not
-    # answers, so writing either is the second question `manage_answers?` decides.
-    #
-    # The posted value rather than the record's. `reserved` is the model's default, so a member
-    # answering without naming a status has claimed nothing, and reading the record instead would
-    # refuse the commonest case there is.
-    def answering?(status)
-      status.nil? || status.in?(Registration::ANSWERS)
     end
 end

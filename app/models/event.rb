@@ -111,6 +111,19 @@ class Event < ApplicationRecord
     registrations.find { it.member_id == member&.id }
   end
 
+  # Filling the event, all or nothing: a set refused part way through leaves nobody half-invited.
+  # `invited` rather than a posted status, because being put on the list is what an invitation is
+  # and answering it is the member's own move afterwards.
+  #
+  # Here rather than in the controller because creating several registrations at once is what the
+  # event does, not what a request does; the controller decides who is in the set and this decides
+  # what happens to them.
+  def invite(members)
+    transaction do
+      members.map { registrations.create!(member: it, status: :invited) }
+    end
+  end
+
   # TODO: add event's time_zone context
   def same_day?
     starts_at.to_date == ends_at.to_date

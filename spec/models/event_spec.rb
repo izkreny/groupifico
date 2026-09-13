@@ -346,6 +346,29 @@ RSpec.describe Event, type: :model do
     end
   end
 
+  describe "#invite" do
+    it "creates one invited registration per member" do
+      event = create(:event)
+      first = create(:member, group: event.group)
+      second = create(:member, group: event.group)
+
+      expect { event.invite([ first, second ]) }.to change(Registration, :count).by(2)
+      expect(event.reload.registrations.pluck(:status)).to all eq "invited"
+    end
+
+    # The unique index is what a member already on the list hits, and the transaction is what stops
+    # the members before them in the set landing anyway.
+    it "creates nobody when one member is already registered" do
+      event = create(:event)
+      listed = create(:member, group: event.group)
+      fresh = create(:member, group: event.group)
+      create(:registration, event:, member: listed)
+
+      expect { event.invite([ fresh, listed ]) }.to raise_error ActiveRecord::RecordNotUnique
+      expect(event.reload.registrations.count).to eq 1
+    end
+  end
+
   describe "#duplicate" do
     let(:event)            { create(:event, status: :confirmed) }
     let(:duplicated_event) { event.duplicate }
