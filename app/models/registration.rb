@@ -42,10 +42,25 @@ class Registration < ApplicationRecord
 
   enum :status, %i[ reserved invited yes maybe no ], default: :reserved, validate: true
 
+  # An answer belongs to an event that can still take one, whoever is writing it. A domain
+  # invariant rather than an authorization rule, and it lives here for the reason
+  # `docs/AUTHORIZATION.md` gives for the last-active-owner guard: the tables decide who may act,
+  # and "this event is over" is not a fact about the actor. Without it the screen's own guard was
+  # the whole of the protection, and a posted answer to a concluded event still succeeded.
+  #
+  # Only an answer is checked. `reserved` and `invited` are what somebody filling the event writes,
+  # and correcting a roster after the fact is their business rather than this rule's.
+  validate :event_must_be_open_to_answers, if: -> { answered? && will_save_change_to_status? }
+
   # Whether this member has said anything, asked by the event card to choose between the question
   # and the answer it draws. The two unanswered statuses are not a "no": `reserved` is a place held
   # before anybody was asked and `invited` is a question still waiting.
   def answered?
     ANSWERS.include?(status)
   end
+
+  private
+    def event_must_be_open_to_answers
+      errors.add(:status, "cannot be answered once the event is over") unless event&.open_to_answers?
+    end
 end

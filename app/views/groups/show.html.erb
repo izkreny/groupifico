@@ -4,9 +4,9 @@
   The group's home. The name, the mark, the switcher and the pencil are all the shell's, drawn by
   `layouts/_header`, so this screen starts at the hero and never repeats the title.
 %>
-<% if @next_event %>
+<% if @featured_event %>
   <div class="flex flex-col gap-3">
-    <%= render "events/next_up", event: @next_event, registration: @next_event.registration_for(@membership) %>
+    <%= render "events/next_up", event: @featured_event, registration: @featured_event.registration_for(@membership) %>
 
     <%= link_to group_events_path(@group), class: "link link-hover inline-flex items-center gap-1 text-card-fact" do %>
       See all events<%= icon :go_to, class: "size-4" %>

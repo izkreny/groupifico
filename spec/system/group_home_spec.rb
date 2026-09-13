@@ -87,7 +87,7 @@ RSpec.describe "The group home", type: :system do
   # the same partial, so it is not asked again here.
   #
   # Copied from `spec/system/events_list_spec.rb`, where the same hero needs the same event: a
-  # confirmed one, upcoming, with the times frozen out of Faker's reach so `Group#next_event`
+  # confirmed one, upcoming, with the times frozen out of Faker's reach so `Group#featured_event`
   # answers it rather than whatever the factory rolled.
   def next_event_for(member)
     create(:event,

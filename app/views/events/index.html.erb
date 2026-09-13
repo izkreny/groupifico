@@ -1,27 +1,59 @@
 <% content_for :title, "Events" %>
 
-<div class="w-full">
-  <div class="flex justify-between items-center">
-    <h1 class="font-bold text-4xl"><%= link_to @group.name, group_path(@group) %> Events</h1>
-    <%= link_to "New event", new_group_event_path(@group), class: "btn btn-primary" %>
+<%#
+  The group's events. The shell's header already carries the group's name, so this screen's own
+  title is which of the two lists is open - and because that is also the choice on offer, the title
+  is the select rather than a heading above one.
+%>
+<div class="flex flex-col gap-3">
+  <div class="flex items-center justify-between gap-2.5">
+    <%# No visible label, because the select states the current list as its own value and a word
+        above it would say the same thing twice. `aria-label` is then the whole of its accessible
+        name, which is why the warning below lives in it.
+
+        The name warns because changing this control navigates, with nothing to press and no notice
+        first, and that is WCAG 2.1 SC 3.2.2 On Input. Accepted rather than repaired, per the plan's
+        `## Settled`: the repair is a submit button beside the select, and the first two acceptance
+        criteria rule one out by making the select the page title. `be_accessible` cannot hold this
+        up, because axe-core has no rule for that criterion, so the wording is pinned by a request
+        example instead and shortening it reddens. What no gate can hold is the criterion itself:
+        adding a submit control later is free, and is the repair if it ever becomes wanted.
+
+        Its width and its type size are the component's own. The surface and the radius are not:
+        the issue asks for a pill, and both are plain utilities over a component daisyUI leaves
+        square. %>
+    <%= form_with url: group_events_path(@group), method: :get, data: { controller: "form" } do %>
+      <%= select_tag :scope,
+            options_for_select([ [ "Upcoming events", "upcoming" ], [ "Past events", "past" ] ], @past ? "past" : "upcoming"),
+            class: "select select-ghost bg-base-200 rounded-full",
+            aria: { label: "Which events to show; choosing one loads that list" },
+            data: { action: "change->form#submit" } %>
+    <% end %>
+
+    <%# Asked of a new event rather than of the group, because that is the record `EventPolicy`
+        writes the rule against. A refused reader gets no button rather than a disabled one. %>
+    <% if allowed_to?(:create?, @group.events.new) %>
+      <%= link_to new_group_event_path(@group), class: "btn btn-primary btn-sm" do %>
+        <%= icon :new, class: "size-4" %>New
+      <% end %>
+    <% end %>
   </div>
 
   <% reader = Current.member %>
-
-  <% if @next_event %>
-    <%= render "events/next_up", event: @next_event, registration: @next_event.registration_for(reader) %>
+  <% if @featured_event %>
+    <%= render "events/next_up", event: @featured_event, registration: @featured_event.registration_for(reader) %>
   <% end %>
 
   <div id="events">
-    <% rows = @events.reject { it.id == @next_event&.id } %>
+    <% rows = @events.reject { it.id == @featured_event&.id } %>
     <% if rows.any? %>
       <ul class="list">
         <% rows.each do |event| %>
           <%= render "events/row", event: event, registration: event.registration_for(reader) %>
         <% end %>
       </ul>
-    <% elsif @next_event.nil? %>
-      <p class="text-center my-10">No events found.</p>
+    <% elsif @featured_event.nil? %>
+      <p class="text-meta"><%= @past ? "No past events." : "Nothing coming up." %></p>
     <% end %>
   </div>
 </div>

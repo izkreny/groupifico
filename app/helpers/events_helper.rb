@@ -28,6 +28,26 @@ module EventsHelper
     day_and_time(event.starts_at)
   end
 
+  # The hero card's first line, which has two readings because the card now draws an event that has
+  # already begun. The countdown is `time_ago_in_words`, which measures a distance and never a
+  # direction, so pointing it at `starts_at` once the event has started counts the wrong way; while
+  # it runs, the distance worth stating is the one to the end.
+  def event_kicker(event)
+    if event.ongoing?
+      "Happening now#{DOT}ends in #{time_ago_in_words event.ends_at}"
+    else
+      "Next up#{DOT}in #{time_ago_in_words event.starts_at}"
+    end
+  end
+
+  # The question in the tense the event is in. An event that has ended and that nobody has
+  # concluded is still worth a roster - who actually turned up is the thing worth knowing - and
+  # asking a reader whether they are coming to something that finished last week reads as a screen
+  # that has not noticed.
+  def answer_prompt(event)
+    event.ends_at.past? ? "Did you go?" : "Are you coming?"
+  end
+
   # Status and category on one line, the way every hero card and detail screen draws them. The
   # category is folded in rather than tagged separately, and `other` is the category that says
   # nothing, so it leaves the status standing alone.
@@ -36,7 +56,7 @@ module EventsHelper
   end
 
   # Who has said yes, for the hero card's one line of names. Queried with the names preloaded
-  # rather than read off the loaded registrations: the hero is fetched by `Group#next_event`, which
+  # rather than read off the loaded registrations: the hero is fetched by `Group#featured_event`, which
   # no screen's preload reaches, and `Member` gets its name through `user` - so selecting in memory
   # walked two queries per answer.
   def said_yes_line(event)

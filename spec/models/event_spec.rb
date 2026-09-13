@@ -172,45 +172,30 @@ RSpec.describe Event, type: :model do
     end
   end
 
-  describe ".upcoming" do
-    before do
+  # The complement of `.past`, so the pair is asserted as a partition rather than as two lists that
+  # happen to look right: every event the group has falls in exactly one of them.
+  describe ".current_and_upcoming" do
+    it "returns the events that start in the future and the ones already running" do
       create(:event, :from_the_past)
-      create(:event, :ongoing)
+      future_event = create(:event, :from_the_future)
+      ongoing_event = create(:event, :ongoing)
+
+      expect(described_class.current_and_upcoming).to contain_exactly(future_event, ongoing_event)
     end
 
-    context "when there are no events that start in the future" do
-      it "returns an empty array" do
-        expect(described_class.upcoming).to be_empty
-      end
+    it "returns an empty array when every event has ended" do
+      create(:event, :from_the_past)
+
+      expect(described_class.current_and_upcoming).to be_empty
     end
 
-    context "when there are events that start in the future" do
-      it "returns all of them" do
-        future_event = create(:event, :from_the_future)
-
-        expect(described_class.upcoming).to contain_exactly(future_event)
-      end
-    end
-  end
-
-  describe ".ongoing" do
-    before do
+    it "leaves no event on neither list, and none on both" do
       create(:event, :from_the_past)
       create(:event, :from_the_future)
-    end
+      create(:event, :ongoing)
 
-    context "when there are no ongoing events" do
-      it "returns an empty array" do
-        expect(described_class.ongoing).to be_empty
-      end
-    end
-
-    context "when there are ongoing events" do
-      it "returns all of them" do
-        ongoing_event = create(:event, :ongoing)
-
-        expect(described_class.ongoing).to contain_exactly(ongoing_event)
-      end
+      expect(described_class.current_and_upcoming.ids + described_class.past.ids).to match_array described_class.ids
+      expect(described_class.current_and_upcoming.ids & described_class.past.ids).to be_empty
     end
   end
 
@@ -232,6 +217,61 @@ RSpec.describe Event, type: :model do
         past_event = create(:event, :from_the_past)
 
         expect(described_class.past).to contain_exactly(past_event)
+      end
+    end
+  end
+
+  describe "#ongoing?" do
+    it "is true between the event's start and its end" do
+      freeze_time do
+        expect(build(:event, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)).to be_ongoing
+      end
+    end
+
+    it "is false before it starts" do
+      freeze_time do
+        expect(build(:event, starts_at: 1.hour.from_now, ends_at: 2.hours.from_now)).not_to be_ongoing
+      end
+    end
+
+    it "is false once it has ended" do
+      freeze_time do
+        expect(build(:event, starts_at: 2.hours.ago, ends_at: 1.hour.ago)).not_to be_ongoing
+      end
+    end
+  end
+
+  # A question about the status alone: an event that has ended and that nobody has concluded is
+  # still worth a roster, so the clock decides the tense of the question rather than whether it is
+  # asked. `EventsHelper#answer_prompt` carries that half.
+  describe "#open_to_answers?" do
+    it "is true for a confirmed event still ahead" do
+      freeze_time do
+        expect(build(:event, status: :confirmed, starts_at: 1.hour.from_now, ends_at: 2.hours.from_now)).to be_open_to_answers
+      end
+    end
+
+    it "is true for a confirmed event that has ended, since nobody concluded it" do
+      freeze_time do
+        expect(build(:event, status: :confirmed, starts_at: 2.hours.ago, ends_at: 1.hour.ago)).to be_open_to_answers
+      end
+    end
+
+    it "is true for an event nobody has confirmed yet" do
+      freeze_time do
+        expect(build(:event, status: :unconfirmed, starts_at: 1.hour.from_now, ends_at: 2.hours.from_now)).to be_open_to_answers
+      end
+    end
+
+    it "is false once somebody has declared it over" do
+      freeze_time do
+        expect(build(:event, status: :concluded, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)).not_to be_open_to_answers
+      end
+    end
+
+    it "is false for an event that has been called off, however far ahead" do
+      freeze_time do
+        expect(build(:event, status: :canceled, starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours)).not_to be_open_to_answers
       end
     end
   end
