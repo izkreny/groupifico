@@ -92,9 +92,9 @@ The card's kicker becomes `EventsHelper#event_kicker`, over a new `Event#ongoing
 
 ## Verification
 
-- [ ] `bin/ci` is green, which covers `lint`, `scan_ruby`, `scan_js`, the request specs and the browser suite.
-- [ ] `bin/rspec spec/system/events_list_spec.rb` passes on its own, since `bin/ci` is the only run that reaches `spec/system`.
-- [ ] The nobody-asked assertion and the past-list assertion are each watched failing before their code lands.
+- `bin/ci` is green, which covers `lint`, `scan_ruby`, `scan_js`, the request specs and the browser suite.
+- `bin/rspec spec/system/events_list_spec.rb` passes on its own, since `bin/ci` is the only run that reaches `spec/system`.
+- The nobody-asked assertion and the past-list assertion are each watched failing before their code lands.
 
 What these gates cannot see: whether the select is usable with JavaScript off, which it is not, since `requestSubmit` is what navigates and there is no submit button beside it. Nor whether the pill reads as a page title rather than as a control, which is the judgement the frames were drawn to settle and only a person looking at the screen can make.
 
