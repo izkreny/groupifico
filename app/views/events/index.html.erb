@@ -42,10 +42,8 @@
   <% reader = Current.member %>
   <% next_registration = @next_event.registration_for(reader) if @next_event %>
 
-  <%# The hero draws no answer row here: on this screen the reader's own reply sits below the list,
-      where their thumb is, rather than inside the card. The group home keeps it in the card. %>
   <% if @next_event %>
-    <%= render "events/next_up", event: @next_event, registration: next_registration, answer_row: false %>
+    <%= render "events/next_up", event: @next_event, registration: next_registration %>
   <% end %>
 
   <div id="events">
@@ -60,8 +58,4 @@
       <p class="text-meta"><%= @past ? "No past events." : "Nothing coming up." %></p>
     <% end %>
   </div>
-
-  <% if @next_event %>
-    <%= render "events/rsvp", event: @next_event, registration: next_registration %>
-  <% end %>
 </div>

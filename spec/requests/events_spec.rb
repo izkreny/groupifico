@@ -132,25 +132,24 @@ RSpec.describe "Events", type: :request do
         end
       end
 
-      # Where the answer row sits, which is the one thing about it this screen decides: the hero
-      # renders no answer row here, so the reader's own reply follows the whole list rather than
-      # sitting inside the card. `id="events"` is the list's wrapper, so matching across it is
-      # matching across every row.
+      # Where the question is asked, which is the one thing about it this screen decides: inside the
+      # hero's own card, and again under any row the reader was invited to. `id="events"` is the
+      # list's wrapper, so a match that crosses it has one copy on each side of the list's start.
       #
-      # The count is what makes the order mean anything. A hero that drew the question too would
-      # satisfy the match on the second copy alone, which is exactly what the screen looked like
-      # before the local existed.
-      it "puts the reader's answer row below the list rather than in the hero" do
+      # The count is what makes the order mean anything. Either copy alone satisfies the match on
+      # its own, which is what the screen looked like when the answer row sat once below the list.
+      it "asks inside the hero card and again under an invited row" do
         owner = create(:member, :owner)
         next_up = confirmed_event(owner, days: 2, name: "Tuesday rehearsal")
-        confirmed_event(owner, days: 5, name: "Sunday service")
+        later = confirmed_event(owner, days: 5, name: "Sunday service")
         create(:registration, event: next_up, member: owner, status: :invited)
+        create(:registration, event: later, member: owner, status: :invited)
         sign_in_as(owner.user)
 
         get group_events_path(owner.group)
 
-        expect(response.body).to match(/Tuesday rehearsal.*id="events".*Sunday service.*Are you coming\?/m)
-        expect(response.body.scan("Are you coming?").size).to eq 1
+        expect(response.body).to match(/Tuesday rehearsal.*Are you coming\?.*id="events".*Sunday service.*Are you coming\?/m)
+        expect(response.body.scan("Are you coming?").size).to eq 2
       end
 
       # The row's own answer is an icon and nothing else, so what it carries is the icon's name.

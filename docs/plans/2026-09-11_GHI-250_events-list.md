@@ -100,10 +100,11 @@ What these gates cannot see: whether the select is usable with JavaScript off, w
 
 ## Open questions
 
-- Frames 4h, 4n and 4i put the "Are you coming?" block inside the invited *row* it belongs to, not below the list for the next event, and under the literal criterion frame 4n's nobody-asked state draws no pills at all; implemented as the criterion words it, so say if the frame was the intent.
+None.
 
 ## Settled
 
-- An event that has started and not yet ended was in neither `Event.upcoming` nor `Event.past`, so it disappeared from both lists. Decided in RF1's thread: the upcoming list carries it, through `Event.unfinished`, which is the exact complement of `past`.
+- The frames put the "Are you coming?" block inside the invited row rather than below the list for the next event, and the fifth acceptance criterion worded it the other way; implemented as the criterion said and raised as the first open question. Decided in its thread: the frames were the intent. The hero's question goes back inside its card, the separate render below the list goes away, and every row the reader was invited to carries its own.
+- An event that has started and not yet ended was in neither `Event.upcoming` nor `Event.past`, so it disappeared from both lists. Decided in RF1's thread: the upcoming list carries it, through what is now `Event.current_and_upcoming`, the exact complement of `past`.
 - The hero then advertised a later event than the running one directly beneath it. Decided in RF6's thread: the hero shows the running event, with its own kicker, and both hero sites follow the same rule.
 - The select navigates on `change`, with no warning and no submit control, which is a failure of WCAG 2.1 SC 3.2.2 On Input. `be_accessible` cannot see it, because axe-core has no rule for that criterion, so nothing in the suite will ever raise it again. Decided in RF8's thread: the control stays as it is, and the accessible name carries the warning instead - "Which events to show; choosing one loads that list". The alternative was a submit button beside the select, which the first two acceptance criteria rule out by specifying the select as the page title. The wording is pinned by a request example, since axe-core has no rule for that criterion and `be_accessible` would pass over a name shortened back to the bare purpose; the criterion itself no gate can hold, so adding a submit control later is free and is the repair if it becomes wanted.
