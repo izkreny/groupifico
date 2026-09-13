@@ -89,7 +89,7 @@ class RegistrationsController < ApplicationController
     # while the form sat open would fail the unique index. Intersecting answers both, and the
     # screen's own hidden blank entry is dropped by the same `where`.
     def invitees
-      @group.members.active.invitable_to(@event).where(id: params.expect(member_ids: []))
+      @group.members.active.without_registration_for(@event).where(id: params.expect(member_ids: []))
     end
 
     # All or nothing: a set that is refused part way through leaves no half-filled event behind.

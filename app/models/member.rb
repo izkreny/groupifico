@@ -47,15 +47,15 @@ class Member < ApplicationRecord
   # owner. Two spellings of one join are two places a later role change has to find.
   scope :owners, -> { joins(:roles).where(roles: { name: Role::OWNER }) }
 
-  # Who an event can still be filled from: members with no registration on it, never invited or
-  # taken off. An `inactive` member has left the group, so they are outside the set entirely; a
-  # `paused` one is in it because the invitation screen lists them, unticked, and says why.
+  # Members with no registration on the event, never invited or taken off. The whole of what it
+  # decides, so each caller states its own status rule beside it rather than inheriting one the
+  # name does not mention: the invitation screen keeps paused members, who are listed and cannot
+  # be ticked, and the create behind it takes `active` alone.
   #
-  # Here rather than in `RegistrationsHelper` because both the screen and the create it posts to
-  # ask it - the screen to draw the rows, the controller to intersect the posted ids with what it
-  # actually offered - and two spellings of one rule are two places a later change has to find.
-  scope :invitable_to, ->(event) {
-    where.not(status: :inactive).where.not(id: event.registrations.select(:member_id))
+  # Here rather than in `RegistrationsHelper` because both ask it, and two spellings of one rule
+  # are two places a later change has to find.
+  scope :without_registration_for, ->(event) {
+    where.not(id: event.registrations.select(:member_id))
   }
 
   # A group is never left without an owner, whoever is asking - the last owner acting on themselves
