@@ -199,8 +199,8 @@ RSpec.describe "Groups", type: :request do
       it "gives the card to a running event rather than the next one" do
         freeze_time do
           member = create(:member, group: create(:group))
-          confirmed_event(member, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
-          confirmed_event(member, starts_at: 1.day.from_now, ends_at: 1.day.from_now + 2.hours)
+          confirmed_event_spanning(member, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
+          confirmed_event_spanning(member, starts_at: 1.day.from_now, ends_at: 1.day.from_now + 2.hours)
           sign_in_as(member.user)
 
           get group_path(member.group)
@@ -824,10 +824,15 @@ RSpec.describe "Groups", type: :request do
     end
   end
 
-  # A confirmed event of this member's group, at the instants the caller names. Only the hero
-  # examples above need one, and what they vary is the pair of instants: whether an event has
-  # started is the whole of what `Group#featured_event` and `#next_event` disagree about.
-  def confirmed_event(member, starts_at:, ends_at:)
+  # A confirmed event of this member's group, spanning the instants the caller names. Only the hero
+  # examples above need one, and what they vary is that pair: whether an event has started is the
+  # whole of what `Group#featured_event` and `#next_event` disagree about.
+  #
+  # Not `confirmed_event`, which `spec/requests/events_spec.rb` already holds for a differently
+  # shaped thing - it takes `days:` as an offset either side of now, and keeps `running_event` for
+  # the started-but-not-ended case the first caller here builds. Two files covering the same card
+  # with one name for two shapes is a name that tells the next reader the wrong thing.
+  def confirmed_event_spanning(member, starts_at:, ends_at:)
     create(:event, group: member.group, creator: member, status: :confirmed,
       starts_at: starts_at, ends_at: ends_at)
   end
