@@ -21,10 +21,10 @@ class EventsController < ApplicationController
     # Ordered here because the list had no order at all: the rows were whatever the database
     # happened to return, which is the same list in a different sequence on a different day.
     #
-    # `unfinished` rather than `upcoming`, so the two lists partition the group's events between
-    # them: an event a group is in the middle of is still ahead of its members.
+    # The two scopes partition the group's events between them, so an event it is in the middle of
+    # is on the upcoming list rather than on neither: still ahead of its members, not behind them.
     events = authorized_scope(@group.events).includes(:address, :registrations)
-    @events = @past ? events.past.order(starts_at: :desc) : events.unfinished.order(:starts_at)
+    @events = @past ? events.past.order(starts_at: :desc) : events.current_and_upcoming.order(:starts_at)
 
     # The group decides which event the hero draws, not the list: the filter is
     # `Group#featured_event`'s, and picking it out of `@events` here would be that rule written a

@@ -192,7 +192,7 @@ RSpec.describe "Groups", type: :request do
         expect(response.body).to include group_events_path(member.group)
       end
 
-      # The home reads `Group#featured_event`, not `#next_event`, so an event already running takes
+      # The home reads `Group#featured_event`, so an event already running takes
       # the card from a later one here exactly as it does on the events list. Without this example
       # that line reverts green: every other example on this screen builds its event days out, so
       # the two methods agree in all of them.
@@ -826,7 +826,7 @@ RSpec.describe "Groups", type: :request do
 
   # A confirmed event of this member's group, spanning the instants the caller names. Only the hero
   # examples above need one, and what they vary is that pair: whether an event has started is the
-  # whole of what `Group#featured_event` and `#next_event` disagree about.
+  # whole of what `Group#featured_event` answers differently before and after an event begins.
   #
   # Not `confirmed_event`, which `spec/requests/events_spec.rb` already holds for a differently
   # shaped thing - it takes `days:` as an offset either side of now, and keeps `running_event` for

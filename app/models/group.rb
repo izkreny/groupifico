@@ -61,23 +61,15 @@ class Group < ApplicationRecord
     Address.where(id: events.select(:address_id)).or(Address.where(id: address_id))
   end
 
+  # The event a group is at, or heading for: the one already running where there is one, and the
+  # soonest upcoming otherwise. No fallback branch for that pair, because a running event's
+  # `starts_at` is in the past and so sorts ahead of everything that has not begun.
+  #
   # `confirmed` alone: an unconfirmed event is not yet a commitment and a canceled one is not an
   # event, so neither belongs under a group's name. `status` defaults to `unconfirmed`, so a newly
   # created event stays out of here until somebody confirms it.
-  def next_event
-    events.confirmed.upcoming.order(:starts_at).first
-  end
-
-  # What the hero card draws: the event already running where there is one, and the soonest
-  # upcoming event otherwise. `next_event` with `unfinished` in place of `upcoming`, and no
-  # fallback branch is needed for the pair - a running event's `starts_at` is in the past, so it
-  # sorts ahead of every event that has not begun.
-  #
-  # `next_event` stays narrower rather than being widened in place, because the groups index reads
-  # it through `GroupsHelper#next_event_line` to say "next: Tue 2 Sep", and an event happening now
-  # is not a date to look forward to.
   def featured_event
-    events.confirmed.unfinished.order(:starts_at).first
+    events.confirmed.current_and_upcoming.order(:starts_at).first
   end
 
   # Whoever starts a group owns it, and both routes to a group say so through here rather than

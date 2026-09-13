@@ -48,7 +48,7 @@ module EventsHelper
   end
 
   # Who has said yes, for the hero card's one line of names. Queried with the names preloaded
-  # rather than read off the loaded registrations: the hero is fetched by `Group#next_event`, which
+  # rather than read off the loaded registrations: the hero is fetched by `Group#featured_event`, which
   # no screen's preload reaches, and `Member` gets its name through `user` - so selecting in memory
   # walked two queries per answer.
   def said_yes_line(event)

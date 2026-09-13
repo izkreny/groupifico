@@ -80,7 +80,7 @@ RSpec.describe "Events", type: :request do
       # the event this example is looking for on the other list.
       #
       # `status:` is named on top of the trait, which rolls its own: a confirmed roll makes the
-      # event `Group#next_event`, and it then draws as the hero rather than as a row. And the match
+      # event `Group#featured_event`, and it then draws as the hero rather than as a row. And the match
       # carries `id="` so the hero could not satisfy it if it did - `dom_id` alone is a substring
       # of the hero's `next_up_event_N`, which is what let the roll go unnoticed.
       it "lists only events from groups the acting user belongs to" do
@@ -271,7 +271,7 @@ RSpec.describe "Events", type: :request do
 
     # The gap the two scopes left between them, and what the hero does about it. The row examples
     # use an `unconfirmed` event so `Group#featured_event` cannot claim it for the card: what they
-    # are about is `Event.unfinished` carrying it at all, and a hero that swallowed it would make
+    # are about is `Event.current_and_upcoming` carrying it at all, and a hero that swallowed it would make
     # the delimited id assertion pass for the wrong reason.
     context "when an event is under way" do
       it "keeps it on the upcoming list" do
@@ -342,7 +342,7 @@ RSpec.describe "Events", type: :request do
 
     context "when the group's only upcoming event is unconfirmed" do
       # What a wrong filter looks like from the reader's side: an unconfirmed event is not a
-      # commitment, so no card is drawn at all. A model spec cannot show this - `#next_event`
+      # commitment, so no card is drawn at all. A model spec cannot show this - `#featured_event`
       # answering the wrong record and the card being drawn anyway are the same thing there.
       it "draws no hero card" do
         freeze_time do
@@ -884,7 +884,7 @@ RSpec.describe "Events", type: :request do
 
   # The card states its own copy, so the examples above need an event with a fixed name, place and
   # offset rather than the factory's random ones. `status:` is named because the base factory
-  # leaves it at the model default, `unconfirmed`, which `Group#next_event` deliberately excludes.
+  # leaves it at the model default, `unconfirmed`, which `Group#featured_event` deliberately excludes.
   #
   # The offset is exact, never an hour of its own day. The kicker rounds the distance to the
   # nearest day, so an event pinned to 19:00 is "in 2 days" or "in 3 days" depending on the hour

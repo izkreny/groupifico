@@ -84,18 +84,17 @@ class Event < ApplicationRecord
   validates :description, length: { maximum: 25_000 }
   validates :ends_at, comparison: { greater_than: :starts_at }
 
-  scope :upcoming, -> { where(starts_at: Time.now..) }
-  scope :ongoing,  -> { where(starts_at: ...Time.now).where(ends_at: Time.now..) }
-  scope :past,     -> { where(ends_at: ...Time.now) }
-
-  # `upcoming` and `ongoing` together, which is what the events screen calls its upcoming list: an
-  # event a group is in the middle of is still ahead of its members, not behind them.
+  # The two lists the events screen offers, and between them every event a group has: an event is
+  # current or upcoming exactly when it is not past, so nothing falls through the pair and nothing
+  # is on both. One predicate each, on `ends_at`, which is what makes that true rather than nearly
+  # true - a union of "has not started" and "has started but not ended" reads the clock three times
+  # and leaves a gap between the readings.
   #
-  # One predicate on `ends_at` rather than the union of the two scopes above, because that makes it
-  # the exact complement of `past` and so puts every event on exactly one of the screen's two
-  # lists. `upcoming.or(ongoing)` reads the clock three times and leaves a gap between the
-  # readings, which is where an event caught mid-transition falls through both.
-  scope :unfinished, -> { where(ends_at: Time.now..) }
+  # `Time.current` rather than `Time.now`: both serialize to the same UTC instant, so the rows are
+  # the same either way, but the system zone is not this application's and the first derivation
+  # off a boundary - `.beginning_of_day`, `.to_date` - is where that stops being harmless.
+  scope :current_and_upcoming, -> { where(ends_at: Time.current..) }
+  scope :past,                 -> { where(ends_at: ...Time.current) }
 
   # The tallies the event card draws, in one query, with a zero for a status nobody holds so the
   # card draws the same tags whatever the answers are. `reserved` is not among them: a place held

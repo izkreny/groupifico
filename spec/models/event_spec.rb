@@ -172,63 +172,21 @@ RSpec.describe Event, type: :model do
     end
   end
 
-  describe ".upcoming" do
-    before do
-      create(:event, :from_the_past)
-      create(:event, :ongoing)
-    end
-
-    context "when there are no events that start in the future" do
-      it "returns an empty array" do
-        expect(described_class.upcoming).to be_empty
-      end
-    end
-
-    context "when there are events that start in the future" do
-      it "returns all of them" do
-        future_event = create(:event, :from_the_future)
-
-        expect(described_class.upcoming).to contain_exactly(future_event)
-      end
-    end
-  end
-
-  describe ".ongoing" do
-    before do
-      create(:event, :from_the_past)
-      create(:event, :from_the_future)
-    end
-
-    context "when there are no ongoing events" do
-      it "returns an empty array" do
-        expect(described_class.ongoing).to be_empty
-      end
-    end
-
-    context "when there are ongoing events" do
-      it "returns all of them" do
-        ongoing_event = create(:event, :ongoing)
-
-        expect(described_class.ongoing).to contain_exactly(ongoing_event)
-      end
-    end
-  end
-
   # The complement of `.past`, so the pair is asserted as a partition rather than as two lists that
   # happen to look right: every event the group has falls in exactly one of them.
-  describe ".unfinished" do
+  describe ".current_and_upcoming" do
     it "returns the events that start in the future and the ones already running" do
       create(:event, :from_the_past)
       future_event = create(:event, :from_the_future)
       ongoing_event = create(:event, :ongoing)
 
-      expect(described_class.unfinished).to contain_exactly(future_event, ongoing_event)
+      expect(described_class.current_and_upcoming).to contain_exactly(future_event, ongoing_event)
     end
 
     it "returns an empty array when every event has ended" do
       create(:event, :from_the_past)
 
-      expect(described_class.unfinished).to be_empty
+      expect(described_class.current_and_upcoming).to be_empty
     end
 
     it "leaves no event on neither list, and none on both" do
@@ -236,8 +194,8 @@ RSpec.describe Event, type: :model do
       create(:event, :from_the_future)
       create(:event, :ongoing)
 
-      expect(described_class.unfinished.ids + described_class.past.ids).to match_array described_class.ids
-      expect(described_class.unfinished.ids & described_class.past.ids).to be_empty
+      expect(described_class.current_and_upcoming.ids + described_class.past.ids).to match_array described_class.ids
+      expect(described_class.current_and_upcoming.ids & described_class.past.ids).to be_empty
     end
   end
 
