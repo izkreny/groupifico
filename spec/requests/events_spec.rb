@@ -42,6 +42,19 @@ RSpec.describe "Events", type: :request do
         expect(response.body).to include %(<option selected="selected" value="upcoming">)
       end
 
+      # The accessible name carries a warning that choosing navigates, which is what the plan's
+      # `## Settled` accepts SC 3.2.2 on. Asserted here because axe-core has no rule for that
+      # criterion, so `be_accessible` passes over a name shortened back to the bare purpose. What
+      # this pins is the wording; that the control still changes context on input, nothing can.
+      it "warns in the select's accessible name that choosing navigates" do
+        member = create(:member, :active)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group)
+
+        expect(response.body).to include %(aria-label="Which events to show; choosing one loads that list")
+      end
+
       # Who may create an event is `EventPolicy#create?`, and a refused reader gets no control
       # rather than a disabled one - so the assertion is the route's absence, not a class.
       it "offers the New button to a reader who may create events" do

@@ -102,7 +102,7 @@ RSpec.describe "The events list", type: :system do
     resize_to ViewportHelper::MOBILE
 
     visit group_events_path(member.group)
-    select "Past events", from: "Which events to show"
+    select "Past events", from: "Which events to show; choosing one loads that list"
 
     expect(page).to have_current_path group_events_path(member.group, scope: "past")
     expect(page).to have_text "Spring concert"

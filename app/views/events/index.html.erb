@@ -9,7 +9,15 @@
   <div class="flex items-center justify-between gap-2.5">
     <%# No visible label, because the select states the current list as its own value and a word
         above it would say the same thing twice. `aria-label` is then the whole of its accessible
-        name, and `be_accessible` is the gate that says so.
+        name, which is why the warning below lives in it.
+
+        The name warns because changing this control navigates, with nothing to press and no notice
+        first, and that is WCAG 2.1 SC 3.2.2 On Input. Accepted rather than repaired, per the plan's
+        `## Settled`: the repair is a submit button beside the select, and the first two acceptance
+        criteria rule one out by making the select the page title. `be_accessible` cannot hold this
+        up, because axe-core has no rule for that criterion, so the wording is pinned by a request
+        example instead and shortening it reddens. What no gate can hold is the criterion itself:
+        adding a submit control later is free, and is the repair if it ever becomes wanted.
 
         Its width and its type size are the component's own. The surface and the radius are not:
         the issue asks for a pill, and both are plain utilities over a component daisyUI leaves
@@ -18,7 +26,7 @@
       <%= select_tag :scope,
             options_for_select([ [ "Upcoming events", "upcoming" ], [ "Past events", "past" ] ], @past ? "past" : "upcoming"),
             class: "select select-ghost bg-base-200 rounded-full",
-            aria: { label: "Which events to show" },
+            aria: { label: "Which events to show; choosing one loads that list" },
             data: { action: "change->form#submit" } %>
     <% end %>
 
