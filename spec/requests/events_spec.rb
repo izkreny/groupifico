@@ -354,6 +354,24 @@ RSpec.describe "Events", type: :request do
       end
     end
 
+    # The other half of `open_to_answers?`'s status test. An unconfirmed event is on the list and is
+    # still ahead, so it does ask: nobody has called it off, and gauging who would come is most of
+    # what an unconfirmed event is for. Without this the `unconfirmed?` term is a one-token deletion
+    # nothing catches.
+    context "when the group's only upcoming event is unconfirmed and the reader was invited" do
+      it "asks under its row" do
+        member = create(:member, :active)
+        pencilled = create(:event, group: member.group, creator: member, status: :unconfirmed,
+          name: "Extra rehearsal", starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        create(:registration, event: pencilled, member:, status: :invited)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group)
+
+        expect(response.body).to include "Extra rehearsal", "Are you coming?"
+      end
+    end
+
     # `Event.current_and_upcoming` filters on `ends_at` alone, so a canceled event still ahead is on
     # the list. It draws, and it does not ask: the clock has not ruled it out but its status has.
     context "when the group's only upcoming event has been called off" do
