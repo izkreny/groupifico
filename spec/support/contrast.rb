@@ -71,8 +71,11 @@ module ContrastHelper
   # everywhere it can see.
   WCAG_AA = 4.5
 
+  # The selector travels as an argument rather than interpolated into the source, exactly as
+  # `PaintMatcher::SCRIPT` passes its own: interpolation closes the JavaScript string literal on the
+  # first double quote a selector carries, which every attribute selector does.
   def text_contrast(selector)
-    page.evaluate_script(<<~JAVASCRIPT)
+    page.evaluate_script(<<~JAVASCRIPT, selector)
       (function(selector) {
         const element = document.querySelector(selector);
         if (!element) return null;
@@ -97,7 +100,7 @@ module ContrastHelper
         const blended = ink.slice(0, 3).map((value, index) => value * alpha + beneath[index] * (1 - alpha));
 
         return ratio(blended, beneath);
-      })("#{selector}")
+      })(arguments[0])
     JAVASCRIPT
   end
 end
