@@ -1,9 +1,11 @@
 class RegistrationsController < ApplicationController
   include GroupScoped
 
-  # One message for the one thing that happened, whichever side of the write it happened on:
-  # somebody the reader ticked stopped being invitable while they were choosing.
-  MOVED_ON = "Somebody was invited while you were choosing. Here is the list again.".freeze
+  # One message for every way a ticked member can stop being invitable while the reader was
+  # choosing - registered by somebody else, paused, or gone from the group - and for both sides of
+  # the write it can happen on. It names none of them, because the controller cannot tell which
+  # happened and the reader's answer is the same either way: the list moved, here it is again.
+  MOVED_ON = "Some of the people you ticked are no longer on the list. Here it is again.".freeze
 
   before_action :set_event
   before_action :set_registration, only: %i[ update destroy ]
@@ -45,7 +47,7 @@ class RegistrationsController < ApplicationController
   rescue ActiveRecord::RecordNotUnique
     # The same move as the intersection above, arriving too late for it: the row landed while this
     # request was writing rather than before it read. The transaction has rolled the whole set back,
-    # so the answer is the same one - the screen again, redrawn without whoever arrived.
+    # so the answer is the same one - the screen again, redrawn without whoever moved.
     flash.now[:alert] = MOVED_ON
     render :new, status: :unprocessable_content
   end
