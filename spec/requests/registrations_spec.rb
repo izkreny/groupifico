@@ -239,6 +239,7 @@ RSpec.describe "Registrations", type: :request do
         end
 
         expect(response).to have_http_status :unprocessable_content
+        expect(flash[:alert]).to include "while you were choosing"
       end
 
       it "ignores a ticked member from another group, whose name is nobody here's to publish" do
