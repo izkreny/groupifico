@@ -152,34 +152,6 @@ RSpec.describe "Events", type: :request do
         expect(response.body.scan("Are you coming?").size).to eq 2
       end
 
-      # The past list is full of invitations nobody ever answered, and a canceled event is not
-      # asking either. Both reach `events/_row` through the same partial as an upcoming one, so the
-      # registration alone cannot decide whether to ask.
-      it "does not ask under an event that has already ended" do
-        member = create(:member, :active)
-        over = confirmed_event(member, days: -9, name: "Spring concert")
-        create(:registration, event: over, member:, status: :invited)
-        sign_in_as(member.user)
-
-        get group_events_path(member.group, scope: "past")
-
-        expect(response.body).to include "Spring concert"
-        expect(response.body).not_to include "Are you coming?"
-      end
-
-      it "does not ask under an event that has been called off" do
-        member = create(:member, :active)
-        called_off = create(:event, group: member.group, creator: member, status: :canceled,
-          name: "Autumn gig", starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
-        create(:registration, event: called_off, member:, status: :invited)
-        sign_in_as(member.user)
-
-        get group_events_path(member.group)
-
-        expect(response.body).to include "Autumn gig"
-        expect(response.body).not_to include "Are you coming?"
-      end
-
       # The row's own answer is an icon and nothing else, so what it carries is the icon's name.
       # The clock is left alone here, unlike the examples around it: this one asserts no copy that
       # states a distance in time, and every event it creates is upcoming at whatever hour it runs.
@@ -270,6 +242,21 @@ RSpec.describe "Events", type: :request do
 
         expect(response.body).to match(/Summer gig.*Spring concert/m)
         expect(response.body).not_to include "Next up", "Tuesday rehearsal"
+      end
+
+      # The past list is full of invitations nobody ever answered, and they reach `events/_row`
+      # through the same partial as an upcoming row, so the registration alone cannot decide
+      # whether to ask.
+      it "does not ask under an event that has already ended" do
+        member = create(:member, :active)
+        over = confirmed_event(member, days: -9, name: "Spring concert")
+        create(:registration, event: over, member:, status: :invited)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group, scope: "past")
+
+        expect(response.body).to include "Spring concert"
+        expect(response.body).not_to include "Are you coming?"
       end
 
       # The select states which list is open, so a reader who lands on the past one by a typed URL
@@ -364,6 +351,23 @@ RSpec.describe "Events", type: :request do
 
         expect(response.body).to include "No past events."
         expect(response.body).not_to include "Nothing coming up."
+      end
+    end
+
+    # `Event.current_and_upcoming` filters on `ends_at` alone, so a canceled event still ahead is on
+    # the list. It draws, and it does not ask: the clock has not ruled it out but its status has.
+    context "when the group's only upcoming event has been called off" do
+      it "draws the row and does not ask under it" do
+        member = create(:member, :active)
+        called_off = create(:event, group: member.group, creator: member, status: :canceled,
+          name: "Autumn gig", starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        create(:registration, event: called_off, member:, status: :invited)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group)
+
+        expect(response.body).to include "Autumn gig"
+        expect(response.body).not_to include "Are you coming?"
       end
     end
 
