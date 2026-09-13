@@ -30,11 +30,7 @@ class RegistrationPolicy < ApplicationPolicy
   private
     def group_for(record) = record.event.group
 
-    # A registration with nobody on it yet is nobody else's: `new` builds one before the form has
-    # chosen a member, and every member may answer for themselves, so refusing there would refuse
-    # them the only form they have. Nothing escapes through it - `create` asks again with the posted
-    # member_id, and a registration saved without one fails `belongs_to :member` anyway.
-    def own? = record.member_id.nil? || record.member_id == membership.id
+    def own? = record.member_id == membership.id
 
     def manages_event? = record.event.manager_id == membership.id
 end

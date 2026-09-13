@@ -1,9 +1,65 @@
-<% content_for :title, "New registration" %>
+<% content_for :title, "Add someone" %>
 
-<div class="md:w-2/3 w-full">
-  <h1 class="font-bold text-4xl">New registration</h1>
+<%= render "shared/page_header", title: "Add someone" %>
 
-  <%= render "form", group: @group, event: @event, registration: @registration %>
+<%# The event this is filling, stated before the list: the reader arrives here from the event and
+    the tally is the one number that says whether the job is done. %>
+<div class="w-full">
+  <div class="mb-2">
+    <p class="text-lg"><%= @event.name %></p>
+    <p class="text-xs"><%= event_schedule_range(@event) %> · <%= invited_tally(@group, @event) %></p>
+  </div>
 
-  <%= link_to "Back to registrations", group_event_registrations_path(@group, @event), class: "btn btn-ghost" %>
+  <%# Loaded once and split here rather than queried twice: `members_available` orders the tickable
+      members ahead of the paused ones, so the partition keeps that order in both halves. %>
+  <% tickable, paused = members_available(@group, @event).partition(&:active?) %>
+
+  <% if tickable.any? || paused.any? %>
+    <%= form_with url: group_event_registrations_path(@group, @event), data: { controller: "invite" } do %>
+      <%# Always posted, so a submission with nothing ticked still carries the key and reaches the
+          controller's own answer rather than a 400 from the strong parameters. %>
+      <%= hidden_field_tag "member_ids[]", "", id: nil %>
+
+      <ul class="list">
+        <li class="p-4 pb-2 text-xs tracking-wide">Not on the list</li>
+
+        <% tickable.each do |member| %>
+          <li id="<%= dom_id member %>" class="list-row">
+            <%= check_box_tag "member_ids[]", member.id, false,
+                  id: dom_id(member, :invite),
+                  class: "checkbox",
+                  data: { invite_target: "tick", action: "invite#count" } %>
+
+            <label for="<%= dom_id(member, :invite) %>" class="list-col-grow cursor-pointer">
+              <span class="block"><%= member.full_name %></span>
+              <span class="block text-xs"><%= member.status %></span>
+            </label>
+          </li>
+        <% end %>
+
+        <%# No checkbox at all rather than a disabled one: a control a reader can reach and not use
+            says less than its absence, and the line beneath the name is what says why. The empty
+            cell keeps the name in the same column as the rows above. %>
+        <% paused.each do |member| %>
+          <li id="<%= dom_id member %>" class="list-row">
+            <span class="checkbox invisible" aria-hidden="true"></span>
+
+            <div class="list-col-grow">
+              <span class="block"><%= member.full_name %></span>
+              <span class="block text-xs">paused · can't be invited</span>
+            </div>
+          </li>
+        <% end %>
+      </ul>
+
+      <div class="mt-4">
+        <%= button_tag type: "submit", class: "btn btn-primary btn-block", data: { invite_target: "submit" } do %>
+          <%= icon :invited %>
+          <span data-invite-target="label">Invite</span>
+        <% end %>
+      </div>
+    <% end %>
+  <% else %>
+    <p class="text-center my-10">Everybody in this group is already on the list.</p>
+  <% end %>
 </div>

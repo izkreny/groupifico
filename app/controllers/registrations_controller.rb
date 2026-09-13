@@ -2,7 +2,7 @@ class RegistrationsController < ApplicationController
   include GroupScoped
 
   before_action :set_event
-  before_action :set_registration, only: %i[ show edit update destroy ]
+  before_action :set_registration, only: %i[ update destroy ]
 
   def index
     authorize! @group, to: :show?
@@ -10,31 +10,36 @@ class RegistrationsController < ApplicationController
     @registrations = authorized_scope(@event.registrations)
   end
 
-  def show
-    authorize! @registration
-  end
-
+  # The invitation screen. A registration nobody has been chosen for is nobody's, so `own?` is
+  # false on it and `create?` is the three roles and the event's manager alone - the invitation row
+  # of the events table, which is exactly who this screen is for.
   def new
     @registration = @event.registrations.new
 
     authorize! @registration
   end
 
-  def edit
-    authorize! @registration
-  end
-
+  # One `invited` registration per ticked member. The status is written here rather than posted,
+  # because this screen is the only thing that posts here and `invited` is the only thing it means -
+  # so the second question is asked unconditionally, where the single-record form asked it only for
+  # a status that was not an answer.
+  #
+  # Both questions are asked of the record with no member on it, which is the stricter reading:
+  # `own?` can only widen `create?`, so a set nobody may create is refused before any of it is
+  # built, and an empty set is answered by the same pair.
   def create
-    attributes    = new_registration_params
-    @registration = @event.registrations.new(attributes)
+    @registration = @event.registrations.new
 
     authorize! @registration
-    authorize! @registration, to: :manage_answers? unless answering?(attributes[:status])
+    authorize! @registration, to: :manage_answers?
 
-    if @registration.save
-      redirect_to group_event_registration_path(@group, @event, @registration),
-        notice: "Registration was successfully created."
+    invited = invite(invitees)
+
+    if invited.any?
+      redirect_to group_event_path(@group, @event),
+        notice: "#{helpers.pluralize(invited.size, "member")} invited."
     else
+      flash.now[:alert] = "Pick at least one member to invite."
       render :new, status: :unprocessable_content
     end
   end
@@ -46,11 +51,16 @@ class RegistrationsController < ApplicationController
     authorize! @registration, to: :manage_answers? unless answering?(attributes[:status])
 
     if @registration.update(attributes)
-      redirect_to group_event_registration_path(@group, @event, @registration),
+      redirect_to group_event_path(@group, @event),
         notice: "Registration was successfully updated.",
         status: :see_other
     else
-      render :edit, status: :unprocessable_content
+      # An answer is a button rather than a field, so there is no form to re-render and no typed
+      # value to keep: the only way here is a posted status the enum refuses, which says what is
+      # wrong on the screen the buttons live on.
+      redirect_to group_event_path(@group, @event),
+        alert: @registration.errors.full_messages.to_sentence,
+        status: :see_other
     end
   end
 
@@ -59,7 +69,7 @@ class RegistrationsController < ApplicationController
 
     @registration.destroy!
 
-    redirect_to group_event_registrations_path(@group, @event),
+    redirect_to group_event_path(@group, @event),
       notice: "Registration was successfully destroyed.",
       status: :see_other
   end
@@ -73,13 +83,20 @@ class RegistrationsController < ApplicationController
       @registration = @event.registrations.find(params.expect(:id))
     end
 
-    # Used on create: deciding whose registration it is is what creating one means. :member_id is
-    # checked, not trusted. The form's picker offers members_available(group, event), which is this
-    # group's, but the parameter is unscoped: registering somebody from another group publishes
-    # their name through Event#attendees to people with no claim on it.
-    def new_registration_params
-      params.expect(registration: [ :status, :member_id ])
-        .tap { |permitted| permitted.delete(:member_id) if foreign_member?(permitted[:member_id]) }
+    # The ticked members, intersected with the set the screen actually offered rather than trusted.
+    # The ids are unscoped: one naming somebody from another group would publish their name through
+    # `Event#attendees` to people with no claim on it, and one naming a member who was registered
+    # while the form sat open would fail the unique index. Intersecting answers both, and the
+    # screen's own hidden blank entry is dropped by the same `where`.
+    def invitees
+      @group.members.active.invitable_to(@event).where(id: params.expect(member_ids: []))
+    end
+
+    # All or nothing: a set that is refused part way through leaves no half-filled event behind.
+    def invite(members)
+      Registration.transaction do
+        members.map { @event.registrations.create!(member: it, status: :invited) }
+      end
     end
 
     # Used on update: member_id stays out, so a registration cannot be handed to another member.
@@ -95,16 +112,10 @@ class RegistrationsController < ApplicationController
     # A posted status the actor is saying about themselves. `reserved` and `invited` are not
     # answers, so writing either is the second question `manage_answers?` decides.
     #
-    # The posted value rather than the record's, on create as well as update. `reserved` is the
-    # model's default, so a member registering themselves without naming a status has claimed
-    # nothing, and reading the record instead would refuse the commonest case there is.
+    # The posted value rather than the record's. `reserved` is the model's default, so a member
+    # answering without naming a status has claimed nothing, and reading the record instead would
+    # refuse the commonest case there is.
     def answering?(status)
       status.nil? || status.in?(Registration::ANSWERS)
-    end
-
-    # Present and not ours. A blank passes through so the model refuses it, rather than being
-    # dropped here and turning an invalid submission into a silent no-change.
-    def foreign_member?(id)
-      id.present? && !@group.members.exists?(id)
     end
 end

@@ -32,7 +32,11 @@ Rails.application.routes.draw do
     resources :members
     resources :events do
       get "duplicate", on: :member
-      resources :registrations
+      # No `show` and no `edit`: the invitation screen is the one registration screen the design
+      # keeps, and answering on somebody's behalf or taking them off is a roster row on the event
+      # itself. `index` is the scaffold list, still linked from the event partial until #251
+      # rebuilds that screen.
+      resources :registrations, except: %i[ show edit ]
     end
   end
 

@@ -54,6 +54,17 @@ RSpec.describe RegistrationPolicy, type: :policy do
     failed "for a members administrator registering somebody else" do
       let(:actor) { create(:member, :members_administrator, group:) }
     end
+
+    # The record the invitation screen authorizes, built before any member is chosen. Nobody owns
+    # it, so `own?` is false and what is left is the invitation row.
+    failed "for a member holding no role, on the registration the invitation screen builds" do
+      let(:record) { build(:registration, event:, member: nil) }
+    end
+
+    succeed "for the event's manager, on the registration the invitation screen builds" do
+      let(:event)  { create(:event, group:, manager: actor) }
+      let(:record) { build(:registration, event:, member: nil) }
+    end
   end
 
   describe_rule :update? do
