@@ -5,10 +5,11 @@
 
   The question is the exception, and it is asked wherever the reader has been invited, has not
   answered, and the event can still take an answer - a row is where they are looking when they
-  decide. `open_to_answers?` is what the past list needs, since it is full of invitations nobody
-  ever answered, and it is what rules out an event whose status has ended it. `events/_rsvp`
-  carries no such guard of its own, because the hero is its only other caller and is always
-  confirmed and unfinished.
+  decide. The past list asks too, in the past tense: an event that has ended and that nobody
+  concluded is still worth a roster, and `EventsHelper#answer_prompt` carries that half.
+  `open_to_answers?` rules out the events somebody ended rather than the ones the clock did.
+  `events/_rsvp` carries no such guard of its own, because the hero is its only other caller and is
+  always confirmed and unfinished.
 
   An answer already given stays an icon beside the name rather than a second set of pills.
   `list-col-wrap` puts the question on its own line under the row rather than in a column beside it.
