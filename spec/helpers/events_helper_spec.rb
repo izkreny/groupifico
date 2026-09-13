@@ -1,6 +1,20 @@
 require 'rails_helper'
 
 RSpec.describe EventsHelper, type: :helper do
+  describe "#answer_prompt" do
+    it "asks in the present about an event still ahead" do
+      freeze_time do
+        expect(helper.answer_prompt(build(:event, starts_at: 1.hour.from_now, ends_at: 2.hours.from_now))).to eq "Are you coming?"
+      end
+    end
+
+    it "asks in the past about an event that has ended" do
+      freeze_time do
+        expect(helper.answer_prompt(build(:event, starts_at: 2.hours.ago, ends_at: 1.hour.ago))).to eq "Did you go?"
+      end
+    end
+  end
+
   describe "#event_kicker" do
     it "counts down to an event that has not started" do
       freeze_time do

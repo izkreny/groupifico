@@ -241,35 +241,37 @@ RSpec.describe Event, type: :model do
     end
   end
 
+  # A question about the status alone: an event that has ended and that nobody has concluded is
+  # still worth a roster, so the clock decides the tense of the question rather than whether it is
+  # asked. `EventsHelper#answer_prompt` carries that half.
   describe "#open_to_answers?" do
-    it "is true for an event still ahead" do
+    it "is true for a confirmed event still ahead" do
       freeze_time do
         expect(build(:event, status: :confirmed, starts_at: 1.hour.from_now, ends_at: 2.hours.from_now)).to be_open_to_answers
       end
     end
 
-    it "is true while it is running" do
+    it "is true for a confirmed event that has ended, since nobody concluded it" do
       freeze_time do
-        expect(build(:event, status: :confirmed, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)).to be_open_to_answers
+        expect(build(:event, status: :confirmed, starts_at: 2.hours.ago, ends_at: 1.hour.ago)).to be_open_to_answers
       end
     end
 
-    it "is false once it has ended" do
+    it "is true for an event nobody has confirmed yet" do
       freeze_time do
-        expect(build(:event, status: :confirmed, starts_at: 2.hours.ago, ends_at: 1.hour.ago)).not_to be_open_to_answers
+        expect(build(:event, status: :unconfirmed, starts_at: 1.hour.from_now, ends_at: 2.hours.from_now)).to be_open_to_answers
+      end
+    end
+
+    it "is false once somebody has declared it over" do
+      freeze_time do
+        expect(build(:event, status: :concluded, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)).not_to be_open_to_answers
       end
     end
 
     it "is false for an event that has been called off, however far ahead" do
       freeze_time do
         expect(build(:event, status: :canceled, starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours)).not_to be_open_to_answers
-      end
-    end
-
-    # The case the clock alone misses: a manager may call an event over before its `ends_at`.
-    it "is false for an event declared over while its end is still ahead" do
-      freeze_time do
-        expect(build(:event, status: :concluded, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)).not_to be_open_to_answers
       end
     end
   end

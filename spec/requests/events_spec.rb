@@ -244,10 +244,11 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include "Next up", "Tuesday rehearsal"
       end
 
-      # The past list is full of invitations nobody ever answered, and they reach `events/_row`
-      # through the same partial as an upcoming row, so the registration alone cannot decide
-      # whether to ask.
-      it "does not ask under an event that has already ended" do
+      # An event that has ended and that nobody concluded is still worth a roster, so the question
+      # is asked here too - in the tense the event is in. Both halves in one example: the past
+      # tense present and the present tense absent, since a screen asking neither would satisfy
+      # either assertion alone.
+      it "asks in the past tense under an event that has ended" do
         member = create(:member, :active)
         over = confirmed_event(member, days: -9, name: "Spring concert")
         create(:registration, event: over, member:, status: :invited)
@@ -255,8 +256,21 @@ RSpec.describe "Events", type: :request do
 
         get group_events_path(member.group, scope: "past")
 
-        expect(response.body).to include "Spring concert"
+        expect(response.body).to include "Spring concert", "Did you go?"
         expect(response.body).not_to include "Are you coming?"
+      end
+
+      it "does not ask at all under an event somebody has concluded" do
+        member = create(:member, :active)
+        over = create(:event, group: member.group, creator: member, status: :concluded,
+          name: "Summer gig", starts_at: 9.days.ago, ends_at: 9.days.ago + 2.hours)
+        create(:registration, event: over, member:, status: :invited)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group, scope: "past")
+
+        expect(response.body).to include "Summer gig"
+        expect(response.body).not_to include "Did you go?", "Are you coming?"
       end
 
       # The select states which list is open, so a reader who lands on the past one by a typed URL

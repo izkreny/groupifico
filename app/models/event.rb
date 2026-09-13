@@ -123,15 +123,15 @@ class Event < ApplicationRecord
     starts_at.past? && ends_at.future?
   end
 
-  # Whether the question is still worth putting to a reader: the event has not run out of clock,
-  # and its status is one that can still take an answer. The past list is full of registrations
-  # nobody ever answered, and neither of the two statuses that end an event is asking any more.
+  # Whether this event can still take an answer, which is a question about its status alone. An
+  # event that has ended and that nobody has concluded is still worth answering - the roster is
+  # what it is for - so the clock decides the tense of the question rather than whether it is
+  # asked; `EventsHelper#answer_prompt` is where that reading lives.
   #
   # The open statuses are named rather than the closed ones excluded, so a fifth status arrives
-  # unable to take answers until somebody decides it should. `concluded` is the case the clock
-  # alone misses: a manager may call an event over while its `ends_at` is still ahead.
+  # unable to take answers until somebody decides it should.
   def open_to_answers?
-    ends_at.future? && (unconfirmed? || confirmed?)
+    unconfirmed? || confirmed?
   end
 
   # TODO: add event's time_zone context
