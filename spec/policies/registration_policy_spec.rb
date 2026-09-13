@@ -31,7 +31,7 @@ RSpec.describe RegistrationPolicy, type: :policy do
 
     failed "for a member holding no role, registering somebody else"
 
-    succeed "for a member registering themselves, whatever roles they hold" do
+    failed "for a member registering themselves, which no row of the table grants" do
       let(:record) { build(:registration, event:, member: actor) }
     end
 

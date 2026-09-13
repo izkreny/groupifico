@@ -96,6 +96,8 @@ That is a domain invariant rather than an authorization rule - it refuses the la
 
 **A registration is answered, never withdrawn.** The statuses are `reserved`, `invited`, `yes`, `maybe` and `no`, and only the last three are an answer, so a member's own writes are limited to those three: `reserved` and `invited` are what somebody filling the event puts you into. Declining is the `no` answer rather than a deletion, which is why no row grants a member the removal of their own registration and `RegistrationPolicy#destroy?` is the three roles' alone.
 
+**A registration is made for a member, never by one.** The table gives `member` the answer and no row of it gives anybody the registering of themselves, which is deliberate rather than an omission: a place is `reserved` for you or you are `invited`, and answering is what you do with it afterwards. So `RegistrationPolicy#create?` is the invitation row alone, and `own?` appears on `update?` and `edit?` where the answer is.
+
 **A manager invites and does not un-invite.** `manager` is marked for registering another member for their event and is deliberately not marked for changing that member's answer or removing their registration. Filling an event is the manager's job; overruling somebody's own answer, or taking a registration away once it exists, stays with the group's administrators and its events administrators, and a mistaken invitation is undone by one of them rather than by the person who made it.
 
 **Editing an event includes handing it on.** `events.manager_id` is an attribute of the event like its status and its location, so the edit row decides it and no separate row exists: a manager may pass their event to another member or take one on, and the same three roles may reassign it over their head.

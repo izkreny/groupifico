@@ -20,18 +20,16 @@ class RegistrationsController < ApplicationController
   end
 
   # One `invited` registration per ticked member. The status is written here rather than posted,
-  # because this screen is the only thing that posts here and `invited` is the only thing it means -
-  # so the second question is asked unconditionally, where the single-record form asked it only for
-  # a status that was not an answer.
+  # because this screen is the only thing that posts here and `invited` is the only thing it means,
+  # so there is no posted status for a second question to ask about - which is why `create` asks
+  # one rule where `update` asks two.
   #
-  # Both questions are asked of the record with no member on it, which is the stricter reading:
-  # `own?` can only widen `create?`, so a set nobody may create is refused before any of it is
-  # built, and an empty set is answered by the same pair.
+  # Asked of the record with no member on it, which costs nothing now that `create?` no longer
+  # reads one: an empty set is answered by the same call as a full one.
   def create
     @registration = @event.registrations.new
 
     authorize! @registration
-    authorize! @registration, to: :manage_answers?
 
     invited = invite(invitees)
 

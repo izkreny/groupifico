@@ -5,9 +5,13 @@ class RegistrationPolicy < ApplicationPolicy
   # registered and what they answered.
   def show? = true
 
-  # Answering for yourself is every member's; registering somebody else is the three roles', and
-  # the event's manager may do it for their own event - that is the invitation row.
-  def create? = own? || membership.can_manage?(:events) || manages_event?
+  # The invitation row, and nobody else's: a registration is something somebody else puts you into,
+  # `reserved` or `invited`, and what a member does with it afterwards is answer it. So `own?` is
+  # absent here and present on `update?`, which is the row that grants a member their own answer.
+  #
+  # It reads the same as `manage_answers?` below, which is not a duplicate to fold away: this rule
+  # decides an action and that one decides a status, and `update?` already shows them parting.
+  def create? = membership.can_manage?(:events) || manages_event?
 
   # Changing somebody else's answer is not the manager's, deliberately: filling an event is their
   # job, overruling an answer is not. So `manages_event?` is absent here and present above.
