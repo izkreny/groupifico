@@ -192,6 +192,24 @@ RSpec.describe "Groups", type: :request do
         expect(response.body).to include group_events_path(member.group)
       end
 
+      # The home reads `Group#featured_event`, not `#next_event`, so an event already running takes
+      # the card from a later one here exactly as it does on the events list. Without this example
+      # that line reverts green: every other example on this screen builds its event days out, so
+      # the two methods agree in all of them.
+      it "gives the card to a running event rather than the next one" do
+        freeze_time do
+          member = create(:member, group: create(:group))
+          confirmed_event(member, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
+          confirmed_event(member, starts_at: 1.day.from_now, ends_at: 1.day.from_now + 2.hours)
+          sign_in_as(member.user)
+
+          get group_path(member.group)
+
+          expect(response.body).to include "Happening now · ends in about 1 hour"
+          expect(response.body).not_to include "Next up ·"
+        end
+      end
+
       # The answer row is `events/_rsvp`'s, and which of its states it draws is
       # `spec/requests/events_spec.rb`'s question. What belongs here is that this screen hands the
       # partial the reader's own registration at all: without `@membership`, `registration_for`
@@ -804,5 +822,13 @@ RSpec.describe "Groups", type: :request do
       # that, with the defect fully restored.
       expect(response.body).not_to include "group_#{actor.group_id}"
     end
+  end
+
+  # A confirmed event of this member's group, at the instants the caller names. Only the hero
+  # examples above need one, and what they vary is the pair of instants: whether an event has
+  # started is the whole of what `Group#featured_event` and `#next_event` disagree about.
+  def confirmed_event(member, starts_at:, ends_at:)
+    create(:event, group: member.group, creator: member, status: :confirmed,
+      starts_at: starts_at, ends_at: ends_at)
   end
 end
