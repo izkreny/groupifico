@@ -88,6 +88,15 @@ class Event < ApplicationRecord
   scope :ongoing,  -> { where(starts_at: ...Time.now).where(ends_at: Time.now..) }
   scope :past,     -> { where(ends_at: ...Time.now) }
 
+  # `upcoming` and `ongoing` together, which is what the events screen calls its upcoming list: an
+  # event a group is in the middle of is still ahead of its members, not behind them.
+  #
+  # One predicate on `ends_at` rather than the union of the two scopes above, because that makes it
+  # the exact complement of `past` and so puts every event on exactly one of the screen's two
+  # lists. `upcoming.or(ongoing)` reads the clock three times and leaves a gap between the
+  # readings, which is where an event caught mid-transition falls through both.
+  scope :unfinished, -> { where(ends_at: Time.now..) }
+
   # The tallies the event card draws, in one query, with a zero for a status nobody holds so the
   # card draws the same tags whatever the answers are. `reserved` is not among them: a place held
   # that nobody has been asked about is the absence of an answer rather than one, and it is the one
@@ -109,6 +118,13 @@ class Event < ApplicationRecord
   # matches nothing.
   def registration_for(member)
     registrations.find { it.member_id == member&.id }
+  end
+
+  # The `ongoing` scope asked of one record, for the card that has to word itself differently while
+  # an event is running. Mirrors the scope rather than calling it, because a card holds the event
+  # it is drawing and a query to ask whether that event is the one in its own hand is a query.
+  def ongoing?
+    starts_at.past? && ends_at.future?
   end
 
   # TODO: add event's time_zone context

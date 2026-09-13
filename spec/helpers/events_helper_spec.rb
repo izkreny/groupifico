@@ -1,6 +1,26 @@
 require 'rails_helper'
 
 RSpec.describe EventsHelper, type: :helper do
+  describe "#event_kicker" do
+    it "counts down to an event that has not started" do
+      freeze_time do
+        event = build(:event, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 1.hour)
+
+        expect(helper.event_kicker(event)).to eq "Next up · in 2 days"
+      end
+    end
+
+    # The distance to the end rather than to the start: `time_ago_in_words` measures a distance and
+    # never a direction, so the old line read "in about 1 hour" about an hour that had already gone.
+    it "counts down to the end of an event that is running" do
+      freeze_time do
+        event = build(:event, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
+
+        expect(helper.event_kicker(event)).to eq "Happening now · ends in about 1 hour"
+      end
+    end
+  end
+
   describe "#event_schedule" do
     context "when the event starts and ends on the same day" do
       it "formats the end time as a bare time, without repeating the date" do

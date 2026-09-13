@@ -6,14 +6,30 @@ class EventsController < ApplicationController
   def index
     authorize! @group, to: :show?
 
+    # Which of the two lists the screen is showing, decided by comparing the parameter against a
+    # literal rather than by naming a scope from it: `params[:scope]` is reader input, and anything
+    # built out of it and sent to the relation is a door onto every scope the model has. Anything
+    # that is not "past" reads as upcoming, so a mistyped URL degrades to the default list. The
+    # matching value is spelled again in the select on `events/index`, which is the only other
+    # place that knows these two lists exist.
+    @past = params[:scope] == "past"
+
     # Preloaded because every row asks the event for the reader's own registration and its place,
     # and `Event#registration_for` reads the loaded association: without this the list costs a
     # query per row for each.
-    @events = authorized_scope(@group.events).includes(:address, :registrations) # TODO: upcoming, past, ongoing, with filters
+    #
+    # Ordered here because the list had no order at all: the rows were whatever the database
+    # happened to return, which is the same list in a different sequence on a different day.
+    #
+    # `unfinished` rather than `upcoming`, so the two lists partition the group's events between
+    # them: an event a group is in the middle of is still ahead of its members.
+    events = authorized_scope(@group.events).includes(:address, :registrations)
+    @events = @past ? events.past.order(starts_at: :desc) : events.unfinished.order(:starts_at)
 
-    # The group decides which event is next, not the list: the filter is `Group#next_event`'s, and
-    # picking it out of `@events` here would be that rule written a second time.
-    @next_event = @group.next_event
+    # The group decides which event the hero draws, not the list: the filter is
+    # `Group#featured_event`'s, and picking it out of `@events` here would be that rule written a
+    # second time. A past list has no such event, so it is not asked for one.
+    @next_event = @group.featured_event unless @past
   end
 
   def show
