@@ -43,8 +43,31 @@ class User < ApplicationRecord
   # of what was issued that ADR 0004 chose the row-per-request table for.
   after_update :consume_outstanding_sign_in_tokens, if: :saved_change_to_email?
 
+  # Deleting the account takes every membership with it, so an account that is the last active owner
+  # of a group would leave that group ownerless. `Member`'s own last-owner guard never fires on this
+  # route: it returns early on `destroyed_by_association`, which any parent destroy sets, and it was
+  # written for the one parent whose destruction makes an ownerless group harmless - the group's.
+  #
+  # `prepend: true` is load-bearing, the same trap that guard documents. `has_many :members,
+  # dependent: :destroy` registers its own before_destroy when the association is declared, so
+  # without it the memberships are destroyed first and this asks a user who no longer owns anything.
+  before_destroy :ensure_no_group_loses_its_only_owner, prepend: true
+
+  # Asked of the user rather than of the member, because the refusal has to name every group the
+  # account would orphan and a member sees one group at a time. One statement rather than the
+  # group's own predicate per membership, which is the same question asked N times; `Member.owners`
+  # is what keeps both ends counting the same owners.
+  def solely_owned_groups
+    Group.where(id: members.active.owners.select(:group_id))
+      .where.not(id: Member.active.owners.where.not(user_id: id).select(:group_id))
+  end
+
   private
     def consume_outstanding_sign_in_tokens
       sign_in_tokens.consume_all
+    end
+
+    def ensure_no_group_loses_its_only_owner
+      throw :abort if solely_owned_groups.any?
     end
 end

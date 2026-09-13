@@ -89,6 +89,6 @@ class Group < ApplicationRecord
   # so counting either would let the last owner who can actually act be removed while the predicate
   # still answered yes.
   def owned_by_anyone_but?(member)
-    members.active.joins(:roles).where(roles: { name: Role::OWNER }).where.not(id: member.id).exists?
+    members.active.owners.where.not(id: member.id).exists?
   end
 end
