@@ -1,6 +1,10 @@
 class RegistrationsController < ApplicationController
   include GroupScoped
 
+  # One message for the one thing that happened, whichever side of the write it happened on:
+  # somebody the reader ticked stopped being invitable while they were choosing.
+  MOVED_ON = "Somebody was invited while you were choosing. Here is the list again.".freeze
+
   before_action :set_event
   before_action :set_registration, only: %i[ update destroy ]
 
@@ -25,20 +29,24 @@ class RegistrationsController < ApplicationController
 
     authorize! @registration
 
-    invited = @event.invite(invitees)
+    ticked  = member_ids
+    invited = @event.invite(invitees(ticked))
 
     if invited.any?
       redirect_to group_event_path(@group, @event),
         notice: "#{helpers.pluralize(invited.size, "member")} invited."
     else
-      flash.now[:alert] = "Pick at least one member to invite."
+      # The two ways of inviting nobody read the same to the controller and differently to the
+      # reader: one of them ticked somebody, and telling them to tick somebody sends them back to
+      # re-tick the row that was taken out from under them.
+      flash.now[:alert] = ticked.any? ? MOVED_ON : "Pick at least one member to invite."
       render :new, status: :unprocessable_content
     end
   rescue ActiveRecord::RecordNotUnique
-    # Somebody else invited one of the ticked members between `invitees` reading the set and the
-    # write reaching the unique index. The transaction has rolled the whole set back, so the answer
-    # is the screen again, redrawn without whoever arrived in the meantime.
-    flash.now[:alert] = "Somebody was invited while you were choosing. Here is the list again."
+    # The same move as the intersection above, arriving too late for it: the row landed while this
+    # request was writing rather than before it read. The transaction has rolled the whole set back,
+    # so the answer is the same one - the screen again, redrawn without whoever arrived.
+    flash.now[:alert] = MOVED_ON
     render :new, status: :unprocessable_content
   end
 
@@ -81,16 +89,22 @@ class RegistrationsController < ApplicationController
       @registration = @event.registrations.find(params.expect(:id))
     end
 
-    # The ticked members, intersected with the set the screen actually offered rather than trusted.
-    # The ids are unscoped: one naming somebody from another group would publish their name through
-    # `Event#attendees` to people with no claim on it. The screen's own hidden blank entry is
-    # dropped by the same `where`.
+    # What the reader actually ticked, blanks dropped - the screen posts a hidden empty entry so the
+    # key is always there. Read separately from the intersection below because an empty result means
+    # different things depending on whether this was empty too.
+    def member_ids
+      params.expect(member_ids: []).compact_blank
+    end
+
+    # Those of them the screen would still offer, rather than the ids as posted. They are unscoped:
+    # one naming somebody from another group would publish their name through `Event#attendees` to
+    # people with no claim on it.
     #
-    # It reads the set as it stands now, which closes the row that was registered while the form
-    # sat open and not the one registered while this request runs - that one reaches the unique
-    # index, and `create` rescues it.
-    def invitees
-      @group.members.active.without_registration_for(@event).where(id: params.expect(member_ids: []))
+    # It reads the set as it stands now, which closes the row that was registered while the form sat
+    # open and not the one registered while this request runs - that one reaches the unique index,
+    # and `create` rescues it.
+    def invitees(ids)
+      @group.members.active.without_registration_for(@event).where(id: ids)
     end
 
     # Used on update: member_id stays out, so a registration cannot be handed to another member.

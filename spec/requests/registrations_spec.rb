@@ -153,6 +153,7 @@ RSpec.describe "Registrations", type: :request do
     end
 
     context "when signed in as an events administrator" do
+      # The two ways of inviting nobody, which differ only in the message: this one ticked nothing.
       it "re-renders the screen when nothing was ticked" do
         event = create(:event)
         actor = create(:member, :active, :events_administrator, group: event.group)
@@ -162,6 +163,7 @@ RSpec.describe "Registrations", type: :request do
           .not_to change(Registration, :count)
 
         expect(response).to have_http_status :unprocessable_content
+        expect(flash[:alert]).to include "Pick at least one"
       end
 
       it "ignores a ticked member who is paused, inactive or already registered" do
@@ -175,6 +177,8 @@ RSpec.describe "Registrations", type: :request do
 
         expect { post group_event_registrations_path(event.group, event), params: { member_ids: [ paused.id, gone.id, registered.id ] } }
           .not_to change(Registration, :count)
+
+        expect(flash[:alert]).to include "while you were choosing"
       end
 
       # The row the intersection cannot see: it lands after `invitees` has read the set and reaches
