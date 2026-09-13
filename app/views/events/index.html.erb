@@ -40,19 +40,19 @@
   </div>
 
   <% reader = Current.member %>
-  <% if @next_event %>
-    <%= render "events/next_up", event: @next_event, registration: @next_event.registration_for(reader) %>
+  <% if @featured_event %>
+    <%= render "events/next_up", event: @featured_event, registration: @featured_event.registration_for(reader) %>
   <% end %>
 
   <div id="events">
-    <% rows = @events.reject { it.id == @next_event&.id } %>
+    <% rows = @events.reject { it.id == @featured_event&.id } %>
     <% if rows.any? %>
       <ul class="list">
         <% rows.each do |event| %>
           <%= render "events/row", event: event, registration: event.registration_for(reader) %>
         <% end %>
       </ul>
-    <% elsif @next_event.nil? %>
+    <% elsif @featured_event.nil? %>
       <p class="text-meta"><%= @past ? "No past events." : "Nothing coming up." %></p>
     <% end %>
   </div>

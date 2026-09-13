@@ -29,7 +29,7 @@ class EventsController < ApplicationController
     # The group decides which event the hero draws, not the list: the filter is
     # `Group#featured_event`'s, and picking it out of `@events` here would be that rule written a
     # second time. A past list has no such event, so it is not asked for one.
-    @next_event = @group.featured_event unless @past
+    @featured_event = @group.featured_event unless @past
   end
 
   def show
