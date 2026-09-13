@@ -96,6 +96,7 @@ RSpec.describe "Adding someone to an event", type: :system do
     expect(page).to have_button "Invite 2 people"
   end
 
+  # The landing is the browser's part; that the row was written is the request spec's.
   it "invites the ticked members and lands on the event" do
     event, actor, invitable, = event_with_three_members
     sign_in_as actor.user
@@ -105,7 +106,6 @@ RSpec.describe "Adding someone to an event", type: :system do
     click_button "Invite 1 person"
 
     expect(page).to have_current_path group_event_path(event.group, event)
-    expect(event.reload.attendees).to contain_exactly invitable
   end
 
   # The one arrangement every example needs: an events administrator, a member who can be invited
