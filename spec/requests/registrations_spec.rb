@@ -225,6 +225,22 @@ RSpec.describe "Registrations", type: :request do
           .not_to change(Registration, :count)
       end
 
+      # The row the intersection cannot see: it lands after `invitees` has read the set and reaches
+      # the unique index instead. The racing row rolls back with the rest here, where a real one on
+      # another connection would not, so what this proves is the answer rather than the row count.
+      it "answers the screen again when somebody is invited mid-request" do
+        event = create(:event)
+        invitee = create(:member, :active, group: event.group)
+        actor = create(:member, :active, :events_administrator, group: event.group)
+        sign_in_as actor.user
+
+        racing_on(event) do
+          post group_event_registrations_path(event.group, event), params: { member_ids: [ invitee.id ] }
+        end
+
+        expect(response).to have_http_status :unprocessable_content
+      end
+
       it "ignores a ticked member from another group, whose name is nobody here's to publish" do
         event = create(:event)
         outsider = create(:member, :active)
@@ -474,5 +490,21 @@ RSpec.describe "Registrations", type: :request do
         expect(flash[:alert]).to be_present
       end
     end
+  end
+
+  # Runs the block with the row the request is about to write already landing from inside the
+  # request, after `invitees` has read the set, which is the only place a spec can reach that
+  # window. The lambda is held in a local so `skip_callback` is handed the object `set_callback`
+  # was given.
+  def racing_on(event)
+    insert = ->(registration) {
+      Registration.insert_all!([ { event_id: event.id, member_id: registration.member_id,
+        status: Registration.statuses[:invited], created_at: Time.current, updated_at: Time.current } ])
+    }
+
+    Registration.set_callback(:create, :before, insert)
+    yield
+  ensure
+    Registration.skip_callback(:create, :before, insert)
   end
 end

@@ -42,6 +42,12 @@ class RegistrationsController < ApplicationController
       flash.now[:alert] = "Pick at least one member to invite."
       render :new, status: :unprocessable_content
     end
+  rescue ActiveRecord::RecordNotUnique
+    # Somebody else invited one of the ticked members between `invitees` reading the set and the
+    # write reaching the unique index. The transaction has rolled the whole set back, so the answer
+    # is the screen again, redrawn without whoever arrived in the meantime.
+    flash.now[:alert] = "Somebody was invited while you were choosing. Here is the list again."
+    render :new, status: :unprocessable_content
   end
 
   def update
@@ -85,9 +91,12 @@ class RegistrationsController < ApplicationController
 
     # The ticked members, intersected with the set the screen actually offered rather than trusted.
     # The ids are unscoped: one naming somebody from another group would publish their name through
-    # `Event#attendees` to people with no claim on it, and one naming a member who was registered
-    # while the form sat open would fail the unique index. Intersecting answers both, and the
-    # screen's own hidden blank entry is dropped by the same `where`.
+    # `Event#attendees` to people with no claim on it. The screen's own hidden blank entry is
+    # dropped by the same `where`.
+    #
+    # It reads the set as it stands now, which closes the row that was registered while the form
+    # sat open and not the one registered while this request runs - that one reaches the unique
+    # index, and `create` rescues it.
     def invitees
       @group.members.active.without_registration_for(@event).where(id: params.expect(member_ids: []))
     end
