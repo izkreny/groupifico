@@ -50,7 +50,7 @@ gem "mailpace-rails"
 # json arrives transitively and would resolve to 3.x, which Rails 8.1.3.1 cannot run:
 # `ActiveSupport::JSON.decode` passes a positional options hash and json 3.0 takes keywords only.
 # Remove this line once Rails ships the fix - #274 tracks it, `.agents/dependencies.md` has the detail.
-gem "json", "~> 2.21"
+gem "json", "~> 3.0"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
