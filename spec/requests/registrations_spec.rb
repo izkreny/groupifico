@@ -1,54 +1,6 @@
 require 'rails_helper'
 
 RSpec.describe "Registrations", type: :request do
-  describe "GET /groups/:group_id/events/:event_id/registrations" do
-    context "when not signed in" do
-      it "redirects to the sign-in page" do
-        event = create(:event)
-
-        get group_event_registrations_path(event.group, event)
-
-        expect(response).to redirect_to new_session_path
-      end
-    end
-
-    context "when signed in as a non-member" do
-      it "returns 404" do
-        event = create(:event)
-        sign_in_as(create(:user))
-
-        get group_event_registrations_path(event.group, event)
-
-        expect(response).to have_http_status :not_found
-      end
-    end
-
-    context "when signed in as an active member" do
-      it "shows the registrations page" do
-        event = create(:event)
-        member = create(:member, :active, group: event.group)
-        sign_in_as(member.user)
-
-        get group_event_registrations_path(event.group, event)
-
-        expect(response).to have_http_status :ok
-      end
-
-      it "lists only registrations from groups the acting user belongs to" do
-        event = create(:event)
-        member = create(:member, :active, group: event.group)
-        own_registration = create(:registration, event:, member:)
-        other_registration = create(:registration)
-        sign_in_as(member.user)
-
-        get group_event_registrations_path(event.group, event)
-
-        expect(response.body).to include(ActionView::RecordIdentifier.dom_id(own_registration))
-        expect(response.body).not_to include(ActionView::RecordIdentifier.dom_id(other_registration))
-      end
-    end
-  end
-
   describe "GET /groups/:group_id/events/:event_id/registrations/new" do
     context "when not signed in" do
       it "redirects to the sign-in page" do

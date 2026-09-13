@@ -4,12 +4,6 @@ class RegistrationsController < ApplicationController
   before_action :set_event
   before_action :set_registration, only: %i[ update destroy ]
 
-  def index
-    authorize! @group, to: :show?
-
-    @registrations = authorized_scope(@event.registrations)
-  end
-
   # The invitation screen. A registration nobody has been chosen for is nobody's, so `own?` is
   # false on it and `create?` is the three roles and the event's manager alone - the invitation row
   # of the events table, which is exactly who this screen is for.
