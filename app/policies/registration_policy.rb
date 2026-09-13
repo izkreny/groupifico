@@ -16,10 +16,8 @@ class RegistrationPolicy < ApplicationPolicy
   # Changing somebody else's answer is not the manager's, deliberately: filling an event is their
   # job, overruling an answer is not. So `manages_event?` is absent here and present above.
   #
-  # `edit?` says the same thing under its own name rather than aliasing `update?`, for the reason
-  # GroupPolicy's own comment gives: an alias renames the running rule and the read/write split
-  # stops seeing a read.
-  def edit?   = own? || membership.can_manage?(:events)
+  # No `edit?` beside it: a registration has no form of its own, and the roster row that answers
+  # one posts straight to `update`.
   def update? = own? || membership.can_manage?(:events)
 
   # Taking a registration away is the three roles', and nobody withdraws their own: the answer to
