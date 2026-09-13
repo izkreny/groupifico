@@ -123,6 +123,13 @@ class Event < ApplicationRecord
     starts_at.past? && ends_at.future?
   end
 
+  # Whether the question is still worth putting to a reader: the event has not finished, and it has
+  # not been called off. Both states carry registrations that were never answered - the past list
+  # is full of them - and neither is a question any more.
+  def open_to_answers?
+    ends_at.future? && !canceled?
+  end
+
   # TODO: add event's time_zone context
   def same_day?
     starts_at.to_date == ends_at.to_date

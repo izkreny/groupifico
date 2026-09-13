@@ -241,6 +241,32 @@ RSpec.describe Event, type: :model do
     end
   end
 
+  describe "#open_to_answers?" do
+    it "is true for an event still ahead" do
+      freeze_time do
+        expect(build(:event, status: :confirmed, starts_at: 1.hour.from_now, ends_at: 2.hours.from_now)).to be_open_to_answers
+      end
+    end
+
+    it "is true while it is running" do
+      freeze_time do
+        expect(build(:event, status: :confirmed, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)).to be_open_to_answers
+      end
+    end
+
+    it "is false once it has ended" do
+      freeze_time do
+        expect(build(:event, status: :confirmed, starts_at: 2.hours.ago, ends_at: 1.hour.ago)).not_to be_open_to_answers
+      end
+    end
+
+    it "is false for an event that has been called off, however far ahead" do
+      freeze_time do
+        expect(build(:event, status: :canceled, starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours)).not_to be_open_to_answers
+      end
+    end
+  end
+
   describe "#same_day?" do
     context "when the event starts and ends on the same day" do
       it "returns true" do
