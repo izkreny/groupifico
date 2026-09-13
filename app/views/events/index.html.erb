@@ -40,10 +40,8 @@
   </div>
 
   <% reader = Current.member %>
-  <% next_registration = @next_event.registration_for(reader) if @next_event %>
-
   <% if @next_event %>
-    <%= render "events/next_up", event: @next_event, registration: next_registration %>
+    <%= render "events/next_up", event: @next_event, registration: @next_event.registration_for(reader) %>
   <% end %>
 
   <div id="events">
