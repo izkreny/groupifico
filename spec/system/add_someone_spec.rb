@@ -40,7 +40,7 @@ RSpec.describe "Adding someone to an event", type: :system do
     check ActionView::RecordIdentifier.dom_id(invitable, :invite)
 
     expect(rendered_colour_scheme).to eq "light"
-    expect(dimmed_contrast(paused)).to be >= wcag_aa
+    expect(text_contrast("##{ActionView::RecordIdentifier.dom_id(paused)} .list-col-grow span")).to be >= ContrastHelper::WCAG_AA
     expect(page).to be_accessible
   end
 
@@ -54,7 +54,7 @@ RSpec.describe "Adding someone to an event", type: :system do
     check ActionView::RecordIdentifier.dom_id(invitable, :invite)
 
     expect(rendered_colour_scheme).to eq "dark"
-    expect(dimmed_contrast(paused)).to be >= wcag_aa
+    expect(text_contrast("##{ActionView::RecordIdentifier.dom_id(paused)} .list-col-grow span")).to be >= ContrastHelper::WCAG_AA
     expect(page).to be_accessible
   end
 
@@ -125,49 +125,6 @@ RSpec.describe "Adding someone to an event", type: :system do
       (() => {
         const r = document.querySelector("#{selector}").getBoundingClientRect();
         return [ Math.round(r.width), Math.round(r.height) ];
-      })()
-    JAVASCRIPT
-  end
-
-  # The ratio WCAG 2.1 AA asks of normal text, which is what `spec/support/axe.rb` enforces
-  # everywhere else on the screen.
-  def wcag_aa = 4.5
-
-  # The contrast the dimmed row actually reaches, which needs the row's `opacity` folded into the
-  # text colour before it is compared with the surface - the step axe skips. Composited by filling
-  # a canvas rather than by parsing, for the reason `spec/support/paint_matcher.rb` gives: this
-  # palette resolves to `oklch(...)`, which no `rgb()`-shaped parser survives.
-  def dimmed_contrast(member)
-    page.evaluate_script(<<~JAVASCRIPT)
-      (() => {
-        const el = document.querySelector("##{ActionView::RecordIdentifier.dom_id(member)} .list-col-grow span");
-        const canvas = document.createElement("canvas");
-        canvas.width = canvas.height = 1;
-        const ctx = canvas.getContext("2d", { willReadFrequently: true });
-        const fill = (c) => { ctx.fillStyle = "rgba(0,0,0,0)"; ctx.fillStyle = c; ctx.fillRect(0, 0, 1, 1); };
-        const pixel = () => Array.from(ctx.getImageData(0, 0, 1, 1).data);
-
-        let alpha = 1;
-        for (let n = el; n; n = n.parentElement) alpha *= parseFloat(getComputedStyle(n).opacity);
-
-        let surface = "rgb(255, 255, 255)";
-        for (let n = el.parentElement; n; n = n.parentElement) {
-          const colour = getComputedStyle(n).backgroundColor;
-          ctx.clearRect(0, 0, 1, 1); fill(colour);
-          if (pixel()[3] === 255) { surface = colour; break; }
-        }
-
-        ctx.clearRect(0, 0, 1, 1); fill(surface); const beneath = pixel();
-        ctx.clearRect(0, 0, 1, 1); fill(getComputedStyle(el).color); const ink = pixel();
-        const blended = ink.slice(0, 3).map((v, i) => v * alpha + beneath[i] * (1 - alpha));
-
-        const luminance = ([ r, g, b ]) => {
-          const channel = (v) => { const s = v / 255; return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4); };
-          return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
-        };
-
-        const a = luminance(blended), b = luminance(beneath);
-        return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
       })()
     JAVASCRIPT
   end

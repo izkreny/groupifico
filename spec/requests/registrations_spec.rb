@@ -134,10 +134,10 @@ RSpec.describe "Registrations", type: :request do
       end
     end
 
-    # Filling the event is the manager's job and the three roles', and saying `invited` is part of
-    # it. A member speaking for themselves says `yes`, `maybe` or `no` on the event's own roster.
+    # Filling the event is the manager's job and the three roles'. The status those rows carry is
+    # `Event#invite`'s to write and `spec/models/event_spec.rb`'s to assert.
     context "when signed in as the event's manager" do
-      it "invites every ticked member at once, as invited" do
+      it "invites every ticked member at once" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, manager: actor)
         first = create(:member, :active, group: actor.group)
@@ -147,7 +147,6 @@ RSpec.describe "Registrations", type: :request do
         expect { post group_event_registrations_path(event.group, event), params: { member_ids: [ "", first.id, second.id ] } }
           .to change(Registration, :count).by(2)
 
-        expect(event.registrations.pluck(:status)).to all eq "invited"
         expect(response).to redirect_to group_event_path(event.group, event)
       end
     end
