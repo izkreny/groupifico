@@ -20,10 +20,15 @@ Rails.application.routes.draw do
   resources :addresses, only: %i[ index show edit update ]
 
   # No `new` and no `create`: signing up and being invited are the two ways to become a user, and
-  # neither of them is a signed-in visitor asking for a second account.
-  resource :user, only: %i[ show edit update destroy ] do
+  # neither of them is a signed-in visitor asking for a second account. Reading and editing the
+  # account is the Me screen's, which one Save writes through the profile, so the account keeps only
+  # its deletion and its two old screens redirect there. `as: nil` so a retired path mints no
+  # `user_edit_path` helper for anything to link to.
+  resource :user, only: %i[ destroy ] do
     resource :profile, controller: "user_profiles", only: %i[ show edit update ]
   end
+  get "user", to: redirect("/user/profile"), as: nil
+  get "user/edit", to: redirect("/user/profile/edit"), as: nil
   resolve("User")        { [ :user         ] }
   resolve("UserProfile") { [ :user_profile ] }
 
