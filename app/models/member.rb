@@ -77,7 +77,7 @@ class Member < ApplicationRecord
   # form to render the message on.
   validate :group_keeps_an_active_owner, on: :update
 
-  delegate :full_name, to: :profile
+  delegate :full_name, :short_name, to: :profile
 
   # The one question a policy asks. It learns nothing about how the answer is stored, which is what
   # lets a role arrive as a row rather than as a migration. `module_name` rather than `module`

@@ -77,4 +77,26 @@ RSpec.describe UserProfile, type: :model do
       expect(build(:user_profile, first_name: "nick", last_name: "cave").initials).to eq "NC"
     end
   end
+
+  describe "#short_name" do
+    it "takes the first name and the last name's initial when both are present" do
+      expect(build(:user_profile, first_name: "Ben", last_name: "Cole").short_name).to eq "Ben C."
+    end
+
+    it "upcases the initial of a last name typed in lower case" do
+      expect(build(:user_profile, first_name: "Ben", last_name: "cole").short_name).to eq "Ben C."
+    end
+
+    # Abbreviating needs both halves: a lone first name shortened would still be the whole of it,
+    # and a lone last name shortened would be one letter and a dot, which names nobody.
+    it "answers the whole name when only one of the two is present" do
+      expect(build(:user_profile, first_name: nil, last_name: "Cole").short_name).to eq "Cole"
+    end
+
+    it "falls back to the email local-part when neither name is present" do
+      nameless = build(:user_profile, first_name: nil, last_name: nil, user: build(:user, email: "username@domain"))
+
+      expect(nameless.short_name).to eq "username"
+    end
+  end
 end

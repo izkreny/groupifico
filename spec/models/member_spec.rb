@@ -208,6 +208,7 @@ RSpec.describe Member, type: :model do
   end
 
   it { is_expected.to delegate_method(:full_name).to(:profile) }
+  it { is_expected.to delegate_method(:short_name).to(:profile) }
 
   describe "#full_name" do
     it "answers the email local part for a fresh signup whose profile has no name yet" do
