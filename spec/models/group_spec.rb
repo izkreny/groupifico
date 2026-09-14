@@ -155,25 +155,48 @@ RSpec.describe Group, type: :model do
   end
 
   # Times are frozen so "upcoming" cannot depend on how long the suite takes to reach this file.
-  describe "#next_event" do
-    it "is the soonest of the group's confirmed upcoming events" do
+  describe "#featured_event" do
+    it "is the event already running, ahead of one that starts sooner than it ends" do
+      freeze_time do
+        group = create(:group)
+        creator = create(:member, group:)
+        create(:event, group:, creator:, status: :confirmed, starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour)
+        running = create(:event, group:, creator:, status: :confirmed, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
+
+        expect(group.featured_event).to eq running
+      end
+    end
+
+    it "falls back to the soonest upcoming event when nothing is running" do
       freeze_time do
         group = create(:group)
         creator = create(:member, group:)
         create(:event, group:, creator:, status: :confirmed, starts_at: 10.days.from_now, ends_at: 10.days.from_now + 1.hour)
         soonest = create(:event, group:, creator:, status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 1.hour)
 
-        expect(group.next_event).to eq soonest
+        expect(group.featured_event).to eq soonest
       end
     end
 
-    it "ignores an event that has already started" do
+    # `confirmed` filters this as it filters everything under a group's name: an event running right
+    # now is still not a commitment until somebody confirms it.
+    it "ignores an unconfirmed event, however far under way" do
+      freeze_time do
+        group = create(:group)
+        creator = create(:member, group:)
+        create(:event, group:, creator:, status: :unconfirmed, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
+
+        expect(group.featured_event).to be_nil
+      end
+    end
+
+    it "ignores an event that has ended" do
       freeze_time do
         group = create(:group)
         creator = create(:member, group:)
         create(:event, group:, creator:, status: :confirmed, starts_at: 2.days.ago, ends_at: 2.days.ago + 1.hour)
 
-        expect(group.next_event).to be_nil
+        expect(group.featured_event).to be_nil
       end
     end
 
@@ -184,22 +207,12 @@ RSpec.describe Group, type: :model do
         create(:event, group:, creator:, status: :canceled, starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour)
         confirmed = create(:event, group:, creator:, status: :confirmed, starts_at: 5.days.from_now, ends_at: 5.days.from_now + 1.hour)
 
-        expect(group.next_event).to eq confirmed
-      end
-    end
-
-    it "ignores an event nobody has confirmed yet" do
-      freeze_time do
-        group = create(:group)
-        creator = create(:member, group:)
-        create(:event, group:, creator:, status: :unconfirmed, starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour)
-
-        expect(group.next_event).to be_nil
+        expect(group.featured_event).to eq confirmed
       end
     end
 
     it "is nil for a group with no events at all" do
-      expect(create(:group).next_event).to be_nil
+      expect(create(:group).featured_event).to be_nil
     end
   end
 

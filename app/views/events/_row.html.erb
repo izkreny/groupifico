@@ -1,8 +1,18 @@
 <%# locals: (event:, registration: nil) %>
 <%#
-  The compact row: the status as its icon alone, the name, and one meta line. No count tags and no
-  answer row - the legend's matrix gives a row the reader's own reply as an icon and nothing else,
-  because the row competes with every other row beneath it.
+  The compact row: the status as its icon alone, the name, and one meta line. No count tags, which
+  the legend's matrix reserves for a card: a row competes with every other row beneath it.
+
+  The question is the exception, and it is asked wherever the reader has been invited, has not
+  answered, and the event can still take an answer - a row is where they are looking when they
+  decide. The past list asks too, in the past tense: an event that has ended and that nobody
+  concluded is still worth a roster, and `EventsHelper#answer_prompt` carries that half.
+  `open_to_answers?` rules out the events somebody ended rather than the ones the clock did.
+  `events/_rsvp` carries no such guard of its own, because the hero is its only other caller and is
+  always confirmed and unfinished.
+
+  An answer already given stays an icon beside the name rather than a second set of pills.
+  `list-col-wrap` puts the question on its own line under the row rather than in a column beside it.
 %>
 <li id="<%= dom_id event %>" class="list-row">
   <%= status_icon event, label: event.status, class: "size-5" %>
@@ -20,4 +30,10 @@
       <% end %>
     </div>
   </div>
+
+  <% if registration&.invited? && event.open_to_answers? %>
+    <div class="list-col-wrap">
+      <%= render "events/rsvp", event: event, registration: registration %>
+    </div>
+  <% end %>
 </li>

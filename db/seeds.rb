@@ -21,6 +21,23 @@ NUMBER_OF_GROUPS            = 2   # DO NOT CHANGE THIS! :) TODO: Make this confi
 NUMBER_OF_MEMBERS_PER_GROUP = 22  # Minimum is two!
 NUMBER_OF_EVENTS_PER_GROUP  = 44  # Use even number!
 
+
+# Everyone answers, and only then is the event settled, because that is the order it happens in:
+# people say whether they are coming, and afterwards somebody concludes it or calls it off.
+# `Registration` refuses an answer to an event that is already over, so writing the outcome first
+# would seed a history that could not have occurred. The factory traits stay the authority on which
+# outcome each event ends up with.
+def answer_then_settle(event, members)
+  outcome = event.status
+  event.update!(status: :confirmed)
+
+  members.each do |member|
+    FactoryBot.create(:registration, event: event, member: member, status: [ :yes, :maybe, :no ].sample)
+  end
+
+  event.update!(status: outcome)
+end
+
 def populate_empty_database
   # Make Faker always produce same results aka enable deterministic output
   Faker::Config.random = Random.new(666)
@@ -54,9 +71,7 @@ def populate_empty_database
       address: nil
     }
     FactoryBot.create_list(:event, NUMBER_OF_EVENTS_PER_GROUP / 2, :from_the_past, :with_all_attributes, options) do |event|
-      group.members.each do |member|
-        FactoryBot.create(:registration, event: event, member: member, status: [ :yes, :maybe, :no ].sample)
-      end
+      answer_then_settle(event, group.members)
     end
   end
 
@@ -69,9 +84,7 @@ def populate_empty_database
       address: nil
     }
     FactoryBot.create_list(:event, NUMBER_OF_EVENTS_PER_GROUP / 2, :from_the_future, :with_all_attributes, options) do |event|
-      group.members.each do |member|
-        FactoryBot.create(:registration, event: event, member: member, status: [ :yes, :maybe, :no ].sample)
-      end
+      answer_then_settle(event, group.members)
     end
   end
 

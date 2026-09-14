@@ -30,16 +30,69 @@ RSpec.describe "Events", type: :request do
         expect(response).to have_http_status :ok
       end
 
-      it "lists only events from groups the acting user belongs to" do
+      # The select is the screen's title as well as its filter, so what proves the title is there
+      # is the control's own two options rather than a heading above them.
+      it "titles the screen with the select that chooses between the two lists" do
         member = create(:member, :active)
-        own_event = create(:event, group: member.group, creator: member)
-        other_event = create(:event)
         sign_in_as(member.user)
 
         get group_events_path(member.group)
 
-        expect(response.body).to include(ActionView::RecordIdentifier.dom_id(own_event))
-        expect(response.body).not_to include(ActionView::RecordIdentifier.dom_id(other_event))
+        expect(response.body).to include %(name="scope"), ">Upcoming events</option>", ">Past events</option>"
+        expect(response.body).to include %(<option selected="selected" value="upcoming">)
+      end
+
+      # The accessible name carries a warning that choosing navigates, which is what the plan's
+      # `## Settled` accepts SC 3.2.2 on. Asserted here because axe-core has no rule for that
+      # criterion, so `be_accessible` passes over a name shortened back to the bare purpose. What
+      # this pins is the wording; that the control still changes context on input, nothing can.
+      it "warns in the select's accessible name that choosing navigates" do
+        member = create(:member, :active)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group)
+
+        expect(response.body).to include %(aria-label="Which events to show; choosing one loads that list")
+      end
+
+      # Who may create an event is `EventPolicy#create?`, and a refused reader gets no control
+      # rather than a disabled one - so the assertion is the route's absence, not a class.
+      it "offers the New button to a reader who may create events" do
+        owner = create(:member, :owner)
+        sign_in_as(owner.user)
+
+        get group_events_path(owner.group)
+
+        expect(response.body).to include %(href="#{new_group_event_path(owner.group)}")
+      end
+
+      it "offers a plain member no New button" do
+        member = create(:member, :active)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group)
+
+        expect(response.body).not_to include %(href="#{new_group_event_path(member.group)}")
+      end
+
+      # `:from_the_future` rather than the bare factory, whose `starts_at` is a random point in a
+      # year either side of today: this list shows the upcoming events, so half of those rolls put
+      # the event this example is looking for on the other list.
+      #
+      # `status:` is named on top of the trait, which rolls its own: a confirmed roll makes the
+      # event `Group#featured_event`, and it then draws as the hero rather than as a row. And the match
+      # carries `id="` so the hero could not satisfy it if it did - `dom_id` alone is a substring
+      # of the hero's `next_up_event_N`, which is what let the roll go unnoticed.
+      it "lists only events from groups the acting user belongs to" do
+        member = create(:member, :active)
+        own_event = create(:event, :from_the_future, status: :unconfirmed, group: member.group, creator: member)
+        other_event = create(:event, :from_the_future, status: :unconfirmed)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group)
+
+        expect(response.body).to include %(id="#{ActionView::RecordIdentifier.dom_id(own_event)}")
+        expect(response.body).not_to include %(id="#{ActionView::RecordIdentifier.dom_id(other_event)}")
       end
     end
 
@@ -77,6 +130,26 @@ RSpec.describe "Events", type: :request do
           expect(response.body).to include "Your answer:", "no reply", "Carla Dean said yes"
           expect(response.body).not_to include "Are you coming?"
         end
+      end
+
+      # Where the question is asked, which is the one thing about it this screen decides: inside the
+      # hero's own card, and again under any row the reader was invited to. `id="events"` is the
+      # list's wrapper, so a match that crosses it has one copy on each side of the list's start.
+      #
+      # The count is what makes the order mean anything. Either copy alone satisfies the match on
+      # its own, which is what the screen looked like when the answer row sat once below the list.
+      it "asks inside the hero card and again under an invited row" do
+        owner = create(:member, :owner)
+        next_up = confirmed_event(owner, days: 2, name: "Tuesday rehearsal")
+        later = confirmed_event(owner, days: 5, name: "Sunday service")
+        create(:registration, event: next_up, member: owner, status: :invited)
+        create(:registration, event: later, member: owner, status: :invited)
+        sign_in_as(owner.user)
+
+        get group_events_path(owner.group)
+
+        expect(response.body).to match(/Tuesday rehearsal.*Are you coming\?.*id="events".*Sunday service.*Are you coming\?/m)
+        expect(response.body.scan("Are you coming?").size).to eq 2
       end
 
       # The row's own answer is an icon and nothing else, so what it carries is the icon's name.
@@ -136,7 +209,10 @@ RSpec.describe "Events", type: :request do
         end
       end
 
-      it "draws no count tags while every registration is still reserved" do
+      # Both halves of the nobody-asked state in one example, because they are one behaviour: the
+      # tags are absent and a sentence stands where they were. The negative alone was satisfied by
+      # a card that drew nothing there at all, which is what this state used to look like.
+      it "says nobody has been asked while every registration is still reserved" do
         freeze_time do
           owner = create(:member, :owner)
           next_up = confirmed_event(owner, days: 2)
@@ -145,15 +221,191 @@ RSpec.describe "Events", type: :request do
 
           get group_events_path(owner.group)
 
-          expect(response.body).to include "Next up · in 2 days"
+          expect(response.body).to include "Next up · in 2 days", "Nobody asked yet · 1 on the list"
           expect(response.body).not_to include "no reply"
         end
       end
     end
 
+    # A negative offset is what makes an event past: `confirmed_event` reads `days:` as a distance
+    # from now in either direction, and an event that started nine days ago ended eight days and
+    # twenty-two hours ago, which is what `Event.past` asks about.
+    context "when the past list is asked for" do
+      it "lists the group's past events newest first, with no hero card" do
+        member = create(:member, :active)
+        confirmed_event(member, days: 2, name: "Tuesday rehearsal")
+        confirmed_event(member, days: -9, name: "Spring concert")
+        confirmed_event(member, days: -2, name: "Summer gig")
+        sign_in_as(member.user)
+
+        get group_events_path(member.group, scope: "past")
+
+        expect(response.body).to match(/Summer gig.*Spring concert/m)
+        expect(response.body).not_to include "Next up", "Tuesday rehearsal"
+      end
+
+      # An event that has ended and that nobody concluded is still worth a roster, so the question
+      # is asked here too - in the tense the event is in. Both halves in one example: the past
+      # tense present and the present tense absent, since a screen asking neither would satisfy
+      # either assertion alone.
+      it "asks in the past tense under an event that has ended" do
+        member = create(:member, :active)
+        over = confirmed_event(member, days: -9, name: "Spring concert")
+        create(:registration, event: over, member:, status: :invited)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group, scope: "past")
+
+        expect(response.body).to include "Spring concert", "Did you go?"
+        expect(response.body).not_to include "Are you coming?"
+      end
+
+      it "does not ask at all under an event somebody has concluded" do
+        member = create(:member, :active)
+        over = create(:event, group: member.group, creator: member, status: :concluded,
+          name: "Summer gig", starts_at: 9.days.ago, ends_at: 9.days.ago + 2.hours)
+        create(:registration, event: over, member:, status: :invited)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group, scope: "past")
+
+        expect(response.body).to include "Summer gig"
+        expect(response.body).not_to include "Did you go?", "Are you coming?"
+      end
+
+      # The select states which list is open, so a reader who lands on the past one by a typed URL
+      # sees the control agreeing with what is under it.
+      it "shows the past option as the select's own value" do
+        member = create(:member, :active)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group, scope: "past")
+
+        expect(response.body).to include %(<option selected="selected" value="past">)
+      end
+
+      # Anything that is not "past" is the upcoming list, which is what keeps a mistyped URL a
+      # screen rather than an error.
+      it "reads an unknown scope as the upcoming list" do
+        member = create(:member, :active)
+        confirmed_event(member, days: -2, name: "Summer gig")
+        sign_in_as(member.user)
+
+        get group_events_path(member.group, scope: "sideways")
+
+        expect(response.body).not_to include "Summer gig"
+      end
+    end
+
+    # The gap the two scopes left between them, and what the hero does about it. The row examples
+    # use an `unconfirmed` event so `Group#featured_event` cannot claim it for the card: what they
+    # are about is `Event.current_and_upcoming` carrying it at all, and a hero that swallowed it would make
+    # the delimited id assertion pass for the wrong reason.
+    context "when an event is under way" do
+      it "keeps it on the upcoming list" do
+        member = create(:member, :active)
+        running = running_event(member, status: :unconfirmed)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group)
+
+        expect(response.body).to include %(id="#{ActionView::RecordIdentifier.dom_id(running)}")
+      end
+
+      it "keeps it off the past list" do
+        member = create(:member, :active)
+        running = running_event(member, status: :unconfirmed)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group, scope: "past")
+
+        expect(response.body).not_to include %(id="#{ActionView::RecordIdentifier.dom_id(running)}")
+      end
+
+      # The screen's largest element used to name a later event than the one the reader was at.
+      # Both halves in one example because they are one behaviour: the running event takes the card
+      # and the later one is demoted to a row, and asserting either alone passes on a screen that
+      # drew both as heroes or neither.
+      it "gives the hero to the running event and leaves the later one a row" do
+        freeze_time do
+          member = create(:member, :active)
+          running = running_event(member, status: :confirmed)
+          later = confirmed_event(member, days: 1, name: "Sunday service")
+          sign_in_as(member.user)
+
+          get group_events_path(member.group)
+
+          expect(response.body).to include "Happening now · ends in about 1 hour",
+            %(id="#{ActionView::RecordIdentifier.dom_id(running, :next_up)}"), %(id="#{ActionView::RecordIdentifier.dom_id(later)}")
+          expect(response.body).not_to include "Next up ·"
+        end
+      end
+    end
+
+    # The empty state, one sentence per list, asserted both ways round: the positive alone was
+    # satisfied by a screen carrying both sentences, and the negative alone by a screen carrying
+    # neither. Swapping the two literals reddens both examples, which is the mutation the pair
+    # exists for.
+    context "when the group has nothing on the list being asked for" do
+      it "says nothing is coming up on an empty upcoming list" do
+        member = create(:member, :active)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group)
+
+        expect(response.body).to include "Nothing coming up."
+        expect(response.body).not_to include "No past events."
+      end
+
+      it "says there are no past events on an empty past list" do
+        member = create(:member, :active)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group, scope: "past")
+
+        expect(response.body).to include "No past events."
+        expect(response.body).not_to include "Nothing coming up."
+      end
+    end
+
+    # The other half of `open_to_answers?`'s status test. An unconfirmed event is on the list and is
+    # still ahead, so it does ask: nobody has called it off, and gauging who would come is most of
+    # what an unconfirmed event is for. Without this the `unconfirmed?` term is a one-token deletion
+    # nothing catches.
+    context "when the group's only upcoming event is unconfirmed and the reader was invited" do
+      it "asks under its row" do
+        member = create(:member, :active)
+        pencilled = create(:event, group: member.group, creator: member, status: :unconfirmed,
+          name: "Extra rehearsal", starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        create(:registration, event: pencilled, member:, status: :invited)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group)
+
+        expect(response.body).to include "Extra rehearsal", "Are you coming?"
+      end
+    end
+
+    # `Event.current_and_upcoming` filters on `ends_at` alone, so a canceled event still ahead is on
+    # the list. It draws, and it does not ask: the clock has not ruled it out but its status has.
+    context "when the group's only upcoming event has been called off" do
+      it "draws the row and does not ask under it" do
+        member = create(:member, :active)
+        called_off = create(:event, group: member.group, creator: member, status: :canceled,
+          name: "Autumn gig", starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        create(:registration, event: called_off, member:, status: :invited)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group)
+
+        expect(response.body).to include "Autumn gig"
+        expect(response.body).not_to include "Are you coming?"
+      end
+    end
+
     context "when the group's only upcoming event is unconfirmed" do
       # What a wrong filter looks like from the reader's side: an unconfirmed event is not a
-      # commitment, so no card is drawn at all. A model spec cannot show this - `#next_event`
+      # commitment, so no card is drawn at all. A model spec cannot show this - `#featured_event`
       # answering the wrong record and the card being drawn anyway are the same thing there.
       it "draws no hero card" do
         freeze_time do
@@ -685,9 +937,17 @@ RSpec.describe "Events", type: :request do
     end
   end
 
+  # An event the reader is in the middle of: started, not yet ended. `status:` is the caller's,
+  # because whether `Group#featured_event` may claim it for the hero is exactly what the examples
+  # around it differ on.
+  def running_event(member, status:)
+    create(:event, group: member.group, creator: member, status: status,
+      starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
+  end
+
   # The card states its own copy, so the examples above need an event with a fixed name, place and
   # offset rather than the factory's random ones. `status:` is named because the base factory
-  # leaves it at the model default, `unconfirmed`, which `Group#next_event` deliberately excludes.
+  # leaves it at the model default, `unconfirmed`, which `Group#featured_event` deliberately excludes.
   #
   # The offset is exact, never an hour of its own day. The kicker rounds the distance to the
   # nearest day, so an event pinned to 19:00 is "in 2 days" or "in 3 days" depending on the hour
