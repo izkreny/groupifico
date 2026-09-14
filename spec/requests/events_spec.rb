@@ -529,6 +529,20 @@ RSpec.describe "Events", type: :request do
         expect(response.body).to include new_group_event_registration_path(event.group, event)
       end
 
+      # `Registration` refuses every answer on an event that is over, so a pill there is a control
+      # certain to fail. Taking somebody off stays, since correcting a closed roster is still theirs.
+      it "leaves the pills off the roster of a concluded event, and keeps the badges and the take-off" do
+        owner = create(:member, :active, :owner)
+        event = detailed_event(owner)
+        event.update!(status: :concluded)
+        sign_in_as(owner.user)
+
+        get group_event_path(event.group, event)
+
+        expect(response.body).to include "Place reserved, not asked yet", "Take Ben Cole off the list"
+        expect(response.body).not_to include "Yes for Ben Cole"
+      end
+
       it "names a paused member with no registration as left out above the rows" do
         owner = create(:member, :active, :owner)
         event = detailed_event(owner)

@@ -11,10 +11,14 @@
 
   A row whose pills already say where it stands draws no badge beside them. An unanswered row keeps
   its badge whoever reads it, because no pill is current there to tell `reserved` from `invited`.
+
+  The pills also wait on `Event#open_to_answers?`, as on `events/_row`: `Registration` refuses every
+  answer on an event that is over, so a pill there is a control certain to fail. The take-off does
+  not, since correcting a roster after the fact is still the three roles' business.
 %>
 <% unattached = Registration.new(event: event) %>
 <% may_invite = allowed_to?(:create?, unattached) %>
-<% may_answer = allowed_to?(:update?, unattached) %>
+<% may_answer = event.open_to_answers? && allowed_to?(:update?, unattached) %>
 <% may_remove = allowed_to?(:destroy?, unattached) %>
 <% roster = event.roster %>
 
