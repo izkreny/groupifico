@@ -134,12 +134,19 @@ class Event < ApplicationRecord
     unconfirmed? || confirmed?
   end
 
-  # Everyone on the list, in the order the event screen draws them: by the name each row carries,
-  # which is what a reader scans for, whatever case it was typed in. Sorted after loading rather
-  # than by the database because the name is not a column - `UserProfile#full_name` falls back to
-  # the email - and the profile is preloaded because every row asks for it through `user`.
+  # Everyone on the list, in the order the event screen draws them: grouped by where each stands,
+  # the answers first in the order the answer row offers them, then the two unanswered statuses from
+  # the one nearest an answer - the enum declares them in the order a registration moves through, so
+  # that is their declaration reversed. Within a status, by the name each row carries, whatever case
+  # it was typed in.
+  #
+  # Sorted after loading rather than by the database because the name is not a column -
+  # `UserProfile#full_name` falls back to the email - and the profile is preloaded because every row
+  # asks for it through `user`.
   def roster
-    registrations.includes(member: :profile).sort_by { it.member.full_name.downcase }
+    order = Registration::ANSWERS + (Registration.statuses.keys - Registration::ANSWERS).reverse
+
+    registrations.includes(member: :profile).sort_by { [ order.index(it.status), it.member.full_name.downcase ] }
   end
 
   # Filling the event, all or nothing: a set refused part way through leaves nobody half-invited.

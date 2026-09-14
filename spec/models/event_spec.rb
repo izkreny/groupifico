@@ -387,29 +387,31 @@ RSpec.describe Event, type: :model do
   end
 
   describe "#roster" do
-    it "lists every registration, reserved ones included, by the member's name" do
+    it "lists the answers first, then the invited, then the reserved, reserved ones included" do
       event = create(:event)
-      reserved = create(:registration, event:, status: :reserved,
-        member: create(:member, group: event.group, user: create(:user, :with_full_profile, first_name: "Carla", last_name: "Duke")))
-      answered = create(:registration, event:, status: :yes,
-        member: create(:member, group: event.group, user: create(:user, :with_full_profile, first_name: "Alice", last_name: "Bird")))
-      invited = create(:registration, event:, status: :invited,
-        member: create(:member, group: event.group, user: create(:user, :with_full_profile, first_name: "Ben", last_name: "Cole")))
+      reserved = registration_named("Adam", on: event, status: :reserved)
+      invited = registration_named("Bea", on: event, status: :invited)
+      declined = registration_named("Carl", on: event, status: :no)
+      unsure = registration_named("Dora", on: event, status: :maybe)
+      coming = registration_named("Emil", on: event, status: :yes)
 
-      expect(event.roster).to eq [ answered, invited, reserved ]
+      expect(event.roster).to eq [ coming, unsure, declined, invited, reserved ]
     end
 
     # A name typed in lower case is still the same name to somebody scanning the list for it.
-    it "sorts a lower-case name among the capitalised ones rather than after them" do
+    it "orders the members who share a status by name, whatever case it was typed in" do
       event = create(:event)
-      lower = create(:registration, event:,
-        member: create(:member, group: event.group, user: create(:user, :with_full_profile, first_name: "bea", last_name: "Fox")))
-      upper = create(:registration, event:,
-        member: create(:member, group: event.group, user: create(:user, :with_full_profile, first_name: "Carl", last_name: "Fox")))
-      first = create(:registration, event:,
-        member: create(:member, group: event.group, user: create(:user, :with_full_profile, first_name: "Adam", last_name: "Fox")))
+      lower = registration_named("bea", on: event, status: :yes)
+      upper = registration_named("Carl", on: event, status: :yes)
+      first = registration_named("Adam", on: event, status: :yes)
 
       expect(event.roster).to eq [ first, lower, upper ]
+    end
+
+    # The roster reads the name each row draws, so the order is only visible through a named profile.
+    def registration_named(first_name, on:, status:)
+      user = create(:user, :with_full_profile, first_name:, last_name: "Fox")
+      create(:registration, event: on, status:, member: create(:member, group: on.group, user:))
     end
   end
 
