@@ -541,6 +541,8 @@ RSpec.describe "Events", type: :request do
 
         expect(response.body).to include "Place reserved, not asked yet", "Take Ben Cole off the list"
         expect(response.body).not_to include "Yes for Ben Cole"
+        # With no pill lit to say where an answered row stands, the badge says it instead.
+        expect(response.body).to include %(title="Yes")
       end
 
       it "names a paused member with no registration as left out above the rows" do
