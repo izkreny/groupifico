@@ -860,7 +860,7 @@ RSpec.describe "Events", type: :request do
         expect(Event.sole.creator).to eq creator
       end
 
-      it "re-renders the new page when the event is invalid" do
+      it "re-renders the new page with the address fields when the event is invalid" do
         member = create(:member, :active, :events_administrator)
         sign_in_as(member.user)
 
@@ -868,6 +868,17 @@ RSpec.describe "Events", type: :request do
           .not_to change(Event, :count)
 
         expect(response).to have_http_status :unprocessable_content
+        expect(response.body).to include "event_address_attributes_name"
+      end
+
+      it "keeps a typed address in the re-rendered new page when the event is invalid" do
+        member = create(:member, :active, :events_administrator)
+        sign_in_as(member.user)
+
+        post group_events_path(member.group), params: { event: { name: "", address_attributes: { name: "Rehearsal room" } } }
+
+        expect(response).to have_http_status :unprocessable_content
+        expect(response.body).to include %(value="Rehearsal room")
       end
 
       it "creates no event for a member who manages one but holds no role" do
@@ -933,7 +944,7 @@ RSpec.describe "Events", type: :request do
         expect(event.reload.name).to eq "Renamed"
       end
 
-      it "re-renders the edit page when the event is invalid" do
+      it "re-renders the edit page with the address fields when the event is invalid" do
         actor = create(:member, :active, :events_administrator)
         event = create(:event, group: actor.group)
         sign_in_as(actor.user)
@@ -941,6 +952,7 @@ RSpec.describe "Events", type: :request do
         patch group_event_path(event.group, event), params: { event: { name: "" } }
 
         expect(response).to have_http_status :unprocessable_content
+        expect(response.body).to include "event_address_attributes_name"
       end
 
       it "ignores a posted group_id, leaving the event in its own group" do
