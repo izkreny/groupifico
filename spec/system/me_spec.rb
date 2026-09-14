@@ -20,7 +20,7 @@ RSpec.describe "The Me screen", type: :system do
     visit user_profile_path
 
     expect(rendered_colour_scheme).to eq "light"
-    expect(page).to paint ".avatar > div"
+    expect(page).to paint "main .avatar > div"
     expect(page).to paint "a[href='#{new_group_path}']"
     expect(page).to be_accessible
   end
@@ -34,7 +34,7 @@ RSpec.describe "The Me screen", type: :system do
     visit user_profile_path
 
     expect(rendered_colour_scheme).to eq "dark"
-    expect(page).to paint ".avatar > div"
+    expect(page).to paint "main .avatar > div"
     expect(page).to paint "a[href='#{new_group_path}']"
     expect(page).to be_accessible
   end
