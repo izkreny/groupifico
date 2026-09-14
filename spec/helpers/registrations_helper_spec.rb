@@ -60,6 +60,22 @@ RSpec.describe RegistrationsHelper, type: :helper do
     end
   end
 
+  describe "#registration_status_label" do
+    it "names an answer by the answer itself" do
+      expect(helper.registration_status_label(build(:registration, status: :maybe))).to eq "Maybe"
+    end
+
+    # The badge is the row's only statement of where it stands, so the two unanswered statuses
+    # are spelled out rather than left as the enum's own words.
+    it "reads an invited registration as a question still waiting" do
+      expect(helper.registration_status_label(build(:registration, status: :invited))).to eq "Invited, no reply yet"
+    end
+
+    it "reads a reserved registration as a place held before anybody asked" do
+      expect(helper.registration_status_label(build(:registration, status: :reserved))).to eq "Place reserved, not asked yet"
+    end
+  end
+
   describe "#left_out_line" do
     it "names the paused member who has no registration on the event" do
       event = create(:event)
