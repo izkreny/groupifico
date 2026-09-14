@@ -5,17 +5,19 @@ class RegistrationPolicy < ApplicationPolicy
   # registered and what they answered.
   def show? = true
 
-  # Answering for yourself is every member's; registering somebody else is the three roles', and
-  # the event's manager may do it for their own event - that is the invitation row.
-  def create? = own? || membership.can_manage?(:events) || manages_event?
+  # The invitation row, and nobody else's: a registration is something somebody else puts you into,
+  # `reserved` or `invited`, and what a member does with it afterwards is answer it. So `own?` is
+  # absent here and present on `update?`, which is the row that grants a member their own answer.
+  #
+  # It reads the same as `manage_answers?` below, which is not a duplicate to fold away: this rule
+  # decides an action and that one decides a status, and `update?` already shows them parting.
+  def create? = membership.can_manage?(:events) || manages_event?
 
   # Changing somebody else's answer is not the manager's, deliberately: filling an event is their
   # job, overruling an answer is not. So `manages_event?` is absent here and present above.
   #
-  # `edit?` says the same thing under its own name rather than aliasing `update?`, for the reason
-  # GroupPolicy's own comment gives: an alias renames the running rule and the read/write split
-  # stops seeing a read.
-  def edit?   = own? || membership.can_manage?(:events)
+  # No `edit?` beside it: a registration has no form of its own, and the roster row that answers
+  # one posts straight to `update`.
   def update? = own? || membership.can_manage?(:events)
 
   # Taking a registration away is the three roles', and nobody withdraws their own: the answer to
@@ -30,11 +32,7 @@ class RegistrationPolicy < ApplicationPolicy
   private
     def group_for(record) = record.event.group
 
-    # A registration with nobody on it yet is nobody else's: `new` builds one before the form has
-    # chosen a member, and every member may answer for themselves, so refusing there would refuse
-    # them the only form they have. Nothing escapes through it - `create` asks again with the posted
-    # member_id, and a registration saved without one fails `belongs_to :member` anyway.
-    def own? = record.member_id.nil? || record.member_id == membership.id
+    def own? = record.member_id == membership.id
 
     def manages_event? = record.event.manager_id == membership.id
 end

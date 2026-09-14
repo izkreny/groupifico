@@ -93,10 +93,10 @@ class AppFormBuilder < ActionView::Helpers::FormBuilder
     end
 
     # A missing `belongs_to` is keyed on the association, never on its foreign key, so a control
-    # drawn for `:member_id` answers for `:member` too. Without this a missing `Registration#member`
-    # renders in the summary while the select it belongs to sits unmarked, which is the case
-    # `RegistrationsController#new_registration_params` lets through on purpose so the model can
-    # refuse it.
+    # drawn for `:member_id` answers for `:member` too. Without this the association's own message
+    # renders in the summary while the select it belongs to sits unmarked. Proven in
+    # `spec/form_builders/app_form_builder_spec.rb` against `Registration#member`, which is the
+    # shape rather than a screen: no form in the application draws a required association today.
     #
     # It answers for the association's *absence* alone. `validates_associated` files its failure on
     # the same key with type `:invalid`, and that one belongs to the nested form's own fields, which

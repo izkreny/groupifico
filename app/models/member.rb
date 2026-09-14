@@ -47,6 +47,17 @@ class Member < ApplicationRecord
   # owner. Two spellings of one join are two places a later role change has to find.
   scope :owners, -> { joins(:roles).where(roles: { name: Role::OWNER }) }
 
+  # Members with no registration on the event, never invited or taken off. The whole of what it
+  # decides, so each caller states its own status rule beside it rather than inheriting one the
+  # name does not mention: the invitation screen keeps paused members, who are listed and cannot
+  # be ticked, and the create behind it takes `active` alone.
+  #
+  # Here rather than in `RegistrationsHelper` because both ask it, and two spellings of one rule
+  # are two places a later change has to find.
+  scope :without_registration_for, ->(event) {
+    where.not(id: event.registrations.select(:member_id))
+  }
+
   # A group is never left without an owner, whoever is asking - the last owner acting on themselves
   # included, which is why this is here and not in a policy. `dependent: :destroy` rather than
   # `delete_all` on the roles above is what this costs: `delete_all` skips callbacks by definition,

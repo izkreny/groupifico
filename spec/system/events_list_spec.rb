@@ -61,8 +61,10 @@ RSpec.describe "The events list", type: :system do
   end
 
   # Where a pressed pill lands is `RegistrationsController#update`'s answer, not this screen's, and
-  # it is the first of the open questions on #246: the reader leaves the list for the registration
-  # it wrote. Asserted as it behaves rather than as the card would want it.
+  # it is the first of the open questions on #246: the reader leaves the list for the event the
+  # registration is on. The roster that will show the answer there arrives with #251; until it
+  # does, the event screen is the scaffold. Asserted as it behaves rather than as the card would
+  # want it.
   it "writes the answer and lands where the update sends the reader" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
     event = next_event_for(member)
@@ -73,7 +75,7 @@ RSpec.describe "The events list", type: :system do
     visit group_events_path(member.group)
     click_button "Yes"
 
-    expect(page).to have_current_path group_event_registration_path(member.group, event, registration)
+    expect(page).to have_current_path group_event_path(member.group, event)
     expect(registration.reload).to be_yes
   end
 

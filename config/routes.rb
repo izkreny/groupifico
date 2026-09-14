@@ -32,7 +32,10 @@ Rails.application.routes.draw do
     resources :members
     resources :events do
       get "duplicate", on: :member
-      resources :registrations
+      # The invitation screen and the two writes a roster row makes. Reading who is registered is
+      # the event's own screen rather than a list of its own, and answering on somebody's behalf or
+      # taking them off are rows on it, so `index`, `show` and `edit` have nowhere to be.
+      resources :registrations, only: %i[ new create update destroy ]
     end
   end
 

@@ -2,17 +2,9 @@
 # assigned inside it lands on Object and is reassigned on every match, which Ruby warns about.
 module PaintMatcher
   # Composites the element's own background over the first ancestor that paints an opaque one and
-  # reports the WCAG contrast ratio between the two.
-  #
-  # The compositing is done by filling a 1x1 canvas rather than by parsing the colour string, and
-  # that is the whole trick. `getComputedStyle` reports a translucent fill uncomposited, so a ratio
-  # read straight off it describes a colour nobody sees; and this application's palette resolves to
-  # `oklch(...)`, which any `rgb()`-shaped parser reads as three unrelated numbers. Handing the
-  # string to `fillStyle` makes the browser do the conversion and the alpha blend, and the pixel
-  # that comes back is the one a person is looking at.
-  #
-  # `document.body` is transparent here, and filling a cleared canvas with a transparent colour
-  # leaves alpha at zero rather than inheriting anything, which is what the ancestor walk is for.
+  # reports the WCAG contrast ratio between the two. The compositing, the ancestor walk and the
+  # luminance arithmetic are `spec/support/contrast.rb`'s, shared with the text measurement there;
+  # what is this matcher's own is reading `backgroundColor` rather than `color`.
   #
   # Wrapped in an immediately-invoked function because `evaluate_script` evaluates an expression: a
   # bare `const` or `return` at the top level is a syntax error in that position.
@@ -21,29 +13,9 @@ module PaintMatcher
       const element = document.querySelector(selector);
       if (!element) return null;
 
-      const canvas = document.createElement("canvas");
-      canvas.width = canvas.height = 1;
-      const context = canvas.getContext("2d", { willReadFrequently: true });
-
-      const fill = (colour) => {
-        context.fillStyle = "rgba(0, 0, 0, 0)";
-        context.fillStyle = colour;
-        context.fillRect(0, 0, 1, 1);
-      };
-
-      const pixel = () => context.getImageData(0, 0, 1, 1).data;
-
-      const opaque = (colour) => {
-        context.clearRect(0, 0, 1, 1);
-        fill(colour);
-        return pixel()[3] === 255;
-      };
-
-      let surface = "rgb(255, 255, 255)";
-      for (let node = element.parentElement; node; node = node.parentElement) {
-        const colour = getComputedStyle(node).backgroundColor;
-        if (opaque(colour)) { surface = colour; break; }
-      }
+      #{Contrast::CANVAS}
+      #{Contrast::SURFACE}
+      #{Contrast::LUMINANCE}
 
       context.clearRect(0, 0, 1, 1);
       fill(surface);
@@ -52,17 +24,7 @@ module PaintMatcher
       fill(getComputedStyle(element).backgroundColor);
       const composited = Array.from(pixel());
 
-      const luminance = ([ red, green, blue ]) => {
-        const channel = (value) => {
-          const ratio = value / 255;
-          return ratio <= 0.03928 ? ratio / 12.92 : Math.pow((ratio + 0.055) / 1.055, 2.4);
-        };
-        return 0.2126 * channel(red) + 0.7152 * channel(green) + 0.0722 * channel(blue);
-      };
-
-      const lighter = Math.max(luminance(composited), luminance(beneath));
-      const darker = Math.min(luminance(composited), luminance(beneath));
-      return (lighter + 0.05) / (darker + 0.05);
+      return ratio(composited, beneath);
     })(arguments[0])
   JAVASCRIPT
 
