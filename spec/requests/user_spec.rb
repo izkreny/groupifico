@@ -39,9 +39,8 @@ RSpec.describe "User", type: :request do
         expect { delete user_path }
           .to change(User, :count).by(-1)
 
-        # Known-wrong target: destroying the user destroys their session too,
-        # so `user_path` can never render for them. #179 fixes the controller.
-        expect(response).to redirect_to user_path
+        expect(response).to redirect_to new_session_path
+        expect(flash[:notice]).to eq "Your account was deleted."
       end
 
       it "refuses while the reader is a group's only active owner, and says nothing happened" do
@@ -63,7 +62,7 @@ RSpec.describe "User", type: :request do
         expect { delete user_path }
           .to change(User, :count).by(-1)
 
-        expect(response).to redirect_to user_path
+        expect(response).to redirect_to new_session_path
       end
     end
   end
