@@ -1,17 +1,9 @@
 module EventsHelper
-  DATETIME_FORMAT = "%Y-%m-%d %H:%M"
   DATE_FORMAT     = "%a %-d %b"
   TIME_FORMAT     = "%H:%M"
   SEPARATOR       = " – "
   RANGE           = "–"
   DOT             = " · "
-
-  # TODO: Localize and translate using l() and time zones
-  def event_schedule(event)
-    event.starts_at.strftime(DATETIME_FORMAT) +
-    SEPARATOR +
-    event.ends_at.strftime(event.same_day? ? TIME_FORMAT : DATETIME_FORMAT)
-  end
 
   # The card's own two readings of the same schedule: the range a hero card and the detail screen
   # carry, and the start alone that a compact row carries beside the place. Both print in
