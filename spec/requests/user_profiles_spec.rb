@@ -144,6 +144,18 @@ RSpec.describe "UserProfiles", type: :request do
         expect(document.at_css("#error_explanation").text.squish).to eq "Please fix the highlighted fields."
       end
 
+      # The header's avatar reads the reader's stored profile, so a refused write never reaches it:
+      # a blank email and no name would otherwise leave `initials` nothing to take a letter from.
+      it "keeps the stored initials in the header when a cleared email is refused" do
+        user = create(:user, email: "ada@example.com")
+        sign_in_as(user)
+
+        patch user_profile_path, params: { user_profile: { user_attributes: { email: "" } } }
+
+        expect(response).to have_http_status :unprocessable_content
+        expect(header_text(response.body)).to include "A"
+      end
+
       # The account written is always the one the profile belongs to, whatever the request names.
       it "writes the reader's own email when the params name another account" do
         user = create(:user)

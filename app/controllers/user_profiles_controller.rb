@@ -22,8 +22,12 @@ class UserProfilesController < ApplicationController
   end
 
   private
+    # Its own copy rather than `Current.user.profile`, which the layout's avatar reads: a refused
+    # save leaves the typed values assigned, email included, and the header would show them as
+    # though they had been saved - or raise, when a cleared email leaves no name to take initials
+    # from.
     def set_user_profile
-      @user_profile = Current.user.profile
+      @user_profile = UserProfile.find_by!(user: Current.user)
     end
 
     def user_profile_params
