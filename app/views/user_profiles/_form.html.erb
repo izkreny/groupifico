@@ -1,15 +1,23 @@
+<%#
+  Name and mobile are the profile, the email is the account, and one Save writes both. No hint on
+  the email: the frame promises a confirmation mail when it changes, and nothing sends one yet.
+%>
 <%= form_with(model: user_profile, class: "contents") do |form| %>
   <%= form.with_error_summary do %>
     <fieldset class="fieldset">
-      <legend class="fieldset-legend">Profile details</legend>
-
       <%= form.field :first_name %>
       <%= form.field :last_name %>
-      <%= form.field :mobile_phone, as: :telephone_field %>
+      <%= form.field :mobile_phone, as: :telephone_field, label: "Mobile", hint: "Optional. Shown to members of your groups." %>
+
+      <%# No `id`: `update_only` writes the profile's own user, so the form has nothing to name. %>
+      <%= form.fields_for :user, include_id: false do |user_form| %>
+        <%= user_form.field :email, as: :email_field %>
+      <% end %>
     </fieldset>
   <% end %>
 
-  <div class="inline">
-    <%= form.submit class: "btn btn-primary" %>
+  <div class="flex flex-wrap items-center gap-2 mt-4">
+    <%= link_to "Cancel", user_profile_path, class: "btn btn-ghost" %>
+    <%= form.submit "Save", class: "btn btn-primary" %>
   </div>
 <% end %>

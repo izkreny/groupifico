@@ -18,6 +18,34 @@ RSpec.describe "UserProfiles", type: :request do
 
         expect(response).to have_http_status :ok
       end
+
+      it "offers the account rows and lists none of the reader's groups" do
+        member = create(:member, group: create(:group, name: "Riverside Choir"))
+        sign_in_as(member.user)
+
+        get user_profile_path
+        text = page_text(response.body)
+
+        expect(text).to include("Edit name, mobile and email", "Sign out", "Create group", "Delete my account")
+        expect(text).not_to include "Riverside Choir"
+      end
+
+      it "names each group the reader is the only active owner of" do
+        member = create(:member, :owner)
+        sign_in_as(member.user)
+
+        get user_profile_path
+
+        expect(response.body).to include("You still own #{member.group.name}.")
+      end
+
+      it "says nothing where the reader owns no group alone" do
+        sign_in_as(create(:member).user)
+
+        get user_profile_path
+
+        expect(response.body).not_to include("You still own")
+      end
     end
   end
 
@@ -37,6 +65,16 @@ RSpec.describe "UserProfiles", type: :request do
         get edit_user_profile_path
 
         expect(response).to have_http_status :ok
+      end
+
+      it "edits the name, the mobile and the email in one form" do
+        sign_in_as(create(:user))
+
+        get edit_user_profile_path
+        document = Nokogiri::HTML(response.body)
+
+        expect(document.css("form label").map { it.text.squish }).to eq [ "First name", "Last name", "Mobile", "Email" ]
+        expect(document.at_css("#user_profile_mobile_phone_hint").text).to eq "Optional. Shown to members of your groups."
       end
     end
   end
@@ -59,6 +97,75 @@ RSpec.describe "UserProfiles", type: :request do
 
         expect(response).to redirect_to user_profile_path
         expect(user.profile.reload.full_name).to eq "Ada Lovelace"
+      end
+
+      it "writes the email with the name in one save" do
+        user = create(:user)
+        sign_in_as(user)
+
+        patch user_profile_path, params: { user_profile: { first_name: "Ada", user_attributes: { email: "ada@example.com" } } }
+
+        expect(response).to redirect_to user_profile_path
+        expect(user.profile.reload.first_name).to eq "Ada"
+        expect(user.reload.email).to eq "ada@example.com"
+      end
+
+      # The account write is skipped rather than repeated: an unchanged email writes nothing to
+      # `users`, so `User`'s email-change callback never consumes the reader's outstanding links.
+      it "leaves the account untouched when the email is unchanged" do
+        user = create(:user)
+        sign_in_as(user)
+        travel 1.day
+
+        expect { patch user_profile_path, params: { user_profile: { first_name: "Ada", user_attributes: { email: user.email } } } }
+          .not_to change { user.reload.updated_at }
+      end
+
+      it "keeps the name unsaved when the email is refused" do
+        user = create(:user)
+        sign_in_as(user)
+
+        patch user_profile_path, params: { user_profile: { first_name: "Ada", user_attributes: { email: "ada.example.com" } } }
+
+        expect(response).to have_http_status :unprocessable_content
+        expect(user.profile.reload.first_name).not_to eq "Ada"
+        expect(user.reload.email).not_to eq "ada.example.com"
+      end
+
+      # The summary saying "fix the highlighted fields" is only true if the field it means carries
+      # the message, and the email's error arrives on the profile keyed `user.email`.
+      it "puts a refused email under the Email field rather than in the summary" do
+        sign_in_as(create(:user))
+
+        patch user_profile_path, params: { user_profile: { user_attributes: { email: "ada.example.com" } } }
+        document = Nokogiri::HTML(response.body)
+
+        expect(document.at_css("#user_profile_user_attributes_email_error").text).to eq "Email is invalid"
+        expect(document.at_css("#error_explanation").text.squish).to eq "Please fix the highlighted fields."
+      end
+
+      # The header's avatar reads the reader's stored profile, so a refused write never reaches it:
+      # a blank email and no name would otherwise leave `initials` nothing to take a letter from.
+      it "keeps the stored initials in the header when a cleared email is refused" do
+        user = create(:user, email: "ada@example.com")
+        sign_in_as(user)
+
+        patch user_profile_path, params: { user_profile: { user_attributes: { email: "" } } }
+
+        expect(response).to have_http_status :unprocessable_content
+        expect(header_text(response.body)).to include "A"
+      end
+
+      # The account written is always the one the profile belongs to, whatever the request names.
+      it "writes the reader's own email when the params name another account" do
+        user = create(:user)
+        other = create(:user, email: "other@example.com")
+        sign_in_as(user)
+
+        patch user_profile_path, params: { user_profile: { user_attributes: { id: other.id, email: "taken@example.com" } } }
+
+        expect(other.reload.email).to eq "other@example.com"
+        expect(user.reload.email).to eq "taken@example.com"
       end
 
       it "re-renders the edit page when the update is invalid" do

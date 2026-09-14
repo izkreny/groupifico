@@ -4,38 +4,22 @@ class UsersController < ApplicationController
   # can act on - hand the owner role over first - rather than a fault, so it gets a message instead
   # of a 500. `MembersController` answers the same invariant from the group's end.
   #
-  # Which groups those are is the account screen's to say, not the flash's: the block there names
-  # them whenever they exist, so the reader has already read it once before pressing delete and
-  # reads it again underneath this. The flash says only that nothing happened.
+  # Which groups those are is the Me screen's to say, not the flash's: the block there names them
+  # whenever they exist, so the reader has already read it once before pressing delete and reads it
+  # again underneath this. The flash says only that nothing happened.
   rescue_from ActiveRecord::RecordNotDestroyed, with: :refuse_ownerless_groups
 
-  # Permanent, all four. Each reaches its record through `set_user`, which answers `Current.user`,
-  # so the record is named by the caller's own signed cookie and never by the request: a policy
-  # here would have one possible input and one possible answer. That is the argument
-  # `SessionsController` makes for its own `destroy`, arriving by the same route - having something
-  # to authorize against is not the same as having a decision to make.
+  # Permanent. `destroy` reaches its record through `set_user`, which answers `Current.user`, so
+  # the record is named by the caller's own signed cookie and never by the request: a policy here
+  # would have one possible input and one possible answer. That is the argument `SessionsController`
+  # makes for its own `destroy`, arriving by the same route - having something to authorize against
+  # is not the same as having a decision to make.
   #
   # Named actions rather than a bare skip, so an action added later cannot inherit an exemption
   # nobody chose for it - same reason `SessionsController` names its own.
-  skip_verify_authorized only: %i[ show edit update destroy ]
+  skip_verify_authorized only: %i[ destroy ]
 
-  before_action :set_user, only: %i[ show edit update destroy ]
-
-  def show
-  end
-
-  def edit
-  end
-
-  def update
-    if @user.update(user_params)
-      redirect_to user_path,
-        notice: "User was successfully updated.",
-        status: :see_other
-    else
-      render :edit, status: :unprocessable_content
-    end
-  end
+  before_action :set_user, only: %i[ destroy ]
 
   def destroy
     @user.destroy!
@@ -51,12 +35,8 @@ class UsersController < ApplicationController
     end
 
     def refuse_ownerless_groups
-      redirect_to user_path,
+      redirect_to user_profile_path,
         alert: "Your account was not deleted.",
         status: :see_other
-    end
-
-    def user_params
-      params.expect(user: [ :email ])
     end
 end

@@ -23,7 +23,7 @@ RSpec.describe "Refusing to delete a group's last owner", type: :system do
   before do
     sign_in_as member.user
 
-    visit user_path
+    visit user_profile_path
   end
 
   it "paints the block naming the group still owned" do
