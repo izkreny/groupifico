@@ -61,6 +61,51 @@ RSpec.describe "UserProfiles", type: :request do
         expect(user.profile.reload.full_name).to eq "Ada Lovelace"
       end
 
+      it "writes the email with the name in one save" do
+        user = create(:user)
+        sign_in_as(user)
+
+        patch user_profile_path, params: { user_profile: { first_name: "Ada", user_attributes: { email: "ada@example.com" } } }
+
+        expect(response).to redirect_to user_profile_path
+        expect(user.profile.reload.first_name).to eq "Ada"
+        expect(user.reload.email).to eq "ada@example.com"
+      end
+
+      # The account write is skipped rather than repeated: an unchanged email writes nothing to
+      # `users`, so `User`'s email-change callback never consumes the reader's outstanding links.
+      it "leaves the account untouched when the email is unchanged" do
+        user = create(:user)
+        sign_in_as(user)
+        travel 1.day
+
+        expect { patch user_profile_path, params: { user_profile: { first_name: "Ada", user_attributes: { email: user.email } } } }
+          .not_to change { user.reload.updated_at }
+      end
+
+      it "keeps the name unsaved when the email is refused" do
+        user = create(:user)
+        sign_in_as(user)
+
+        patch user_profile_path, params: { user_profile: { first_name: "Ada", user_attributes: { email: "ada.example.com" } } }
+
+        expect(response).to have_http_status :unprocessable_content
+        expect(user.profile.reload.first_name).not_to eq "Ada"
+        expect(user.reload.email).not_to eq "ada.example.com"
+      end
+
+      # The account written is always the one the profile belongs to, whatever the request names.
+      it "writes the reader's own email when the params name another account" do
+        user = create(:user)
+        other = create(:user, email: "other@example.com")
+        sign_in_as(user)
+
+        patch user_profile_path, params: { user_profile: { user_attributes: { id: other.id, email: "taken@example.com" } } }
+
+        expect(other.reload.email).to eq "other@example.com"
+        expect(user.reload.email).to eq "taken@example.com"
+      end
+
       it "re-renders the edit page when the update is invalid" do
         user = create(:user)
         sign_in_as(user)

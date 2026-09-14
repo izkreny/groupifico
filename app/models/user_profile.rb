@@ -28,6 +28,11 @@
 #
 class UserProfile < ApplicationRecord
   belongs_to :user
+  # One Save on the Me screen writes the name and the email together, in one transaction.
+  # `update_only` is load-bearing: without it, attributes arriving with no `id` build a new user
+  # rather than updating the one this profile belongs to, so it is also what keeps a request from
+  # naming any account but the reader's own.
+  accepts_nested_attributes_for :user, update_only: true
 
   validates :user_id, uniqueness: true
 
