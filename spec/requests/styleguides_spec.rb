@@ -12,6 +12,18 @@ RSpec.describe "The styleguide", type: :request do
 
         expect(response.body).to include "Every shared partial, drawn from sample records"
       end
+
+      # Every section is drawn twice, so an id a partial mints for itself is on the page twice unless
+      # the twin names it; a label pointing at a repeated id labels the first twin's control only.
+      it "points every label at exactly one control" do
+        sign_in_as(create(:user))
+
+        get "/styleguide"
+
+        html = Nokogiri::HTML(response.body)
+        ids = html.css("[id]").map { it["id"] }.tally
+        expect(html.css("label[for]").map { it["for"] }.uniq.reject { ids[it] == 1 }).to be_empty
+      end
     end
 
     context "when not signed in" do

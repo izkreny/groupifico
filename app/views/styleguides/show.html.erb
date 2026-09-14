@@ -94,8 +94,9 @@
     <% end %>
   <% end %>
 
-  <%= render layout: "styleguides/section", locals: { title: "Event form" } do %>
-    <%= render "events/form", group: group, event: unsaved %>
+  <%= render layout: "styleguides/section", locals: { title: "Event form" } do |theme| %>
+    <%# Namespaced apart from the fields section's form too, which is an `Event` form under the same theme. %>
+    <%= render "events/form", group: group, event: unsaved, namespace: "#{theme}_form" %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Confirm sheet" } do |theme| %>

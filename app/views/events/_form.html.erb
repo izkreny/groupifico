@@ -1,4 +1,5 @@
-<%= form_with(model: [group, event], class: "contents") do |form| %>
+<%# `namespace` is the styleguide's, which draws this form once per theme; every screen leaves it out and keeps its ids. %>
+<%= form_with(model: [group, event], namespace: local_assigns[:namespace], class: "contents") do |form| %>
   <%= form.with_error_summary do %>
     <fieldset class="fieldset">
       <legend class="fieldset-legend">Event details</legend>
