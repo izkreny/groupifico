@@ -9,7 +9,7 @@ require "rails_helper"
 # `.agents/testing.md` none of them comes back here. What is left is that the controls paint, that
 # each row lands where it says, and that a refused save's messages are visible rather than merely
 # present. The block naming solely owned groups and the delete sheet are
-# `spec/system/account_deletion_refusal_spec.rb`'s.
+# `spec/system/account_deletion_spec.rb`'s.
 RSpec.describe "The Me screen", type: :system do
   it "paints in light, with no accessibility violations" do
     user = create(:user)
