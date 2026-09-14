@@ -955,6 +955,17 @@ RSpec.describe "Events", type: :request do
         expect(response.body).to include "event_address_attributes_name"
       end
 
+      it "keeps the event's address on the re-rendered edit page when the event is invalid" do
+        actor = create(:member, :active, :events_administrator)
+        event = create(:event, group: actor.group, address: create(:address))
+        sign_in_as(actor.user)
+
+        patch group_event_path(event.group, event), params: { event: { name: "" } }
+
+        expect(response).to have_http_status :unprocessable_content
+        expect(response.body).to include edit_address_path(event.address)
+      end
+
       it "ignores a posted group_id, leaving the event in its own group" do
         actor = create(:member, :active, :events_administrator)
         event = create(:event, group: actor.group)
