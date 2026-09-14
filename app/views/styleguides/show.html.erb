@@ -1,0 +1,122 @@
+<% content_for :title, "Styleguide" %>
+
+<%#
+  Sample records built in memory, never read from the database. Each carries an id because every
+  partial builds its paths from one, and each id is negative because an id on an unsaved owner lets
+  a partial's own query run: a negative id is one no saved row carries, so that query finds nothing
+  rather than somebody's development data. What reads through SQL therefore draws its empty state -
+  the count tags, the roster's rows and the said-yes line.
+
+  No sample names a manager or a creator: `Member#full_name` goes through `has_one :profile,
+  through: :user`, which an unsaved member cannot answer.
+%>
+<%
+  group  = Group.new(id: -1, name: "Sample choir")
+  hall   = Address.new(id: -1, name: "Community hall", street_name: "Obala", building_number: "14", postal_code: "10000", city: "Zagreb")
+  member = Member.new(id: -1, group: group)
+  soon   = 2.days.from_now.change(hour: 19)
+
+  next_up  = Event.new(id: -1, group: group, address: hall, name: "Autumn concert rehearsal", status: :confirmed, category: :rehearsal, starts_at: soon, ends_at: soon + 2.hours)
+  question = next_up.registrations.build(id: -1, member: member, status: :invited, updated_at: 3.hours.ago)
+  answer   = next_up.registrations.build(id: -2, member: member, status: :yes, updated_at: 1.day.ago)
+
+  unconfirmed = Event.new(id: -2, group: group, address: hall, name: "Christmas gig", status: :unconfirmed, category: :gig, starts_at: soon + 5.days, ends_at: soon + 5.days + 3.hours)
+  confirmed   = Event.new(id: -3, group: group, name: "Sectional", status: :confirmed, starts_at: soon + 1.week, ends_at: soon + 1.week + 1.hour)
+  concluded   = Event.new(id: -4, group: group, address: hall, name: "Summer concert", status: :concluded, category: :gig, starts_at: 1.week.ago, ends_at: 1.week.ago + 2.hours)
+  canceled    = Event.new(id: -5, group: group, name: "Open rehearsal", status: :canceled, category: :rehearsal, starts_at: soon + 2.weeks, ends_at: soon + 2.weeks + 2.hours)
+  rows = [
+    [ unconfirmed, Registration.new(id: -3, event: unconfirmed, member: member, status: :invited, updated_at: 1.day.ago) ],
+    [ confirmed,   Registration.new(id: -4, event: confirmed, member: member, status: :yes, updated_at: 2.days.ago) ],
+    [ concluded,   nil ],
+    [ canceled,    nil ]
+  ]
+
+  unsaved = Event.new(group: group, name: "Autumn concert", starts_at: soon, ends_at: soon + 2.hours)
+  unsaved.build_address
+  invalid = Event.new(group: group, name: "Autumn concert")
+  invalid.errors.add(:starts_at, :blank)
+  invalid.errors.add(:creator, :required)
+%>
+
+<div class="flex flex-col gap-8">
+  <div>
+    <h1 class="text-hero">Styleguide</h1>
+    <p class="text-meta">Every shared partial, drawn from sample records under the light and the dark theme.</p>
+  </div>
+
+  <%= render layout: "styleguides/section", locals: { title: "Page header" } do %>
+    <%= render "shared/page_header", title: "Event" %>
+  <% end %>
+
+  <%= render layout: "styleguides/section", locals: { title: "Flash, notice and alert" } do %>
+    <%= render "layouts/flash" %>
+  <% end %>
+
+  <%= render layout: "styleguides/section", locals: { title: "Hero card" } do %>
+    <%= render "events/next_up", event: next_up, registration: question %>
+  <% end %>
+
+  <%= render layout: "styleguides/section", locals: { title: "Record facts" } do %>
+    <%= render "events/event", event: next_up %>
+  <% end %>
+
+  <%= render layout: "styleguides/section", locals: { title: "Compact rows, one per event status" } do %>
+    <ul class="list">
+      <% rows.each do |event, registration| %>
+        <%= render "events/row", event: event, registration: registration %>
+      <% end %>
+    </ul>
+  <% end %>
+
+  <%= render layout: "styleguides/section", locals: { title: "Counts" } do %>
+    <%= render "events/counts", event: next_up %>
+  <% end %>
+
+  <%= render layout: "styleguides/section", locals: { title: "RSVP, question and answer" } do %>
+    <div class="flex flex-col gap-4">
+      <%= render "events/rsvp", event: next_up, registration: question %>
+      <%= render "events/rsvp", event: next_up, registration: answer %>
+    </div>
+  <% end %>
+
+  <%= render layout: "styleguides/section", locals: { title: "Roster" } do %>
+    <%= render "events/roster", event: next_up %>
+  <% end %>
+
+  <%= render layout: "styleguides/section", locals: { title: "Fields, with a hint and with an error" } do |theme| %>
+    <%= form_with model: invalid, url: styleguide_path, method: :get, namespace: theme do |form| %>
+      <%= form.with_error_summary do %>
+        <fieldset class="fieldset">
+          <%= form.field :name, hint: "What the group calls it, as it appears on every list." %>
+          <%= form.field :starts_at, as: :datetime_field %>
+        </fieldset>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <%= render layout: "styleguides/section", locals: { title: "Event form" } do |theme| %>
+    <%# Namespaced apart from the fields section's form too, which is an `Event` form under the same theme. %>
+    <%= render "events/form", group: group, event: unsaved, namespace: "#{theme}_form" %>
+  <% end %>
+
+  <%= render layout: "styleguides/section", locals: { title: "Confirm sheet" } do |theme| %>
+    <%= render "shared/confirm_sheet",
+          id: "confirm_delete_#{theme}",
+          url: group_event_path(group, next_up),
+          label: "Delete event",
+          title: "Delete this event?",
+          body: "Every registration for it goes too. This can't be undone.",
+          dismiss: "Keep event" %>
+  <% end %>
+
+  <%= render layout: "styleguides/section", locals: { title: "Legend icons" } do %>
+    <ul class="grid grid-cols-3 gap-4 sm:grid-cols-4">
+      <% IconsHelper::ICONS.each_key do |meaning| %>
+        <li class="flex flex-col items-center gap-1 text-xs">
+          <%= icon meaning, class: "size-6" %>
+          <span><%= meaning %></span>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+</div>

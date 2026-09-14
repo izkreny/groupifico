@@ -1,2 +1,2 @@
 --require spec_helper
---exclude-pattern "system/**/*_spec.rb"
+--exclude-pattern "{system,styleguide}/**/*_spec.rb"

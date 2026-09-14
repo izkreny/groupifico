@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="<%= I18n.locale %>">
+  <head>
+    <%= render "layouts/head" %>
+  </head>
+
+  <%# Neither the shell nor a flash slot: the page judges components, and the application layout's
+      own flash would draw the controller's two samples a third time outside either theme. %>
+  <body>
+    <main class="w-full max-w-7xl mx-auto px-4 py-6">
+      <%= yield %>
+    </main>
+  </body>
+</html>
