@@ -24,13 +24,13 @@ The pills post to `registrations#update` and the take-off is a plain `button_to`
 
 ## The disclosure
 
-A `<details>` element, per the issue. Everything after `<summary>` hides while it is closed, so the summary holds "Who's coming" and `events/_counts`, the body holds the roster, and the reader's own answer row sits after the element, never inside it: a `button_to` form cannot live in a `<summary>`, and the answer row must show while the roster is folded. Open, the roster therefore unfolds between the counts and the answer row rather than below the answer row as 4l draws it. The counts' `div` inside `<summary>` is block content in phrasing content, which Herb's linter was run against and passes; the daisyUI component syntax expert settles the markup around it.
+A `<details>` element, per the issue, and the card reads in the frames' order: the counts, the reader's own answer row, then the roster unfolding below both. Everything after `<summary>` folds with it, and the answer row must show while the roster is folded and cannot live inside a `<summary>`, so the `<details>` holds its summary alone - "Who's coming" and `events/_counts` - and the roster is a later sibling that Tailwind's `peer-open:` variant shows, with `aria-controls` on the summary naming it. The counts' `div` inside `<summary>` is block content in phrasing content, which Herb's linter was run against and passes; the daisyUI component syntax expert settles the markup around it.
 
-When `events/_counts` draws "Nobody asked yet" the summary carries that line, and when it draws nothing the summary is "Who's coming" alone: the body then says nobody is on the list, and "Add someone" is still there for a reader allowed it, since an empty event is exactly the one that needs filling.
+When `events/_counts` draws "Nobody asked yet" the summary carries that line, and when it draws nothing the summary is "Who's coming" alone: the roster then says nobody is on the list, and "Add someone" is still there for a reader allowed it, since an empty event is exactly the one that needs filling.
 
 ## The roster
 
-`Event#roster` returns the event's registrations with each member's profile preloaded, ordered by the name the row draws, case-insensitively: the frames are alphabetical, the order is defined nowhere in the repository, and a name is what the reader scans for. The name lives on `UserProfile`, reached through `user`, so the preload is what keeps the list from costing two queries a row. The sort is in Ruby because `full_name` falls back to the email's local part and no column holds it.
+`Event#roster` returns the event's registrations with each member's profile preloaded, grouped by status - yes, maybe, no, invited, reserved - and ordered within each by the name the row draws, case-insensitively. The name lives on `UserProfile`, reached through `user`, so the preload is what keeps the list from costing two queries a row. The sort is in Ruby because `full_name` falls back to the email's local part and no column holds it. A pill press or a take-off redirects back to the event with the roster folded again.
 
 Above the rows: "Who's invited", `RegistrationsHelper#invited_tally` as #252 wrote it for the invitation screen, and the paused members with no registration on this event named as left out. That set is `Member.without_registration_for` narrowed to `paused`, the scope #252 put on `Member` so the two screens ask one rule.
 
@@ -66,11 +66,11 @@ No file under `spec/system` covers this view yet: `spec/system/events_list_spec.
 
 ## Open questions
 
-- The fourth criterion names "Invite the rest" and the paper plane on unasked rows, which the issue's technical notes and #258 both give to #258. Neither is built here, so that criterion stays unticked until the owner splits it onto #258 or accepts it open until #258 lands.
-- Every pill press and take-off redirects back to the event, and the roster comes back folded. Accepted for this branch rather than carrying state through the redirect.
-- Roster order is by the name each row draws, alphabetical, as the frames show.
-- The answer row sits after the disclosure, so an open roster unfolds above it rather than below it as 4l draws.
+None.
 
 ## Settled
 
-None yet.
+- Whether the fourth criterion keeps "Invite the rest" and the paper plane, which the issue's own notes give to #258. They move: "Move this to #258 -- update and sync both issues regarding this "Invite the rest"." The criterion now ends at "Add someone", and #258 carries both controls.
+- Whether the roster folds again after a pill press or a take-off redirects back to the event. "Fold again."
+- Whether the roster is ordered by name alone. "Nope, it should be sorted first by status (YES, MAYBE, NO, INVITED, RESERVED) and then alphabetically."
+- Whether the answer row may sit below the disclosure, so the roster unfolds above it. "It should be placed as it is on 4c, 4l, 4d and 4m screens." The roster unfolds below the answer row, as the disclosure section above describes.
