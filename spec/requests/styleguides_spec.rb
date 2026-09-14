@@ -1,31 +1,31 @@
 require 'rails_helper'
 
-# The page is drawn in development alone, so what the suite can prove about the controller is that
-# nothing else answers for it.
+# Production is the one environment the page is kept out of, and no spec runs there; the guard in
+# `config/routes.rb` is `Rails.env.local?`, which answers true for this suite.
 RSpec.describe "The styleguide", type: :request do
   describe "GET /styleguide" do
     context "when signed in" do
-      it "is not routed outside development" do
+      it "draws the page" do
         sign_in_as(create(:user))
 
         get "/styleguide"
 
-        expect(response).to have_http_status(:not_found)
+        expect(response.body).to include "Every shared partial, drawn from sample records"
       end
     end
 
     context "when not signed in" do
-      it "is not routed outside development" do
+      it "redirects to the login page" do
         get "/styleguide"
 
-        expect(response).to have_http_status(:not_found)
+        expect(response).to redirect_to new_session_path
       end
     end
   end
 
-  # Not a request, and here anyway: the page is not routed in test, `spec/views` is banned by
-  # `.agents/testing.md`, and this is the one file that is the styleguide's. What the suite can hold
-  # the page to is that its template renders every partial it exists to show.
+  # Not a request, and here anyway: `spec/views` is banned by `.agents/testing.md`, and this is the
+  # styleguide's own file. What it holds the page to is that its template renders every partial it
+  # exists to show.
   describe "its template" do
     it "renders every partial under app/views/events and app/views/shared" do
       template = Rails.root.join("app/views/styleguides/show.html.erb").read
