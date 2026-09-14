@@ -465,6 +465,19 @@ RSpec.describe "Events", type: :request do
 
         expect(response).to have_http_status :ok
       end
+
+      # A paused owner keeps read and loses every write, so the roles they hold must not bring the
+      # controls back: each is asked of a write rule, which the paused pre-check refuses first.
+      it "draws the roster with nothing to press, whatever roles they hold" do
+        member = create(:member, :paused, :owner)
+        event = detailed_event(member)
+        sign_in_as(member.user)
+
+        get group_event_path(event.group, event)
+
+        expect(page_text(response.body)).to include "Ben Cole"
+        expect(response.body).not_to include "Take Ben Cole off the list", "Yes for Ben Cole", "Add someone", "Delete event"
+      end
     end
 
     context "when signed in as an inactive member" do
@@ -476,6 +489,158 @@ RSpec.describe "Events", type: :request do
         get group_event_path(event.group, event)
 
         expect(response).to have_http_status :not_found
+      end
+    end
+
+    context "when signed in as an owner" do
+      it "draws the event's facts under the pushed title" do
+        owner = create(:member, :active, :owner)
+        event = detailed_event(owner)
+        sign_in_as(owner.user)
+
+        get group_event_path(event.group, event)
+
+        expect(headings(response.body)).to include "Event"
+        expect(page_text(response.body)).to include "Tuesday rehearsal", "Confirmed rehearsal", "Wed 2 Sep · 19:00–21:00", "Community Hall"
+        expect(page_text(response.body)).to include "Managed by Ben C. · Created by Alice B.", "Bring the new folders."
+      end
+
+      it "offers Duplicate and Edit in the title row and Delete at the bottom" do
+        owner = create(:member, :active, :owner)
+        event = detailed_event(owner)
+        sign_in_as(owner.user)
+
+        get group_event_path(event.group, event)
+
+        expect(response.body).to include duplicate_group_event_path(event.group, event), %(aria-label="Duplicate")
+        expect(response.body).to include edit_group_event_path(event.group, event), %(aria-label="Edit")
+        expect(page_text(response.body)).to include "Delete event"
+      end
+
+      it "draws the answer pills and a take-off on every roster row, and Add someone" do
+        owner = create(:member, :active, :owner)
+        event = detailed_event(owner)
+        sign_in_as(owner.user)
+
+        get group_event_path(event.group, event)
+
+        expect(response.body).to include "Yes for Ben Cole", "Maybe for Carla Duke", "No for Alice Bird"
+        expect(response.body).to include "Take Ben Cole off the list", "Take Carla Duke off the list"
+        expect(response.body).to include new_group_event_registration_path(event.group, event)
+      end
+
+      # `Registration` refuses every answer on an event that is over, so a pill there is a control
+      # certain to fail. Taking somebody off stays, since correcting a closed roster is still theirs.
+      it "leaves the pills off the roster of a concluded event, and keeps the badges and the take-off" do
+        owner = create(:member, :active, :owner)
+        event = detailed_event(owner)
+        event.update!(status: :concluded)
+        sign_in_as(owner.user)
+
+        get group_event_path(event.group, event)
+
+        expect(response.body).to include "Place reserved, not asked yet", "Take Ben Cole off the list"
+        expect(response.body).not_to include "Yes for Ben Cole"
+        # With no pill lit to say where an answered row stands, the badge says it instead.
+        expect(response.body).to include %(title="Yes")
+      end
+
+      it "names a paused member with no registration as left out above the rows" do
+        owner = create(:member, :active, :owner)
+        event = detailed_event(owner)
+        create(:member, :paused, group: owner.group, user: create(:user, :with_full_profile, first_name: "Dan", last_name: "Ellis"))
+        sign_in_as(owner.user)
+
+        get group_event_path(event.group, event)
+
+        expect(page_text(response.body)).to match(/Dan Ellis is paused, left out.*Alice Bird/)
+      end
+    end
+
+    # `events.creator_id` carries no foreign key and `Member#created_events` no `dependent:`, so
+    # removing the member who created an event leaves the event pointing at nobody.
+    context "when the event's creator has been removed from the group" do
+      it "draws the event with the manager alone on the credits line" do
+        member = create(:member, :active)
+        event = detailed_event(member)
+        event.creator.destroy!
+        sign_in_as(member.user)
+
+        get group_event_path(event.group, event)
+
+        expect(page_text(response.body)).to include "Managed by Ben C."
+        expect(page_text(response.body)).not_to include "Created by"
+      end
+    end
+
+    context "when signed in as a plain member" do
+      # The owner's rows with every control gone: the order is `Event#roster`'s, asserted here only
+      # as far as that this screen draws it, and a reserved row carries the bookmark because a
+      # member's view has no paper plane to read the state from.
+      it "draws the same rows in roster order as badges, with nothing to press" do
+        member = create(:member, :active)
+        event = detailed_event(member)
+        sign_in_as(member.user)
+
+        get group_event_path(event.group, event)
+
+        expect(page_text(response.body)).to match(/Alice Bird.*Carla Duke.*Ben Cole/)
+        expect(response.body).to include "Place reserved, not asked yet", "Invited, no reply yet"
+        expect(response.body).not_to include "Take Ben Cole off the list", "Yes for Ben Cole", "Add someone"
+        expect(response.body).not_to include "Yes for #{member.full_name}"
+      end
+
+      it "offers no Duplicate, Edit or Delete" do
+        member = create(:member, :active)
+        event = detailed_event(member)
+        sign_in_as(member.user)
+
+        get group_event_path(event.group, event)
+
+        expect(page_text(response.body)).to include "Tuesday rehearsal"
+        expect(response.body).not_to include %(aria-label="Duplicate"), %(aria-label="Edit"), "Delete event"
+      end
+
+      # The frames' order, which the markup has to carry because the disclosure cannot: its summary
+      # is the counts, and the roster it unfolds is drawn after the answer row rather than inside it.
+      it "draws the answer row between the counts and the roster" do
+        member = create(:member, :active)
+        event = detailed_event(member, reader_status: :maybe)
+        sign_in_as(member.user)
+
+        get group_event_path(event.group, event)
+
+        expect(page_text(response.body)).to match(/Who’s coming.*Your answer:.*Who’s invited/)
+      end
+
+      it "draws the four count tags and the reader's own question" do
+        travel_to Time.zone.parse("2026-09-01 12:00") do
+          member = create(:member, :active)
+          event = detailed_event(member, reader_status: :invited)
+          sign_in_as(member.user)
+
+          get group_event_path(event.group, event)
+
+          expect(response.body).to include %(aria-label="yes"), %(aria-label="maybe"), %(aria-label="no"), %(aria-label="no reply")
+          expect(page_text(response.body)).to include "Are you coming?"
+        end
+      end
+    end
+
+    # The manager's column of the events table: editing their event and filling it, and nothing the
+    # three roles keep for themselves - copying it, deleting it, overruling an answer, taking
+    # somebody off the list.
+    context "when signed in as the event's manager" do
+      it "offers Edit and Add someone, and nothing the roles keep for themselves" do
+        manager = create(:member, :active)
+        event = detailed_event(manager)
+        event.update!(manager:)
+        sign_in_as(manager.user)
+
+        get group_event_path(event.group, event)
+
+        expect(response.body).to include %(aria-label="Edit"), new_group_event_registration_path(event.group, event)
+        expect(response.body).not_to include %(aria-label="Duplicate"), "Delete event", "Yes for Ben Cole", "Take Ben Cole off the list"
       end
     end
   end
@@ -935,6 +1100,33 @@ RSpec.describe "Events", type: :request do
 
       expect(response).to have_http_status :not_found
     end
+  end
+
+  # The screen the frames draw: a named creator and manager, a place, notes, and a roster of three
+  # named members in three states, so every row an example reads has a name to find it by. The
+  # reader is registered too, with `reader_status:`, and the date is fixed because the schedule
+  # line is copy the examples read.
+  def detailed_event(reader, reader_status: :yes)
+    group = reader.group
+    alice = create(:member, :active, group:, user: create(:user, :with_full_profile, first_name: "Alice", last_name: "Bird"))
+    ben = create(:member, :active, group:, user: create(:user, :with_full_profile, first_name: "Ben", last_name: "Cole"))
+    carla = create(:member, :active, group:, user: create(:user, :with_full_profile, first_name: "Carla", last_name: "Duke"))
+    event = create(:event,
+      group:,
+      creator: alice,
+      manager: ben,
+      name: "Tuesday rehearsal",
+      category: :rehearsal,
+      status: :confirmed,
+      description: "Bring the new folders.",
+      address: create(:address, name: "Community Hall"),
+      starts_at: Time.zone.parse("2026-09-02 19:00"),
+      ends_at: Time.zone.parse("2026-09-02 21:00"))
+    create(:registration, event:, member: alice, status: :yes)
+    create(:registration, event:, member: ben, status: :reserved)
+    create(:registration, event:, member: carla, status: :invited)
+    create(:registration, event:, member: reader, status: reader_status)
+    event
   end
 
   # An event the reader is in the middle of: started, not yet ended. `status:` is the caller's,

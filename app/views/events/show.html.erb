@@ -1,20 +1,51 @@
-<% content_for :title, "Showing event" %>
+<% content_for :title, @event.name %>
 
-<div class="md:w-2/3 w-full">
-  <h1 class="font-bold text-4xl">Showing event</h1>
+<%= render "shared/page_header", title: "Event" %>
 
+<div class="flex flex-col gap-4 w-full">
   <%= render @event %>
 
-  <div class="flex flex-wrap gap-2">
-    <%= link_to "Edit this event", edit_group_event_path(@group, @event), class: "btn btn-ghost" %>
-    <%= link_to "Duplicate this event", duplicate_group_event_path(@group, @event), class: "btn btn-ghost" %>
-    <%= link_to "Back to events", group_events_path(@group), class: "btn btn-ghost" %>
-    <%= render "shared/confirm_sheet",
-          id: dom_id(@event, :confirm_delete),
-          url: group_event_path(@group, @event),
-          label: "Delete event",
-          title: "Delete this event?",
-          body: "Every registration for it goes too. This can't be undone.",
-          dismiss: "Keep event" %>
+  <%#
+    The attendance card, in the frames' order: the counts, the reader's own answer row, and the
+    roster unfolding below both. The counts are the disclosure's summary, but the roster cannot be
+    its body, because everything after a `<summary>` folds with it and the answer row between them
+    has to show while the roster is folded - nor can the answer row go inside the summary, since a
+    `button_to` form cannot live in one. So the `<details>` holds its summary alone and the roster is
+    a later sibling that `peer-open:` shows, with `aria-controls` telling assistive technology which
+    element the summary's expanded state is about.
+  %>
+  <div class="card card-sm bg-base-200">
+    <div class="card-body gap-3">
+      <details class="collapse collapse-arrow peer">
+        <summary class="collapse-title flex flex-col gap-2 px-0" aria-controls="<%= dom_id @event, :roster %>">
+          <span class="font-semibold">Who&rsquo;s coming</span>
+          <%= render "events/counts", event: @event %>
+        </summary>
+      </details>
+
+      <%= render "events/rsvp", event: @event, registration: @event.registration_for(Current.member) %>
+
+      <div id="<%= dom_id @event, :roster %>" class="hidden peer-open:block">
+        <%= render "events/roster", event: @event %>
+      </div>
+    </div>
   </div>
+
+  <% if @event.description.present? %>
+    <%= simple_format @event.description %>
+  <% end %>
+
+  <%# `destroy?` rather than the `show?` that admitted the reader, for the reason `groups/edit` gives:
+      a paused member reads the screen and is refused every write on it. %>
+  <% if allowed_to?(:destroy?, @event) %>
+    <div class="mt-6">
+      <%= render "shared/confirm_sheet",
+            id: dom_id(@event, :confirm_delete),
+            url: group_event_path(@group, @event),
+            label: "Delete event",
+            title: "Delete this event?",
+            body: "Every registration for it goes too. This can't be undone.",
+            dismiss: "Keep event" %>
+    </div>
+  <% end %>
 </div>

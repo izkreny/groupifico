@@ -122,6 +122,11 @@ RSpec.describe RegistrationPolicy, type: :policy do
       let(:actor) { create(:member, :events_administrator, group:) }
     end
 
+    succeed "for an owner removing their own registration" do
+      let(:actor)  { create(:member, :owner, group:) }
+      let(:record) { create(:registration, event:, member: actor) }
+    end
+
     failed "for the member the registration is for, who answers no instead of withdrawing" do
       let(:record) { create(:registration, event:, member: actor) }
     end

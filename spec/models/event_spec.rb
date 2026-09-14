@@ -386,6 +386,35 @@ RSpec.describe Event, type: :model do
     end
   end
 
+  describe "#roster" do
+    it "lists the answers first, then the invited, then the reserved, reserved ones included" do
+      event = create(:event)
+      reserved = registration_named("Adam", on: event, status: :reserved)
+      invited = registration_named("Bea", on: event, status: :invited)
+      declined = registration_named("Carl", on: event, status: :no)
+      unsure = registration_named("Dora", on: event, status: :maybe)
+      coming = registration_named("Emil", on: event, status: :yes)
+
+      expect(event.roster).to eq [ coming, unsure, declined, invited, reserved ]
+    end
+
+    # A name typed in lower case is still the same name to somebody scanning the list for it.
+    it "orders the members who share a status by name, whatever case it was typed in" do
+      event = create(:event)
+      lower = registration_named("bea", on: event, status: :yes)
+      upper = registration_named("Carl", on: event, status: :yes)
+      first = registration_named("Adam", on: event, status: :yes)
+
+      expect(event.roster).to eq [ first, lower, upper ]
+    end
+
+    # The roster reads the name each row draws, so the order is only visible through a named profile.
+    def registration_named(first_name, on:, status:)
+      user = create(:user, :with_full_profile, first_name:, last_name: "Fox")
+      create(:registration, event: on, status:, member: create(:member, group: on.group, user:))
+    end
+  end
+
   describe "#invite" do
     it "creates one invited registration per member" do
       event = create(:event)

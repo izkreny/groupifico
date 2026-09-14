@@ -1,14 +1,49 @@
-<div id="<%= dom_id event %>" class="w-full sm:w-auto my-5 space-y-5">
-  <strong>
-    <%= event.name %>
-  </strong>
-  (<%= event.category %>)
-  <br>
-  <%= event_schedule(event) %> (<%= event.status %>)
-  <br>
-  @ <%= event.address&.name %>
-  <br>
-  Created by <%= event.creator&.full_name %>
-  |
-  Managed by <%= event.manager&.full_name %>
+<%# locals: (event:) %>
+<%#
+  The record's own facts, as the event screen draws them under its pushed title. Status, when, where
+  and who are quiet facts - their icons and plain text colour, as on the hero card.
+
+  Duplicate and Edit are icon buttons in the name's row, each asked of the rule its action
+  authorizes: `EventsController#duplicate` authorizes `create?`, so a manager who may edit the
+  event is still refused the copy. A refused reader gets no control rather than a disabled one.
+%>
+<div id="<%= dom_id event %>" class="flex flex-col gap-2">
+  <div class="flex items-start justify-between gap-2">
+    <h2 class="text-record"><%= event.name %></h2>
+
+    <div class="flex flex-none gap-1">
+      <% if allowed_to?(:create?, event) %>
+        <%= link_to duplicate_group_event_path(event.group, event), class: "btn btn-ghost btn-circle btn-sm text-primary", aria: { label: "Duplicate" } do %>
+          <%= icon :duplicate, class: "size-4" %>
+        <% end %>
+      <% end %>
+
+      <% if allowed_to?(:edit?, event) %>
+        <%= link_to edit_group_event_path(event.group, event), class: "btn btn-ghost btn-circle btn-sm text-primary", aria: { label: "Edit" } do %>
+          <%= icon :edit, class: "size-4" %>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+
+  <p class="flex items-center gap-1">
+    <%= status_icon event, class: "size-4" %><%= event_status_line event %>
+  </p>
+
+  <p class="flex items-center gap-1">
+    <%= icon :when, class: "size-4" %><%= event_schedule_range event %>
+  </p>
+
+  <% if event.address %>
+    <p class="flex items-center gap-1">
+      <%= icon :where, class: "size-4" %><%= link_to event.address.name, address_map_url(event.address), class: "link link-hover" %>
+    </p>
+  <% end %>
+
+  <% if (credits = event_credits(event)) %>
+    <p class="flex items-center gap-1">
+      <%= icon :members, class: "size-4 flex-none" %>
+      <span><%= credits %></span>
+    </p>
+  <% end %>
 </div>

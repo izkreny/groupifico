@@ -20,8 +20,8 @@ class RegistrationPolicy < ApplicationPolicy
   # one posts straight to `update`.
   def update? = own? || membership.can_manage?(:events)
 
-  # Taking a registration away is the three roles', and nobody withdraws their own: the answer to
-  # not attending is `no`, which `update?` already covers.
+  # Taking a registration away is the three roles', their own included. A member holding none of
+  # them withdraws nothing: the answer to not attending is `no`, which `update?` already covers.
   def destroy? = membership.can_manage?(:events)
 
   # Which statuses the actor may write, asked by the controller alongside the rules above, because a

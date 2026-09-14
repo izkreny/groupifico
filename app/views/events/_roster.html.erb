@@ -1,0 +1,81 @@
+<%# locals: (event:) %>
+<%#
+  Who is on the event's list, one row per registration in `Event#roster` order, the same rows in
+  the same order for every reader: what varies is only what a reader may do with a row.
+
+  The two capabilities are the reader's rather than a row's, so each is asked once, of a
+  registration with no member on it - the record `RegistrationsController#new` asks. With no member
+  `own?` is false, so `update?` there is "change another member's answer" alone; asked per row it
+  would hand a plain member controls on their own row. `Registration.new(event:)` rather than
+  `event.registrations.new`, which would join the loaded association `events/_counts` sizes.
+
+  A row whose pills already say where it stands draws no badge beside them. An unanswered row keeps
+  its badge whoever reads it, because no pill is current there to tell `reserved` from `invited`.
+
+  The pills also wait on `Event#open_to_answers?`, as on `events/_row`: `Registration` refuses every
+  answer on an event that is over, so a pill there is a control certain to fail. The take-off does
+  not, since correcting a roster after the fact is still the three roles' business.
+%>
+<% unattached = Registration.new(event: event) %>
+<% may_invite = allowed_to?(:create?, unattached) %>
+<% may_answer = event.open_to_answers? && allowed_to?(:update?, unattached) %>
+<% may_remove = allowed_to?(:destroy?, unattached) %>
+<% roster = event.roster %>
+
+<div class="flex flex-col gap-2">
+  <div>
+    <h3 class="font-semibold">Who&rsquo;s invited</h3>
+    <p class="text-xs">
+      <%= invited_tally(event.group, event) %><% if (left_out = left_out_line(event.group, event)) %> · <%= left_out %><% end %>
+    </p>
+  </div>
+
+  <% if roster.any? %>
+    <ul class="list">
+      <% roster.each do |registration| %>
+        <% name = registration.member.full_name %>
+        <li id="<%= dom_id registration, :roster %>" class="list-row items-center px-0">
+          <span class="list-col-grow"><%= name %></span>
+
+          <% unless may_answer && registration.answered? %>
+            <span class="badge badge-sm" title="<%= registration_status_label(registration) %>">
+              <%= status_icon registration, label: registration_status_label(registration), class: "size-4" %>
+            </span>
+          <% end %>
+
+          <% if may_answer %>
+            <div class="join">
+              <% Registration::ANSWERS.each do |answer| %>
+                <% current = registration.status == answer %>
+                <%= button_to group_event_registration_path(event.group, event, registration),
+                      method: :patch,
+                      params: { registration: { status: answer } },
+                      class: "join-item btn btn-sm btn-square#{" btn-primary" if current}",
+                      aria: { label: "#{answer.capitalize} for #{name}", current: (current ? "true" : nil) } do %>
+                  <%= icon answer, class: "size-4" %>
+                <% end %>
+              <% end %>
+            </div>
+          <% end %>
+
+          <% if may_remove %>
+            <%= button_to group_event_registration_path(event.group, event, registration),
+                  method: :delete,
+                  class: "btn btn-ghost btn-sm btn-square",
+                  aria: { label: "Take #{name} off the list" } do %>
+              <%= icon :delete, class: "size-4" %>
+            <% end %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="text-sm">Nobody is on the list yet.</p>
+  <% end %>
+
+  <% if may_invite %>
+    <%= link_to new_group_event_registration_path(event.group, event), class: "btn btn-sm self-start" do %>
+      <%= icon :add_member, class: "size-4" %>Add someone
+    <% end %>
+  <% end %>
+</div>

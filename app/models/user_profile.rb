@@ -60,4 +60,15 @@ class UserProfile < ApplicationRecord
     words = full_name.split
     [ words.first, (words.last if words.many?) ].compact.map { it[0].upcase }.join
   end
+
+  # "Ben C.", the form the event screen's manager and creator line draws. Both halves or neither:
+  # a lone name has nothing to abbreviate, so it answers `full_name`, whose own fallback covers a
+  # profile with no name at all.
+  def short_name
+    if first_name.present? && last_name.present?
+      "#{first_name} #{last_name[0].upcase}."
+    else
+      full_name
+    end
+  end
 end

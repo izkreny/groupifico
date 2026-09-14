@@ -35,21 +35,29 @@ RSpec.describe EventsHelper, type: :helper do
     end
   end
 
-  describe "#event_schedule" do
-    context "when the event starts and ends on the same day" do
-      it "formats the end time as a bare time, without repeating the date" do
-        event = build(:event, starts_at: Time.zone.parse("2026-01-01 10:00"), ends_at: Time.zone.parse("2026-01-01 12:00"))
+  describe "#event_credits" do
+    it "names the manager and the creator, joined by a dot" do
+      alice = create(:member, user: create(:user, :with_full_profile, first_name: "Alice", last_name: "Bird"))
+      ben = create(:member, group: alice.group, user: create(:user, :with_full_profile, first_name: "Ben", last_name: "Cole"))
+      event = create(:event, group: alice.group, creator: alice, manager: ben)
 
-        expect(helper.event_schedule(event)).to eq "2026-01-01 10:00 – 12:00"
-      end
+      expect(Nokogiri::HTML(helper.event_credits(event)).text).to eq "Managed by Ben C. · Created by Alice B."
     end
 
-    context "when the event spans more than one day" do
-      it "formats the end time with its own date" do
-        event = build(:event, starts_at: Time.zone.parse("2026-01-01 10:00"), ends_at: Time.zone.parse("2026-01-02 12:00"))
+    it "leaves the manager half out of an event with no manager" do
+      alice = create(:member, user: create(:user, :with_full_profile, first_name: "Alice", last_name: "Bird"))
+      event = create(:event, group: alice.group, creator: alice)
 
-        expect(helper.event_schedule(event)).to eq "2026-01-01 10:00 – 2026-01-02 12:00"
-      end
+      expect(Nokogiri::HTML(helper.event_credits(event)).text).to eq "Created by Alice B."
+    end
+
+    # A creator removed from the group leaves `creator_id` pointing at nobody, since the column
+    # carries no foreign key, and with no manager either there is nobody left to credit.
+    it "is nil when neither a manager nor the creator is there to name" do
+      event = create(:event)
+      event.creator.destroy!
+
+      expect(helper.event_credits(event.reload)).to be_nil
     end
   end
 

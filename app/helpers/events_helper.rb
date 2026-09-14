@@ -1,17 +1,9 @@
 module EventsHelper
-  DATETIME_FORMAT = "%Y-%m-%d %H:%M"
   DATE_FORMAT     = "%a %-d %b"
   TIME_FORMAT     = "%H:%M"
   SEPARATOR       = " – "
   RANGE           = "–"
   DOT             = " · "
-
-  # TODO: Localize and translate using l() and time zones
-  def event_schedule(event)
-    event.starts_at.strftime(DATETIME_FORMAT) +
-    SEPARATOR +
-    event.ends_at.strftime(event.same_day? ? TIME_FORMAT : DATETIME_FORMAT)
-  end
 
   # The card's own two readings of the same schedule: the range a hero card and the detail screen
   # carry, and the start alone that a compact row carries beside the place. Both print in
@@ -22,6 +14,17 @@ module EventsHelper
     else
       "#{day_and_time(event.starts_at)}#{SEPARATOR}#{day_and_time(event.ends_at)}"
     end
+  end
+
+  # "Managed by Ben C. · Created by Alice B.", naming only who is still there. `manager` is optional,
+  # and `creator_id` carries no foreign key, so removing the member who created an event leaves it
+  # pointing at nobody; either half is left out rather than raising, and nil means nobody to name.
+  def event_credits(event)
+    credits = { "Managed by" => event.manager, "Created by" => event.creator }.filter_map do |role, member|
+      safe_join([ role, " ", link_to(member.short_name, group_member_path(event.group, member), class: "link link-hover") ]) if member
+    end
+
+    safe_join(credits, DOT) if credits.any?
   end
 
   def event_schedule_start(event)
