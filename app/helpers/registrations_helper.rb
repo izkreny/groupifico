@@ -19,4 +19,13 @@ module RegistrationsHelper
 
     "#{active.where(id: event.registrations.select(:member_id)).count} of #{active.count} invited"
   end
+
+  # The event roster's line above its rows, naming whoever the tally leaves out for being paused: a
+  # paused member cannot be invited, so without the line they are missing from both the numbers
+  # and the rows with nothing saying why. One who is already registered has a row of their own.
+  def left_out_line(group, event)
+    names = group.members.paused.without_registration_for(event).includes(:profile).map(&:full_name).sort
+
+    "#{names.to_sentence} #{names.one? ? "is" : "are"} paused, left out" if names.any?
+  end
 end

@@ -134,6 +134,14 @@ class Event < ApplicationRecord
     unconfirmed? || confirmed?
   end
 
+  # Everyone on the list, in the order the event screen draws them: by the name each row carries,
+  # which is what a reader scans for, whatever case it was typed in. Sorted after loading rather
+  # than by the database because the name is not a column - `UserProfile#full_name` falls back to
+  # the email - and the profile is preloaded because every row asks for it through `user`.
+  def roster
+    registrations.includes(member: :profile).sort_by { it.member.full_name.downcase }
+  end
+
   # Filling the event, all or nothing: a set refused part way through leaves nobody half-invited.
   # `invited` rather than a posted status, because being put on the list is what an invitation is
   # and answering it is the member's own move afterwards.
