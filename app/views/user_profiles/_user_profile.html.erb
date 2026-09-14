@@ -1,10 +1,10 @@
-<div id="<%= dom_id user_profile %>" class="w-full sm:w-auto my-5 space-y-5">
-  <ul>
-    <li>
-      <%= user_profile.full_name %>
-    </li>
-    <li>
-      <%= user_profile.mobile_phone %>
-    </li>
-  </ul>
+<%# The avatar is decorative: the name beside it says the same thing in words. %>
+<div id="<%= dom_id user_profile %>" class="flex items-center gap-3 my-4">
+  <div class="avatar avatar-placeholder" aria-hidden="true">
+    <div class="bg-base-300 text-base-content w-16 rounded-full">
+      <span class="text-xl"><%= user_profile.initials %></span>
+    </div>
+  </div>
+
+  <h1 class="text-record"><%= user_profile.full_name %></h1>
 </div>

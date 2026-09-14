@@ -18,6 +18,34 @@ RSpec.describe "UserProfiles", type: :request do
 
         expect(response).to have_http_status :ok
       end
+
+      it "offers the account rows and lists none of the reader's groups" do
+        member = create(:member, group: create(:group, name: "Riverside Choir"))
+        sign_in_as(member.user)
+
+        get user_profile_path
+        text = page_text(response.body)
+
+        expect(text).to include("Edit name, mobile and email", "Sign out", "Create group", "Delete my account")
+        expect(text).not_to include "Riverside Choir"
+      end
+
+      it "names each group the reader is the only active owner of" do
+        member = create(:member, :owner)
+        sign_in_as(member.user)
+
+        get user_profile_path
+
+        expect(response.body).to include("You still own #{member.group.name}.")
+      end
+
+      it "says nothing where the reader owns no group alone" do
+        sign_in_as(create(:member).user)
+
+        get user_profile_path
+
+        expect(response.body).not_to include("You still own")
+      end
     end
   end
 
@@ -37,6 +65,16 @@ RSpec.describe "UserProfiles", type: :request do
         get edit_user_profile_path
 
         expect(response).to have_http_status :ok
+      end
+
+      it "edits the name, the mobile and the email in one form" do
+        sign_in_as(create(:user))
+
+        get edit_user_profile_path
+        document = Nokogiri::HTML(response.body)
+
+        expect(document.css("form label").map { it.text.squish }).to eq [ "First name", "Last name", "Mobile", "Email" ]
+        expect(document.at_css("#user_profile_mobile_phone_hint").text).to eq "Optional. Shown to members of your groups."
       end
     end
   end
@@ -92,6 +130,18 @@ RSpec.describe "UserProfiles", type: :request do
         expect(response).to have_http_status :unprocessable_content
         expect(user.profile.reload.first_name).not_to eq "Ada"
         expect(user.reload.email).not_to eq "ada.example.com"
+      end
+
+      # The summary saying "fix the highlighted fields" is only true if the field it means carries
+      # the message, and the email's error arrives on the profile keyed `user.email`.
+      it "puts a refused email under the Email field rather than in the summary" do
+        sign_in_as(create(:user))
+
+        patch user_profile_path, params: { user_profile: { user_attributes: { email: "ada.example.com" } } }
+        document = Nokogiri::HTML(response.body)
+
+        expect(document.at_css("#user_profile_user_attributes_email_error").text).to eq "Email is invalid"
+        expect(document.at_css("#error_explanation").text.squish).to eq "Please fix the highlighted fields."
       end
 
       # The account written is always the one the profile belongs to, whatever the request names.

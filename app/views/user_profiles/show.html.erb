@@ -1,11 +1,56 @@
-<% content_for :title, "Showing user profile" %>
+<% content_for :title, "Me" %>
 
-<div class="md:w-2/3 w-full">
-  <h1 class="font-bold text-4xl">Showing user profile</h1>
+<%= render "shared/page_header", title: "Me" %>
 
+<%#
+  The account rows only. The reader's groups live on the groups index and in the switcher, so the
+  one way from here to a group is making a second one - which is also the only way there for an
+  owner whose root lands on their single group.
+%>
+<div class="w-full">
   <%= render @user_profile %>
 
-  <div class="flex flex-wrap gap-2">
-    <%= link_to "Edit this user profile", edit_user_profile_path, class: "btn btn-ghost" %>
+  <ul class="list">
+    <li class="p-4 pb-2 text-xs tracking-wide">Account</li>
+
+    <li class="list-row">
+      <%= link_to "Edit name, mobile and email", edit_user_profile_path, class: "list-col-grow link link-hover" %>
+      <%= icon :go_to, class: "size-4" %>
+    </li>
+
+    <li class="list-row">
+      <%= button_to "Sign out", session_path, method: :delete, class: "link link-hover", form_class: "list-col-grow" %>
+    </li>
+  </ul>
+
+  <div class="mt-6">
+    <%= link_to new_group_path, class: "btn" do %>
+      <%= icon :new, class: "size-4" %>Create group
+    <% end %>
+    <p class="text-meta mt-1">A second group of any type</p>
+  </div>
+
+  <%# Alone at the bottom, with its rule spelled out beneath it. The block naming the groups that
+      would be left ownerless sits above the control it explains: the refusal's flash says only
+      that nothing happened, so this is where the reader learns why. %>
+  <div class="mt-10">
+    <% solely_owned_groups = @user_profile.user.solely_owned_groups %>
+
+    <% if solely_owned_groups.any? %>
+      <div role="alert" class="alert alert-error mb-5" id="solely_owned_groups">
+        <%= icon :alert, class: "size-6 shrink-0" %>
+
+        <span><%= solely_owned_groups_message(solely_owned_groups) %></span>
+      </div>
+    <% end %>
+
+    <%= render "shared/confirm_sheet",
+          id: dom_id(@user_profile.user, :confirm_delete),
+          url: user_path,
+          label: "Delete my account",
+          title: "Delete your account?",
+          body: "You leave every group, and every registration you made goes with you. This can't be undone.",
+          dismiss: "Keep my account" %>
+    <p class="text-meta mt-1">Removes you from every group. Groups you own need another owner first.</p>
   </div>
 </div>
