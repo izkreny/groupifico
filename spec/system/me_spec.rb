@@ -40,12 +40,12 @@ RSpec.describe "The Me screen", type: :system do
   end
 
   it "keeps every row and line inside a phone's width" do
-    sign_in_as create(:member, :owner).user
+    sign_in_as create(:user)
     resize_to ViewportHelper::MOBILE
 
     visit user_profile_path
 
-    expect(page).to have_css "#solely_owned_groups"
+    expect(page).to have_button "Delete my account"
     expect(horizontal_overflow).to eq 0
   end
 

@@ -1,23 +1,52 @@
-<%# locals: (id:, url:, label:, title:, body:, dismiss:) %>
+<%# locals: (id:, url:, label:, title:, body:, dismiss:, word: nil, block: nil) %>
+<%#
+  `word` makes this the type-to-confirm variant, and `block` names why the delete cannot happen
+  yet. A block leaves the comparing controller unwired, so the primary stays disabled whatever is
+  typed; the record's own guard is still what refuses.
+
+  The field belongs to no form, deliberately. The trigger form's default button is the trigger
+  itself, which is never disabled, so a field that form owned would submit the delete on Enter
+  without the word ever being compared.
+%>
 <div data-controller="dialog" data-action="submit->dialog#open turbo:before-cache@document->dialog#close">
   <%= button_to label, url, method: :delete, class: "btn btn-error",
         form: { id: "#{id}_form" }, data: { dialog_target: "trigger" } %>
 
   <dialog id="<%= id %>" class="modal modal-bottom sm:modal-middle"
-          aria-labelledby="<%= id %>_title" aria-describedby="<%= id %>_body"
+          aria-labelledby="<%= id %>_title"
+          aria-describedby="<%= [ "#{id}_body", ("#{id}_block" if block) ].compact.join(" ") %>"
           data-dialog-target="sheet">
-    <div class="modal-box">
+    <%= tag.div class: "modal-box",
+          data: ({ controller: "type-to-confirm", type_to_confirm_word_value: word } if word && !block) do %>
       <h3 id="<%= id %>_title" class="text-lg font-bold"><%= title %></h3>
       <p id="<%= id %>_body" class="py-4"><%= body %></p>
+
+      <% if block %>
+        <div role="alert" id="<%= id %>_block" class="alert alert-error">
+          <%= icon :alert, class: "size-6 shrink-0" %>
+
+          <span><%= block %></span>
+        </div>
+      <% end %>
+
+      <% if word %>
+        <fieldset class="fieldset">
+          <label class="label" for="<%= id %>_word">Type <%= word %> to confirm</label>
+          <input type="text" id="<%= id %>_word" class="input w-full" autocomplete="off"
+                 data-type-to-confirm-target="field" data-action="type-to-confirm#compare">
+        </fieldset>
+      <% end %>
 
       <div class="modal-action">
         <form method="dialog">
           <button class="btn btn-sm"><%= dismiss %></button>
         </form>
 
-        <button form="<%= id %>_form" class="btn btn-sm btn-error"><%= label %></button>
+        <%= tag.button label, form: "#{id}_form", class: "btn btn-sm btn-error",
+              disabled: word.present? || block.present?,
+              data: { type_to_confirm_target: ("primary" if word) } %>
       </div>
-    </div>
+    <% end %>
 
     <form method="dialog" class="modal-backdrop">
       <button>close</button>
