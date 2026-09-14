@@ -37,7 +37,7 @@ module RegistrationsHelper
   # paused member cannot be invited, so without the line they are missing from both the numbers
   # and the rows with nothing saying why. One who is already registered has a row of their own.
   def left_out_line(group, event)
-    names = group.members.paused.without_registration_for(event).includes(:profile).map(&:full_name).sort
+    names = group.members.paused.without_registration_for(event).includes(:profile).map(&:full_name).sort_by(&:downcase)
 
     "#{names.to_sentence} #{names.one? ? "is" : "are"} paused, left out" if names.any?
   end

@@ -92,6 +92,16 @@ RSpec.describe RegistrationsHelper, type: :helper do
       expect(helper.left_out_line(event.group, event)).to eq "dan and fay are paused, left out"
     end
 
+    # A member with no profile name is named by their email's local part, which is lower case, and
+    # sorting by byte would put every such name after every capitalised one.
+    it "orders the names whatever case they are in, as the roster below them does" do
+      event = create(:event)
+      create(:member, :paused, group: event.group, user: create(:user, :with_full_profile, first_name: "Bob", last_name: "Ray"))
+      create(:member, :paused, group: event.group, user: create(:user, email: "adam@example.com"))
+
+      expect(helper.left_out_line(event.group, event)).to eq "adam and Bob Ray are paused, left out"
+    end
+
     # A paused member already on the list has a row of their own, and an inactive one has left the
     # group, so neither is somebody the roster leaves out.
     it "is nil when no paused member is missing from the list" do
