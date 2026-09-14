@@ -9,7 +9,7 @@ require "rails_helper"
 # `.agents/testing.md` none of them comes back here. What is left is that the controls paint, that
 # each row lands where it says, and that a refused save's messages are visible rather than merely
 # present. The block naming solely owned groups and the delete sheet are
-# `spec/system/account_deletion_refusal_spec.rb`'s.
+# `spec/system/account_deletion_spec.rb`'s.
 RSpec.describe "The Me screen", type: :system do
   it "paints in light, with no accessibility violations" do
     user = create(:user)
@@ -40,12 +40,12 @@ RSpec.describe "The Me screen", type: :system do
   end
 
   it "keeps every row and line inside a phone's width" do
-    sign_in_as create(:member, :owner).user
+    sign_in_as create(:user)
     resize_to ViewportHelper::MOBILE
 
     visit user_profile_path
 
-    expect(page).to have_css "#solely_owned_groups"
+    expect(page).to have_button "Delete my account"
     expect(horizontal_overflow).to eq 0
   end
 
