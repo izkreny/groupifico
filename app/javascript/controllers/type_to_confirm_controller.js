@@ -7,13 +7,12 @@ export default class extends Controller {
   static targets = ["field", "primary"]
   static values = { word: String }
 
-  // A snapshot Turbo restores keeps what was typed, so the button is made to agree with the field
-  // on arrival rather than only on the next keystroke.
-  connect() {
-    this.compare()
-  }
-
   compare() {
     this.primaryTarget.disabled = this.fieldTarget.value !== this.wordValue
+  }
+
+  reset() {
+    this.fieldTarget.value = ""
+    this.compare()
   }
 }

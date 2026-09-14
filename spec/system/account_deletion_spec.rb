@@ -68,6 +68,35 @@ RSpec.describe "Deleting my account", type: :system do
       expect(User.where(id: user.id)).not_to exist
     end
 
+    it "starts over from an empty field when the sheet is dismissed and opened again" do
+      fill_in "Type DELETE to confirm", with: "DELETE"
+      within(".modal-action") { click_button "Keep my account" }
+      expect(page).to have_no_css "dialog[open]"
+
+      within("##{dom_id(user, :confirm_delete)}_form") { click_button "Delete my account" }
+
+      expect(page).to have_field "Type DELETE to confirm", with: ""
+      expect(page).to have_button "Delete my account", disabled: true
+    end
+
+    # Asserted at `turbo:before-cache`, for the reason `spec/system/confirm_sheet_spec.rb` gives for
+    # its own history example: the restored page is transient, so a read taken on it races the
+    # restore. The listener is added after the controller's own, so it runs after the reset.
+    it "does not leave the word typed in the page Turbo caches" do
+      fill_in "Type DELETE to confirm", with: "DELETE"
+      page.execute_script <<~JAVASCRIPT
+        window.cachedWord = null
+        document.addEventListener("turbo:before-cache", () => {
+          window.cachedWord = document.querySelector("dialog input").value
+        })
+      JAVASCRIPT
+
+      page.execute_script "Turbo.visit('#{new_group_path}')"
+      expect(page).to have_current_path new_group_path
+
+      expect(page.evaluate_script("window.cachedWord")).to eq ""
+    end
+
     it "keeps the account when Keep my account is used" do
       within(".modal-action") { click_button "Keep my account" }
 

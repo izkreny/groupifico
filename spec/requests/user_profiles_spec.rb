@@ -44,7 +44,7 @@ RSpec.describe "UserProfiles", type: :request do
         expect(sheet.at_css("p").text).to eq "You leave Ninth Street Band and every registration goes with you. This can't be undone."
         expect(sheet.at_css("label").text.squish).to eq "Type DELETE to confirm"
         expect(sheet.at_css("button[form][disabled]")).to be_present
-        expect(sheet.at_css("[data-controller='type-to-confirm']")).to be_present
+        expect(sheet["data-controller"]).to eq "type-to-confirm"
       end
 
       it "blocks the sheet on each group the reader is the only active owner of, and does not name it as left" do
@@ -57,7 +57,7 @@ RSpec.describe "UserProfiles", type: :request do
 
         expect(sheet.at_css("[role=alert]").text.squish).to eq "You still own Riverside Choir. Give another member the owner role first."
         expect(sheet.at_css("p").text).to eq "You leave Ninth Street Band and every registration goes with you. This can't be undone."
-        expect(sheet.at_css("[data-controller='type-to-confirm']")).to be_nil
+        expect(sheet["data-controller"]).to be_nil
       end
 
       it "leaves the sheet unblocked where the reader owns no group alone" do

@@ -12,12 +12,18 @@
   <%= button_to label, url, method: :delete, class: "btn btn-error",
         form: { id: "#{id}_form" }, data: { dialog_target: "trigger" } %>
 
+  <%#
+    The comparing controller sits on the `<dialog>` because `close` does not bubble, and each
+    attempt starts from an empty field: a word typed before the sheet was dismissed, or before
+    Turbo cached the page, would otherwise reopen it with the primary already enabled.
+  %>
   <dialog id="<%= id %>" class="modal modal-bottom sm:modal-middle"
           aria-labelledby="<%= id %>_title"
           aria-describedby="<%= [ "#{id}_body", ("#{id}_block" if block) ].compact.join(" ") %>"
-          data-dialog-target="sheet">
-    <%= tag.div class: "modal-box",
-          data: ({ controller: "type-to-confirm", type_to_confirm_word_value: word } if word && !block) do %>
+          data-dialog-target="sheet"
+          <% if word && !block %><%= tag.attributes(data: { controller: "type-to-confirm", type_to_confirm_word_value: word,
+                action: "close->type-to-confirm#reset turbo:before-cache@document->type-to-confirm#reset" }) %><% end %>>
+    <div class="modal-box">
       <h3 id="<%= id %>_title" class="text-lg font-bold"><%= title %></h3>
       <p id="<%= id %>_body" class="py-4"><%= body %></p>
 
@@ -46,7 +52,7 @@
               disabled: word.present? || block.present?,
               data: { type_to_confirm_target: ("primary" if word) } %>
       </div>
-    <% end %>
+    </div>
 
     <form method="dialog" class="modal-backdrop">
       <button>close</button>
