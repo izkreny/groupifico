@@ -1,0 +1,17 @@
+<%# locals: (title:) %>
+<%#
+  Rendered as a `render layout:`, so a section is written once and yielded to once per theme, which
+  is what keeps its light and dark twins from drifting apart. The block receives the theme name for
+  the ids a twin mints itself, since each id has to be unique on the page.
+%>
+<section class="flex flex-col gap-2">
+  <h2 class="text-lg font-semibold"><%= title %></h2>
+
+  <div class="grid gap-4 lg:grid-cols-2">
+    <% %w[ light dark ].each do |theme| %>
+      <div data-theme="<%= theme %>" class="bg-base-100 text-base-content rounded-box border border-base-300 p-4">
+        <%= yield theme %>
+      </div>
+    <% end %>
+  </div>
+</section>
