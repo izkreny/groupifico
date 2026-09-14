@@ -62,6 +62,12 @@ class User < ApplicationRecord
       .where.not(id: Member.active.owners.where.not(user_id: id).select(:group_id))
   end
 
+  # What deleting the account would take the user out of. The groups they own alone are left out:
+  # those block the deletion rather than go with it, and the delete sheet names them apart.
+  def groups_left_on_deletion
+    current_groups.where.not(id: solely_owned_groups)
+  end
+
   private
     def consume_outstanding_sign_in_tokens
       sign_in_tokens.consume_all
