@@ -70,6 +70,8 @@ class EventsController < ApplicationController
       redirect_to group_event_path(@group, @event),
         notice: "Event was successfully created."
     else
+      @event.build_address unless @event.address
+
       render :new, status: :unprocessable_content
     end
   end
@@ -82,6 +84,8 @@ class EventsController < ApplicationController
         notice: "Event was successfully updated.",
         status: :see_other
     else
+      @event.build_address unless @event.address
+
       render :edit, status: :unprocessable_content
     end
   end
