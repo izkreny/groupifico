@@ -6,25 +6,28 @@
   <%= render @event %>
 
   <%#
-    The attendance card. The counts are the disclosure's summary and the roster its body, so the
-    counts stay in place and the roster unfolds under them. The reader's own answer row sits after
-    the `<details>`, never inside it: a `button_to` form cannot live in a `<summary>`, and the answer
-    has to show while the roster is folded.
+    The attendance card, in the frames' order: the counts, the reader's own answer row, and the
+    roster unfolding below both. The counts are the disclosure's summary, but the roster cannot be
+    its body, because everything after a `<summary>` folds with it and the answer row between them
+    has to show while the roster is folded - nor can the answer row go inside the summary, since a
+    `button_to` form cannot live in one. So the `<details>` holds its summary alone and the roster is
+    a later sibling that `peer-open:` shows, with `aria-controls` telling assistive technology which
+    element the summary's expanded state is about.
   %>
   <div class="card card-sm bg-base-200">
     <div class="card-body gap-3">
-      <details class="collapse collapse-arrow">
-        <summary class="collapse-title flex flex-col gap-2 px-0">
+      <details class="collapse collapse-arrow peer">
+        <summary class="collapse-title flex flex-col gap-2 px-0" aria-controls="<%= dom_id @event, :roster %>">
           <span class="font-semibold">Who&rsquo;s coming</span>
           <%= render "events/counts", event: @event %>
         </summary>
-
-        <div class="collapse-content px-0">
-          <%= render "events/roster", event: @event %>
-        </div>
       </details>
 
       <%= render "events/rsvp", event: @event, registration: @event.registration_for(Current.member) %>
+
+      <div id="<%= dom_id @event, :roster %>" class="hidden peer-open:block">
+        <%= render "events/roster", event: @event %>
+      </div>
     </div>
   </div>
 

@@ -569,6 +569,18 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include %(aria-label="Duplicate"), %(aria-label="Edit"), "Delete event"
       end
 
+      # The frames' order, which the markup has to carry because the disclosure cannot: its summary
+      # is the counts, and the roster it unfolds is drawn after the answer row rather than inside it.
+      it "draws the answer row between the counts and the roster" do
+        member = create(:member, :active)
+        event = detailed_event(member, reader_status: :maybe)
+        sign_in_as(member.user)
+
+        get group_event_path(event.group, event)
+
+        expect(page_text(response.body)).to match(/Who’s coming.*Your answer:.*Who’s invited/)
+      end
+
       it "draws the four count tags and the reader's own question" do
         travel_to Time.zone.parse("2026-09-01 12:00") do
           member = create(:member, :active)
