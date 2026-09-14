@@ -19,27 +19,48 @@ RSpec.describe "UserProfiles", type: :request do
         expect(response).to have_http_status :ok
       end
 
+      # The delete sheet is left out: it names the groups the reader would leave by design, where
+      # this is about the screen's own rows.
       it "offers the account rows and lists none of the reader's groups" do
         member = create(:member, group: create(:group, name: "Riverside Choir"))
         sign_in_as(member.user)
 
         get user_profile_path
-        text = page_text(response.body)
+        document = Nokogiri::HTML(response.body)
+        document.css("dialog").remove
+        text = document.css("body").text.squish
 
         expect(text).to include("Edit name, mobile and email", "Sign out", "Create group", "Delete my account")
         expect(text).not_to include "Riverside Choir"
       end
 
-      it "names each group the reader is the only active owner of" do
-        member = create(:member, :owner)
+      it "asks for the word before deleting, naming the groups the reader leaves" do
+        member = create(:member, group: create(:group, name: "Ninth Street Band"))
         sign_in_as(member.user)
 
         get user_profile_path
+        sheet = Nokogiri::HTML(response.body).at_css("dialog")
 
-        expect(response.body).to include("You still own #{member.group.name}.")
+        expect(sheet.at_css("p").text).to eq "You leave Ninth Street Band and every registration goes with you. This can't be undone."
+        expect(sheet.at_css("label").text.squish).to eq "Type DELETE to confirm"
+        expect(sheet.at_css("button[form][disabled]")).to be_present
+        expect(sheet["data-controller"]).to eq "type-to-confirm"
       end
 
-      it "says nothing where the reader owns no group alone" do
+      it "blocks the sheet on each group the reader is the only active owner of, and does not name it as left" do
+        choir = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+        create(:member, user: choir.user, group: create(:group, name: "Ninth Street Band"))
+        sign_in_as(choir.user)
+
+        get user_profile_path
+        sheet = Nokogiri::HTML(response.body).at_css("dialog")
+
+        expect(sheet.at_css("[role=alert]").text.squish).to eq "You still own Riverside Choir. Give another member the owner role first."
+        expect(sheet.at_css("p").text).to eq "You leave Ninth Street Band and every registration goes with you. This can't be undone."
+        expect(sheet["data-controller"]).to be_nil
+      end
+
+      it "leaves the sheet unblocked where the reader owns no group alone" do
         sign_in_as(create(:member).user)
 
         get user_profile_path

@@ -5,4 +5,14 @@ module UsersHelper
   def solely_owned_groups_message(groups)
     "You still own #{groups.map(&:name).to_sentence}. Give another member the owner role first."
   end
+
+  # The delete sheet's body. A reader whose every group is still theirs alone, or who belongs to
+  # none, leaves nothing by deleting, and `to_sentence` on nothing would read "You leave  and".
+  def account_deletion_message(groups)
+    if groups.any?
+      "You leave #{groups.map(&:name).to_sentence} and every registration goes with you. This can't be undone."
+    else
+      "Every registration goes with you. This can't be undone."
+    end
+  end
 end

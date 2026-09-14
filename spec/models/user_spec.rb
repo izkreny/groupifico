@@ -88,6 +88,28 @@ RSpec.describe User, type: :model do
     end
   end
 
+  describe "#groups_left_on_deletion" do
+    it "answers a group the user belongs to, and one they own beside another active owner" do
+      member = create(:member)
+      co_owned = create(:member, :owner, user: member.user)
+      create(:member, :owner, group: co_owned.group)
+
+      expect(member.user.groups_left_on_deletion).to contain_exactly(member.group, co_owned.group)
+    end
+
+    it "omits a group the user owns alone, which blocks the deletion instead" do
+      member = create(:member, :owner)
+
+      expect(member.user.groups_left_on_deletion).to be_empty
+    end
+
+    it "omits a group the user has already left" do
+      member = create(:member, :inactive)
+
+      expect(member.user.groups_left_on_deletion).to be_empty
+    end
+  end
+
   describe "(the last owner's account)" do
     it "refuses to be destroyed, leaving the user and every membership standing" do
       member = create(:member, :owner)

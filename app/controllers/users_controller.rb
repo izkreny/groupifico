@@ -4,9 +4,10 @@ class UsersController < ApplicationController
   # can act on - hand the owner role over first - rather than a fault, so it gets a message instead
   # of a 500. `MembersController` answers the same invariant from the group's end.
   #
-  # Which groups those are is the Me screen's to say, not the flash's: the block there names them
-  # whenever they exist, so the reader has already read it once before pressing delete and reads it
-  # again underneath this. The flash says only that nothing happened.
+  # Which groups those are is the delete sheet's to say, not the flash's: the sheet names them
+  # whenever they exist and keeps its button disabled while it does, so the refusal is reached only
+  # without JavaScript or when ownership changed after the sheet rendered. The flash says only that
+  # nothing happened.
   rescue_from ActiveRecord::RecordNotDestroyed, with: :refuse_ownerless_groups
 
   # Permanent. `destroy` reaches its record through `set_user`, which answers `Current.user`, so
@@ -24,8 +25,8 @@ class UsersController < ApplicationController
   def destroy
     @user.destroy!
 
-    redirect_to user_path,
-      notice: "User was successfully destroyed.",
+    redirect_to new_session_path,
+      notice: "Your account was deleted.",
       status: :see_other
   end
 
