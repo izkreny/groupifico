@@ -34,7 +34,7 @@
           <span class="list-col-grow"><%= name %></span>
 
           <% unless may_answer && registration.answered? %>
-            <span class="badge badge-ghost badge-sm" title="<%= registration_status_label(registration) %>">
+            <span class="badge badge-sm" title="<%= registration_status_label(registration) %>">
               <%= status_icon registration, label: registration_status_label(registration), class: "size-4" %>
             </span>
           <% end %>
