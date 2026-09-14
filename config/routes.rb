@@ -55,6 +55,9 @@ Rails.application.routes.draw do
   # The icon browser the `rails_icons` generator would mount unconditionally. It lists every synced glyph and answers to anyone, so it is development-only here.
   mount RailsIcons::Engine, at: "/rails_icons" if Rails.env.development?
 
+  # Every shared partial on one page, drawn from sample records rather than anybody's data, so it is a developer's page and nobody else's.
+  resource :styleguide, only: :show if Rails.env.development?
+
   # Defines the root path route ("/")
   root "groups#index"
 end
