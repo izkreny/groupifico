@@ -64,4 +64,4 @@ Every step that writes markup goes through the daisyUI Blueprint MCP server firs
 
 ## Settled
 
-None yet.
+- Whether this pull request also closes #179: yes. Criterion 3 made this branch do #179's whole fix, so the body carries `Closes #179` beside `Closes #259`. Settled by the owner in the session rather than in a thread.
