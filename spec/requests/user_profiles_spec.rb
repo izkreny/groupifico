@@ -43,7 +43,7 @@ RSpec.describe "UserProfiles", type: :request do
 
         expect(sheet.at_css("p").text).to eq "You leave Ninth Street Band and every registration goes with you. This can't be undone."
         expect(sheet.at_css("label").text.squish).to eq "Type DELETE to confirm"
-        expect(sheet.at_css(".modal-action button[form][disabled]")).to be_present
+        expect(sheet.at_css("button[form][disabled]")).to be_present
         expect(sheet.at_css("[data-controller='type-to-confirm']")).to be_present
       end
 
