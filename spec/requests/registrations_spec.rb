@@ -177,7 +177,7 @@ RSpec.describe "Registrations", type: :request do
         expect { post group_event_registrations_path(event.group, event), params: { member_ids: [ paused.id, gone.id, registered.id ] } }
           .not_to change(Registration, :count)
 
-        expect(flash[:alert]).to include "no longer on the list"
+        expect(flash[:alert]).to include "Nobody was invited"
       end
 
       # The row the intersection cannot see: it lands after `invitees` has read the set and reaches
@@ -194,7 +194,7 @@ RSpec.describe "Registrations", type: :request do
         end
 
         expect(response).to have_http_status :unprocessable_content
-        expect(flash[:alert]).to include "no longer on the list"
+        expect(flash[:alert]).to include "Nobody was invited"
       end
 
       it "ignores a ticked member from another group, whose name is nobody here's to publish" do

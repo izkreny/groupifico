@@ -5,7 +5,10 @@ class RegistrationsController < ApplicationController
   # choosing - registered by somebody else, paused, or gone from the group - and for both sides of
   # the write it can happen on. It names none of them, because the controller cannot tell which
   # happened and the reader's answer is the same either way: the list moved, here it is again.
-  MOVED_ON = "Some of the people you ticked are no longer on the list. Here it is again.".freeze
+  #
+  # It says nobody rather than some, because that is what reaching it means: the set is empty, so
+  # every ticked member was dropped. Which also makes it read the same for one tick and for ten.
+  MOVED_ON = "Nobody was invited: nobody you ticked is still on the list. Here it is again.".freeze
 
   before_action :set_event
   before_action :set_registration, only: %i[ update destroy ]
