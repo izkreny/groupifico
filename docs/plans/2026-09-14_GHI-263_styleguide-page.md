@@ -55,3 +55,7 @@ What these gates cannot see is whether either theme looks right, which is what t
 
 - The in-memory rule leaves the count tags, the roster's rows and the said-yes line empty, because each reads through SQL. Sample rows created inside a transaction rolled back after rendering would draw all three, at the price of the criterion's "rather than the database". Assumed: in memory, as the criterion says.
 - The page answers `allowed_to?` yes for every rule and adds a permanent `skip_verify_authorized`, which `.agents/rails-style.md` calls a conversation. Assumed: both, with the skip added to that file's list.
+
+## Settled
+
+- Settled in the terminal on 2026-09-14, after the headless Chromium gate ran from a session scratchpad: should the page be checked by RSpec system specs instead? Decided by the owner: yes, in `spec/styleguide/`, tagged `type: :system`, kept out of a bare `bin/rspec` and of `bin/ci` by the exclude pattern in `.rspec`, and run with `bin/rspec spec/styleguide`. The page is therefore routed in development and test (`if Rails.env.local?`), the issue's first criterion reads "not routed in production", and the route examples in `spec/requests/styleguides_spec.rb` become the signed-in 200 and the signed-out redirect.
