@@ -16,6 +16,17 @@ module EventsHelper
     end
   end
 
+  # "Managed by Ben C. · Created by Alice B.", naming only who is still there. `manager` is optional,
+  # and `creator_id` carries no foreign key, so removing the member who created an event leaves it
+  # pointing at nobody; either half is left out rather than raising, and nil means nobody to name.
+  def event_credits(event)
+    credits = { "Managed by" => event.manager, "Created by" => event.creator }.filter_map do |role, member|
+      safe_join([ role, " ", link_to(member.short_name, group_member_path(event.group, member), class: "link link-hover") ]) if member
+    end
+
+    safe_join(credits, DOT) if credits.any?
+  end
+
   def event_schedule_start(event)
     day_and_time(event.starts_at)
   end

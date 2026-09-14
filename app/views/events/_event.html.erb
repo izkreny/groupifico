@@ -40,15 +40,10 @@
     </p>
   <% end %>
 
-  <%# The manager half is left out rather than drawn as "Managed by nobody": `manager` is optional,
-      and an event without one is the ordinary case rather than a gap worth stating. %>
-  <p class="flex items-center gap-1">
-    <%= icon :members, class: "size-4 flex-none" %>
-    <span>
-      <% if event.manager %>
-        Managed by <%= link_to event.manager.short_name, group_member_path(event.group, event.manager), class: "link link-hover" %> ·
-      <% end %>
-      Created by <%= link_to event.creator.short_name, group_member_path(event.group, event.creator), class: "link link-hover" %>
-    </span>
-  </p>
+  <% if (credits = event_credits(event)) %>
+    <p class="flex items-center gap-1">
+      <%= icon :members, class: "size-4 flex-none" %>
+      <span><%= credits %></span>
+    </p>
+  <% end %>
 </div>

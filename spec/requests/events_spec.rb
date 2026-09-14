@@ -541,6 +541,22 @@ RSpec.describe "Events", type: :request do
       end
     end
 
+    # `events.creator_id` carries no foreign key and `Member#created_events` no `dependent:`, so
+    # removing the member who created an event leaves the event pointing at nobody.
+    context "when the event's creator has been removed from the group" do
+      it "draws the event with the manager alone on the credits line" do
+        member = create(:member, :active)
+        event = detailed_event(member)
+        event.creator.destroy!
+        sign_in_as(member.user)
+
+        get group_event_path(event.group, event)
+
+        expect(page_text(response.body)).to include "Managed by Ben C."
+        expect(page_text(response.body)).not_to include "Created by"
+      end
+    end
+
     context "when signed in as a plain member" do
       # The owner's rows with every control gone: the order is `Event#roster`'s, asserted here only
       # as far as that this screen draws it, and a reserved row carries the bookmark because a
