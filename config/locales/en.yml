@@ -39,3 +39,10 @@ en:
         description: "Notes"
         starts_at: "Starts"
         ends_at: "Ends"
+      # Frame 9l's names, which are the one address field set every form draws. `street_name` and
+      # `building_number` are the two halves of its "Street and number" pair.
+      address:
+        street_name: "Street"
+        building_number: "Number"
+        postal_code: "Postcode"
+        country_code: "Country"
