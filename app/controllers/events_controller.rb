@@ -46,13 +46,14 @@ class EventsController < ApplicationController
   # Authorizes create?, not show?: what this action reads is incidental, what it offers is a form
   # for making a new event. `new` resolves new? through create?, so authorizing show? here made two
   # doors onto the same form disagree - a paused member was refused at one and admitted at the other.
+  #
+  # The source stays in `@original`, because the screen says which event was copied and from when.
   def duplicate
     authorize! @event, to: :create?
 
-    @event = @event.duplicate.shift_by(7.days)
+    @original = @event
+    @event = @original.duplicate.shift_by(7.days)
     @event.build_address unless @event.address
-
-    render :new
   end
 
   def edit
@@ -119,8 +120,13 @@ class EventsController < ApplicationController
     # place and only `EventPolicy#update?` is ever asked - so whoever may edit the event edits the
     # address too, the group's home address included, which `AddressPolicy` reserves to the `owner`.
     # Without one, the nested attributes can only build a new address, which is what the form asks
-    # for: it renders these fields solely when the event has no address yet, and links to
-    # `AddressesController#edit` otherwise, where the question is asked properly.
+    # for when "New address…" is picked; a saved address is corrected at `AddressesController#edit`,
+    # where the question is asked properly.
+    #
+    # The form draws those fields whichever row is picked, so they arrive beside an `address_id` too,
+    # and assigned after it they would build a new address that replaces the pick. A picked address
+    # is used as it is, so an `address_id` wins and the typed fields are dropped. A blank one is the
+    # "New address…" row, and leaves them to build.
     def event_params
       params.expect(
         event: [ :name, :description, :starts_at, :ends_at, :status, :category,
@@ -132,6 +138,7 @@ class EventsController < ApplicationController
       ).tap do |permitted|
         permitted.delete(:manager_id) if foreign_member?(permitted[:manager_id])
         permitted.delete(:address_id) if foreign_address?(permitted[:address_id])
+        permitted.delete(:address_attributes) if permitted[:address_id].present?
       end
     end
 

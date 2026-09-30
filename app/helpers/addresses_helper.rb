@@ -1,10 +1,6 @@
 module AddressesHelper
   MAP_SEARCH_URL = "https://www.google.com/maps/search/"
 
-  def address_choices(addresses)
-    addresses.map { [ it.name, it.id ] }
-  end
-
   # Where the place is, in the one line frame 2f gives it - "Obala 14, 10000 Zagreb" - under the
   # name the screen states separately. The four fields that line names and no more: the coordinates
   # are machine values, and the country is on the form because a group can meet abroad rather than

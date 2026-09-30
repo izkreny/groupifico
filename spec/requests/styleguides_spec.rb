@@ -44,8 +44,9 @@ RSpec.describe "The styleguide", type: :request do
       partials = Rails.root.glob("app/views/{events,shared}/_*.html.erb").map do |path|
         "#{path.dirname.basename}/#{path.basename.to_s.delete_prefix("_").delete_suffix(".html.erb")}"
       end
-      # The summary is reached only through the builder, which draws it after the fields it reads.
-      rendered_by = { "shared/errors" => "form.with_error_summary" }
+      # The summary is reached only through the builder, which draws it after the fields it reads,
+      # and the confirm sheet through the event's delete partial, which is where its strings live.
+      rendered_by = { "shared/errors" => "form.with_error_summary", "shared/confirm_sheet" => %(render "events/delete") }
 
       expect(partials).not_to be_empty
       expect(partials.reject { template.include?(rendered_by.fetch(it, %(render "#{it}"))) }).to be_empty

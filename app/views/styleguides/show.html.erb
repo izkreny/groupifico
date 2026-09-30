@@ -96,17 +96,11 @@
 
   <%= render layout: "styleguides/section", locals: { title: "Event form" } do |theme| %>
     <%# Namespaced apart from the fields section's form too, which is an `Event` form under the same theme. %>
-    <%= render "events/form", group: group, event: unsaved, namespace: "#{theme}_form" %>
+    <%= render "events/form", group: group, event: unsaved, submit: "Create event", cancel: "#", namespace: "#{theme}_form" %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Confirm sheet" } do |theme| %>
-    <%= render "shared/confirm_sheet",
-          id: "confirm_delete_#{theme}",
-          url: group_event_path(group, next_up),
-          confirm: "Delete event",
-          title: "Delete this event?",
-          body: "Every registration for it goes too. This can't be undone.",
-          dismiss: "Keep event" %>
+    <%= render "events/delete", group: group, event: next_up, id: "confirm_delete_#{theme}" %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Legend icons" } do %>

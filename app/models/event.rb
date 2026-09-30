@@ -174,9 +174,12 @@ class Event < ApplicationRecord
     end
   end
 
+  # A copy is a new event, so it has no assignment to keep: a manager whose membership is no longer
+  # active is not handed the copy, which starts with nobody in charge instead. Settled on #312.
   def duplicate
     self.dup.tap do |event|
       event.status = Event.new.status
+      event.manager = nil unless manager&.active?
     end
   end
 end

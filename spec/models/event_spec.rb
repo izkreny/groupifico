@@ -447,5 +447,19 @@ RSpec.describe Event, type: :model do
 
       expect(duplicated_event.status).to eq(default_event_status)
     end
+
+    it "keeps a manager who is still active" do
+      manager = create(:member, :active)
+      source  = create(:event, group: manager.group, manager:)
+
+      expect(source.duplicate.manager).to eq manager
+    end
+
+    it "leaves the copy with nobody in charge when the manager is no longer active" do
+      manager = create(:member, :paused)
+      source  = create(:event, group: manager.group, manager:)
+
+      expect(source.duplicate.manager).to be_nil
+    end
   end
 end

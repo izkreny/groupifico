@@ -1,15 +1,6 @@
 require 'rails_helper'
 
 RSpec.describe AddressesHelper, type: :helper do
-  describe "#address_choices" do
-    it "pairs each address's name with its id, in collection order" do
-      hall   = build_stubbed(:address, name: "Village Hall")
-      studio = build_stubbed(:address, name: "Studio B")
-
-      expect(helper.address_choices([ hall, studio ])).to eq [ [ "Village Hall", hall.id ], [ "Studio B", studio.id ] ]
-    end
-  end
-
   describe "#address_summary" do
     it "reads as one line: the street, then the postcode and city" do
       address = build_stubbed(:address, street_name: "Obala", building_number: "14", postal_code: "10000", city: "Zagreb")
