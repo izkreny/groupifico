@@ -1,4 +1,4 @@
-<%# locals: (id:, url:, label:, title:, body:, dismiss:, word: nil, block: nil) %>
+<%# locals: (id:, url:, confirm:, title:, body:, dismiss:, word: nil, block: nil) %>
 <%#
   `word` makes this the type-to-confirm variant, and `block` names why the delete cannot happen
   yet. A block leaves the comparing controller unwired, so the primary stays disabled whatever is
@@ -9,7 +9,7 @@
   without the word ever being compared.
 %>
 <div data-controller="dialog" data-action="submit->dialog#open turbo:before-cache@document->dialog#close">
-  <%= button_to label, url, method: :delete, class: "btn btn-error",
+  <%= button_to confirm, url, method: :delete, class: "btn btn-error",
         form: { id: "#{id}_form" }, data: { dialog_target: "trigger" } %>
 
   <%#
@@ -48,7 +48,7 @@
           <button class="btn btn-sm"><%= dismiss %></button>
         </form>
 
-        <%= tag.button label, form: "#{id}_form", class: "btn btn-sm btn-error",
+        <%= tag.button confirm, form: "#{id}_form", class: "btn btn-sm btn-error",
               disabled: word.present? || block.present?,
               data: { type_to_confirm_target: ("primary" if word) } %>
       </div>

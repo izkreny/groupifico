@@ -10,7 +10,7 @@
 # `node_modules/.bin/herb-lint --upgrade`, which raises this number and writes
 # an explicit `enabled: false` for each newly arrived rule, then decide each of
 # those on its own rather than leaving the whole batch off.
-version: 0.10.3
+version: 0.11.0
 
 # These templates are ActionView's, not plain ERB rendered by a script, so the
 # `actionview-*` rules are reading the right dialect. Declarative only: the
@@ -32,8 +32,16 @@ linter:
     # fires on each one for a missing space before `/>` inside a minified
     # inline `<svg>`. `--fix` corrects them, but no reader benefits and
     # `rails new` reintroduces it on the next framework upgrade, turning the
-    # gate red for something nobody changed. Scoped to this one rule so the
-    # other 84 keep running on pages users actually see.
+    # gate red for something nobody changed. Scoped to this one rule so every
+    # other rule keeps running on pages users actually see.
     html-no-space-in-tag:
       exclude:
         - 'public/**/*'
+
+    # A false positive: the rule fires on any `form_with` inside a
+    # `render layout:` block, even with no `<form>` anywhere around it, and
+    # the styleguide yields each section's form through `styleguides/section`
+    # that way. Scoped to that one file so a real nested form still fails.
+    html-no-nested-forms:
+      exclude:
+        - 'app/views/styleguides/show.html.erb'

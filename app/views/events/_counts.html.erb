@@ -20,6 +20,9 @@
       </span>
     <% end %>
   </div>
-<% elsif (waiting = event.registrations.size).positive? %>
-  <p class="text-card-fact">Nobody asked yet · <%= waiting %> on the list</p>
+<% else %>
+  <% waiting = event.registrations.size %>
+  <% if waiting.positive? %>
+    <p class="text-card-fact">Nobody asked yet · <%= waiting %> on the list</p>
+  <% end %>
 <% end %>

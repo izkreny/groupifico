@@ -3,7 +3,7 @@
 <%= render "shared/page_header", title: "Event" %>
 
 <div class="flex flex-col gap-4 w-full">
-  <%= render @event %>
+  <%= render "events/event", event: @event %>
 
   <%#
     The attendance card, in the frames' order: the counts, the reader's own answer row, and the
@@ -42,7 +42,7 @@
       <%= render "shared/confirm_sheet",
             id: dom_id(@event, :confirm_delete),
             url: group_event_path(@group, @event),
-            label: "Delete event",
+            confirm: "Delete event",
             title: "Delete this event?",
             body: "Every registration for it goes too. This can't be undone.",
             dismiss: "Keep event" %>

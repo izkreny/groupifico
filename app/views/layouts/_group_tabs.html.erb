@@ -11,11 +11,11 @@
      [ :home,    "Home",    group_path(group)         ],
      [ :events,  "Events",  group_events_path(group)  ],
      [ :members, "Members", group_members_path(group) ]
-   ].each do |name, label, path| %>
+   ].each do |name, aria_label, path| %>
   <% current = name == section %>
   <%= link_to path,
         class: [ "text-primary" => current, "text-base-content/60" => !current, "dock-active" => (current && in_dock) ],
-        aria: { label: label, current: ("page" if current) } do %>
+        aria: { label: aria_label, current: ("page" if current) } do %>
     <%= icon name, class: "size-5" %>
   <% end %>
 <% end %>
