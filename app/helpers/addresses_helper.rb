@@ -9,10 +9,15 @@ module AddressesHelper
   # `compact_blank` at both levels rather than one, because an address with a city and no street
   # would otherwise open on a comma and one with neither would be a bare comma.
   def address_summary(address)
-    street = [ address.street_name, address.building_number ].compact_blank.join(" ")
-    area   = [ address.postal_code, address.city ].compact_blank.join(" ")
+    [ address_street(address), address_area(address) ].compact_blank.join(", ")
+  end
 
-    [ street, area ].compact_blank.join(", ")
+  def address_street(address)
+    [ address.street_name, address.building_number ].compact_blank.join(" ")
+  end
+
+  def address_area(address)
+    [ address.postal_code, address.city ].compact_blank.join(" ")
   end
 
   # Every address in the app is a link that opens the reader's map application. A maps URL rather

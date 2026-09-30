@@ -18,4 +18,24 @@ RSpec.describe Address, type: :model do
     it { is_expected.to validate_numericality_of(:latitude).allow_nil }
     it { is_expected.to validate_numericality_of(:longitude).allow_nil }
   end
+
+  describe "#owning_group" do
+    it "is the group that calls the address home" do
+      address = create(:address)
+      group   = create(:group, address:)
+
+      expect(address.owning_group).to eq group
+    end
+
+    it "is the group whose events use an address no group calls home" do
+      address = create(:address)
+      event   = create(:event, address:)
+
+      expect(address.owning_group).to eq event.group
+    end
+
+    it "is nil for an address nothing points at" do
+      expect(create(:address).owning_group).to be_nil
+    end
+  end
 end

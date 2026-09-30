@@ -1,14 +1,10 @@
 class AddressesController < ApplicationController
   before_action :set_address, only: %i[ show edit update ]
 
-  def index
-    authorize! Address, to: :index?
-
-    @addresses = authorized_scope(Address.all)
-  end
-
   def show
     authorize! @address
+
+    @events = @address.events.includes(:group).order(:starts_at)
   end
 
   def edit

@@ -29,4 +29,11 @@ class Address < ApplicationRecord
   validates :state_code, length: { maximum: 50 }
   validates :country_code, length: { maximum: 5 }
   validates :latitude, :longitude, numericality: true, allow_nil: true
+
+  # The group this place belongs to: the one that calls it home, or else the one whose events use it.
+  # One group either way, because nothing can point two groups at one address - `AddressPolicy#owners`
+  # carries that evidence.
+  def owning_group
+    group || Group.find_by(id: events.select(:group_id))
+  end
 end

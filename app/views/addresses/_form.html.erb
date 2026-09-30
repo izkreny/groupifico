@@ -1,13 +1,45 @@
+<%# locals: (address:) %>
+<%#
+  Frame 9l's five fields, drawn here rather than through `addresses/form_fields`, which is #239's
+  and draws the record's whole shape down to the coordinates. The columns this form leaves out keep
+  their stored values, since a column that is not submitted is not written.
+
+  The note counts the events that move with a correction, and is left out when none do: "used by 0
+  events" says nothing a reader can act on.
+%>
 <%= form_with(model: address, class: "contents") do |form| %>
   <%= form.with_error_summary do %>
-    <fieldset class="fieldset">
-      <legend class="fieldset-legend">Address details</legend>
+    <div class="fieldset">
+      <%= form.field :name, hint: "As it reads on cards" %>
+    </div>
 
-      <%= render "addresses/form_fields", form: form %>
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend">Street and number</legend>
+
+      <div class="grid grid-cols-3 gap-2">
+        <div class="fieldset col-span-2">
+          <%= form.field :street_name %>
+        </div>
+
+        <div class="fieldset">
+          <%= form.field :building_number %>
+        </div>
+      </div>
     </fieldset>
+
+    <div class="fieldset">
+      <%= form.field :postal_code %>
+      <%= form.field :city %>
+      <%= form.field :country_code %>
+    </div>
   <% end %>
 
-  <div class="inline">
-    <%= form.submit class: "btn btn-primary" %>
+  <% if (count = address.events.count).positive? %>
+    <p class="mt-4">Used by <%= pluralize(count, "event") %> in <%= address.owning_group.name %>. <%= count == 1 ? "That event moves" : "They all move" %> with it.</p>
+  <% end %>
+
+  <div class="flex flex-wrap items-center gap-2 mt-4">
+    <%= link_to "Cancel", address_path(address), class: "btn btn-ghost" %>
+    <%= form.submit "Save", class: "btn btn-primary" %>
   </div>
 <% end %>

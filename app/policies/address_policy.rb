@@ -17,13 +17,6 @@ class AddressPolicy < ApplicationPolicy
 
   alias_rule :edit?, to: :show?
 
-  relation_scope do |relation|
-    relation.where(id: user.current_groups.where.not(address_id: nil).select(:address_id))
-      .or(relation.where(id: Event.where(group: user.current_groups).where.not(address_id: nil).select(:address_id)))
-  end
-
-  def index? = true
-
   def show? = owners.any? { |owner| allowed_to?(:show?, owner) }
 
   # Not aliased to show?: `write_rule?` matches the rule that actually runs, so an aliased update?

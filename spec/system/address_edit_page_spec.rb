@@ -23,7 +23,7 @@ RSpec.describe "The address edit page", type: :system do
       visit edit_address_path(member.group.address)
       fill_in "address_name", with: ""
       fill_in "address_city", with: "Springfield"
-      click_button "Update Address"
+      click_button "Save"
     end
 
     # `.validator-hint` is `visibility: hidden` until the `~ .validator-hint` sibling rule reveals
@@ -69,6 +69,37 @@ RSpec.describe "The address edit page", type: :system do
 
     it "has no accessibility violations" do
       expect(page).to be_accessible
+    end
+  end
+
+  context "when the place is corrected" do
+    it "has no accessibility violations before anything is submitted" do
+      sign_in_as member.user
+
+      visit edit_address_path(member.group.address)
+
+      expect(page).to have_field "address_name"
+      expect(page).to be_accessible
+    end
+
+    it "returns to the place when the correction is cancelled" do
+      sign_in_as member.user
+
+      visit edit_address_path(member.group.address)
+      click_link "Cancel"
+
+      expect(page).to have_current_path address_path(member.group.address)
+    end
+
+    it "returns to the place with the correction when it is saved" do
+      sign_in_as member.user
+
+      visit edit_address_path(member.group.address)
+      fill_in "address_name", with: "Community Hall, Room 2"
+      click_button "Save"
+
+      expect(page).to have_current_path address_path(member.group.address)
+      expect(page).to have_css "h2", text: "Community Hall, Room 2"
     end
   end
 end

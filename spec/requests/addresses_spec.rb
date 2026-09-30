@@ -1,39 +1,6 @@
 require 'rails_helper'
 
 RSpec.describe "Addresses", type: :request do
-  describe "GET /addresses" do
-    context "when not signed in" do
-      it "redirects to the sign-in page" do
-        get addresses_path
-
-        expect(response).to redirect_to new_session_path
-      end
-    end
-
-    context "when successfully signed in" do
-      it "shows the addresses page" do
-        sign_in_as(create(:user))
-
-        get addresses_path
-
-        expect(response).to have_http_status :ok
-      end
-
-      it "lists only addresses reachable through the acting user's groups and events" do
-        reachable = create(:address)
-        group     = create(:group, address: reachable)
-        member    = create(:member, group:)
-        unreachable = create(:address)
-        sign_in_as(member.user)
-
-        get addresses_path
-
-        expect(response.body).to include(ActionView::RecordIdentifier.dom_id(reachable))
-        expect(response.body).not_to include(ActionView::RecordIdentifier.dom_id(unreachable))
-      end
-    end
-  end
-
   describe "GET /addresses/:id" do
     context "when not signed in" do
       it "redirects to the sign-in page" do
@@ -56,33 +23,125 @@ RSpec.describe "Addresses", type: :request do
         expect(response).to have_http_status :ok
       end
 
-      # Destroying is denied for everyone until #172, so the button must not be offered. Asserting
-      # the edit button too keeps this honest: without it a page that failed to render its action
-      # bar at all would pass.
-      it "does not offer the destroy button" do
-        address = create(:address)
-        group   = create(:group, address: address)
-        member  = create(:member, group:)
-
+      # Frame 9k: the pushed title, then the name, the lines of the address and whose home it is.
+      it "shows the place under its pushed title" do
+        address = create(:address, name: "Community Hall", street_name: "Obala", building_number: "14", postal_code: "10000", city: "Zagreb", country_code: "HR")
+        member  = create(:member, group: create(:group, name: "Riverside Choir", address:))
         sign_in_as(member.user)
 
         get address_path(address)
 
-        expect(response.body).to include "Edit this address"
-        expect(response.body).not_to include "Destroy this address"
+        expect(page_text(response.body)).to include "Place Community Hall", "Obala 14 10000 Zagreb HR", "Riverside Choir · home address"
       end
 
-      it "shows an address reached through one of the group's own events" do
-        event   = create(:event)
-        address = create(:address)
-        event.update!(address: address)
-        member  = create(:member, group: event.group)
+      it "links the street to the reader's map application" do
+        address = create(:address, street_name: "Obala", building_number: "14")
+        member  = create(:member, group: create(:group, address:))
+        sign_in_as(member.user)
 
+        get address_path(address)
+        street = Nokogiri::HTML(response.body).at_xpath("//a[normalize-space()='Obala 14']")
+
+        expect(street["href"]).to start_with "https://www.google.com/maps/search/"
+      end
+
+      it "links the area line instead for a place with no street" do
+        address = create(:address, street_name: nil, building_number: nil, postal_code: "10000", city: "Zagreb")
+        member  = create(:member, group: create(:group, address:))
+        sign_in_as(member.user)
+
+        get address_path(address)
+        area = Nokogiri::HTML(response.body).at_xpath("//a[normalize-space()='10000 Zagreb']")
+
+        expect(area["href"]).to start_with "https://www.google.com/maps/search/"
+        expect(page_text(response.body).scan("10000 Zagreb").size).to eq 1
+      end
+
+      it "links the name instead for a place that is a name and nothing else" do
+        address = create(:address, name: "Community Hall", street_name: nil, building_number: nil, postal_code: nil, city: nil)
+        member  = create(:member, group: create(:group, address:))
+        sign_in_as(member.user)
+
+        get address_path(address)
+        name = Nokogiri::HTML(response.body).at_xpath("//h2/a[normalize-space()='Community Hall']")
+
+        expect(name["href"]).to start_with "https://www.google.com/maps/search/"
+      end
+
+      it "leaves the name unlinked where an address line carries the map" do
+        address = create(:address, name: "Community Hall", street_name: "Obala", building_number: "14")
+        member  = create(:member, group: create(:group, address:))
         sign_in_as(member.user)
 
         get address_path(address)
 
-        expect(response).to have_http_status :ok
+        expect(page_text(response.body)).to include "Community Hall"
+        expect(Nokogiri::HTML(response.body).at_xpath("//h2/a")).to be_nil
+      end
+
+      it "lists the events using the place, earliest first, each with its start" do
+        address = create(:address)
+        group   = create(:group)
+        later   = create(:event, group:, address:, name: "Extra gig", starts_at: Time.zone.local(2026, 10, 3, 20, 0))
+        create(:event, group:, address:, name: "Tuesday rehearsal", starts_at: Time.zone.local(2026, 9, 1, 19, 0))
+        member  = create(:member, group:)
+        sign_in_as(member.user)
+
+        get address_path(address)
+
+        expect(page_text(response.body)).to include "Used by Tuesday rehearsal Tue 1 Sep · 19:00 Extra gig Sat 3 Oct · 20:00"
+        expect(Nokogiri::HTML(response.body).at_xpath("//a[normalize-space()='Extra gig']")["href"]).to eq group_event_path(group, later)
+      end
+
+      it "says nothing about a home for a place only events use" do
+        address = create(:address)
+        event   = create(:event, address:)
+        member  = create(:member, group: event.group)
+        sign_in_as(member.user)
+
+        get address_path(address)
+
+        expect(page_text(response.body)).to include "Used by"
+        expect(page_text(response.body)).not_to include "home address"
+      end
+
+      it "draws no Used by for a place no event uses" do
+        address = create(:address, name: "Community Hall")
+        member  = create(:member, group: create(:group, address:))
+        sign_in_as(member.user)
+
+        get address_path(address)
+
+        expect(page_text(response.body)).to include "Community Hall"
+        expect(page_text(response.body)).not_to include "Used by"
+      end
+
+      # A delete could never succeed, since every address a member can reach is held by an
+      # ON DELETE RESTRICT reference, so no form on the page may post to the address at all. Correct
+      # is asserted beside it so a page that drew none of its controls cannot pass.
+      it "offers the owner Correct and never a delete" do
+        address = create(:address)
+        member  = create(:member, :owner, group: create(:group, address:))
+        sign_in_as(member.user)
+
+        get address_path(address)
+        document = Nokogiri::HTML(response.body)
+
+        expect(document.at_xpath("//a[normalize-space()='Correct']")["href"]).to eq edit_address_path(address)
+        expect(document.at_css("form[action='#{address_path(address)}']")).to be_nil
+      end
+
+      # `AddressPolicy#update?` reserves a group's home address to the owner, so a member reads it
+      # with no control to correct it.
+      it "offers Correct to nobody the policy refuses" do
+        address = create(:address, name: "Community Hall")
+        member  = create(:member, group: create(:group, address:))
+        sign_in_as(member.user)
+
+        get address_path(address)
+
+        expect(page_text(response.body)).to include "Community Hall"
+        expect(Nokogiri::HTML(response.body).at_xpath("//a[normalize-space()='Correct']")).to be_nil
       end
     end
 
@@ -139,6 +198,13 @@ RSpec.describe "Addresses", type: :request do
       expect { Rails.application.routes.recognize_path("/addresses", method: :post) }
         .to raise_error(ActionController::RoutingError)
     end
+
+    # No list of addresses either: frames 9k and 9l reach a place only from the group or event that
+    # uses it, and nothing linked to the scaffold's list. Removed on #255.
+    it "does not route GET /addresses" do
+      expect { Rails.application.routes.recognize_path("/addresses", method: :get) }
+        .to raise_error(ActionController::RoutingError)
+    end
   end
 
   describe "GET /addresses/:id/edit" do
@@ -161,6 +227,68 @@ RSpec.describe "Addresses", type: :request do
         get edit_address_path(address)
 
         expect(response).to have_http_status :ok
+      end
+
+      # Frame 9l's five, and none of the columns it leaves out: the state and the coordinates keep
+      # whatever they hold.
+      it "draws the five fields under their frame names, Name with its hint" do
+        address = create(:address)
+        member  = create(:member, :owner, group: create(:group, address:))
+        sign_in_as(member.user)
+
+        get edit_address_path(address)
+        document = Nokogiri::HTML(response.body)
+
+        expect(document.css("form label.label").map { it.text.strip }).to eq [ "Name", "Street", "Number", "Postcode", "City", "Country" ]
+        expect(document.at_css("#address_name_hint").text).to eq "As it reads on cards"
+        expect(document.css("#address_state_code, #address_latitude, #address_longitude")).to be_empty
+      end
+
+      it "notes how many events in the group move with a correction" do
+        address = create(:address)
+        group   = create(:group, name: "Riverside Choir", address:)
+        create_list(:event, 2, group:, address:)
+        member  = create(:member, :owner, group:)
+        sign_in_as(member.user)
+
+        get edit_address_path(address)
+
+        expect(page_text(response.body)).to include "Used by 2 events in Riverside Choir. They all move with it."
+      end
+
+      it "says the one event moves with a correction when only one uses the place" do
+        address = create(:address)
+        group   = create(:group, name: "Riverside Choir", address:)
+        create(:event, group:, address:)
+        member  = create(:member, :owner, group:)
+        sign_in_as(member.user)
+
+        get edit_address_path(address)
+
+        expect(page_text(response.body)).to include "Used by 1 event in Riverside Choir. That event moves with it."
+      end
+
+      it "leaves the note out when no event uses the place" do
+        address = create(:address)
+        member  = create(:member, :owner, group: create(:group, address:))
+        sign_in_as(member.user)
+
+        get edit_address_path(address)
+
+        expect(page_text(response.body)).to include "Street and number"
+        expect(page_text(response.body)).not_to include "Used by"
+      end
+
+      it "cancels back to the place and offers no delete" do
+        address = create(:address)
+        member  = create(:member, :owner, group: create(:group, address:))
+        sign_in_as(member.user)
+
+        get edit_address_path(address)
+        document = Nokogiri::HTML(response.body)
+
+        expect(document.at_xpath("//a[normalize-space()='Cancel']")["href"]).to eq address_path(address)
+        expect(document.at_css("form[action='#{address_path(address)}'] input[name='_method'][value='delete']")).to be_nil
       end
     end
   end
