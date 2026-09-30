@@ -42,6 +42,12 @@ Rails.application.configure do
   # ActionMailer::Base.deliveries array.
   config.action_mailer.delivery_method = :test
 
+  # WHY: nothing here delivers through MailPace, but production sets this same option, and
+  # `action_mailer.set_configs` raises on it the moment `ActionMailer::Base` loads unless
+  # `config/application.rb` has already registered the delivery method. Setting it here makes
+  # every run of the suite prove that order.
+  config.action_mailer.mailpace_settings = { api_token: "test-token" }
+
   # Set host to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = { host: "example.com" }
 

@@ -14,7 +14,17 @@ module Groupifico
     # Please, add to the `ignore` list any other `lib` subdirectories that do
     # not contain `.rb` files, or that should not be reloaded or eager loaded.
     # Common ones are `templates`, `generators`, or `middleware`, for example.
-    config.autoload_lib(ignore: %w[assets tasks])
+    #
+    # WHY: once rather than reloaded, because `ActionMailer::Base` is never reloaded and keeps the
+    # `MailpaceDelivery` it was given, so a reloaded class would leave it holding a stale one.
+    config.autoload_lib_once(ignore: %w[assets tasks])
+
+    # WHY: in this class body and nowhere later. `add_delivery_method` is what defines the
+    # `mailpace_settings=` writer, and `action_mailer.set_configs` calls that writer from a load
+    # hook of its own, with the settings an environment file gave it. Hooks run in the order they
+    # were registered, and a file in config/initializers registers after that one, so production
+    # would not boot.
+    ActiveSupport.on_load(:action_mailer) { add_delivery_method :mailpace, MailpaceDelivery }
 
     # No attachment in the application needs a variant yet, and the vips default
     # would make libvips a boot dependency of every environment. Set this back to
