@@ -11,7 +11,7 @@ require "rails_helper"
 # `paint` is deliberately absent from the note: it composites an element's own *background* over
 # its ancestor's, and the note has none, so it scores 1 for a message that reads perfectly well.
 # The colour comparisons are what cover the note and the control instead.
-RSpec.describe "The address edit page", type: :system do
+RSpec.describe "The address screens", type: :system do
   # `:with_all_attributes` reaches the address through the traits that already name it: member's
   # associates `group, :with_all_attributes` and group's associates `address, :with_all_attributes`.
   let(:member) { create(:member, :owner, :with_all_attributes) }
@@ -69,6 +69,82 @@ RSpec.describe "The address edit page", type: :system do
 
     it "has no accessibility violations" do
       expect(page).to be_accessible
+    end
+  end
+
+  # Frame 9k's screen, which Correct leaves and Cancel and Save come back to. What the screen draws
+  # for which reader is `spec/requests/addresses_spec.rb`'s; here is whether it paints and where its
+  # links land.
+  context "when the place is read" do
+    it "paints Correct, with no accessibility violations" do
+      sign_in_as member.user
+
+      visit address_path(member.group.address)
+
+      expect(page).to paint "#address_#{member.group.address.id} .btn"
+      expect(page).to be_accessible
+    end
+
+    it "paints Correct in dark, with no accessibility violations" do
+      sign_in_as member.user
+      prefer_colour_scheme :dark
+      resize_to ViewportHelper::MOBILE
+
+      visit address_path(member.group.address)
+
+      expect(rendered_colour_scheme).to eq "dark"
+      expect(page).to paint "#address_#{member.group.address.id} .btn"
+      expect(page).to be_accessible
+    end
+
+    it "lands on the correction form from Correct" do
+      sign_in_as member.user
+
+      visit address_path(member.group.address)
+      click_link "Correct"
+
+      expect(page).to have_current_path edit_address_path(member.group.address)
+    end
+
+    it "lands on an event from Used by" do
+      event = create(:event, group: member.group, address: member.group.address, name: "Tuesday rehearsal")
+      sign_in_as member.user
+
+      visit address_path(member.group.address)
+      click_link "Tuesday rehearsal"
+
+      expect(page).to have_current_path group_event_path(member.group, event)
+    end
+  end
+
+  context "when the place is corrected" do
+    it "has no accessibility violations before anything is submitted" do
+      sign_in_as member.user
+
+      visit edit_address_path(member.group.address)
+
+      expect(page).to have_field "address_name"
+      expect(page).to be_accessible
+    end
+
+    it "returns to the place when the correction is cancelled" do
+      sign_in_as member.user
+
+      visit edit_address_path(member.group.address)
+      click_link "Cancel"
+
+      expect(page).to have_current_path address_path(member.group.address)
+    end
+
+    it "returns to the place with the correction when it is saved" do
+      sign_in_as member.user
+
+      visit edit_address_path(member.group.address)
+      fill_in "address_name", with: "Community Hall, Room 2"
+      click_button "Save"
+
+      expect(page).to have_current_path address_path(member.group.address)
+      expect(page).to have_css "h2", text: "Community Hall, Room 2"
     end
   end
 end
