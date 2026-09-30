@@ -32,8 +32,8 @@ linter:
     # fires on each one for a missing space before `/>` inside a minified
     # inline `<svg>`. `--fix` corrects them, but no reader benefits and
     # `rails new` reintroduces it on the next framework upgrade, turning the
-    # gate red for something nobody changed. Scoped to this one rule so the
-    # other 84 keep running on pages users actually see.
+    # gate red for something nobody changed. Scoped to this one rule so every
+    # other rule keeps running on pages users actually see.
     html-no-space-in-tag:
       exclude:
         - 'public/**/*'
