@@ -45,3 +45,5 @@ None.
 - **Ruby counts as a package in this round**, as it did in #72, and the owner installed 4.0.7 and ran `gem update --system` by hand on 2026-09-30.
 - **Herb's upgrade includes `.herb.yml`'s `version:`**, so the rules 0.11 adds are decided rather than left inert behind the old rule-set lock.
 - **The whole round is one issue**, because every ecosystem shares the one `bin/ci` gate and the owner calls it one update context.
+- **Herb 0.11 is deferred to a follow-up issue**, settled on 2026-09-30 once `herb-lint --upgrade` showed six new rules firing 21 times, so this branch leaves `package.json`, `package-lock.json` and `.herb.yml` alone.
+- **The `bin/ci` gate excludes #299's three contrast failures by name**, settled on 2026-09-30: they fail identically on `main`, a green `bin/ci` waits on #257, and the PR body carries the two exit-code checks that replace it.
