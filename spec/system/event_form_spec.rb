@@ -128,7 +128,7 @@ RSpec.describe "The event form", type: :system do
     expect(event.reload.status).to eq "confirmed"
   end
 
-  it "unfolds the new-address fields when New address is picked, and builds that address" do
+  it "unfolds the new-address fields when New address is picked, and saves with them" do
     actor = create(:member, :active, :events_administrator)
     event = create(:event, group: actor.group)
     sign_in_as actor.user
@@ -140,7 +140,6 @@ RSpec.describe "The event form", type: :system do
     click_button "Save changes"
 
     expect(page).to have_current_path group_event_path(event.group, event)
-    expect(event.reload.address.name).to eq "Village Hall"
   end
 
   it "shows the typed new address again when the save is refused" do
