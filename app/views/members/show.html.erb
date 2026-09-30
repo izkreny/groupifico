@@ -11,7 +11,7 @@
     <%= render "shared/confirm_sheet",
           id: dom_id(@member, :confirm_delete),
           url: group_member_path(@group, @member),
-          label: "Remove member",
+          confirm: "Remove member",
           title: "Remove this member?",
           body: "They lose access to the group, and every registration they made goes with them. This can't be undone.",
           dismiss: "Keep member" %>

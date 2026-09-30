@@ -7,7 +7,7 @@
       assigned, and this heading is the screen's own record title. %>
   <h1 class="text-record"><%= @group.name_in_database %></h1>
 
-  <%= render "form", group: @group %>
+  <%= render "groups/form", group: @group %>
 
   <%# Alone at the bottom, below the form rather than inside it: the sheet's trigger is a
       `button_to`, and a form cannot hold another. #247 moved the control off the group home and
@@ -19,7 +19,7 @@
       <%= render "shared/confirm_sheet",
             id: dom_id(@group, :confirm_delete),
             url: group_path(@group),
-            label: "Delete group",
+            confirm: "Delete group",
             title: "Delete this group?",
             body: "Every member, event and registration goes with it. This can't be undone.",
             dismiss: "Keep group" %>

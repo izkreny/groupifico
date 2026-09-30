@@ -10,7 +10,7 @@
 # `node_modules/.bin/herb-lint --upgrade`, which raises this number and writes
 # an explicit `enabled: false` for each newly arrived rule, then decide each of
 # those on its own rather than leaving the whole batch off.
-version: 0.10.3
+version: 0.11.0
 
 # These templates are ActionView's, not plain ERB rendered by a script, so the
 # `actionview-*` rules are reading the right dialect. Declarative only: the
@@ -37,3 +37,26 @@ linter:
     html-no-space-in-tag:
       exclude:
         - 'public/**/*'
+
+    # `render @event` is the idiomatic Rails form: the record names its own
+    # partial through `to_partial_path`. Spelling out `partial:` and `object:`
+    # at every call site buys the linter a lookup it could make itself and
+    # costs every reader the shorter line.
+    actionview-no-implicit-partial:
+      enabled: false
+
+    # The groups index passes each card its own `membership`, looked up once
+    # for the whole page so no card queries for it, and a collection render
+    # cannot pass a per-item local. Scoped to that one file so the rule still
+    # catches a loop that passes nothing per item.
+    actionview-prefer-collection-render:
+      exclude:
+        - 'app/views/groups/index.html.erb'
+
+    # A false positive: the rule fires on any `form_with` inside a
+    # `render layout:` block, even with no `<form>` anywhere around it, and
+    # the styleguide yields each section's form through `styleguides/section`
+    # that way. Scoped to that one file so a real nested form still fails.
+    html-no-nested-forms:
+      exclude:
+        - 'app/views/styleguides/show.html.erb'

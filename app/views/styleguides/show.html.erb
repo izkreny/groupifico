@@ -103,7 +103,7 @@
     <%= render "shared/confirm_sheet",
           id: "confirm_delete_#{theme}",
           url: group_event_path(group, next_up),
-          label: "Delete event",
+          confirm: "Delete event",
           title: "Delete this event?",
           body: "Every registration for it goes too. This can't be undone.",
           dismiss: "Keep event" %>
