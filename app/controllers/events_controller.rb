@@ -119,8 +119,13 @@ class EventsController < ApplicationController
     # place and only `EventPolicy#update?` is ever asked - so whoever may edit the event edits the
     # address too, the group's home address included, which `AddressPolicy` reserves to the `owner`.
     # Without one, the nested attributes can only build a new address, which is what the form asks
-    # for: it renders these fields solely when the event has no address yet, and links to
-    # `AddressesController#edit` otherwise, where the question is asked properly.
+    # for when "New address…" is picked; a saved address is corrected at `AddressesController#edit`,
+    # where the question is asked properly.
+    #
+    # The form draws those fields whichever row is picked, so they arrive beside an `address_id` too,
+    # and assigned after it they would build a new address that replaces the pick. A picked address
+    # is used as it is, so an `address_id` wins and the typed fields are dropped. A blank one is the
+    # "New address…" row, and leaves them to build.
     def event_params
       params.expect(
         event: [ :name, :description, :starts_at, :ends_at, :status, :category,
@@ -132,6 +137,7 @@ class EventsController < ApplicationController
       ).tap do |permitted|
         permitted.delete(:manager_id) if foreign_member?(permitted[:manager_id])
         permitted.delete(:address_id) if foreign_address?(permitted[:address_id])
+        permitted.delete(:address_attributes) if permitted[:address_id].present?
       end
     end
 

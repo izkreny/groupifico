@@ -1111,6 +1111,32 @@ RSpec.describe "Events", type: :request do
       expect(home.reload.name).to eq "Rehearsal Hall"
       expect(event.address.name).to eq "Hijacked"
     end
+
+    # The form draws the new-address fields whichever row is picked, so a reader who typed into
+    # them and then picked a saved address posts both. The pick is what they chose last.
+    it "uses a picked address and builds nothing from new-address fields posted beside it" do
+      actor = create(:member, :active, :events_administrator)
+      event = create(:event, group: actor.group)
+      venue = create(:address, name: "Studio B")
+      create(:event, group: actor.group, address: venue)
+      sign_in_as(actor.user)
+
+      expect {
+        patch group_event_path(event.group, event), params: { event: { address_id: venue.id, address_attributes: { name: "Typed first" } } }
+      }.not_to change(Address, :count)
+
+      expect(event.reload.address).to eq venue
+    end
+
+    it "builds the new address when the New address row is picked" do
+      actor = create(:member, :active, :events_administrator)
+      event = create(:event, group: actor.group, address: create(:address, name: "Studio B"))
+      sign_in_as(actor.user)
+
+      patch group_event_path(event.group, event), params: { event: { address_id: "", address_attributes: { name: "Village Hall" } } }
+
+      expect(event.reload.address.name).to eq "Village Hall"
+    end
   end
 
   describe "an inactive member's event list" do
