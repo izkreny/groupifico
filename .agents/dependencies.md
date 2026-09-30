@@ -8,12 +8,12 @@ Read this before bumping a gem, editing `Gemfile` or `Gemfile.lock`, or acting o
 
 The toolchain moves before any gem does, so the bumps are resolved and locked by the Bundler the branch declares rather than by the one it replaces.
 
-1. **RubyGems and the Bundler it ships, by hand.** `gem update --system` is a machine-wide install, so the owner runs it and no agent does. Nothing in the repository changes at this step.
-2. **The lockfile's declaration of it**, `bundle update --bundler=<version>`. The version is named and never implied, for the reason in *The `BUNDLED WITH` trap* below.
+1. **RubyGems and Bundler, by hand**: `gem update --system`, then `gem install bundler -v <version>`, which puts the gem in the cache step 2 checksums. Both are machine-wide installs, so the owner runs them and no agent does. Nothing in the repository changes at this step.
+2. **The lockfile's declaration of it**, `bundle update --bundler=<version>`. The version is named and never implied, for the reason in *The `BUNDLED WITH` trap* below. It also writes Bundler's own `bundler (<version>) sha256=…` line under `CHECKSUMS`.
 3. **The gems, with `--conservative`**, so nothing outside the named gems moves and the lockfile diff stays readable: `bundle update --conservative <gem> <gem> ...`.
 4. **Each major release in its own commit**, so it stays revertable without unpicking the minor bumps beside it. Read its changelog before bumping, and read it closely where the gem arrives transitively, since nothing in `Gemfile` asked for it and a clean `bundle outdated` is the only thing the bump buys.
 
-Then check the `Gemfile.lock` diff by eye against the trunk's copy: nothing should have moved beyond the gems named and, where step 2 ran, the `BUNDLED WITH` line.
+Then check the `Gemfile.lock` diff by eye against the trunk's copy: nothing should have moved beyond the gems named and, where step 2 ran, the `BUNDLED WITH` line and the `bundler (<version>)` checksum line.
 
 ## The `BUNDLED WITH` trap
 
