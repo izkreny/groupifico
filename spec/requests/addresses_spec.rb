@@ -45,6 +45,18 @@ RSpec.describe "Addresses", type: :request do
         expect(street["href"]).to start_with "https://www.google.com/maps/search/"
       end
 
+      it "links the area line instead for a place with no street" do
+        address = create(:address, street_name: nil, building_number: nil, postal_code: "10000", city: "Zagreb")
+        member  = create(:member, group: create(:group, address:))
+        sign_in_as(member.user)
+
+        get address_path(address)
+        area = Nokogiri::HTML(response.body).at_xpath("//a[normalize-space()='10000 Zagreb']")
+
+        expect(area["href"]).to start_with "https://www.google.com/maps/search/"
+        expect(page_text(response.body).scan("10000 Zagreb").size).to eq 1
+      end
+
       it "lists the events using the place, earliest first, each with its start" do
         address = create(:address)
         group   = create(:group)

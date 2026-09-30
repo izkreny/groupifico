@@ -1,7 +1,8 @@
 <%# locals: (address:) %>
 <%#
   The place's own facts under the pushed title, in frame 9k's order. The street is the map link, as
-  every address in the app is, and Correct sits in the name's row the way Edit does on the event
+  every address in the app is - the area line instead where no street was written, so no place is
+  left without one - and Correct sits in the name's row the way Edit does on the event
   screen: asked of `update?`, which reserves a group's home address to that group's owner. There is
   no delete here or anywhere, since every address a member can reach is held by an ON DELETE
   RESTRICT reference.
@@ -16,10 +17,11 @@
   </div>
 
   <address class="flex flex-col not-italic">
-    <% if (street = address_street(address)).present? %>
-      <%= link_to street, address_map_url(address), class: "link link-hover" %>
+    <% street, area = address_street(address), address_area(address) %>
+    <% if (line = street.presence || area.presence) %>
+      <%= link_to line, address_map_url(address), class: "link link-hover" %>
     <% end %>
-    <% if (area = address_area(address)).present? %>
+    <% if street.present? && area.present? %>
       <span><%= area %></span>
     <% end %>
     <% if address.country_code.present? %>
