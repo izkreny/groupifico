@@ -38,14 +38,6 @@ linter:
       exclude:
         - 'public/**/*'
 
-    # The groups index passes each card its own `membership`, looked up once
-    # for the whole page so no card queries for it, and a collection render
-    # cannot pass a per-item local. Scoped to that one file so the rule still
-    # catches a loop that passes nothing per item.
-    actionview-prefer-collection-render:
-      exclude:
-        - 'app/views/groups/index.html.erb'
-
     # A false positive: the rule fires on any `form_with` inside a
     # `render layout:` block, even with no `<form>` anywhere around it, and
     # the styleguide yields each section's form through `styleguides/section`
