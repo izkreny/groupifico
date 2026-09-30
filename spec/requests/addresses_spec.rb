@@ -1,39 +1,6 @@
 require 'rails_helper'
 
 RSpec.describe "Addresses", type: :request do
-  describe "GET /addresses" do
-    context "when not signed in" do
-      it "redirects to the sign-in page" do
-        get addresses_path
-
-        expect(response).to redirect_to new_session_path
-      end
-    end
-
-    context "when successfully signed in" do
-      it "shows the addresses page" do
-        sign_in_as(create(:user))
-
-        get addresses_path
-
-        expect(response).to have_http_status :ok
-      end
-
-      it "lists only addresses reachable through the acting user's groups and events" do
-        reachable = create(:address)
-        group     = create(:group, address: reachable)
-        member    = create(:member, group:)
-        unreachable = create(:address)
-        sign_in_as(member.user)
-
-        get addresses_path
-
-        expect(response.body).to include(ActionView::RecordIdentifier.dom_id(reachable))
-        expect(response.body).not_to include(ActionView::RecordIdentifier.dom_id(unreachable))
-      end
-    end
-  end
-
   describe "GET /addresses/:id" do
     context "when not signed in" do
       it "redirects to the sign-in page" do
@@ -195,6 +162,13 @@ RSpec.describe "Addresses", type: :request do
 
     it "does not route POST /addresses" do
       expect { Rails.application.routes.recognize_path("/addresses", method: :post) }
+        .to raise_error(ActionController::RoutingError)
+    end
+
+    # No list of addresses either: frames 9k and 9l reach a place only from the group or event that
+    # uses it, and nothing linked to the scaffold's list. Removed on #255.
+    it "does not route GET /addresses" do
+      expect { Rails.application.routes.recognize_path("/addresses", method: :get) }
         .to raise_error(ActionController::RoutingError)
     end
   end

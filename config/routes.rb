@@ -16,8 +16,9 @@ Rails.application.routes.draw do
   # nothing appears in no picker and is reachable by nobody, its own author included - and nothing
   # to destroy, since every address a member can reach is held by an ON DELETE RESTRICT reference.
   # What is left is reading them and correcting them. Settled on #172. Settled on #187: the reuse
-  # the event form offers is scoped to a single group, and no catalogue spans groups.
-  resources :addresses, only: %i[ index show edit update ]
+  # the event form offers is scoped to a single group, and no catalogue spans groups. No list either:
+  # a place is reached from the group or event that uses it, and nothing draws one - #255.
+  resources :addresses, only: %i[ show edit update ]
 
   # No `new` and no `create`: signing up and being invited are the two ways to become a user, and
   # neither of them is a signed-in visitor asking for a second account. Reading and editing the

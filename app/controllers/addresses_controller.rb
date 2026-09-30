@@ -1,12 +1,6 @@
 class AddressesController < ApplicationController
   before_action :set_address, only: %i[ show edit update ]
 
-  def index
-    authorize! Address, to: :index?
-
-    @addresses = authorized_scope(Address.all)
-  end
-
   def show
     authorize! @address
 

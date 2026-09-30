@@ -5,17 +5,6 @@ RSpec.describe AddressPolicy, type: :policy do
   let(:record)  { create(:address) }
   let(:context) { { user: } }
 
-  # Unconditionally true, so there is no denial case to pair this with: Action Policy's Defaults
-  # module answers `index?` false, and this rule exists only to override that. Asserted by name
-  # because deleting the override restores the false and the list refuses everybody, which reads
-  # as a decision rather than as the accident it would be.
-  describe_rule :index? do
-    # The class, because that is what `authorize! Address, to: :index?` passes.
-    let(:record) { Address }
-
-    succeed "when the user belongs to no group"
-  end
-
   describe_rule :show? do
     failed "when no group or event of the user's points at the address"
 
@@ -97,24 +86,6 @@ RSpec.describe AddressPolicy, type: :policy do
         member = create(:member, :active, :events_administrator, user:)
         create(:event, group: member.group, address: record)
       end
-    end
-  end
-
-  # A relation_scope is not a rule, so the pre-checks never run for it - and this policy skips them
-  # anyway. `user.groups` is every group ever joined, so an address reachable only through a group
-  # the user has left stayed listed.
-  describe "the relation scope" do
-    it "excludes an address reachable only through a group the user has left" do
-      gone = create(:address)
-      create(:member, :inactive, user:, group: create(:group, address: gone))
-
-      kept = create(:address)
-      create(:member, :active, user:, group: create(:group, address: kept))
-
-      scoped = described_class.new(nil, user:).apply_scope(Address.all, type: :active_record_relation)
-
-      expect(scoped).to include kept
-      expect(scoped).not_to include gone
     end
   end
 end
