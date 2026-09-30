@@ -155,9 +155,10 @@ class AppFormBuilder < ActionView::Helpers::FormBuilder
     # A choice carrying a legend meaning as its third element gets frame 4e's face instead: the
     # icon alone, and its name beside it once picked. daisyUI draws a radio's face from its
     # `aria-label` and has no room for a glyph, so that segment is a `label.btn` wrapping a visually
-    # hidden radio, and the checked colour and the focus ring daisyUI gives the radio itself are
-    # carried up to the label with `has-*`. The name stays on the radio's `aria-label`, because the
-    # visible word is `display: none` on every unpicked segment and would leave it nameless.
+    # hidden radio. daisyUI rings a `.btn` holding a focused control on its own, but colours only a
+    # checked radio that is itself the button, so the checked colour is carried up to the label
+    # with `has-checked:`. The name stays on the radio's `aria-label`, because the visible word is
+    # `display: none` on every unpicked segment and would leave it nameless.
     def segments(attribute, choices, invalid:, describedby:)
       @template.tag.div class: [ "join", ("validator" if invalid) ] do
         @template.safe_join(choices.map { |text, value, meaning|
@@ -165,7 +166,7 @@ class AppFormBuilder < ActionView::Helpers::FormBuilder
           radio = radio_button(attribute, value, class: (meaning ? "peer sr-only" : "join-item btn"), aria:)
 
           if meaning
-            @template.tag.label class: "join-item btn has-checked:btn-primary has-focus-visible:outline-2 has-focus-visible:outline-offset-2" do
+            @template.tag.label class: "join-item btn has-checked:btn-primary" do
               @template.safe_join [ radio, @template.icon(meaning, class: "size-5"), @template.tag.span(text, class: "hidden peer-checked:inline", aria: { hidden: true }) ]
             end
           else
