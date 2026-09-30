@@ -47,3 +47,4 @@ None.
 - **The whole round is one issue**, because every ecosystem shares the one `bin/ci` gate and the owner calls it one update context.
 - **Herb 0.11 is deferred to a follow-up issue**, settled on 2026-09-30 once `herb-lint --upgrade` showed six new rules firing 21 times, so this branch leaves `package.json`, `package-lock.json` and `.herb.yml` alone.
 - **The `bin/ci` gate excludes #299's three contrast failures by name**, settled on 2026-09-30: they fail identically on `main`, a green `bin/ci` waits on #257, and the PR body carries the two exit-code checks that replace it.
+- **json 3.0 ships with RF1's regression accepted**, settled on 2026-09-30: httparty 0.24.2 raises `ArgumentError` on a MailPace JSON error response instead of `Mailpace::DeliveryError`, no httparty release fixes it yet, and #308 replaces `mailpace-rails` with a `Net::HTTP` delivery method right after this merges.
