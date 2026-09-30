@@ -100,13 +100,7 @@
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Confirm sheet" } do |theme| %>
-    <%= render "shared/confirm_sheet",
-          id: "confirm_delete_#{theme}",
-          url: group_event_path(group, next_up),
-          confirm: "Delete event",
-          title: "Delete this event?",
-          body: "Every registration for it goes too. This can't be undone.",
-          dismiss: "Keep event" %>
+    <%= render "events/delete", group: group, event: next_up, id: "confirm_delete_#{theme}" %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Legend icons" } do %>
