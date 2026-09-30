@@ -50,3 +50,4 @@ Every step that writes markup goes through the daisyUI Blueprint MCP server firs
 - 9k's note under Used by is not drawn: the issue's criteria leave it out of the show screen and put it on the edit screen, where the correction happens.
 - An address no event uses draws no Used by section, and its edit screen no note, since "Used by 0 events … They all move with it" says nothing true.
 - Save sits under the form beside Cancel rather than in the header, as on the group and event forms, which is where the redesigned screens put a form's submit.
+- The system-spec gate takes the same exception as `bin/ci`: red only on axe's `color-contrast` for `.validator-hint` in the light theme (2.87:1), which the file's pre-existing rejected-save example meets on `main` too.
