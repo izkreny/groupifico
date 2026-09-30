@@ -9,11 +9,11 @@ Read this before bumping a gem, editing `Gemfile` or `Gemfile.lock`, or acting o
 The toolchain moves before any gem does, so the bumps are resolved and locked by the Bundler the branch declares rather than by the one it replaces.
 
 1. **RubyGems and the Bundler it ships, by hand.** `gem update --system` is a machine-wide install, so the owner runs it and no agent does. Nothing in the repository changes at this step.
-2. **The lockfile's declaration of it**, `bundle update --bundler=<version>`. The version is named and never implied, for the reason in *The `BUNDLED WITH` trap* below.
+2. **The lockfile's declaration of it**, `bundle update --bundler=<version>`. The version is named and never implied, for the reason in *The `BUNDLED WITH` trap* below. The same command writes Bundler's own `bundler (<version>) sha256=…` line under `CHECKSUMS`, but only where `bundler-<version>.gem` sits in the gem cache; a Bundler that step 1 installed as RubyGems' default gem leaves none there, and then the step drops the previous version's line and writes no new one. Without the line, the lockfile comes back dirty from the first `bundle install` on any machine whose cache does hold the gem, so where the step leaves it out, run `gem fetch bundler -v <version>` outside the working tree, check its `sha256sum` against the `sha` that `https://rubygems.org/api/v1/versions/bundler.json` publishes for that version, and add the line by hand in the section's sort order, since Bundler moves one placed elsewhere on its next write. Every later Bundler command keeps it as locked.
 3. **The gems, with `--conservative`**, so nothing outside the named gems moves and the lockfile diff stays readable: `bundle update --conservative <gem> <gem> ...`.
 4. **Each major release in its own commit**, so it stays revertable without unpicking the minor bumps beside it. Read its changelog before bumping, and read it closely where the gem arrives transitively, since nothing in `Gemfile` asked for it and a clean `bundle outdated` is the only thing the bump buys.
 
-Then check the `Gemfile.lock` diff by eye against the trunk's copy: nothing should have moved beyond the gems named and, where step 2 ran, the `BUNDLED WITH` line.
+Then check the `Gemfile.lock` diff by eye against the trunk's copy: nothing should have moved beyond the gems named and, where step 2 ran, the `BUNDLED WITH` line together with the `bundler (<version>) sha256=…` line under `CHECKSUMS`, which names the same version.
 
 ## The `BUNDLED WITH` trap
 
