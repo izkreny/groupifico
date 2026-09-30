@@ -7,6 +7,12 @@ RSpec.describe MailpaceDelivery do
     expect(ActionMailer::Base.delivery_methods[:mailpace]).to eq(described_class)
   end
 
+  # WHY: `config/environments/test.rb` sets the option only so that a registration which runs too
+  # late fails the suite, and this is what notices that line going missing.
+  it "receives the settings an environment file gives it" do
+    expect(ActionMailer::Base.mailpace_settings).to eq(api_token: "test-token")
+  end
+
   describe "#deliver!" do
     it "authenticates with the api token it was configured with" do
       stub_request(:post, "https://app.mailpace.com/api/v1/send").to_return(status: 200, body: { id: 1, status: "queued" }.to_json)
