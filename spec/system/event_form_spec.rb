@@ -40,6 +40,36 @@ RSpec.describe "The event form", type: :system do
     expect(page).to be_accessible
   end
 
+  # A saved address is what draws a Where row, its checked radio and its Correct it link, and no
+  # factory gives an event one, so these are the audits that reach the picker's rows.
+  it "paints the edit screen with a saved address in light, with no accessibility violations" do
+    actor = create(:member, :active, :events_administrator)
+    event = create(:event, group: actor.group, address: create(:address, name: "Studio B"))
+    sign_in_as actor.user
+    prefer_colour_scheme :light
+    resize_to ViewportHelper::MOBILE
+
+    visit edit_group_event_path(event.group, event)
+
+    expect(rendered_colour_scheme).to eq "light"
+    expect(page).to have_link "Correct it"
+    expect(page).to be_accessible
+  end
+
+  it "paints the edit screen with a saved address in dark, with no accessibility violations" do
+    actor = create(:member, :active, :events_administrator)
+    event = create(:event, group: actor.group, address: create(:address, name: "Studio B"))
+    sign_in_as actor.user
+    prefer_colour_scheme :dark
+    resize_to ViewportHelper::MOBILE
+
+    visit edit_group_event_path(event.group, event)
+
+    expect(rendered_colour_scheme).to eq "dark"
+    expect(page).to have_link "Correct it"
+    expect(page).to be_accessible
+  end
+
   # daisyUI colours a checked radio drawn as a button, and the icon segment is a label around a
   # hidden radio, so its colour is carried up by `has-checked:` alone. `paint` cannot see it go
   # missing: an unpicked segment paints too, only in the base colour. The category control is
