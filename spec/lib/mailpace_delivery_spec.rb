@@ -120,5 +120,13 @@ RSpec.describe MailpaceDelivery do
       expect { described_class.new(api_token: "test-token").deliver!(mail) }
         .to raise_error(MailpaceDelivery::Error, "MailPace answered 500")
     end
+
+    it "raises when the answer is a redirect, which is neither an error nor a delivery" do
+      stub_request(:post, "https://app.mailpace.com/api/v1/send").to_return(status: 302, headers: { "Location" => "https://example.com/" })
+      mail = Mail.new(from: "Chorifico <hello@chorifico.com>", to: "member@example.com", subject: "Your sign-in link", body: "Sign in to Chorifico")
+
+      expect { described_class.new(api_token: "test-token").deliver!(mail) }
+        .to raise_error(MailpaceDelivery::Error, "MailPace answered 302")
+    end
   end
 end
