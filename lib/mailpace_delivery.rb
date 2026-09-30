@@ -8,10 +8,6 @@ class MailpaceDelivery
 
   ENDPOINT = URI("https://app.mailpace.com/api/v1/send")
 
-  # WHY: Net::HTTP waits sixty seconds for each by default, and a hung API would park a Solid Queue
-  # worker for that long on every mail.
-  TIMEOUT = 10.seconds
-
   attr_accessor :settings
 
   def initialize(settings)
@@ -30,7 +26,7 @@ class MailpaceDelivery
 
   private
     def post(payload)
-      Net::HTTP.start(ENDPOINT.host, ENDPOINT.port, use_ssl: true, open_timeout: TIMEOUT, read_timeout: TIMEOUT) do |http|
+      Net::HTTP.start(ENDPOINT.host, ENDPOINT.port, use_ssl: true) do |http|
         http.post(ENDPOINT.path, payload.to_json, headers)
       end
     end
