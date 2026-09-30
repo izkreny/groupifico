@@ -42,7 +42,7 @@ RSpec.describe "The event form", type: :system do
 
   # A saved address is what draws a Where row, its checked radio and its Correct it link, and no
   # factory gives an event one, so these are the audits that reach the picker's rows.
-  it "paints the edit screen with a saved address in light, with no accessibility violations" do
+  it "has no accessibility violations on the edit screen with a saved address, in light" do
     actor = create(:member, :active, :events_administrator)
     event = create(:event, group: actor.group, address: create(:address, name: "Studio B"))
     sign_in_as actor.user
@@ -56,7 +56,7 @@ RSpec.describe "The event form", type: :system do
     expect(page).to be_accessible
   end
 
-  it "paints the edit screen with a saved address in dark, with no accessibility violations" do
+  it "has no accessibility violations on the edit screen with a saved address, in dark" do
     actor = create(:member, :active, :events_administrator)
     event = create(:event, group: actor.group, address: create(:address, name: "Studio B"))
     sign_in_as actor.user
