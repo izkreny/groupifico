@@ -46,13 +46,14 @@ class EventsController < ApplicationController
   # Authorizes create?, not show?: what this action reads is incidental, what it offers is a form
   # for making a new event. `new` resolves new? through create?, so authorizing show? here made two
   # doors onto the same form disagree - a paused member was refused at one and admitted at the other.
+  #
+  # The source stays in `@original`, because the screen says which event was copied and from when.
   def duplicate
     authorize! @event, to: :create?
 
-    @event = @event.duplicate.shift_by(7.days)
+    @original = @event
+    @event = @original.duplicate.shift_by(7.days)
     @event.build_address unless @event.address
-
-    render :new
   end
 
   def edit

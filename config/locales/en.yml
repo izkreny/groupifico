@@ -29,3 +29,13 @@
 
 en:
   hello: "Hello world"
+
+  activerecord:
+    attributes:
+      # The names frames 4e, 4f and 4k give the event form's fields. Here rather than as `label:` on
+      # each field, because the error messages read the same names and would otherwise name a field
+      # the screen does not show.
+      event:
+        description: "Notes"
+        starts_at: "Starts"
+        ends_at: "Ends"

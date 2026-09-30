@@ -673,6 +673,17 @@ RSpec.describe "Events", type: :request do
 
         expect(response).to have_http_status :ok
       end
+
+      # Frame 4e's names for the fields, which the locale gives the error messages too.
+      it "names the fields the way the frames do, with the zone the times are typed in" do
+        member = create(:member, :active, :events_administrator)
+        sign_in_as(member.user)
+
+        get new_group_event_path(member.group)
+
+        expect(response.body).to include ">Starts</label>", ">Ends</label>", ">Notes</label>", "Typed and shown in Europe/Zagreb"
+        expect(response.body).to include %(aria-label="Unconfirmed"), %(aria-label="Gig"), "New address…", %(value="Create event")
+      end
     end
 
     context "when signed in as a member who cannot create events" do
@@ -736,14 +747,15 @@ RSpec.describe "Events", type: :request do
     end
 
     context "when signed in as an events administrator" do
-      it "renders the new event page" do
+      it "says which event it copied and what the copy changed" do
         actor = create(:member, :active, :events_administrator)
-        event = create(:event, group: actor.group)
+        event = create(:event, group: actor.group, starts_at: Time.zone.local(2026, 9, 2, 19), ends_at: Time.zone.local(2026, 9, 2, 21))
         sign_in_as(actor.user)
 
         get duplicate_group_event_path(event.group, event)
 
-        expect(response).to have_http_status :ok
+        expect(response.body).to include "Duplicate event", "Copied from Wed 2 Sep. Dates moved on 7 days, status back to unconfirmed, nobody registered yet."
+        expect(response.body).to include %(value="2026-09-09T19:00:00"), %(value="Create copy")
       end
 
       # `Event#duplicate` is `dup`, so the copy carries the original's `creator_id`. Nothing submits
@@ -793,6 +805,46 @@ RSpec.describe "Events", type: :request do
 
         expect(response).to have_http_status :ok
       end
+
+      it "ends with Delete, opening the plain confirm sheet" do
+        actor = create(:member, :active, :events_administrator)
+        event = create(:event, group: actor.group)
+        sign_in_as(actor.user)
+
+        get edit_group_event_path(event.group, event)
+
+        expect(response.body).to include "Delete this event?", "Keep event"
+        expect(response.body).not_to include "to confirm"
+      end
+
+      # `Group#addresses` offers the group's home address beside the events' own, and correcting it
+      # is the owner's alone, so the row is offered for use but not for correction.
+      it "offers Correct it on an event's address and not on the group's home address" do
+        home  = create(:address, name: "Rehearsal Hall")
+        actor = create(:member, :active, :events_administrator, group: create(:group, address: home))
+        venue = create(:address, name: "Studio B")
+        event = create(:event, group: actor.group, address: venue)
+        sign_in_as(actor.user)
+
+        get edit_group_event_path(event.group, event)
+
+        expect(response.body).to include "Rehearsal Hall", edit_address_path(venue)
+        expect(response.body).not_to include edit_address_path(home)
+      end
+
+      # The saved address drawn into the new-address fields would be built afresh by every plain
+      # Save, so the fields are drawn empty and the saved address is picked instead.
+      it "picks the saved address and leaves the new-address fields empty" do
+        actor = create(:member, :active, :events_administrator)
+        venue = create(:address, name: "Studio B")
+        event = create(:event, group: actor.group, address: venue)
+        sign_in_as(actor.user)
+
+        get edit_group_event_path(event.group, event)
+
+        expect(response.body).to include %(value="#{venue.id}" checked="checked")
+        expect(response.body).not_to include %(value="Studio B")
+      end
     end
 
     context "when signed in as the event's manager" do
@@ -804,6 +856,17 @@ RSpec.describe "Events", type: :request do
         get edit_group_event_path(event.group, event)
 
         expect(response).to have_http_status :ok
+      end
+
+      it "offers no Delete, which is not the manager's to do" do
+        actor = create(:member, :active)
+        event = create(:event, group: actor.group, manager: actor)
+        sign_in_as(actor.user)
+
+        get edit_group_event_path(event.group, event)
+
+        expect(response.body).to include %(value="Save changes")
+        expect(response.body).not_to include "Delete event"
       end
     end
 
@@ -879,6 +942,21 @@ RSpec.describe "Events", type: :request do
 
         expect(response).to have_http_status :unprocessable_content
         expect(response.body).to include %(value="Rehearsal room")
+      end
+
+      it "keeps every typed value, and the message under the field it is about" do
+        member = create(:member, :active, :events_administrator)
+        sign_in_as(member.user)
+        params = { name: "", status: "confirmed", category: "gig", description: "Bring the scores", manager_id: member.id,
+                   starts_at: "2026-10-01T19:00", ends_at: "2026-10-01T21:00" }
+
+        post group_events_path(member.group), params: { event: params }
+
+        fragment = Nokogiri::HTML(response.body)
+        expect(fragment.at_css("p#event_name_error").text).to eq "Name can't be blank"
+        expect(fragment.css("input[type=radio][checked]").map { it["value"] }).to include "confirmed", "gig"
+        expect(fragment.at_css("textarea#event_description").text.strip).to eq "Bring the scores"
+        expect(fragment.at_css("select#event_manager_id option[selected]")["value"]).to eq member.id.to_s
       end
 
       it "creates no event for a member who manages one but holds no role" do

@@ -1,42 +1,60 @@
+<%# locals: (group:, event:, submit:, cancel:, namespace: nil) %>
 <%# `namespace` is the styleguide's, which draws this form once per theme; every screen leaves it out and keeps its ids. %>
-<%= form_with(model: [group, event], namespace: local_assigns[:namespace], class: "contents") do |form| %>
+<%= form_with(model: [group, event], namespace:, class: "contents") do |form| %>
   <%= form.with_error_summary do %>
-    <fieldset class="fieldset">
-      <legend class="fieldset-legend">Event details</legend>
-
+    <div class="fieldset">
       <%= form.field :name %>
-      <%= form.field :description, as: :text_area %>
-      <%= form.field :starts_at,   as: :datetime_field %>
-      <%= form.field :ends_at,     as: :datetime_field %>
-      <%= form.field :status,      as: :select, choices: event_statuses %>
-      <%= form.field :category,    as: :select, choices: event_categories %>
-      <%= form.field :manager_id,  as: :select, choices: member_choices(event.group.members) %>
+      <%= form.segmented_field :status, choices: event_statuses %>
+      <%= form.segmented_field :category, choices: event_categories %>
+      <%= form.field :starts_at, as: :datetime_field %>
+      <%= form.field :ends_at, as: :datetime_field, hint: "Typed and shown in #{Time.zone.tzinfo.name}" %>
+    </div>
 
-      <% if event.group.addresses.present? %>
-        <div class="divider"></div>
-        <strong>
-          <%= event.address.persisted? ? "Change address:" : "Select existing address:" %>
-        </strong>
+    <%# Frames 4e, 4f and 4k: this group's addresses, each used as it is, and a new one written
+        here. A picked row offers the one screen that corrects it, where `AddressPolicy` asks its
+        own question - which for the group's home address is the owner's alone.
 
-        <%= form.field :address_id, as: :select, choices: address_choices(event.group.addresses), prompt: true %>
-      <% end %>
+        The new-address fields are always in the page, so they post whichever row is picked;
+        `EventsController#event_params` drops them whenever an `address_id` arrives. They are drawn
+        for a fresh address unless the event's own is unsaved, which is a refused save keeping what
+        was typed: the event's saved address drawn here would be cloned by every plain Save. %>
+    <fieldset class="fieldset">
+      <legend class="label">Where</legend>
 
-      <% if event.address.persisted? %>
-        <div class="mt-2">
-          <%= link_to "Edit '#{event.address.name}' address", edit_address_path(event.address), target: "_blank", class: "link link-hover" %>
+      <% group.addresses.each do |address| %>
+        <div class="flex items-center gap-2">
+          <%= form.radio_button :address_id, address.id, class: "radio radio-sm peer" %>
+          <%= form.label :address_id, where_choice_label(address), value: address.id, class: "grow min-w-0" %>
+
+          <% if allowed_to?(:update?, address) %>
+            <%= link_to "Correct it", edit_address_path(address), target: "_blank", class: "link hidden peer-checked:inline flex-none" %>
+          <% end %>
         </div>
-      <% else %>
-        <div class="divider"></div>
-        <strong>Create new address:</strong>
-
-        <%= form.fields_for :address do |address_form| %>
-          <%= render "addresses/form_fields", form: address_form %>
-        <% end %>
       <% end %>
+
+      <% new_address = event.address&.new_record? ? event.address : Address.new %>
+      <div class="group grid gap-2">
+        <div class="flex items-center gap-2">
+          <%= form.radio_button :address_id, "", checked: new_address.changed?, class: "radio radio-sm" %>
+          <%= form.label :address_id, "New address…", value: "" %>
+        </div>
+
+        <div class="hidden group-has-checked:block">
+          <%= form.fields_for :address, new_address do |address_form| %>
+            <%= render "addresses/form_fields", form: address_form %>
+          <% end %>
+        </div>
+      </div>
     </fieldset>
+
+    <div class="fieldset">
+      <%= form.field :manager_id, as: :select, choices: manager_choices(event) %>
+      <%= form.field :description, as: :text_area %>
+    </div>
   <% end %>
 
-  <div class="inline">
-    <%= form.submit class: "btn btn-primary" %>
+  <div class="flex flex-wrap items-center gap-2 mt-4">
+    <%= link_to "Cancel", cancel, class: "btn btn-ghost" %>
+    <%= form.submit submit, class: "btn btn-primary" %>
   </div>
 <% end %>

@@ -70,12 +70,34 @@ module EventsHelper
 
   # TODO: Translate statuses and categories, something like:
   #       `Event.status.map { |status| 18n.t(status, scope: "statuses") }`
+  #
+  # The third element is the legend meaning `AppFormBuilder#segmented_field` draws a segment as, and
+  # every status is one, so the status is its own icon.
   def event_statuses
-    Event.statuses.keys.map { [ it.upcase, it ] }
+    Event.statuses.keys.map { [ it.capitalize, it, it ] }
   end
 
   def event_categories
-    Event.categories.keys
+    Event.categories.keys.map { [ it.capitalize, it ] }
+  end
+
+  # Frame 4e's Where row, "Community Hall, Room 2 — Obala 14": the name the group knows the place
+  # by, then the street that tells two similar names apart.
+  def where_choice_label(address)
+    street = [ address.street_name, address.building_number ].compact_blank.join(" ")
+
+    [ address.name, street ].compact_blank.join(" — ")
+  end
+
+  # Who may be put in charge: the group's active members, and "nobody" for no manager at all. The
+  # event's own manager stays on the list even once their membership is no longer active, because
+  # a select with no matching option submits its first one, so leaving them out would hand the
+  # event to somebody else on any save. The blank is what `EventsController#foreign_member?` lets
+  # through for the model to clear.
+  def manager_choices(event)
+    members = event.group.members.active.or(event.group.members.where(id: event.manager_id)).includes(:profile)
+
+    members.map { [ it.full_name, it.id ] } + [ [ "nobody", "" ] ]
   end
 
   private

@@ -122,10 +122,53 @@ RSpec.describe EventsHelper, type: :helper do
   end
 
   describe "#event_statuses" do
-    it "pairs each enum status with its upcased label, in enum order" do
-      pairs = [ %w[ UNCONFIRMED unconfirmed ], %w[ CONFIRMED confirmed ], %w[ CONCLUDED concluded ], %w[ CANCELED canceled ] ]
+    it "gives each enum status its label and its own legend icon, in enum order" do
+      choices = [
+        %w[ Unconfirmed unconfirmed unconfirmed ], %w[ Confirmed confirmed confirmed ],
+        %w[ Concluded concluded concluded ], %w[ Canceled canceled canceled ]
+      ]
 
-      expect(helper.event_statuses).to eq(pairs)
+      expect(helper.event_statuses).to eq(choices)
+    end
+  end
+
+  describe "#event_categories" do
+    it "pairs each enum category with its label, in enum order" do
+      expect(helper.event_categories).to eq [ %w[ Other other ], %w[ Rehearsal rehearsal ], %w[ Gig gig ] ]
+    end
+  end
+
+  describe "#where_choice_label" do
+    it "reads as the name, then the street and number" do
+      address = build_stubbed(:address, name: "Community Hall, Room 2", street_name: "Obala", building_number: "14")
+
+      expect(helper.where_choice_label(address)).to eq "Community Hall, Room 2 — Obala 14"
+    end
+
+    it "is the name alone for an address with no street" do
+      address = build_stubbed(:address, name: "The park", street_name: nil, building_number: nil)
+
+      expect(helper.where_choice_label(address)).to eq "The park"
+    end
+  end
+
+  describe "#manager_choices" do
+    it "offers the group's active members and then nobody" do
+      group = create(:group)
+      ada = create(:member, :active, group:, user: create(:user, :with_full_profile, first_name: "Ada", last_name: "Lovelace"))
+      create(:member, :paused, group:)
+      create(:member, :active)
+
+      expect(helper.manager_choices(build(:event, group:))).to eq [ [ "Ada Lovelace", ada.id ], [ "nobody", "" ] ]
+    end
+
+    # A select with no option matching the stored value submits its first option, so a manager
+    # missing from the list would be replaced on the next save by whoever happened to be first.
+    it "keeps the event's own manager on the list after their membership is paused" do
+      group = create(:group)
+      zoe = create(:member, :paused, group:, user: create(:user, :with_full_profile, first_name: "Zoe", last_name: "Zimmer"))
+
+      expect(helper.manager_choices(build(:event, group:, manager: zoe))).to eq [ [ "Zoe Zimmer", zoe.id ], [ "nobody", "" ] ]
     end
   end
 end
