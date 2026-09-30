@@ -18,7 +18,17 @@ RSpec.describe MailpaceDelivery do
         .to have_been_made
     end
 
-    it "sends a text mail as its text body alone, with the sender's display name as written" do
+    it "sends the sender's display name as written" do
+      stub_request(:post, "https://app.mailpace.com/api/v1/send").to_return(status: 200, body: { id: 1, status: "queued" }.to_json)
+      mail = Mail.new(from: "Chorifico <hello@chorifico.com>", to: "member@example.com", subject: "Your sign-in link", body: "Sign in to Chorifico")
+
+      described_class.new(api_token: "test-token").deliver!(mail)
+
+      expect(a_request(:post, "https://app.mailpace.com/api/v1/send").with(body: hash_including("from" => "Chorifico <hello@chorifico.com>")))
+        .to have_been_made
+    end
+
+    it "sends a text mail as its text body alone" do
       stub_request(:post, "https://app.mailpace.com/api/v1/send").to_return(status: 200, body: { id: 1, status: "queued" }.to_json)
       mail = Mail.new(from: "Chorifico <hello@chorifico.com>", to: "member@example.com", subject: "Your sign-in link", body: "Sign in to Chorifico")
 
