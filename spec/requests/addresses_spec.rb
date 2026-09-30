@@ -220,6 +220,56 @@ RSpec.describe "Addresses", type: :request do
 
         expect(response).to have_http_status :ok
       end
+
+      # Frame 9l's five, and none of the columns it leaves out: the state and the coordinates keep
+      # whatever they hold.
+      it "draws the five fields under their frame names, Name with its hint" do
+        address = create(:address)
+        member  = create(:member, :owner, group: create(:group, address:))
+        sign_in_as(member.user)
+
+        get edit_address_path(address)
+        document = Nokogiri::HTML(response.body)
+
+        expect(document.css("form label.label").map { it.text.strip }).to eq [ "Name", "Street", "Number", "Postcode", "City", "Country" ]
+        expect(document.at_css("#address_name_hint").text).to eq "As it reads on cards"
+        expect(document.css("#address_state_code, #address_latitude, #address_longitude")).to be_empty
+      end
+
+      it "notes how many events in the group move with a correction" do
+        address = create(:address)
+        group   = create(:group, name: "Riverside Choir", address:)
+        create_list(:event, 2, group:, address:)
+        member  = create(:member, :owner, group:)
+        sign_in_as(member.user)
+
+        get edit_address_path(address)
+
+        expect(page_text(response.body)).to include "Used by 2 events in Riverside Choir. They all move with it."
+      end
+
+      it "leaves the note out when no event uses the place" do
+        address = create(:address)
+        member  = create(:member, :owner, group: create(:group, address:))
+        sign_in_as(member.user)
+
+        get edit_address_path(address)
+
+        expect(page_text(response.body)).to include "Street and number"
+        expect(page_text(response.body)).not_to include "Used by"
+      end
+
+      it "cancels back to the place and offers no delete" do
+        address = create(:address)
+        member  = create(:member, :owner, group: create(:group, address:))
+        sign_in_as(member.user)
+
+        get edit_address_path(address)
+        document = Nokogiri::HTML(response.body)
+
+        expect(document.at_xpath("//a[normalize-space()='Cancel']")["href"]).to eq address_path(address)
+        expect(document.at_css("form[action='#{address_path(address)}'] input[name='_method'][value='delete']")).to be_nil
+      end
     end
   end
 

@@ -23,7 +23,7 @@ RSpec.describe "The address edit page", type: :system do
       visit edit_address_path(member.group.address)
       fill_in "address_name", with: ""
       fill_in "address_city", with: "Springfield"
-      click_button "Update Address"
+      click_button "Save"
     end
 
     # `.validator-hint` is `visibility: hidden` until the `~ .validator-hint` sibling rule reveals
