@@ -60,3 +60,4 @@ Every step that writes markup goes through the daisyUI Blueprint MCP server firs
 - The system spec is a new file rather than an extension, because no file covers the form's own view; `spec/system/event_detail_spec.rb` keeps the pencil flow that lands on it.
 - A refused create from the duplicate screen re-renders `new`, so the copy note and "Create copy" give way to "New event". `create` has no source event to name, and carrying one through a hidden field is more machinery than a refusal is worth.
 - Delete on `edit` does not remove Delete from the event detail; frame 4k says both screens keep it.
+- What the `bin/ci` gate means while `main` itself fails it. Every refused-save accessibility audit fails axe's `color-contrast` on `.validator-hint` in the light theme at 2.87:1, on `main` as on this branch, and #299 fixes it once #257 lands. The gate is green, or red on that failure alone; #255 and #249 carry the same criterion.
