@@ -57,6 +57,28 @@ RSpec.describe "Addresses", type: :request do
         expect(page_text(response.body).scan("10000 Zagreb").size).to eq 1
       end
 
+      it "links the name instead for a place that is a name and nothing else" do
+        address = create(:address, name: "Community Hall", street_name: nil, building_number: nil, postal_code: nil, city: nil)
+        member  = create(:member, group: create(:group, address:))
+        sign_in_as(member.user)
+
+        get address_path(address)
+        name = Nokogiri::HTML(response.body).at_xpath("//h2/a[normalize-space()='Community Hall']")
+
+        expect(name["href"]).to start_with "https://www.google.com/maps/search/"
+      end
+
+      it "leaves the name unlinked where an address line carries the map" do
+        address = create(:address, name: "Community Hall", street_name: "Obala", building_number: "14")
+        member  = create(:member, group: create(:group, address:))
+        sign_in_as(member.user)
+
+        get address_path(address)
+
+        expect(page_text(response.body)).to include "Community Hall"
+        expect(Nokogiri::HTML(response.body).at_xpath("//h2/a")).to be_nil
+      end
+
       it "lists the events using the place, earliest first, each with its start" do
         address = create(:address)
         group   = create(:group)

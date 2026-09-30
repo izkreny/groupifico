@@ -1,15 +1,17 @@
 <%# locals: (address:) %>
 <%#
   The place's own facts under the pushed title, in frame 9k's order. The street is the map link, as
-  every address in the app is - the area line instead where no street was written, so no place is
-  left without one - and Correct sits in the name's row the way Edit does on the event
-  screen: asked of `update?`, which reserves a group's home address to that group's owner. There is
-  no delete here or anywhere, since every address a member can reach is held by an ON DELETE
-  RESTRICT reference.
+  every address in the app is - the area line where no street was written, and the name where
+  neither was, so no place is left without one - and Correct sits in the name's row the way Edit
+  does on the event screen: asked of `update?`, which reserves a group's home address to that
+  group's owner. There is no delete here or anywhere, since every address a member can reach is held
+  by an ON DELETE RESTRICT reference.
 %>
+<% street, area = address_street(address), address_area(address) %>
+<% line = street.presence || area.presence %>
 <div id="<%= dom_id address %>" class="flex flex-col gap-2">
   <div class="flex items-start justify-between gap-2">
-    <h2 class="text-record"><%= address.name %></h2>
+    <h2 class="text-record"><%= link_to_if line.nil?, address.name, address_map_url(address), class: "link link-hover" %></h2>
 
     <% if allowed_to?(:update?, address) %>
       <%= link_to "Correct", edit_address_path(address), class: "btn btn-sm flex-none" %>
@@ -17,8 +19,7 @@
   </div>
 
   <address class="flex flex-col not-italic">
-    <% street, area = address_street(address), address_area(address) %>
-    <% if (line = street.presence || area.presence) %>
+    <% if line %>
       <%= link_to line, address_map_url(address), class: "link link-hover" %>
     <% end %>
     <% if street.present? && area.present? %>
