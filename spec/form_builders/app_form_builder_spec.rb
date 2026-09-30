@@ -180,6 +180,18 @@ RSpec.describe AppFormBuilder do
       expect(checked.map { it["value"] }).to eq [ "band" ]
     end
 
+    # Frame 4e's status control: a glyph on every segment and a word on the picked one only. The
+    # word is hidden on the rest, so the radio keeps its own name rather than borrowing the label's.
+    it "draws a choice carrying a legend meaning as its icon, with the radio still named" do
+      html = segmented_for(Event.new, :status, choices: [ [ "Unconfirmed", "unconfirmed", :unconfirmed ] ])
+      segment = Nokogiri::HTML5.fragment(html).at_css("div.join > label.btn")
+
+      expect(segment.at_css("input[type=radio]")["aria-label"]).to eq "Unconfirmed"
+      expect(segment.at_css("input[type=radio]")["class"].split).to include "sr-only"
+      expect(segment.at_css("svg")["aria-hidden"]).to eq "true"
+      expect(segment.at_css("span[aria-hidden=true]").text).to eq "Unconfirmed"
+    end
+
     it "renders the hint under the group when the attribute has no errors" do
       html = segmented_for(Group.new, :group_type, choices: [ [ "Choir", "choir" ] ], hint: "Changeable later.")
 
