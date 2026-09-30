@@ -68,7 +68,7 @@ class MailpaceDelivery
       in { error: String => reason }
         reason
       in { errors: Hash => errors }
-        errors.map { |field, messages| "#{field} #{messages.to_sentence}" }.to_sentence
+        errors.map { |field, messages| "#{field} #{Array(messages).to_sentence}" }.to_sentence
       else
         nil
       end

@@ -83,6 +83,15 @@ RSpec.describe MailpaceDelivery do
         .to raise_error(MailpaceDelivery::Error, "MailPace answered 400: to is invalid")
     end
 
+    it "raises with the field and its message when a field error is a bare string" do
+      stub_request(:post, "https://app.mailpace.com/api/v1/send")
+        .to_return(status: 400, body: { errors: { to: "is invalid" } }.to_json, headers: { "Content-Type" => "application/json" })
+      mail = Mail.new(from: "Chorifico <hello@chorifico.com>", to: "member@example", subject: "Your sign-in link", body: "Sign in to Chorifico")
+
+      expect { described_class.new(api_token: "test-token").deliver!(mail) }
+        .to raise_error(MailpaceDelivery::Error, "MailPace answered 400: to is invalid")
+    end
+
     # WHY: an edge or a proxy in front of MailPace answers HTML, and a delivery method that only
     # understood MailPace's own JSON would report that as a success.
     it "raises with the status when the answer is not MailPace's own json" do
