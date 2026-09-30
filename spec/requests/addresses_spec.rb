@@ -56,33 +56,91 @@ RSpec.describe "Addresses", type: :request do
         expect(response).to have_http_status :ok
       end
 
-      # Destroying is denied for everyone until #172, so the button must not be offered. Asserting
-      # the edit button too keeps this honest: without it a page that failed to render its action
-      # bar at all would pass.
-      it "does not offer the destroy button" do
-        address = create(:address)
-        group   = create(:group, address: address)
-        member  = create(:member, group:)
-
+      # Frame 9k: the pushed title, then the name, the lines of the address and whose home it is.
+      it "shows the place under its pushed title" do
+        address = create(:address, name: "Community Hall", street_name: "Obala", building_number: "14", postal_code: "10000", city: "Zagreb", country_code: "HR")
+        member  = create(:member, group: create(:group, name: "Riverside Choir", address:))
         sign_in_as(member.user)
 
         get address_path(address)
 
-        expect(response.body).to include "Edit this address"
-        expect(response.body).not_to include "Destroy this address"
+        expect(page_text(response.body)).to include "Place Community Hall", "Obala 14 10000 Zagreb HR", "Riverside Choir · home address"
       end
 
-      it "shows an address reached through one of the group's own events" do
-        event   = create(:event)
-        address = create(:address)
-        event.update!(address: address)
-        member  = create(:member, group: event.group)
+      it "links the street to the reader's map application" do
+        address = create(:address, street_name: "Obala", building_number: "14")
+        member  = create(:member, group: create(:group, address:))
+        sign_in_as(member.user)
 
+        get address_path(address)
+        street = Nokogiri::HTML(response.body).at_xpath("//a[normalize-space()='Obala 14']")
+
+        expect(street["href"]).to start_with "https://www.google.com/maps/search/"
+      end
+
+      it "lists the events using the place, earliest first, each with its start" do
+        address = create(:address)
+        group   = create(:group)
+        later   = create(:event, group:, address:, name: "Extra gig", starts_at: Time.zone.local(2026, 10, 3, 20, 0))
+        create(:event, group:, address:, name: "Tuesday rehearsal", starts_at: Time.zone.local(2026, 9, 1, 19, 0))
+        member  = create(:member, group:)
         sign_in_as(member.user)
 
         get address_path(address)
 
-        expect(response).to have_http_status :ok
+        expect(page_text(response.body)).to include "Used by Tuesday rehearsal Tue 1 Sep · 19:00 Extra gig Sat 3 Oct · 20:00"
+        expect(Nokogiri::HTML(response.body).at_xpath("//a[normalize-space()='Extra gig']")["href"]).to eq group_event_path(group, later)
+      end
+
+      it "says nothing about a home for a place only events use" do
+        address = create(:address)
+        event   = create(:event, address:)
+        member  = create(:member, group: event.group)
+        sign_in_as(member.user)
+
+        get address_path(address)
+
+        expect(page_text(response.body)).to include "Used by"
+        expect(page_text(response.body)).not_to include "home address"
+      end
+
+      it "draws no Used by for a place no event uses" do
+        address = create(:address, name: "Community Hall")
+        member  = create(:member, group: create(:group, address:))
+        sign_in_as(member.user)
+
+        get address_path(address)
+
+        expect(page_text(response.body)).to include "Community Hall"
+        expect(page_text(response.body)).not_to include "Used by"
+      end
+
+      # A delete could never succeed, since every address a member can reach is held by an
+      # ON DELETE RESTRICT reference, so no form on the page may post to the address at all. Correct
+      # is asserted beside it so a page that drew none of its controls cannot pass.
+      it "offers the owner Correct and never a delete" do
+        address = create(:address)
+        member  = create(:member, :owner, group: create(:group, address:))
+        sign_in_as(member.user)
+
+        get address_path(address)
+        document = Nokogiri::HTML(response.body)
+
+        expect(document.at_xpath("//a[normalize-space()='Correct']")["href"]).to eq edit_address_path(address)
+        expect(document.at_css("form[action='#{address_path(address)}']")).to be_nil
+      end
+
+      # `AddressPolicy#update?` reserves a group's home address to the owner, so a member reads it
+      # with no control to correct it.
+      it "offers Correct to nobody the policy refuses" do
+        address = create(:address, name: "Community Hall")
+        member  = create(:member, group: create(:group, address:))
+        sign_in_as(member.user)
+
+        get address_path(address)
+
+        expect(page_text(response.body)).to include "Community Hall"
+        expect(Nokogiri::HTML(response.body).at_xpath("//a[normalize-space()='Correct']")).to be_nil
       end
     end
 

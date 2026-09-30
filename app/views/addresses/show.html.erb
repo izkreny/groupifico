@@ -1,12 +1,24 @@
-<% content_for :title, "Showing address" %>
+<% content_for :title, @address.name %>
 
-<div class="md:w-2/3 w-full">
-  <h1 class="font-bold text-4xl">Showing address</h1>
+<%= render "shared/page_header", title: "Place" %>
 
+<div class="flex flex-col gap-4 w-full">
   <%= render "addresses/address", address: @address %>
 
-  <div class="flex flex-wrap gap-2">
-    <%= link_to "Edit this address", edit_address_path(@address), class: "btn btn-ghost" %>
-    <%= link_to "Back to addresses", addresses_path, class: "btn btn-ghost" %>
-  </div>
+  <% if @events.any? %>
+    <section class="flex flex-col gap-2" aria-labelledby="used_by">
+      <h3 id="used_by" class="font-semibold">Used by</h3>
+
+      <ul class="list">
+        <% @events.each do |event| %>
+          <li class="list-row">
+            <div>
+              <%= link_to event.name, group_event_path(event.group, event), class: "link link-hover" %>
+              <div class="text-xs"><%= event_schedule_start(event) %></div>
+            </div>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
 </div>

@@ -9,6 +9,8 @@ class AddressesController < ApplicationController
 
   def show
     authorize! @address
+
+    @events = @address.events.includes(:group).order(:starts_at)
   end
 
   def edit
