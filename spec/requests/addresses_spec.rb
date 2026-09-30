@@ -256,6 +256,18 @@ RSpec.describe "Addresses", type: :request do
         expect(page_text(response.body)).to include "Used by 2 events in Riverside Choir. They all move with it."
       end
 
+      it "says the one event moves with a correction when only one uses the place" do
+        address = create(:address)
+        group   = create(:group, name: "Riverside Choir", address:)
+        create(:event, group:, address:)
+        member  = create(:member, :owner, group:)
+        sign_in_as(member.user)
+
+        get edit_address_path(address)
+
+        expect(page_text(response.body)).to include "Used by 1 event in Riverside Choir. That event moves with it."
+      end
+
       it "leaves the note out when no event uses the place" do
         address = create(:address)
         member  = create(:member, :owner, group: create(:group, address:))

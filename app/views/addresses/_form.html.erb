@@ -35,7 +35,7 @@
   <% end %>
 
   <% if (count = address.events.count).positive? %>
-    <p class="mt-4">Used by <%= pluralize(count, "event") %> in <%= address.owning_group.name %>. They all move with it.</p>
+    <p class="mt-4">Used by <%= pluralize(count, "event") %> in <%= address.owning_group.name %>. <%= count == 1 ? "That event moves" : "They all move" %> with it.</p>
   <% end %>
 
   <div class="flex flex-wrap items-center gap-2 mt-4">
