@@ -3,7 +3,7 @@
 <%= render "shared/page_header", title: "Event" %>
 
 <div class="flex flex-col gap-4 w-full">
-  <%= render @event %>
+  <%= render "events/event", event: @event %>
 
   <%#
     The attendance card, in the frames' order: the counts, the reader's own answer row, and the

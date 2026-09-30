@@ -8,7 +8,7 @@
   owner whose root lands on their single group.
 %>
 <div class="w-full">
-  <%= render @user_profile %>
+  <%= render "user_profiles/user_profile", user_profile: @user_profile %>
 
   <ul class="list">
     <li class="p-4 pb-2 text-xs tracking-wide">Account</li>

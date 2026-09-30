@@ -8,7 +8,7 @@
 
 <div id="groups" class="mt-3 flex flex-col gap-3">
   <% @groups.each do |group| %>
-    <%= render group, membership: @memberships[group.id] %>
+    <%= render "groups/group", group: group, membership: @memberships[group.id] %>
   <% end %>
 
   <%# A reader who has left every group they were in. Rare, but the button alone below reads as a

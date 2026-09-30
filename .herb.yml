@@ -38,13 +38,6 @@ linter:
       exclude:
         - 'public/**/*'
 
-    # `render @event` is the idiomatic Rails form: the record names its own
-    # partial through `to_partial_path`. Spelling out `partial:` and `object:`
-    # at every call site buys the linter a lookup it could make itself and
-    # costs every reader the shorter line.
-    actionview-no-implicit-partial:
-      enabled: false
-
     # The groups index passes each card its own `membership`, looked up once
     # for the whole page so no card queries for it, and a collection render
     # cannot pass a per-item local. Scoped to that one file so the rule still

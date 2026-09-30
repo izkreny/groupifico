@@ -3,7 +3,7 @@
 <div class="md:w-2/3 w-full">
   <h1 class="font-bold text-4xl">Showing member</h1>
 
-  <%= render @member %>
+  <%= render "members/member", member: @member %>
 
   <div class="flex flex-wrap gap-2">
     <%= link_to "Edit this member", edit_group_member_path(@group, @member), class: "btn btn-ghost" %>
