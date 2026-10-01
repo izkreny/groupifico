@@ -24,4 +24,31 @@ RSpec.describe "The member edit page", type: :system do
       expect(page).to be_accessible
     end
   end
+
+  context "when an owner edits a member's roles" do
+    it "revokes every role once every box is unticked" do
+      owner  = create(:member, :active, :owner, :with_all_attributes)
+      member = create(:member, :active, group: owner.group, roles: [ build(:role, name: "administrator"), build(:role, name: "events_administrator") ])
+      sign_in_as owner.user
+
+      visit edit_group_member_path(member.group, member)
+      uncheck "Administrator"
+      uncheck "Events administrator"
+      click_button "Update Member"
+
+      expect(page).to have_text "Member was successfully updated."
+      expect(member.reload.roles).to be_empty
+    end
+
+    it "has no accessibility violations" do
+      owner  = create(:member, :active, :owner, :with_all_attributes)
+      member = create(:member, :active, :events_administrator, group: owner.group)
+      sign_in_as owner.user
+
+      visit edit_group_member_path(member.group, member)
+
+      expect(page).to have_checked_field "Events administrator"
+      expect(page).to be_accessible
+    end
+  end
 end
