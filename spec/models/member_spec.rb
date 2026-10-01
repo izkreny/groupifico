@@ -259,6 +259,27 @@ RSpec.describe Member, type: :model do
     end
   end
 
+  # #91: the unique index refuses a second membership as an exception; this is the same rule as a
+  # validation, so every save meets it, not only the new member form.
+  describe "one membership per user in a group" do
+    it "refuses moving an existing membership onto a user the group already holds" do
+      group  = create(:group)
+      held   = create(:member, group:)
+      member = create(:member, group:)
+
+      member.user = held.user
+
+      expect(member).not_to be_valid
+      expect(member.errors[:email]).to eq [ "already belongs to a member of this group" ]
+    end
+
+    it "lets an existing membership save without counting itself as a duplicate" do
+      member = create(:member, :active)
+
+      expect(member.update(status: :paused)).to be true
+    end
+  end
+
   it { is_expected.to delegate_method(:email).to(:user).allow_nil }
   it { is_expected.to delegate_method(:full_name).to(:profile) }
   it { is_expected.to delegate_method(:short_name).to(:profile) }
