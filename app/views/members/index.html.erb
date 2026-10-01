@@ -12,9 +12,9 @@
         <div id="<%= dom_id member, :row %>" class="flex flex-col sm:flex-row justify-between items-center pb-5 sm:pb-0">
           <%= render "members/member", member: member %>
           <%# The list alone, never the shared partial the member page also renders, and only for a
-              reader who manages members: they are the ones who added this person and who would
+              reader who may add members: they are the ones who added this person and who would
               chase them, and frame 3a draws the count on the owner's roster alone. %>
-          <% if allowed_to?(:edit?, member) && !member.user.first_signed_in_at? %>
+          <% if @marks_first_sign_in && !member.user.first_signed_in_at? %>
             <span class="badge badge-ghost">not signed in yet</span>
           <% end %>
           <div class="w-full sm:w-auto flex flex-col sm:flex-row space-x-2 space-y-2">
