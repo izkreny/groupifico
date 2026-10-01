@@ -10,7 +10,7 @@ RSpec.describe "The members list", type: :system do
 
     visit group_members_path(actor.group)
 
-    expect(page).to paint "##{ActionView::RecordIdentifier.dom_id(added)} .badge"
+    expect(page).to paint "##{ActionView::RecordIdentifier.dom_id(added, :row)} .badge"
     expect(page).to be_accessible
   end
 end

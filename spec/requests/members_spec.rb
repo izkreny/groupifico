@@ -60,7 +60,7 @@ RSpec.describe "Members", type: :request do
 
         get group_members_path(actor.group)
 
-        row = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(added)}")
+        row = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(added, :row)}")
         expect(row.text).to include "not signed in yet"
       end
 
@@ -71,7 +71,7 @@ RSpec.describe "Members", type: :request do
 
         get group_members_path(actor.group)
 
-        row = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(joined)}")
+        row = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(joined, :row)}")
         expect(row.text).not_to include "not signed in yet"
       end
     end
@@ -107,6 +107,19 @@ RSpec.describe "Members", type: :request do
         get group_member_path(member.group, member)
 
         expect(response).to have_http_status :ok
+      end
+    end
+
+    # The mark belongs to the members list alone, per #208's criterion.
+    context "when signed in as a members administrator" do
+      it "leaves the mark off the page of a member who has never signed in" do
+        actor = create(:member, :active, :members_administrator)
+        added = create(:member, group: actor.group, user: create(:user, first_signed_in_at: nil))
+        sign_in_as(actor.user)
+
+        get group_member_path(actor.group, added)
+
+        expect(response.body).not_to include "not signed in yet"
       end
     end
 
