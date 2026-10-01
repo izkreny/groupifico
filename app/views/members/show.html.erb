@@ -1,19 +1,86 @@
-<% content_for :title, "Showing member" %>
+<% content_for :title, @member.full_name %>
 
-<div class="md:w-2/3 w-full">
-  <h1 class="font-bold text-4xl">Showing member</h1>
+<%= render "shared/page_header", title: "Member" %>
 
-  <%= render "members/member", member: @member %>
+<%#
+  One screen for every reader, per frame 3c: the members table lets every column see each member's
+  details. Only the pencil varies, asked of `edit?`, the rule the edit screen authorizes; removing
+  a member happens there.
+%>
+<% name = @member.full_name %>
+<div class="flex flex-col gap-4 w-full">
+  <div id="<%= dom_id @member %>" class="flex items-start gap-3">
+    <div class="avatar avatar-placeholder flex-none">
+      <div class="bg-base-300 text-base-content w-16 rounded-full">
+        <span class="text-xl"><%= @member.initials %></span>
+      </div>
+    </div>
 
-  <div class="flex flex-wrap gap-2">
-    <%= link_to "Edit this member", edit_group_member_path(@group, @member), class: "btn btn-ghost" %>
-    <%= link_to "Back to members", group_members_path(@group), class: "btn btn-ghost" %>
-    <%= render "shared/confirm_sheet",
-          id: dom_id(@member, :confirm_delete),
-          url: group_member_path(@group, @member),
-          confirm: "Remove member",
-          title: "Remove this member?",
-          body: "They lose access to the group, and every registration they made goes with them. This can't be undone.",
-          dismiss: "Keep member" %>
+    <div class="flex flex-col gap-2 grow">
+      <div class="flex items-start justify-between gap-2">
+        <h2 class="text-record"><%= name %></h2>
+
+        <% if allowed_to?(:edit?, @member) %>
+          <%= link_to edit_group_member_path(@group, @member), class: "btn btn-ghost btn-circle btn-sm text-primary flex-none", aria: { label: "Edit" } do %>
+            <%= icon :edit, class: "size-4" %>
+          <% end %>
+        <% end %>
+      </div>
+
+      <div class="flex flex-wrap gap-1">
+        <%= render "members/roles", member: @member %>
+        <span class="badge badge-sm badge-ghost"><%= @member.status %></span>
+      </div>
+    </div>
   </div>
+
+  <div class="card card-sm bg-base-200">
+    <dl class="card-body gap-3">
+      <div class="flex items-center justify-between gap-2">
+        <div>
+          <dt class="text-xs">Email</dt>
+          <dd><%= @member.email %></dd>
+        </div>
+
+        <%= mail_to @member.email, class: "btn btn-ghost btn-circle btn-sm flex-none", aria: { label: "Email #{name}" } do %>
+          <%= icon :email, class: "size-4" %>
+        <% end %>
+      </div>
+
+      <% if @member.mobile_phone %>
+        <div class="flex items-center justify-between gap-2">
+          <div>
+            <dt class="text-xs">Mobile</dt>
+            <dd><%= @member.mobile_phone %></dd>
+          </div>
+
+          <%= phone_to @member.mobile_phone, class: "btn btn-ghost btn-circle btn-sm flex-none", aria: { label: "Call #{name}" } do %>
+            <%= icon :call, class: "size-4" %>
+          <% end %>
+        </div>
+      <% end %>
+
+      <div>
+        <dt class="text-xs">Joined</dt>
+        <dd><%= member_joined_on @member %></dd>
+      </div>
+    </dl>
+  </div>
+
+  <% if @managed_events.any? %>
+    <section class="flex flex-col gap-2" aria-labelledby="manages">
+      <h3 id="manages" class="font-semibold">Manages</h3>
+
+      <ul class="list">
+        <% @managed_events.each do |event| %>
+          <li class="list-row">
+            <div>
+              <%= link_to event.name, group_event_path(@group, event), class: "link link-hover" %>
+              <div class="text-xs"><%= event_schedule_start(event) %></div>
+            </div>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
 </div>

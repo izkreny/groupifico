@@ -50,6 +50,88 @@ RSpec.describe "Members", type: :request do
 
         expect(response.body).not_to include "not signed in yet"
       end
+
+      it "lists the members alphabetically by name, whatever the case" do
+        reader = create(:member, :active, user: create(:user, :with_full_profile, first_name: "Carla", last_name: "Duke"))
+        create(:member, group: reader.group, user: create(:user, :with_full_profile, first_name: "ben", last_name: "Cole"))
+        create(:member, group: reader.group, user: create(:user, :with_full_profile, first_name: "Alice", last_name: "Bird"))
+        sign_in_as(reader.user)
+
+        get group_members_path(reader.group)
+
+        names = Nokogiri::HTML(response.body).css("#members li a.link").map(&:text)
+        expect(names).to eq [ "Alice Bird", "ben Cole", "Carla Duke" ]
+      end
+
+      it "lists active and paused members and leaves inactive ones out" do
+        reader   = create(:member, :active)
+        paused   = create(:member, :paused, group: reader.group)
+        inactive = create(:member, :inactive, group: reader.group)
+        sign_in_as(reader.user)
+
+        get group_members_path(reader.group)
+
+        expect(response.body).to include ActionView::RecordIdentifier.dom_id(paused, :row)
+        expect(response.body).not_to include ActionView::RecordIdentifier.dom_id(inactive, :row)
+      end
+
+      it "tags a paused member with their status" do
+        reader = create(:member, :active)
+        paused = create(:member, :paused, group: reader.group)
+        sign_in_as(reader.user)
+
+        get group_members_path(reader.group)
+
+        row = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(paused, :row)}")
+        expect(row.css(".badge").map(&:text)).to include "paused"
+      end
+
+      it "lists inactive members too when asked to" do
+        reader   = create(:member, :active)
+        inactive = create(:member, :inactive, group: reader.group)
+        sign_in_as(reader.user)
+
+        get group_members_path(reader.group, inactive: 1)
+
+        expect(response.body).to include ActionView::RecordIdentifier.dom_id(inactive, :row)
+      end
+
+      it "tags each member with the roles they hold, by their short names" do
+        reader = create(:member, :active, roles: [ build(:role, name: "members_administrator"), build(:role, name: "administrator") ])
+        sign_in_as(reader.user)
+
+        get group_members_path(reader.group)
+
+        row = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(reader, :row)}")
+        expect(row.css(".badge").map(&:text)).to eq [ "admin", "members admin" ]
+      end
+
+      it "offers a call link only for a member with a mobile, and an email link for everyone" do
+        reader  = create(:member, :active)
+        with    = create(:member, group: reader.group, user: create(:user, :with_full_profile))
+        without = create(:member, group: reader.group)
+        sign_in_as(reader.user)
+
+        get group_members_path(reader.group)
+
+        html = Nokogiri::HTML(response.body)
+        expect(html.at_css("##{ActionView::RecordIdentifier.dom_id(with, :row)} a[href^='tel:']")).to be_present
+        expect(html.css("##{ActionView::RecordIdentifier.dom_id(without, :row)} a[href^='tel:']")).to be_empty
+        expect(html.at_css("##{ActionView::RecordIdentifier.dom_id(without, :row)} a[href='mailto:#{without.email}']")).to be_present
+      end
+
+      it "offers no count, no Invite, no edit link and no inactive toggle" do
+        reader = create(:member, :active)
+        other  = create(:member, group: reader.group)
+        sign_in_as(reader.user)
+
+        get group_members_path(reader.group)
+
+        expect(response.body).not_to include new_group_member_path(reader.group)
+        expect(response.body).not_to include edit_group_member_path(reader.group, other)
+        expect(response.body).not_to include "Show inactive"
+        expect(response.body).not_to include "2 members"
+      end
     end
 
     context "when signed in as a members administrator" do
@@ -86,6 +168,50 @@ RSpec.describe "Members", type: :request do
         row = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(joined, :row)}")
         expect(row.text).not_to include "not signed in yet"
       end
+
+      it "counts the current members and offers Invite" do
+        actor = create(:member, :active, :members_administrator)
+        create(:member, :paused, group: actor.group)
+        create(:member, :inactive, group: actor.group)
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group)
+
+        html = Nokogiri::HTML(response.body)
+        expect(html.text).to include "2 members"
+        expect(html.at_css("a[href='#{new_group_member_path(actor.group)}']").text.strip).to eq "Invite"
+      end
+
+      it "offers each member's edit form and the inactive toggle" do
+        actor = create(:member, :active, :members_administrator)
+        other = create(:member, group: actor.group)
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group)
+
+        html = Nokogiri::HTML(response.body)
+        expect(html.at_css("a[href='#{edit_group_member_path(actor.group, other)}']")).to be_present
+        expect(html.at_css("a[href='#{group_members_path(actor.group, inactive: 1)}']").text).to eq "Show inactive"
+      end
+
+      it "offers to hide inactive members once they are shown" do
+        actor = create(:member, :active, :members_administrator)
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group, inactive: 1)
+
+        expect(Nokogiri::HTML(response.body).at_css("main a.link[href='#{group_members_path(actor.group)}']").text).to eq "Hide inactive"
+      end
+
+      # Adding somebody is a write, which the pause refuses; the edit form is a read it keeps.
+      it "offers no Invite while the reader is paused" do
+        actor = create(:member, :paused, :members_administrator)
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group)
+
+        expect(response.body).not_to include new_group_member_path(actor.group)
+      end
     end
   end
 
@@ -120,10 +246,66 @@ RSpec.describe "Members", type: :request do
 
         expect(response).to have_http_status :ok
       end
+
+      it "shows the member's email, mobile, joined date, roles and status" do
+        reader = create(:member, :active)
+        target = create(:member, :active, :events_administrator, group: reader.group,
+          user: create(:user, :with_full_profile), created_at: Time.zone.local(2024, 3, 14))
+        sign_in_as(reader.user)
+
+        get group_member_path(target.group, target)
+
+        html = Nokogiri::HTML(response.body)
+        expect(html.css("dd").map(&:text)).to eq [ target.email, target.mobile_phone, "14 Mar 2024" ]
+        expect(html.css("##{ActionView::RecordIdentifier.dom_id(target)} .badge").map(&:text)).to eq [ "events admin", "active" ]
+      end
+
+      it "lists the events the member manages, earliest first" do
+        reader = create(:member, :active)
+        target = create(:member, group: reader.group)
+        create(:event, group: reader.group, manager: target, name: "Autumn concert", starts_at: 3.weeks.from_now, ends_at: 3.weeks.from_now + 2.hours)
+        create(:event, group: reader.group, manager: target, name: "Tuesday rehearsal", starts_at: 1.week.from_now, ends_at: 1.week.from_now + 2.hours)
+        sign_in_as(reader.user)
+
+        get group_member_path(target.group, target)
+
+        expect(Nokogiri::HTML(response.body).css("[aria-labelledby=manages] li a").map(&:text)).to eq [ "Tuesday rehearsal", "Autumn concert" ]
+      end
+
+      it "leaves Manages out for a member who manages nothing" do
+        reader = create(:member, :active)
+        sign_in_as(reader.user)
+
+        get group_member_path(reader.group, reader)
+
+        expect(response.body).not_to include "Manages"
+      end
+
+      it "offers no edit link and no removal" do
+        reader = create(:member, :active)
+        target = create(:member, group: reader.group)
+        sign_in_as(reader.user)
+
+        get group_member_path(target.group, target)
+
+        expect(response.body).not_to include edit_group_member_path(target.group, target)
+        expect(Nokogiri::HTML(response.body).css("form[action='#{group_member_path(target.group, target)}']")).to be_empty
+      end
     end
 
     # The mark belongs to the members list alone, per #208's criterion.
     context "when signed in as a members administrator" do
+      it "offers the edit link and leaves removal to the edit screen" do
+        actor  = create(:member, :active, :members_administrator)
+        target = create(:member, group: actor.group)
+        sign_in_as(actor.user)
+
+        get group_member_path(target.group, target)
+
+        expect(response.body).to include edit_group_member_path(target.group, target)
+        expect(Nokogiri::HTML(response.body).css("form[action='#{group_member_path(target.group, target)}']")).to be_empty
+      end
+
       it "leaves the mark off the page of a member who has never signed in" do
         actor = create(:member, :active, :members_administrator)
         added = create(:member, group: actor.group, user: create(:user, first_signed_in_at: nil))
@@ -258,6 +440,19 @@ RSpec.describe "Members", type: :request do
         expect(boxes.map { it["value"] }).to eq [ "owner", "administrator", "events_administrator", "members_administrator" ]
         expect(boxes.select { it["checked"] }.map { it["value"] }).to eq [ "events_administrator" ]
       end
+
+      it "describes each role box with what it grants, and names the narrower ones it implies" do
+        owner = create(:member, :active, :owner)
+        sign_in_as(owner.user)
+
+        get edit_group_member_path(owner.group, owner)
+
+        html  = Nokogiri::HTML(response.body)
+        hints = html.css("input[name='member[roles][]'][type=checkbox]").map { html.at_css("##{it["aria-describedby"]}").text }
+        rows  = html.css("[data-role-implications-target=role]").map { JSON.parse(it["data-implies"]) }
+        expect(hints).to eq [ "everything", "all modules", "events only", "members only" ]
+        expect(rows).to eq [ %w[administrator events_administrator members_administrator], %w[events_administrator members_administrator], [], [] ]
+      end
     end
 
     context "when signed in as a members administrator" do
@@ -269,6 +464,40 @@ RSpec.describe "Members", type: :request do
 
         expect(response).to have_http_status :ok
         expect(Nokogiri::HTML(response.body).css("[name='member[email]']")).to be_empty
+      end
+
+      it "offers the status as one radio per status, the member's own checked" do
+        actor  = create(:member, :active, :members_administrator)
+        target = create(:member, :paused, group: actor.group)
+        sign_in_as(actor.user)
+
+        get edit_group_member_path(target.group, target)
+
+        radios = Nokogiri::HTML(response.body).css("input[type=radio][name='member[status]']")
+        expect(radios.map { it["value"] }).to eq %w[active paused inactive]
+        expect(radios.select { it["checked"] }.map { it["value"] }).to eq [ "paused" ]
+      end
+
+      it "offers Remove" do
+        actor  = create(:member, :active, :members_administrator)
+        target = create(:member, group: actor.group)
+        sign_in_as(actor.user)
+
+        get edit_group_member_path(target.group, target)
+
+        expect(Nokogiri::HTML(response.body).at_css("form[action='#{group_member_path(target.group, target)}'] button").text).to eq "Remove"
+      end
+
+      # The edit form is a read a paused manager keeps; removing somebody is a write it refuses.
+      it "offers no Remove while the reader is paused" do
+        actor  = create(:member, :paused, :members_administrator)
+        target = create(:member, group: actor.group)
+        sign_in_as(actor.user)
+
+        get edit_group_member_path(target.group, target)
+
+        expect(response).to have_http_status :ok
+        expect(Nokogiri::HTML(response.body).css("button").map(&:text)).not_to include "Remove"
       end
 
       it "offers no role checkboxes" do

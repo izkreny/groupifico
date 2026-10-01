@@ -16,11 +16,18 @@ class MembersController < ApplicationController
   def index
     authorize! @group, to: :show?
 
-    @members = authorized_scope(@group.members) # TODO: Set up active and paused ones as default
+    @inactive_shown = params[:inactive].present?
+
+    # WHY: sorted in Ruby rather than ordered in SQL, because `full_name` falls back to the address
+    # when the profile has no name, and ordering on the profile's columns would misplace that member.
+    members  = @inactive_shown ? @group.members : @group.members.current
+    @members = authorized_scope(members).includes(:roles, :user, :profile).sort_by { it.full_name.downcase }
   end
 
   def show
     authorize! @member
+
+    @managed_events = @member.managed_events.order(:starts_at)
   end
 
   def new

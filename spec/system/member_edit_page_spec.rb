@@ -1,8 +1,8 @@
 require "rails_helper"
 
-# A `select` is a different daisyUI rule than an `input`, and the builder reaches it through a
-# different positional argument, so neither is evidence for the other. This page is where the
-# app's own `errors.add(:status, ...)` fires: its sole owner going inactive.
+# Only what a browser adds. Which controls the form draws for which reader, what the segments
+# preselect and what a role box is described by are `spec/requests/members_spec.rb`'s assertions.
+# This page is where the app's own `errors.add(:status, ...)` fires: its sole owner going inactive.
 RSpec.describe "The member edit page", type: :system do
   context "when a submission is rejected" do
     before do
@@ -10,17 +10,12 @@ RSpec.describe "The member edit page", type: :system do
       sign_in_as member.user
 
       visit edit_group_member_path(member.group, member)
-      select "inactive", from: "member_status"
-      click_button "Update Member"
-    end
-
-    it "colours the rejected select's border to match its message" do
-      style_of = ->(selector, property) { page.evaluate_script "getComputedStyle(document.querySelector(arguments[0]))[arguments[1]]", selector, property }
-
-      expect(style_of["select#member_status", "borderTopColor"]).to eq style_of["#member_status_error", "color"]
+      find(".join input[type=radio][value='inactive']").click
+      click_button "Save member"
     end
 
     it "has no accessibility violations" do
+      expect(page).to have_css "#member_status_error"
       expect(page).to be_accessible
     end
   end
@@ -34,7 +29,7 @@ RSpec.describe "The member edit page", type: :system do
       visit edit_group_member_path(member.group, member)
       uncheck "Administrator"
       uncheck "Events administrator"
-      click_button "Update Member"
+      click_button "Save member"
 
       expect(page).to have_text "Member was successfully updated."
       expect(member.reload.roles).to be_empty
@@ -50,5 +45,81 @@ RSpec.describe "The member edit page", type: :system do
       expect(page).to have_checked_field "Events administrator"
       expect(page).to be_accessible
     end
+
+    # Which names a role implies is `spec/models/role_spec.rb`'s; that ticking a box greys the rows
+    # those names belong to, and that the grey lifts again, only happens in a browser.
+    it "greys the narrower roles while owner is ticked, and lifts the grey once it is not" do
+      owner  = create(:member, :active, :owner, :with_all_attributes)
+      member = create(:member, :active, group: owner.group)
+      sign_in_as owner.user
+
+      visit edit_group_member_path(member.group, member)
+      check "Owner"
+
+      expect(page).to have_css "[data-implied]", count: 3
+      expect(page.evaluate_script("getComputedStyle(document.querySelector('[data-implied] .text-xs')).opacity")).to eq "0.8"
+      expect(page).to have_checked_field "Owner"
+
+      uncheck "Owner"
+
+      expect(page).to have_no_css "[data-implied]"
+    end
+
+    # A greyed box is presentation alone, so what it shows is what the form posts.
+    it "keeps a greyed role the member already holds when the save is about something else" do
+      owner  = create(:member, :active, :owner, :with_all_attributes)
+      member = create(:member, :active, group: owner.group, roles: [ build(:role, name: "administrator"), build(:role, name: "events_administrator") ])
+      sign_in_as owner.user
+
+      visit edit_group_member_path(member.group, member)
+      expect(page).to have_css "[data-implied]", count: 2
+      find(".join input[type=radio][value='paused']").click
+      click_button "Save member"
+
+      expect(page).to have_text "Member was successfully updated."
+      expect(member.reload.roles.map(&:name)).to contain_exactly "administrator", "events_administrator"
+    end
+
+    it "keeps a greyed role readable in light" do
+      owner  = create(:member, :active, :owner, :with_all_attributes)
+      member = create(:member, :active, :administrator, group: owner.group)
+      sign_in_as owner.user
+      prefer_colour_scheme :light
+
+      visit edit_group_member_path(member.group, member)
+
+      expect(rendered_colour_scheme).to eq "light"
+      expect(page).to have_css "[data-implied]", count: 2
+      expect(text_contrast("[data-implied] .text-xs")).to be >= ContrastHelper::WCAG_AA
+      expect(page).to be_accessible
+    end
+
+    it "keeps a greyed role readable in dark" do
+      owner  = create(:member, :active, :owner, :with_all_attributes)
+      member = create(:member, :active, :administrator, group: owner.group)
+      sign_in_as owner.user
+      prefer_colour_scheme :dark
+
+      visit edit_group_member_path(member.group, member)
+
+      expect(rendered_colour_scheme).to eq "dark"
+      expect(page).to have_css "[data-implied]", count: 2
+      expect(text_contrast("[data-implied] .text-xs")).to be >= ContrastHelper::WCAG_AA
+      expect(page).to be_accessible
+    end
+  end
+
+  it "removes the member through the confirm sheet and lands on the roster" do
+    actor  = create(:member, :active, :members_administrator, :with_all_attributes)
+    target = create(:member, :with_all_attributes, group: actor.group)
+    sign_in_as actor.user
+
+    visit edit_group_member_path(actor.group, target)
+    click_button "Remove"
+    within("dialog[open]") { click_button "Remove" }
+
+    expect(page).to have_current_path group_members_path(actor.group)
+    expect(page).to have_text "Member was successfully destroyed."
+    expect(Member.exists?(target.id)).to be false
   end
 end

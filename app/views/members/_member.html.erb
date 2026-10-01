@@ -1,11 +1,52 @@
-<div id="<%= dom_id member %>" class="w-full sm:w-auto my-5 space-y-5">
-  <ul>
-    <li>
-      <strong>
-        <%= member.full_name %>
-      </strong>
-      <br>
-      (<%= member.status %>)
-    </li>
-  </ul>
-</div>
+<%# locals: (member:, manages:) %>
+<%#
+  One roster row. A member who is not active is still drawn, dimmed and tagged with their status.
+  Call and Email are every reader's; Call only where the member has a mobile, since every member
+  has an address and not every one a number. The detail is every reader's too, so the name links
+  there, and only the pencil opens the edit form.
+
+  The "not signed in yet" mark is the roster's alone, never the member screen's, and only for a
+  reader who manages members: they are the ones who added this person and would chase them.
+%>
+<% name = member.full_name %>
+<li id="<%= dom_id member, :row %>" class="list-row items-center<%= " opacity-80" unless member.active? %>">
+  <div class="avatar avatar-placeholder">
+    <div class="bg-base-300 text-base-content w-10 rounded-full">
+      <span><%= member.initials %></span>
+    </div>
+  </div>
+
+  <div id="<%= dom_id member %>" class="flex flex-col gap-1">
+    <%= link_to name, group_member_path(member.group, member), class: "link link-hover" %>
+
+    <div class="flex flex-wrap gap-1">
+      <%= render "members/roles", member: %>
+
+      <% unless member.active? %>
+        <span class="badge badge-sm badge-ghost"><%= member.status %></span>
+      <% end %>
+
+      <% if manages && !member.user.first_signed_in_at? %>
+        <span class="badge badge-sm badge-ghost">not signed in yet</span>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="flex flex-none gap-1">
+    <% if member.mobile_phone %>
+      <%= phone_to member.mobile_phone, class: "btn btn-ghost btn-circle btn-sm", aria: { label: "Call #{name}" } do %>
+        <%= icon :call, class: "size-4" %>
+      <% end %>
+    <% end %>
+
+    <%= mail_to member.email, class: "btn btn-ghost btn-circle btn-sm", aria: { label: "Email #{name}" } do %>
+      <%= icon :email, class: "size-4" %>
+    <% end %>
+
+    <% if manages %>
+      <%= link_to edit_group_member_path(member.group, member), class: "btn btn-ghost btn-circle btn-sm text-primary", aria: { label: "Edit #{name}" } do %>
+        <%= icon :edit, class: "size-4" %>
+      <% end %>
+    <% end %>
+  </div>
+</li>
