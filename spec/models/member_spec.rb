@@ -282,6 +282,19 @@ RSpec.describe Member, type: :model do
 
   it { is_expected.to delegate_method(:full_name).to(:profile) }
   it { is_expected.to delegate_method(:short_name).to(:profile) }
+  it { is_expected.to delegate_method(:initials).to(:profile) }
+  it { is_expected.to delegate_method(:mobile_phone).to(:profile) }
+
+  describe ".current" do
+    it "keeps active and paused members and leaves out inactive ones" do
+      active   = create(:member, :active)
+      paused   = create(:member, :paused, group: active.group)
+      inactive = create(:member, :inactive, group: active.group)
+
+      expect(described_class.current).to include(active, paused)
+      expect(described_class.current).not_to include(inactive)
+    end
+  end
 
   describe "#full_name" do
     it "answers the email local part for a fresh signup whose profile has no name yet" do

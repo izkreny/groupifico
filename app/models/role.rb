@@ -63,6 +63,18 @@ class Role < ApplicationRecord
   # alone - editing the group, deleting it, and granting a role.
   def owner? = name == OWNER
 
+  # Whether holding this role already grants the named one, which is what the member form greys.
+  # The owner implies every other name, and only `#owner?` can say so, because `#grants?` admits
+  # `administrator` for every module. A module role is implied wherever `#grants?` answers its
+  # module, and `administrator` carries no module suffix, so nothing but the owner implies it.
+  def implies?(other_name)
+    return false if other_name == name
+    return true if owner?
+
+    module_name = other_name.delete_suffix("_administrator")
+    module_name != other_name && grants?(module_name)
+  end
+
   private
     # A member on their way out takes their roles with them, and `Member`'s own guard has already
     # decided whether that removal is allowed; asking again here would refuse the group's last

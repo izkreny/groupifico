@@ -47,6 +47,10 @@ class Member < ApplicationRecord
   # owner. Two spellings of one join are two places a later role change has to find.
   scope :owners, -> { joins(:roles).where(roles: { name: Role::OWNER }) }
 
+  # Everyone who still belongs: an `inactive` member has left, which is the line
+  # `User#current_memberships` draws from the user's side.
+  scope :current, -> { where.not(status: :inactive) }
+
   # Members with no registration on the event, never invited or taken off. The whole of what it
   # decides, so each caller states its own status rule beside it rather than inheriting one the
   # name does not mention: the invitation screen keeps paused members, who are listed and cannot
@@ -100,7 +104,7 @@ class Member < ApplicationRecord
   validate :not_already_in_the_group
 
   delegate :email, to: :user, allow_nil: true
-  delegate :full_name, :short_name, to: :profile
+  delegate :full_name, :short_name, :initials, :mobile_phone, to: :profile
 
   # The one question a policy asks. It learns nothing about how the answer is stored, which is what
   # lets a role arrive as a row rather than as a migration. `module_name` rather than `module`
