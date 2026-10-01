@@ -503,9 +503,9 @@ RSpec.describe "Members", type: :request do
     end
 
     # The roles check asks whether the posted set differs from the one the member holds, not whether
-    # a `roles` key arrived. The form posts roles only for a reader who may grant them, but one loaded
-    # while they could and submitted after they no longer can still carries the unchanged list, and an
-    # administrator must keep their own row.
+    # a `roles` key arrived. The form posts roles only for an acting user who may grant them, but one
+    # loaded while they could and submitted after they no longer can still carries the unchanged list,
+    # and an administrator must keep their own row.
     context "when signed in as an administrator" do
       it "changes a status while posting the roles the member already holds" do
         actor  = create(:member, :active, :administrator)

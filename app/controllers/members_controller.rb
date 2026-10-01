@@ -89,10 +89,10 @@ class MembersController < ApplicationController
     end
 
     # A posted `roles` key that changes nothing is not a grant. The member form draws its role
-    # checkboxes only for a reader who may grant roles, but a form loaded while they could and
-    # submitted after they no longer can still carries the unchanged list, and refusing the status
-    # change over it would be a defect in this check rather than a rule doing its job. Names are
-    # already unique here, so sorting compares the sets.
+    # checkboxes only for an acting user who may grant roles, but a form loaded while they could
+    # and submitted after they no longer can still carries the unchanged list, and refusing the
+    # status change over it would be a defect in this check rather than a rule doing its job. Names
+    # are already unique here, so sorting compares the sets.
     def granting_roles?(attributes)
       return false unless attributes.key?(:roles)
 
