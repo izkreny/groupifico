@@ -40,9 +40,10 @@ class MembersController < ApplicationController
     authorize! @member, to: :manage_roles? if @member.roles.any?
 
     # WHY: sent from here rather than from a callback on `Member`, which would also mail every owner
-    # `Group#add_owner` makes for themselves when they start a group.
+    # `Group#add_owner` makes for themselves when they start a group. Not to an `inactive` one, who
+    # is refused the group like a non-member and so would sign in to a root that does not list it.
     if @member.save
-      MemberMailer.welcome(@member).deliver_later
+      MemberMailer.welcome(@member).deliver_later unless @member.inactive?
 
       redirect_to group_member_path(@group, @member),
         notice: "Member was successfully created."

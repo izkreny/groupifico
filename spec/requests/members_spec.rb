@@ -357,6 +357,16 @@ RSpec.describe "Members", type: :request do
           .to have_enqueued_mail(MemberMailer, :welcome)
       end
 
+      it "emails nobody when the member is added as inactive, since they could not see the group" do
+        actor = create(:member, :active, :members_administrator)
+        sign_in_as(actor.user)
+
+        expect { post group_members_path(actor.group), params: { member: { email: "new.person@example.com", status: "inactive" } } }
+          .not_to have_enqueued_mail(MemberMailer, :welcome)
+
+        expect(actor.group.members.inactive.sole.user.email).to eq "new.person@example.com"
+      end
+
       it "refuses an address that already belongs to the group, saying so and emailing nobody" do
         actor    = create(:member, :active, :members_administrator)
         existing = create(:member, group: actor.group)
