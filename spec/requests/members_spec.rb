@@ -134,13 +134,13 @@ RSpec.describe "Members", type: :request do
     end
 
     context "when signed in as a members administrator" do
-      it "shows the new member page" do
+      it "asks for the new member's email address" do
         member = create(:member, :active, :members_administrator)
         sign_in_as(member.user)
 
         get new_group_member_path(member.group)
 
-        expect(response).to have_http_status :ok
+        expect(Nokogiri::HTML(response.body).css("input[type=email][name='member[email]']")).to be_one
       end
 
       it "offers no role checkboxes" do
@@ -202,13 +202,14 @@ RSpec.describe "Members", type: :request do
     end
 
     context "when signed in as a members administrator" do
-      it "shows the edit member page" do
+      it "shows the edit member page without an email field, since a membership keeps its user" do
         member = create(:member, :active, :members_administrator)
         sign_in_as(member.user)
 
         get edit_group_member_path(member.group, member)
 
         expect(response).to have_http_status :ok
+        expect(Nokogiri::HTML(response.body).css("[name='member[email]']")).to be_empty
       end
 
       it "offers no role checkboxes" do
