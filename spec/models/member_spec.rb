@@ -207,6 +207,59 @@ RSpec.describe Member, type: :model do
     end
   end
 
+  describe "#email=" do
+    it "creates the user along with the membership when no account holds the address" do
+      group = create(:group)
+
+      member = described_class.create!(group:, email: "new.person@example.com")
+
+      expect(member.user).to eq User.find_by!(email: "new.person@example.com")
+    end
+
+    it "takes the existing account when one holds the address, however it is cased" do
+      user  = create(:user, email: "known.person@example.com")
+      group = create(:group)
+
+      expect { described_class.create!(group:, email: " Known.Person@Example.com ") }
+        .not_to change(User, :count)
+
+      expect(group.members.sole.user).to eq user
+    end
+
+    it "refuses an address no account could hold, on the email field, creating nobody" do
+      member = described_class.new(group: create(:group), email: "not an address")
+
+      expect { member.save }.not_to change(User, :count)
+
+      expect(member.errors[:email]).to eq [ "is invalid" ]
+    end
+
+    it "refuses a blank address on the email field" do
+      member = described_class.new(group: create(:group), email: "")
+
+      expect(member).not_to be_valid
+      expect(member.errors[:email]).to include "can't be blank"
+    end
+
+    it "refuses an address that already belongs to a member of the group, whatever their status" do
+      existing = create(:member, :inactive)
+
+      member = described_class.new(group: existing.group, email: existing.user.email)
+
+      expect(member).not_to be_valid
+      expect(member.errors[:email]).to eq [ "already belongs to a member of this group" ]
+    end
+
+    it "accepts an address that belongs to a member of another group" do
+      elsewhere = create(:member)
+
+      member = described_class.new(group: create(:group), email: elsewhere.user.email)
+
+      expect(member).to be_valid
+    end
+  end
+
+  it { is_expected.to delegate_method(:email).to(:user).allow_nil }
   it { is_expected.to delegate_method(:full_name).to(:profile) }
   it { is_expected.to delegate_method(:short_name).to(:profile) }
 
