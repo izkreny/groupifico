@@ -5,6 +5,19 @@
 
       <%= form.field :status, as: :select, choices: member_statuses %>
     </fieldset>
+
+    <% if allowed_to?(:manage_roles?, member) %>
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend">Roles</legend>
+
+        <%= form.collection_check_boxes :roles, Role::NAMES, :itself, :humanize, checked: member.roles.map(&:name) do |box| %>
+          <%= box.label class: "label" do %>
+            <%= box.check_box class: "checkbox" %>
+            <%= box.text %>
+          <% end %>
+        <% end %>
+      </fieldset>
+    <% end %>
   <% end %>
 
   <div class="inline">
