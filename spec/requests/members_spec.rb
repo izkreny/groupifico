@@ -120,6 +120,19 @@ RSpec.describe "Members", type: :request do
       end
     end
 
+    context "when signed in as an owner" do
+      it "offers every role as an unticked checkbox" do
+        owner = create(:member, :active, :owner)
+        sign_in_as(owner.user)
+
+        get new_group_member_path(owner.group)
+
+        boxes = Nokogiri::HTML(response.body).css("input[type=checkbox][name='member[roles][]']")
+        expect(boxes.map { it["value"] }).to eq [ "owner", "administrator", "events_administrator", "members_administrator" ]
+        expect(boxes.select { it["checked"] }).to be_empty
+      end
+    end
+
     context "when signed in as a members administrator" do
       it "shows the new member page" do
         member = create(:member, :active, :members_administrator)
@@ -128,6 +141,15 @@ RSpec.describe "Members", type: :request do
         get new_group_member_path(member.group)
 
         expect(response).to have_http_status :ok
+      end
+
+      it "offers no role checkboxes" do
+        member = create(:member, :active, :members_administrator)
+        sign_in_as(member.user)
+
+        get new_group_member_path(member.group)
+
+        expect(Nokogiri::HTML(response.body).css("[name='member[roles][]']")).to be_empty
       end
     end
 
@@ -165,6 +187,20 @@ RSpec.describe "Members", type: :request do
       end
     end
 
+    context "when signed in as an owner" do
+      it "offers every role as a checkbox, ticking the ones the member holds" do
+        owner  = create(:member, :active, :owner)
+        member = create(:member, :active, :events_administrator, group: owner.group)
+        sign_in_as(owner.user)
+
+        get edit_group_member_path(member.group, member)
+
+        boxes = Nokogiri::HTML(response.body).css("input[type=checkbox][name='member[roles][]']")
+        expect(boxes.map { it["value"] }).to eq [ "owner", "administrator", "events_administrator", "members_administrator" ]
+        expect(boxes.select { it["checked"] }.map { it["value"] }).to eq [ "events_administrator" ]
+      end
+    end
+
     context "when signed in as a members administrator" do
       it "shows the edit member page" do
         member = create(:member, :active, :members_administrator)
@@ -173,6 +209,27 @@ RSpec.describe "Members", type: :request do
         get edit_group_member_path(member.group, member)
 
         expect(response).to have_http_status :ok
+      end
+
+      it "offers no role checkboxes" do
+        member = create(:member, :active, :members_administrator)
+        sign_in_as(member.user)
+
+        get edit_group_member_path(member.group, member)
+
+        expect(Nokogiri::HTML(response.body).css("[name='member[roles][]']")).to be_empty
+      end
+    end
+
+    context "when signed in as an administrator" do
+      it "offers no role checkboxes, so never an owner box" do
+        actor  = create(:member, :active, :administrator)
+        member = create(:member, :active, group: actor.group)
+        sign_in_as(actor.user)
+
+        get edit_group_member_path(member.group, member)
+
+        expect(Nokogiri::HTML(response.body).css("[name='member[roles][]']")).to be_empty
       end
     end
 
@@ -368,6 +425,16 @@ RSpec.describe "Members", type: :request do
         expect(member.reload.roles).to be_empty
       end
 
+      it "saves their own form posting the roles they already hold, as the group's only owner" do
+        owner = create(:member, :active, :owner)
+        sign_in_as(owner.user)
+
+        patch group_member_path(owner.group, owner), params: { member: { status: "active", roles: [ "", "owner" ] } }
+
+        expect(flash[:alert]).to be_nil
+        expect(flash[:notice]).to eq "Member was successfully updated."
+      end
+
       it "grants a role posted twice exactly once" do
         owner  = create(:member, :active, :owner)
         member = create(:member, group: owner.group)
@@ -436,8 +503,9 @@ RSpec.describe "Members", type: :request do
     end
 
     # The roles check asks whether the posted set differs from the one the member holds, not whether
-    # a `roles` key arrived. #193 puts role checkboxes on this form, after which every status change
-    # carries the member's unchanged roles, and an administrator must keep their own row.
+    # a `roles` key arrived. The form posts roles only for an acting user who may grant them, but one
+    # loaded while they could and submitted after they no longer can still carries the unchanged list,
+    # and an administrator must keep their own row.
     context "when signed in as an administrator" do
       it "changes a status while posting the roles the member already holds" do
         actor  = create(:member, :active, :administrator)
