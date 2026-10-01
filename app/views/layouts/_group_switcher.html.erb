@@ -20,7 +20,7 @@
           <%= link_to group_path(membership.group),
                 class: { "menu-active" => membership.group == current_group },
                 aria: { current: ("true" if membership.group == current_group) } do %>
-            <span class="text-row-title"><%= membership.group.name %></span>
+            <span class="font-heading text-row-title"><%= membership.group.name %></span>
             <% if membership.owner? %>
               <span class="badge badge-sm">owner</span>
             <% end %>
