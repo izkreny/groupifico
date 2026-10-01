@@ -177,6 +177,13 @@
   --input-color: var(--color-primary);
 }
 
+/* WHY: a primary border cannot show on a primary fill, so a focused button is also lined inside in
+   the ground colour, 5.7:1 against the fill in light and 5.9:1 in dark, and still draws no ring. */
+.btn:focus-visible,
+.btn:has(:focus-visible) {
+  box-shadow: inset 0 0 0 2px var(--color-base-100);
+}
+
 /* WHY: apart from the rule above, because daisyUI fills a ticked checkbox with `--input-color`, and
    primary under the base-content tick reads 2.4:1. */
 .checkbox:focus-visible {

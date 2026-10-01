@@ -276,7 +276,9 @@ RSpec.describe "The group shell", type: :system do
   # sheet. The style matcher retries, which is what waits out daisyUI's `border-color` transition:
   # read at once, the border is still on its way from the ghost button's transparent one. Watched
   # failing with the focus rule removed, where daisyUI's own 2px outline ring paints over a 1px
-  # border.
+  # border. The inset line in the ground colour is what shows on a primary fill, where a primary
+  # border cannot; on this ghost button it is invisible but computed all the same, and was watched
+  # failing before its rule existed.
   it "thickens a focused button's border in primary rather than drawing a ring" do
     member = create(:member, group: create(:group))
     create(:member, user: member.user, group: create(:group))
@@ -288,7 +290,8 @@ RSpec.describe "The group shell", type: :system do
     page.driver.browser.keyboard.type(:Tab)
 
     expect(page).to have_css "[aria-label='Switch group']:focus-visible",
-      style: { "outline-style" => "none", "border-top-width" => "2px", "border-top-color" => "rgb(140, 73, 26)" }
+      style: { "outline-style" => "none", "border-top-width" => "2px", "border-top-color" => "rgb(140, 73, 26)",
+               "box-shadow" => "rgb(245, 234, 216) 0px 0px 0px 2px inset" }
   end
 
   # `document.fonts.load` rather than `document.fonts.check`, which answers true for a family no
