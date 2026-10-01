@@ -40,6 +40,40 @@ RSpec.describe "Members", type: :request do
         expect(response.body).to include(ActionView::RecordIdentifier.dom_id(member))
         expect(response.body).not_to include(ActionView::RecordIdentifier.dom_id(other_member))
       end
+
+      it "does not say who has not signed in yet" do
+        member = create(:member, :active)
+        create(:member, group: member.group, user: create(:user, first_signed_in_at: nil))
+        sign_in_as(member.user)
+
+        get group_members_path(member.group)
+
+        expect(response.body).not_to include "not signed in yet"
+      end
+    end
+
+    context "when signed in as a members administrator" do
+      it "marks a member who has never signed in" do
+        actor = create(:member, :active, :members_administrator)
+        added = create(:member, group: actor.group, user: create(:user, first_signed_in_at: nil))
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group)
+
+        row = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(added)}")
+        expect(row.text).to include "not signed in yet"
+      end
+
+      it "leaves unmarked a member who has signed in" do
+        actor  = create(:member, :active, :members_administrator)
+        joined = create(:member, group: actor.group, user: create(:user, first_signed_in_at: 1.day.ago))
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group)
+
+        row = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(joined)}")
+        expect(row.text).not_to include "not signed in yet"
+      end
     end
   end
 

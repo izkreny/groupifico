@@ -6,6 +6,11 @@
       </strong>
       <br>
       (<%= member.status %>)
+      <%# Only for a reader who manages members: they are the ones who added this person and who
+          would chase them, and frame 3a draws the count on the owner's roster alone. %>
+      <% if allowed_to?(:edit?, member) && !member.user.first_signed_in_at? %>
+        <span class="badge badge-ghost">not signed in yet</span>
+      <% end %>
     </li>
   </ul>
 </div>

@@ -4,12 +4,13 @@
 #
 # ### Columns
 #
-# Name              | Type               | Attributes
-# ----------------- | ------------------ | ---------------------------
-# **`id`**          | `integer`          | `not null, primary key`
-# **`email`**       | `string(250)`      | `not null`
-# **`created_at`**  | `datetime`         | `not null`
-# **`updated_at`**  | `datetime`         | `not null`
+# Name                      | Type               | Attributes
+# ------------------------- | ------------------ | ---------------------------
+# **`id`**                  | `integer`          | `not null, primary key`
+# **`email`**               | `string(250)`      | `not null`
+# **`first_signed_in_at`**  | `datetime`         |
+# **`created_at`**          | `datetime`         | `not null`
+# **`updated_at`**          | `datetime`         | `not null`
 #
 # ### Indexes
 #
