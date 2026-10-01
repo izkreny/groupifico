@@ -1,0 +1,5 @@
+You were added to <%= @group.name %> on Chorifico. Sign in to see it:
+<%= new_session_url(email: @email) %>
+
+The link opens the sign-in form with your address already in it, and it does not expire.
+Nothing is sent until you press the form's button, which emails you a sign-in link.
