@@ -11,6 +11,23 @@ RSpec.describe "Authentication", type: :system do
     expect(page).to have_current_path root_path
   end
 
+  # The route #208 gives somebody an owner or administrator added: the welcome mail's link opens the
+  # sign-in form already holding their address, the button asks for a sign-in link, and that link
+  # lands them where the group they were added to is listed. The sign-in link is minted rather than
+  # read out of a delivered mail, which is what `sign_in_through_the_browser` already does.
+  it "signs an added member in from the welcome mail, landing where their group is listed" do
+    member = Member.create!(group: create(:group, name: "Riverside Choir"), email: "added@example.com")
+    link   = URI.parse(MemberMailer.welcome(member).body.encoded[%r{https?://\S+?/session/new\?email=[^\s"<]+}])
+
+    visit link.request_uri
+    expect(page).to have_field "Email", with: "added@example.com"
+    click_button "Email me a sign-in link"
+    expect(page).to have_text "Check your inbox"
+
+    sign_in_through_the_browser member.user
+    expect(page).to have_text "Riverside Choir"
+  end
+
   # Guards the helper every other system spec depends on: a cookie the browser rejects would make
   # each of them fail as though its own subject were broken.
   it "signs in without the browser when the cookie helper is used" do
