@@ -8,6 +8,7 @@ RSpec.describe "The member edit page", type: :system do
     before do
       member = create(:member, :owner, :with_all_attributes)
       sign_in_as member.user
+      prefer_colour_scheme :light
 
       visit edit_group_member_path(member.group, member)
       select "inactive", from: "member_status"
@@ -20,7 +21,8 @@ RSpec.describe "The member edit page", type: :system do
       expect(style_of["select#member_status", "borderTopColor"]).to eq style_of["#member_status_error", "color"]
     end
 
-    it "has no accessibility violations" do
+    it "has no accessibility violations in light" do
+      expect(rendered_colour_scheme).to eq "light"
       expect(page).to be_accessible
     end
   end
