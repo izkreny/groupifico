@@ -54,7 +54,7 @@ A cell marked `x` means the column grants the capability. A blank means it does 
 | Capability                                             | member | owner | administrator | events_administrator | members_administrator |
 |--------------------------------------------------------|:------:|:-----:|:-------------:|:--------------------:|:---------------------:|
 | See the member list and each member's details          |   x    |   x   |       x       |          x           |           x           |
-| Add a person to the group                              |        |   x   |       x       |                      |           x           |
+| Add a person to the group by their email address       |        |   x   |       x       |                      |           x           |
 | Change a member's status                               |        |   x   |       x       |                      |           x           |
 | Grant or revoke a member's roles other than owner      |        |   x   |               |                      |                       |
 | Remove a member from the group                         |        |   x   |       x       |                      |           x           |
@@ -81,6 +81,8 @@ A cell marked `x` means the column grants the capability. A blank means it does 
 Every rule the tables decide carries an example per role column in `spec/policies/`, named after the capability rather than the controller action: `succeed` where the row marks the column and `failed` where it leaves it blank. That is what stops the tables and the code drifting apart, and the refusals are as load-bearing as the grants, because `ActionPolicy::Base` answers a misspelled rule name with a denial that looks exactly like a considered one - so a rule proven only by its grants and one proven only by its denials are both unproven.
 
 Two rows have no rule of their own and are proven where they are decided rather than where they are written: the group's home address, which `AddressPolicy` inherits from `GroupPolicy#update?`, and duplicating an event, which authorizes `EventPolicy#create?` and shares its examples.
+
+**Inviting somebody is adding them, and has no rule of its own.** The member form names the person by email address, and an address no account holds becomes a user in the same save, so who may invite is exactly the *Add a person* row, `MemberPolicy#create?`. A role granted at invitation is still the owner's alone, asked by the second question below exactly as it is on an existing member.
 
 **Two capabilities are not controller actions and are asked as a second question.** `MemberPolicy#manage_roles?` decides the two role rows, and `MembersController` asks it whenever the posted roles differ from the ones the member holds - the set rather than the key's presence. The member form draws its role checkboxes only for an acting user `manage_roles?` admits, so this matters for a form loaded while its acting user could grant roles and submitted after they no longer can, whose status change still goes through. `RegistrationPolicy#manage_answers?` decides which statuses the actor may write, and `RegistrationsController` asks it whenever the posted status is not one a member says about themselves, because a posted status is not on the record when `update?` runs.
 
