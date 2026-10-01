@@ -170,6 +170,7 @@
 .btn:focus-visible,
 .btn:has(:focus-visible),
 .checkbox:focus-visible,
+.radio:focus-visible,
 :is(.input, .select, .textarea):is(:focus-within, :open) {
   outline: none;
   border: 2px solid var(--color-primary);
