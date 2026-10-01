@@ -32,15 +32,18 @@ The unique index `index_members_on_user_id_and_group_id` refuses a second member
 - `app/views/members/_form.html.erb`: the email field, drawn for a new record only; `spec/system/member_new_page_spec.rb` (new) for what the browser adds, the rejected field's message painting and no accessibility violations
 - `spec/requests/sessions_spec.rb`: `GET /session/new?email=…` renders the address in the field and enqueues no mail; `spec/system/authentication_spec.rb` gains the invited person's whole route, from the welcome mail's link through the button to a root listing the group
 - `docs/AUTHORIZATION.md`: the *Add a person to the group* row says it is done by email address, with a sentence on why inviting needs no rule of its own
+- `app/models/member.rb`: the repeat-membership refusal guards every save rather than only create, excluding the record itself, which is #91's uniqueness validation
+- `db/migrate/20261001120000_add_first_signed_in_at_to_users.rb` (new) adds `users.first_signed_in_at`, backfilled from `created_at`; `app/models/session.rb` sets it when a user's first session is created; `app/views/members/_member.html.erb` marks a member whose user has none as "not signed in yet" for a reader `MemberPolicy#edit?` admits, with request specs, `spec/system/members_list_spec.rb` (new) for the mark painting, and a sentence in `docs/AUTHORIZATION.md`
 
 ## Verification
 
-- `bin/ci`
+- `bin/ci` is green, or red only on axe's `color-contrast` for `.validator-hint` in the light theme (2.87:1), which fails on `main` too until #257 and #299 land
 
 It cannot see a real mail client: whether the welcome mail reads well, and whether a real mail filter following the link leaves the inbox empty, are the owner's to judge on a deployed environment.
 
-## Open questions
+## Settled
 
-- **Whether an administrator can see that an invited person has never signed in.** The issue asks for this to be decided before building; assumed out of scope here, so nothing is added to `Member` or `User` for it.
-- **Whether this PR closes #91.** It is a `draft` with no criteria and no milestone, but the uniqueness validation it describes is what the repeat-invitation criterion needs, so it lands here; assumed the owner closes #91 by hand, so the body does not say `Closes #91`.
-- **Re-inviting a member whose status is `inactive`.** Assumed refused like any other existing membership, since an owner or administrator can set the status back on the member's own page; reactivating on invitation would be a second way to change a status.
+- **Whether an administrator can see that an invited person has never signed in.** Yes, and it is built here: `users.first_signed_in_at`, set when a user's first session is created, drives a "not signed in yet" mark on the member list for a reader who manages members.
+- **Whether this PR closes #91.** Yes: its uniqueness validation is folded in, guarding every save, and the PR body says `Closes #91`.
+- **Re-inviting a member whose status is `inactive`.** Refused like any other existing membership, because bringing somebody back is a status change rather than an invitation.
+- **Whether the `bin/ci` gate admits the light-theme `.validator-hint` contrast failure that is red on `main`.** Yes, in the wording #313 and #316 carried, settled by the owner in the session.
