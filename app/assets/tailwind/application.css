@@ -138,9 +138,9 @@
   --text-meta: 0.75rem;         /* 12px */
 }
 
-/* WHY: on the elements rather than through `font-heading`, since every title in the app is one of
-   these and none carries a font utility. Caprasimo ships only 400, and `card-title` asks for 600,
-   which Chrome would fake by thickening every stroke until the letters touch. */
+/* WHY: on the elements rather than through `font-heading`, since almost every title in the app is
+   one of these; the few that are not carry the utility. Caprasimo ships only 400, and `card-title`
+   asks for 600, which Chrome would fake by thickening every stroke until the letters touch. */
 @layer base {
   h1, h2, h3 {
     font-family: var(--font-heading);
