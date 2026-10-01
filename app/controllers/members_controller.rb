@@ -85,7 +85,7 @@ class MembersController < ApplicationController
     # Used on update: user_id stays out, so an existing membership cannot be handed to a
     # different user. Who may set a role is `MemberPolicy#manage_roles?`, asked above.
     def member_params
-      role_records params.expect(member: [ :status, roles: [] ])
+      role_records params.expect(member: [ :status, roles: [] ]), held: @member.roles
     end
 
     # A posted `roles` key that changes nothing is not a grant. #193 puts role checkboxes on the
@@ -102,13 +102,18 @@ class MembersController < ApplicationController
     # Roles arrive as names and the association writer wants records, so the swap happens here
     # rather than as a second writer on the model that accepts both. Repeats collapse, and an empty
     # list stays an instruction rather than an omission, and it means "hold no roles".
-    def role_records(permitted)
+    #
+    # WHY: a name the member already holds keeps its row. Swapping it for a fresh record destroys
+    # the old row first, and `Role`'s owner guard refuses that for the group's last owner even
+    # though the role stays, so the only owner could not save their own form at all.
+    def role_records(permitted, held: [])
       return permitted unless permitted.key?(:roles)
 
       role_names = permitted[:roles].compact_blank.uniq
       raise Role::UnknownName if role_names.difference(Role::NAMES).any?
 
-      permitted.merge(roles: role_names.map { Role.new(name: it) })
+      held_by_name = held.index_by(&:name)
+      permitted.merge(roles: role_names.map { held_by_name[it] || Role.new(name: it) })
     end
 
     def refuse_unknown_role

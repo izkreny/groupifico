@@ -425,6 +425,16 @@ RSpec.describe "Members", type: :request do
         expect(member.reload.roles).to be_empty
       end
 
+      it "saves their own form posting the roles they already hold, as the group's only owner" do
+        owner = create(:member, :active, :owner)
+        sign_in_as(owner.user)
+
+        patch group_member_path(owner.group, owner), params: { member: { status: "active", roles: [ "", "owner" ] } }
+
+        expect(flash[:alert]).to be_nil
+        expect(flash[:notice]).to eq "Member was successfully updated."
+      end
+
       it "grants a role posted twice exactly once" do
         owner  = create(:member, :active, :owner)
         member = create(:member, group: owner.group)
