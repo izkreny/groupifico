@@ -250,7 +250,7 @@ RSpec.describe "Members", type: :request do
       it "redirects to the sign-in page" do
         group = create(:group)
 
-        post group_members_path(group), params: { member: { user_id: create(:user).id } }
+        post group_members_path(group), params: { member: { email: create(:user).email } }
 
         expect(response).to redirect_to new_session_path
       end
@@ -262,7 +262,7 @@ RSpec.describe "Members", type: :request do
         user  = create(:user)
         sign_in_as(user)
 
-        expect { post group_members_path(group), params: { member: { user_id: user.id } } }
+        expect { post group_members_path(group), params: { member: { email: user.email } } }
           .not_to change(Member, :count)
 
         expect(response).to have_http_status :not_found
@@ -275,7 +275,7 @@ RSpec.describe "Members", type: :request do
         invitee = create(:user)
         sign_in_as(actor.user)
 
-        expect { post group_members_path(actor.group), params: { member: { user_id: invitee.id, roles: [ "events_administrator", "bogus" ] } } }
+        expect { post group_members_path(actor.group), params: { member: { email: invitee.email, roles: [ "events_administrator", "bogus" ] } } }
           .not_to change(Member, :count)
 
         expect(response).to have_http_status :unprocessable_content
@@ -286,7 +286,7 @@ RSpec.describe "Members", type: :request do
         invitee = create(:user)
         sign_in_as(actor.user)
 
-        post group_members_path(actor.group), params: { member: { user_id: invitee.id, roles: [ "events_administrator" ] } }
+        post group_members_path(actor.group), params: { member: { email: invitee.email, roles: [ "events_administrator" ] } }
 
         expect(Member.find_by(user: invitee).roles.map(&:name)).to eq [ "events_administrator" ]
       end
@@ -298,17 +298,47 @@ RSpec.describe "Members", type: :request do
         invitee = create(:user)
         sign_in_as(actor.user)
 
-        expect { post group_members_path(actor.group), params: { member: { user_id: invitee.id } } }
+        expect { post group_members_path(actor.group), params: { member: { email: invitee.email } } }
           .to change(Member, :count).by(1)
 
         expect(response).to redirect_to group_member_path(actor.group, Member.find_by!(user: invitee, group: actor.group))
+      end
+
+      it "creates the user too when no account holds the address" do
+        actor = create(:member, :active, :members_administrator)
+        sign_in_as(actor.user)
+
+        expect { post group_members_path(actor.group), params: { member: { email: "new.person@example.com" } } }
+          .to change(User, :count).by(1)
+
+        expect(actor.group.members.where(user: User.find_by!(email: "new.person@example.com"))).to exist
+      end
+
+      it "emails the person added a link to the sign-in form" do
+        actor = create(:member, :active, :members_administrator)
+        sign_in_as(actor.user)
+
+        expect { post group_members_path(actor.group), params: { member: { email: "new.person@example.com" } } }
+          .to have_enqueued_mail(MemberMailer, :welcome)
+      end
+
+      it "refuses an address that already belongs to the group, saying so and emailing nobody" do
+        actor    = create(:member, :active, :members_administrator)
+        existing = create(:member, group: actor.group)
+        sign_in_as(actor.user)
+
+        expect { post group_members_path(actor.group), params: { member: { email: existing.user.email } } }
+          .not_to have_enqueued_mail(MemberMailer, :welcome)
+
+        expect(response).to have_http_status :unprocessable_content
+        expect(response.body).to include "already belongs to a member of this group"
       end
 
       it "re-renders the new page when the member is invalid" do
         actor = create(:member, :active, :members_administrator)
         sign_in_as(actor.user)
 
-        expect { post group_members_path(actor.group), params: { member: { user_id: "" } } }
+        expect { post group_members_path(actor.group), params: { member: { email: "" } } }
           .not_to change(Member, :count)
 
         expect(response).to have_http_status :unprocessable_content
@@ -324,7 +354,7 @@ RSpec.describe "Members", type: :request do
         invitee = create(:user)
         sign_in_as(actor.user)
 
-        expect { post group_members_path(actor.group), params: { member: { user_id: invitee.id } } }
+        expect { post group_members_path(actor.group), params: { member: { email: invitee.email } } }
           .to change(Member, :count).by(1)
       end
 
@@ -333,7 +363,7 @@ RSpec.describe "Members", type: :request do
         invitee = create(:user)
         sign_in_as(actor.user)
 
-        expect { post group_members_path(actor.group), params: { member: { user_id: invitee.id, roles: [ "events_administrator" ] } } }
+        expect { post group_members_path(actor.group), params: { member: { email: invitee.email, roles: [ "events_administrator" ] } } }
           .not_to change(Member, :count)
 
         expect(response).to redirect_to root_path
@@ -346,7 +376,7 @@ RSpec.describe "Members", type: :request do
         invitee = create(:user)
         sign_in_as(actor.user)
 
-        expect { post group_members_path(actor.group), params: { member: { user_id: invitee.id } } }
+        expect { post group_members_path(actor.group), params: { member: { email: invitee.email } } }
           .not_to change(Member, :count)
 
         expect(response).to redirect_to root_path
@@ -359,7 +389,7 @@ RSpec.describe "Members", type: :request do
         invitee = create(:user)
         sign_in_as(actor.user)
 
-        expect { post group_members_path(actor.group), params: { member: { user_id: invitee.id } } }
+        expect { post group_members_path(actor.group), params: { member: { email: invitee.email } } }
           .not_to change(Member, :count)
 
         expect(response).to redirect_to root_path
@@ -497,6 +527,18 @@ RSpec.describe "Members", type: :request do
         sign_in_as(actor.user)
 
         patch group_member_path(member.group, member), params: { member: { user_id: other_user.id } }
+
+        expect(member.reload.user).to eq original_user
+      end
+
+      it "ignores a posted email, leaving the membership with the user it had" do
+        actor  = create(:member, :active, :members_administrator)
+        member = create(:member, group: actor.group)
+        original_user = member.user
+        other_user = create(:user)
+        sign_in_as(actor.user)
+
+        patch group_member_path(member.group, member), params: { member: { email: other_user.email } }
 
         expect(member.reload.user).to eq original_user
       end

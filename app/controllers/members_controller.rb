@@ -39,7 +39,11 @@ class MembersController < ApplicationController
     authorize! @member
     authorize! @member, to: :manage_roles? if @member.roles.any?
 
+    # WHY: sent from here rather than from a callback on `Member`, which would also mail every owner
+    # `Group#add_owner` makes for themselves when they start a group.
     if @member.save
+      MemberMailer.welcome(@member).deliver_later
+
       redirect_to group_member_path(@group, @member),
         notice: "Member was successfully created."
     else
@@ -77,12 +81,13 @@ class MembersController < ApplicationController
       @member = @group.members.find(params.expect(:id))
     end
 
-    # Used on create: deciding which person a membership is for is what creating one means.
+    # Used on create: deciding which person a membership is for is what creating one means, and the
+    # person is named by their address, which `Member#email=` resolves to a user.
     def new_member_params
-      role_records params.expect(member: [ :status, :user_id, roles: [] ])
+      role_records params.expect(member: [ :status, :email, roles: [] ])
     end
 
-    # Used on update: user_id stays out, so an existing membership cannot be handed to a
+    # Used on update: the address stays out, so an existing membership cannot be handed to a
     # different user. Who may set a role is `MemberPolicy#manage_roles?`, asked above.
     def member_params
       role_records params.expect(member: [ :status, roles: [] ]), held: @member.roles
