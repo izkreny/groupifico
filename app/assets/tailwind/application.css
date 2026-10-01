@@ -2,12 +2,79 @@
 
 @source not "./daisyui{,*}.mjs";
 
-/* Written out rather than left to daisyUI's own default, which is these same two themes: the pair
-   this application ships on is a decision, and #257 replaces this list with the organic theme. */
+/* The organic theme, #257: light by default and dark for `prefers-color-scheme: dark`. Every value,
+   and the contrast each one was measured at, is in that issue; `docs/design/organic-theme.html` is
+   the page the palette was settled on. */
 @plugin "./daisyui.mjs" {
-  themes:
-    light --default,
-    dark --prefersdark;
+  themes: false;
+}
+
+@plugin "./daisyui-theme.mjs" {
+  name: "organic";
+  default: true;
+  color-scheme: light;
+  --color-base-100: #f5ead8;
+  --color-base-200: #ebddc5;
+  --color-base-300: #dcd3c4;
+  --color-base-content: #201e1d;
+  --color-primary: #8c491a;
+  --color-primary-content: #f9f4ed;
+  --color-secondary: #526539;
+  --color-secondary-content: #f9f4ed;
+  --color-accent: #8c491a;
+  --color-accent-content: #f9f4ed;
+  --color-neutral: #474238;
+  --color-neutral-content: #f9f4ed;
+  --color-info: #266595;
+  --color-info-content: #e7f4ff;
+  --color-success: #286f2f;
+  --color-success-content: #e6f8e6;
+  --color-warning: #e2ba00;
+  --color-warning-content: #201e1d;
+  --color-error: #b32e2a;
+  --color-error-content: #ffedeb;
+  --radius-selector: 9999px;
+  --radius-field: 9999px;
+  --radius-box: 1.75rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+@plugin "./daisyui-theme.mjs" {
+  name: "organic-dark";
+  prefersdark: true;
+  color-scheme: dark;
+  --color-base-100: #2e2b25;
+  --color-base-200: #474238;
+  --color-base-300: #645c50;
+  --color-base-content: #f9f4ed;
+  --color-primary: #e09675;
+  --color-primary-content: #402310;
+  --color-secondary: #aebf92;
+  --color-secondary-content: #272e1b;
+  --color-accent: #e09675;
+  --color-accent-content: #402310;
+  --color-neutral: #645c50;
+  --color-neutral-content: #f9f4ed;
+  --color-info: #79b1e0;
+  --color-info-content: #201e1d;
+  --color-success: #7dbd7f;
+  --color-success-content: #201e1d;
+  --color-warning: #e2ba00;
+  --color-warning-content: #201e1d;
+  --color-error: #ff6f69;
+  --color-error-content: #201e1d;
+  --radius-selector: 9999px;
+  --radius-field: 9999px;
+  --radius-box: 1.75rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
 }
 
 /* Vendored from Google Fonts under the licence in `app/assets/fonts/OFL.txt`. Propshaft treats
@@ -79,4 +146,31 @@
     font-family: var(--font-heading);
     font-synthesis: none;
   }
+}
+
+/* WHY: unlayered, so each rule beats daisyUI's layered component CSS whatever its specificity.
+   daisyUI's input border, base-content at 20%, is 1.5:1 on this ground where a field's boundary
+   needs 3:1; its placeholder at 50% is 3.1:1 and its label at 60% is 4.1:1, where text needs 4.5:1.
+   A rejected field keeps its own red border, and `validator` is applied only to those. */
+:where(.input, .select):not(.input-error, .select-error, .validator) {
+  --input-color: color-mix(in oklab, var(--color-base-content) 50%, #0000);
+}
+
+::placeholder {
+  color: color-mix(in oklab, var(--color-base-content) 65%, #0000);
+  opacity: 1;
+}
+
+.label {
+  color: color-mix(in oklab, currentcolor 65%, #0000);
+}
+
+/* WHY: keyboard focus thickens the border in primary instead of daisyUI's offset outline ring.
+   `:focus-visible` on a button, so a mouse click leaves it alone. */
+.btn:focus-visible,
+:is(.input, .select):is(:focus-within, :open) {
+  outline: none;
+  border: 2px solid var(--color-primary);
+  --btn-border: var(--color-primary);
+  --input-color: var(--color-primary);
 }
