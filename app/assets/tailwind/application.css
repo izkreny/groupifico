@@ -152,7 +152,7 @@
    daisyUI's input border, base-content at 20%, is 1.5:1 on this ground where a field's boundary
    needs 3:1; its placeholder at 50% is 3.1:1 and its label at 60% is 4.1:1, where text needs 4.5:1.
    A rejected field keeps its own red border, and `validator` is applied only to those. */
-:where(.input, .select):not(.input-error, .select-error, .validator) {
+:where(.input, .select, .textarea):not(.input-error, .select-error, .textarea-error, .validator) {
   --input-color: color-mix(in oklab, var(--color-base-content) 50%, #0000);
 }
 
