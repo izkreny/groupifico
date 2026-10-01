@@ -64,6 +64,18 @@ RSpec.describe "Members", type: :request do
         expect(row.text).to include "not signed in yet"
       end
 
+      # The mark is a read, and a paused member keeps every read.
+      it "still marks a member who has never signed in while the reader is paused" do
+        actor = create(:member, :paused, :members_administrator)
+        added = create(:member, group: actor.group, user: create(:user, first_signed_in_at: nil))
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group)
+
+        row = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(added, :row)}")
+        expect(row.text).to include "not signed in yet"
+      end
+
       it "leaves unmarked a member who has signed in" do
         actor  = create(:member, :active, :members_administrator)
         joined = create(:member, group: actor.group, user: create(:user, first_signed_in_at: 1.day.ago))
