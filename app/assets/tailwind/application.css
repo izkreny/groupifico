@@ -2,26 +2,191 @@
 
 @source not "./daisyui{,*}.mjs";
 
-/* Written out rather than left to daisyUI's own default, which is these same two themes: the pair
-   this application ships on is a decision, and #257 replaces this list with the organic theme. */
+/* The organic theme, #257: light by default and dark for `prefers-color-scheme: dark`. Every value,
+   and the contrast each one was measured at, is in that issue; `docs/design/organic-theme.html` is
+   the page the palette was settled on. */
 @plugin "./daisyui.mjs" {
-  themes:
-    light --default,
-    dark --prefersdark;
+  themes: false;
+}
+
+@plugin "./daisyui-theme.mjs" {
+  name: "organic";
+  default: true;
+  color-scheme: light;
+  --color-base-100: #f5ead8;
+  --color-base-200: #ebddc5;
+  --color-base-300: #dcd3c4;
+  --color-base-content: #201e1d;
+  --color-primary: #8c491a;
+  --color-primary-content: #f9f4ed;
+  --color-secondary: #526539;
+  --color-secondary-content: #f9f4ed;
+  --color-accent: #8c491a;
+  --color-accent-content: #f9f4ed;
+  --color-neutral: #474238;
+  --color-neutral-content: #f9f4ed;
+  --color-info: #266595;
+  --color-info-content: #e7f4ff;
+  --color-success: #286f2f;
+  --color-success-content: #e6f8e6;
+  --color-warning: #e2ba00;
+  --color-warning-content: #201e1d;
+  --color-error: #b32e2a;
+  --color-error-content: #ffedeb;
+  --radius-selector: 9999px;
+  --radius-field: 9999px;
+  --radius-box: 1.75rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+@plugin "./daisyui-theme.mjs" {
+  name: "organic-dark";
+  prefersdark: true;
+  color-scheme: dark;
+  --color-base-100: #2e2b25;
+  --color-base-200: #474238;
+  --color-base-300: #645c50;
+  --color-base-content: #f9f4ed;
+  --color-primary: #e09675;
+  --color-primary-content: #402310;
+  --color-secondary: #aebf92;
+  --color-secondary-content: #272e1b;
+  --color-accent: #e09675;
+  --color-accent-content: #402310;
+  --color-neutral: #645c50;
+  --color-neutral-content: #f9f4ed;
+  --color-info: #79b1e0;
+  --color-info-content: #201e1d;
+  --color-success: #7dbd7f;
+  --color-success-content: #201e1d;
+  --color-warning: #e2ba00;
+  --color-warning-content: #201e1d;
+  --color-error: #ff6f69;
+  --color-error-content: #201e1d;
+  --radius-selector: 9999px;
+  --radius-field: 9999px;
+  --radius-box: 1.75rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+/* Vendored from Google Fonts under the licence in `app/assets/fonts/OFL.txt`. Propshaft treats
+   `app/assets/fonts/` as a load path of its own, so a leading slash names a file in it, and the
+   built stylesheet carries the digested path. Figtree is one variable file per subset, 400 to 700. */
+@font-face {
+  font-family: "Caprasimo";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/caprasimo-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "Caprasimo";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/caprasimo-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Figtree";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/figtree-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "Figtree";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/figtree-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
 /* Tailwind's own scale has no size for 13, 22 or 25, so those three rungs cannot be spelled with
-   `text-xs` and friends. #257 retunes the ladder for the organic theme.
+   `text-xs` and friends.
 
    In `rem` for the reason Tailwind's own scale is: `px` is absolute, so a reader who raises the
    browser's default font size scales every daisyUI component and none of these. Measured over the
    DevTools Protocol - at a 24px root, `text-xs` went 12px to 18px while an 11px rung stayed 11px.
-   The comments are the criterion's px, and each rem is that number over 16. */
+   The comments are the criterion's px, and each rem is that number over 16.
+
+   `--font-sans` is what Tailwind's preflight puts on the root, so Figtree reaches everything that
+   names no family. */
 @theme {
+  --font-sans: "Figtree", system-ui, sans-serif;
+  --font-heading: "Caprasimo", system-ui, sans-serif;
+
   --text-record: 1.5625rem;     /* 25px */
   --text-hero: 1.375rem;        /* 22px */
   --text-shell: 1.25rem;        /* 20px */
   --text-row-title: 1rem;       /* 16px */
   --text-card-fact: 0.8125rem;  /* 13px */
   --text-meta: 0.75rem;         /* 12px */
+}
+
+/* WHY: on the elements rather than through `font-heading`, since almost every title in the app is
+   one of these; the few that are not carry the utility. Caprasimo ships only 400, and `card-title`
+   asks for 600, which Chrome would fake by thickening every stroke until the letters touch. */
+@layer base {
+  h1, h2, h3 {
+    font-family: var(--font-heading);
+    font-synthesis: none;
+  }
+}
+
+/* WHY: unlayered, so each rule beats daisyUI's layered component CSS whatever its specificity.
+   daisyUI's input border, base-content at 20%, is 1.5:1 on this ground where a field's boundary
+   needs 3:1; its placeholder at 50% is 3.1:1 and its label at 60% is 4.1:1, where text needs 4.5:1.
+   A rejected field keeps its own red border, and `validator` is applied only to those. */
+:where(.input, .select, .textarea):not(.input-error, .select-error, .textarea-error, .validator) {
+  --input-color: color-mix(in oklab, var(--color-base-content) 50%, #0000);
+}
+
+::placeholder {
+  color: color-mix(in oklab, var(--color-base-content) 65%, #0000);
+  opacity: 1;
+}
+
+.label {
+  color: color-mix(in oklab, currentcolor 65%, #0000);
+}
+
+/* WHY: keyboard focus thickens the border in primary instead of daisyUI's offset outline ring.
+   `:focus-visible` on a button, so a mouse click leaves it alone. */
+.btn:focus-visible,
+.btn:has(:focus-visible),
+.radio:focus-visible,
+:is(.input, .select, .textarea):is(:focus-within, :open) {
+  outline: none;
+  border: 2px solid var(--color-primary);
+  --btn-border: var(--color-primary);
+  --input-color: var(--color-primary);
+}
+
+/* WHY: a primary border cannot show on a primary fill, so a focused button is also lined inside in
+   the ground colour, 5.7:1 against the fill in light and 5.9:1 in dark, and still draws no ring. */
+.btn:focus-visible,
+.btn:has(:focus-visible) {
+  box-shadow: inset 0 0 0 2px var(--color-base-100);
+}
+
+/* WHY: apart from the rule above, because daisyUI fills a ticked checkbox with `--input-color`, and
+   primary under the base-content tick reads 2.4:1. */
+.checkbox:focus-visible {
+  outline: none;
+  border: 2px solid var(--color-primary);
 }

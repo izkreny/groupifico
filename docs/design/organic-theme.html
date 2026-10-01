@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en" data-theme="organic">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Organic theme inspection</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caprasimo&family=Figtree:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<style type="text/tailwindcss">
+  @theme {
+    --font-heading: "Caprasimo", system-ui, sans-serif;
+    --font-body: "Figtree", system-ui, sans-serif;
+  }
+  .font-heading { font-synthesis: none; }
+</style>
+<style>
+  /* CDN theme syntax, as the Blueprint setup step gives it. The real theme is a @plugin block in application.css. */
+  :where(:root),
+  [data-theme="organic"] {
+    color-scheme: light;
+    --color-base-100: #f5ead8;
+    --color-base-200: #ebddc5;
+    --color-base-300: #dcd3c4;
+    --color-base-content: #201e1d;
+    --color-primary: #8c491a;
+    --color-primary-content: #f9f4ed;
+    --color-secondary: #526539;
+    --color-secondary-content: #f9f4ed;
+    --color-accent: #8c491a;
+    --color-accent-content: #f9f4ed;
+    --color-neutral: #474238;
+    --color-neutral-content: #f9f4ed;
+    --color-info: #266595;
+    --color-info-content: #e7f4ff;
+    --color-success: #286f2f;
+    --color-success-content: #e6f8e6;
+    --color-warning: #e2ba00;
+    --color-warning-content: #201e1d;
+    --color-error: #b32e2a;
+    --color-error-content: #ffedeb;
+    --radius-selector: 9999px;
+    --radius-field: 9999px;
+    --radius-box: 1.75rem;
+    --size-selector: 0.25rem;
+    --size-field: 0.25rem;
+    --border: 1px;
+    --depth: 0;
+    --noise: 0;
+    --focus-border: var(--color-primary);
+  }
+  [data-theme="organic-dark"] {
+    color-scheme: dark;
+    --color-base-100: #2e2b25;
+    --color-base-200: #474238;
+    --color-base-300: #645c50;
+    --color-base-content: #f9f4ed;
+    --color-primary: #e09675;
+    --color-primary-content: #402310;
+    --color-secondary: #aebf92;
+    --color-secondary-content: #272e1b;
+    --color-accent: #e09675;
+    --color-accent-content: #402310;
+    --color-neutral: #645c50;
+    --color-neutral-content: #f9f4ed;
+    --color-info: #79b1e0;
+    --color-info-content: #201e1d;
+    --color-success: #7dbd7f;
+    --color-success-content: #201e1d;
+    --color-warning: #e2ba00;
+    --color-warning-content: #201e1d;
+    --color-error: #ff6f69;
+    --color-error-content: #201e1d;
+    --radius-selector: 9999px;
+    --radius-field: 9999px;
+    --radius-box: 1.75rem;
+    --size-selector: 0.25rem;
+    --size-field: 0.25rem;
+    --border: 1px;
+    --depth: 0;
+    --noise: 0;
+    --focus-border: var(--color-primary);
+  }
+  @media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+      color-scheme: dark;
+      --color-base-100: #2e2b25;
+      --color-base-200: #474238;
+      --color-base-300: #645c50;
+      --color-base-content: #f9f4ed;
+      --color-primary: #e09675;
+      --color-primary-content: #402310;
+      --color-secondary: #aebf92;
+      --color-secondary-content: #272e1b;
+      --color-accent: #e09675;
+      --color-accent-content: #402310;
+      --color-neutral: #645c50;
+      --color-neutral-content: #f9f4ed;
+      --color-info: #79b1e0;
+      --color-info-content: #201e1d;
+      --color-success: #7dbd7f;
+      --color-success-content: #201e1d;
+      --color-warning: #e2ba00;
+      --color-warning-content: #201e1d;
+      --color-error: #ff6f69;
+      --color-error-content: #201e1d;
+      --radius-selector: 9999px;
+      --radius-field: 9999px;
+      --radius-box: 1.75rem;
+      --size-selector: 0.25rem;
+      --size-field: 0.25rem;
+      --border: 1px;
+      --depth: 0;
+      --noise: 0;
+      --focus-border: var(--color-primary);
+  }
+  }
+  /* Preview of the theme's AA overrides on daisyUI defaults. */
+  .tab:not(:checked, .tab-active) { color: color-mix(in oklab, var(--color-base-content) 75%, #0000); }
+  .tabs-box > .tab:is(input:checked) { --tab-bg: var(--color-primary); color: var(--color-primary-content); }
+  :where(.input:not(.input-error), .select:not(.select-error)) { --input-color: color-mix(in oklab, var(--color-base-content) 50%, #0000); }
+  ::placeholder { color: color-mix(in oklab, var(--color-base-content) 65%, #0000) !important; opacity: 1 !important; }
+  /* Preview of the theme's focus rule: 2px border in --focus-border, no ring. */
+  :is(.btn, .tab):focus-visible,
+  :is(.input, .select):is(:focus-within, :open) { outline: none !important; border-width: 2px !important; border-style: solid !important; border-color: var(--focus-border) !important; --btn-border: var(--focus-border); --input-color: var(--focus-border); }
+</style>
+</head>
+<body class="bg-base-100 text-base-content font-body min-h-screen">
+<main class="mx-auto max-w-5xl px-4 py-8 flex flex-col gap-10">
+
+  <header class="flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <h1 class="font-heading text-[25px] leading-tight">Organic theme, every colour</h1>
+      <p class="text-[13px] opacity-80">Temporary inspection page for #257. daisyUI 5 from the CDN, fonts from Google Fonts for this page only; the real theme vendors the woff2 files.</p>
+    </div>
+    <div role="tablist" class="tabs tabs-box tabs-sm" id="theme-switch">
+      <input type="radio" name="theme" class="tab" aria-label="Light" value="organic" checked>
+      <input type="radio" name="theme" class="tab" aria-label="Dark" value="organic-dark">
+      <input type="radio" name="theme" class="tab" aria-label="System" value="">
+    </div>
+  </header>
+
+  <section class="flex flex-col gap-3">
+    <h2 class="font-heading text-[22px]">1. The daisyUI tokens, as painted</h2>
+    <p class="text-[13px] opacity-80">Hex values are read back from the rendered swatch, so what you see is what the theme paints. "Pair" is the WCAG ratio of the token against the colour it is used with. 4.5:1 clears AA for text, 3:1 clears it for large text and interface chrome.</p>
+    <div class="overflow-x-auto">
+      <table class="table table-sm" id="tokens">
+        <thead><tr><th>Token</th><th>Swatch</th><th>Hex</th><th>Source</th><th>Pair</th><th>On base-100</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="flex flex-col gap-4">
+    <h2 class="font-heading text-[22px]">2. Components on the theme</h2>
+    <div class="flex flex-wrap items-center gap-2">
+      <button class="btn btn-sm btn-primary">Primary</button>
+      <button class="btn btn-sm btn-secondary">Secondary</button>
+      <button class="btn btn-sm btn-accent">Accent</button>
+      <button class="btn btn-sm btn-neutral">Neutral</button>
+      <button class="btn btn-sm">Default</button>
+      <button class="btn btn-sm btn-outline btn-primary">Outline</button>
+      <button class="btn btn-sm btn-soft btn-primary">Soft</button>
+      <button class="btn btn-sm btn-ghost">Ghost</button>
+      <button class="btn btn-sm btn-error">Error</button>
+      <button class="btn btn-sm" disabled>Disabled</button>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+      <fieldset class="fieldset">
+        <label class="label" for="sample-input">Name</label>
+        <input id="sample-input" type="text" autocomplete="off" placeholder="Type here" class="input input-sm">
+      </fieldset>
+      <fieldset class="fieldset">
+        <label class="label" for="sample-select">Role</label>
+        <select id="sample-select" class="select select-sm"><option>Member</option><option>Organiser</option></select>
+      </fieldset>
+      <fieldset class="fieldset">
+        <label class="label" for="error-input">Email</label>
+        <input id="error-input" type="email" autocomplete="off" placeholder="Invalid" class="input input-sm input-error">
+      </fieldset>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="badge badge-sm">Default</span>
+      <span class="badge badge-sm badge-primary">Primary</span>
+      <span class="badge badge-sm badge-secondary">Secondary</span>
+      <span class="badge badge-sm badge-accent">Accent</span>
+      <span class="badge badge-sm badge-neutral">Neutral</span>
+      <span class="badge badge-sm badge-soft badge-primary">Soft primary</span>
+      <span class="badge badge-sm badge-outline badge-secondary">Outline secondary</span>
+      <span class="badge badge-sm badge-info">Info</span>
+      <span class="badge badge-sm badge-success">Success</span>
+      <span class="badge badge-sm badge-warning">Warning</span>
+      <span class="badge badge-sm badge-error">Error</span>
+    </div>
+    <div class="flex flex-wrap items-center gap-4">
+      <div role="tablist" class="tabs tabs-box tabs-sm">
+        <input type="radio" name="segment" class="tab" aria-label="Upcoming" checked>
+        <input type="radio" name="segment" class="tab" aria-label="Past">
+        <input type="radio" name="segment" class="tab" aria-label="Mine">
+      </div>
+      <div class="join">
+        <input class="join-item btn btn-sm" type="radio" name="join-options" aria-label="Day" checked>
+        <input class="join-item btn btn-sm" type="radio" name="join-options" aria-label="Week">
+        <input class="join-item btn btn-sm" type="radio" name="join-options" aria-label="Month">
+      </div>
+    </div>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div class="card card-sm bg-base-200">
+        <div class="card-body">
+          <h3 class="card-title font-heading">Surface card</h3>
+          <p>A card on base-200, the design's surface, with the box radius at 28px.</p>
+          <div class="card-actions justify-end"><button class="btn btn-sm btn-primary">Join</button></div>
+        </div>
+      </div>
+      <div class="card card-sm card-border bg-base-100">
+        <div class="card-body">
+          <h3 class="card-title font-heading">Bordered card</h3>
+          <p>A card on base-100 with the border colour daisyUI derives from base-300.</p>
+          <div class="card-actions justify-end"><button class="btn btn-sm btn-secondary">Register</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="grid gap-2 sm:grid-cols-2">
+      <div role="alert" class="alert alert-info"><span>Info: your invitation was sent.</span></div>
+      <div role="alert" class="alert alert-success"><span>Success: you are registered.</span></div>
+      <div role="alert" class="alert alert-warning"><span>Warning: the event is nearly full.</span></div>
+      <div role="alert" class="alert alert-error"><span>Error: that email is already taken.</span></div>
+      <div role="alert" class="alert alert-soft alert-info"><span>Soft info</span></div>
+      <div role="alert" class="alert alert-soft alert-success"><span>Soft success</span></div>
+      <div role="alert" class="alert alert-soft alert-error"><span>Soft error</span></div>
+    </div>
+  </section>
+
+  <section class="flex flex-col gap-3">
+    <h2 class="font-heading text-[22px]">3. The type ladder</h2>
+    <div class="flex flex-col gap-1">
+      <p class="font-heading text-[25px] leading-tight">Record title at 25, Caprasimo</p>
+      <p class="font-heading text-[22px] leading-tight">Hero title at 22, Caprasimo</p>
+      <p class="font-heading text-[20px] leading-tight">Shell title at 20, Caprasimo</p>
+      <p class="font-heading text-[16px] leading-tight">Row title at 16, Caprasimo</p>
+      <p class="text-[14px]">Body at 14, Figtree regular. <span class="font-semibold">Semibold 600.</span> <span class="font-bold">Bold 700.</span></p>
+      <p class="text-[13px]">Card fact at 13, Figtree</p>
+      <p class="text-[12px]">Meta at 12, Figtree</p>
+      <p class="text-[11px]">Caption at 11, Figtree</p>
+    </div>
+  </section>
+
+
+</main>
+
+<script src="organic-theme.js"></script>
+</body>
+</html>

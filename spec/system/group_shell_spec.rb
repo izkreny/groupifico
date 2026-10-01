@@ -242,4 +242,72 @@ RSpec.describe "The group shell", type: :system do
 
     expect(page).to have_current_path group_path(member.group)
   end
+
+  # `text-primary` is the colour the current tab, the back chevron and the icon buttons all paint,
+  # so primary against `base-100` is the theme's one text-on-ground pair the shell depends on. axe
+  # cannot see it: the tab is an icon with no text. Watched failing at 3.0:1 with light primary set
+  # to the brand's #c67139, which daisyUI's stock light passes, and at 3.4:1 against stock dark.
+  it "paints the current tab in primary at AA contrast in light" do
+    member = create(:member, group: create(:group))
+    sign_in_as member.user
+    prefer_colour_scheme :light
+    resize_to ViewportHelper::MOBILE
+
+    visit group_path(member.group)
+
+    expect(rendered_colour_scheme).to eq "light"
+    expect(text_contrast(".dock a[aria-current='page']")).to be >= ContrastHelper::WCAG_AA
+  end
+
+  it "paints the current tab in primary at AA contrast in dark" do
+    member = create(:member, group: create(:group))
+    sign_in_as member.user
+    prefer_colour_scheme :dark
+    resize_to ViewportHelper::MOBILE
+
+    visit group_path(member.group)
+
+    expect(rendered_colour_scheme).to eq "dark"
+    expect(text_contrast(".dock a[aria-current='page']")).to be >= ContrastHelper::WCAG_AA
+  end
+
+  # The Tab goes to the page through Ferrum's keyboard rather than `send_keys`, which clicks its
+  # element first: on `body` that starts the order from the dock, and on the switcher it opens the
+  # sheet. The style matcher retries, which is what waits out daisyUI's `border-color` transition:
+  # read at once, the border is still on its way from the ghost button's transparent one. Watched
+  # failing with the focus rule removed, where daisyUI's own 2px outline ring paints over a 1px
+  # border. The inset line in the ground colour is what shows on a primary fill, where a primary
+  # border cannot; on this ghost button it is invisible but computed all the same, and was watched
+  # failing before its rule existed.
+  it "thickens a focused button's border in primary rather than drawing a ring" do
+    member = create(:member, group: create(:group))
+    create(:member, user: member.user, group: create(:group))
+    sign_in_as member.user
+    prefer_colour_scheme :light
+    resize_to ViewportHelper::MOBILE
+
+    visit group_path(member.group)
+    page.driver.browser.keyboard.type(:Tab)
+
+    expect(page).to have_css "[aria-label='Switch group']:focus-visible",
+      style: { "outline-style" => "none", "border-top-width" => "2px", "border-top-color" => "rgb(140, 73, 26)",
+               "box-shadow" => "rgb(245, 234, 216) 0px 0px 0px 2px inset" }
+  end
+
+  # `document.fonts.load` rather than `document.fonts.check`, which answers true for a family no
+  # `@font-face` declares, so it passes with the fonts gone. `load` resolves to the faces it
+  # fetched: none without the rules, a rejection on a URL Propshaft did not digest, and the latin
+  # face of each family here. Watched failing with the `@font-face` rules removed.
+  it "loads Caprasimo and Figtree from the asset pipeline" do
+    member = create(:member, group: create(:group))
+    sign_in_as member.user
+
+    visit group_path(member.group)
+
+    expect(page.evaluate_async_script(<<~JAVASCRIPT)).to eq [ 1, 1 ]
+      const done = arguments[arguments.length - 1];
+      Promise.all([ document.fonts.load("16px Caprasimo"), document.fonts.load("16px Figtree") ])
+        .then((faces) => done(faces.map((face) => face.length)), (error) => done(String(error)));
+    JAVASCRIPT
+  end
 end

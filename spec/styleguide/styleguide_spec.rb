@@ -12,9 +12,9 @@ RSpec.describe "The styleguide", type: :system do
 
     visit styleguide_path
 
-    expect(page.evaluate_script("getComputedStyle(document.querySelector('[data-theme=light]')).colorScheme")).to eq "light"
-    expect(page).to paint "[data-theme=light] .card"
-    expect(page).to paint "[data-theme=light] .join .btn-primary"
+    expect(page.evaluate_script("getComputedStyle(document.querySelector('[data-theme=organic]')).colorScheme")).to eq "light"
+    expect(page).to paint "[data-theme=organic] .card"
+    expect(page).to paint "[data-theme=organic] .join .btn-primary"
   end
 
   it "paints the same two in the dark twin" do
@@ -22,9 +22,9 @@ RSpec.describe "The styleguide", type: :system do
 
     visit styleguide_path
 
-    expect(page.evaluate_script("getComputedStyle(document.querySelector('[data-theme=dark]')).colorScheme")).to eq "dark"
-    expect(page).to paint "[data-theme=dark] .card"
-    expect(page).to paint "[data-theme=dark] .join .btn-primary"
+    expect(page.evaluate_script("getComputedStyle(document.querySelector('[data-theme=organic-dark]')).colorScheme")).to eq "dark"
+    expect(page).to paint "[data-theme=organic-dark] .card"
+    expect(page).to paint "[data-theme=organic-dark] .join .btn-primary"
   end
 
   # One audit covers both themes, since both twins of every section are on the page.
