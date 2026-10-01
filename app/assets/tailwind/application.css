@@ -169,6 +169,7 @@
    `:focus-visible` on a button, so a mouse click leaves it alone. */
 .btn:focus-visible,
 .btn:has(:focus-visible),
+.checkbox:focus-visible,
 :is(.input, .select, .textarea):is(:focus-within, :open) {
   outline: none;
   border: 2px solid var(--color-primary);
