@@ -77,6 +77,29 @@ class Member < ApplicationRecord
   # form to render the message on.
   validate :group_keeps_an_active_owner, on: :update
 
+  # A membership is created for an address, which is how an owner or an administrator names
+  # somebody they are adding. An address no account holds yet builds the user, and `belongs_to`
+  # saves it inside this record's own save, so the user and the membership land together or not
+  # at all. `find_or_initialize_by` applies `User`'s normalization to the lookup, so a differently
+  # cased address finds the account it belongs to.
+  def email=(address)
+    self.user = User.find_or_initialize_by(email: address)
+  end
+
+  # WHY: `belongs_to` saves a new user in `before_save`, after this record has already passed its
+  # own validation, so an address `User` refuses would reach the INSERT with a nil `user_id` and
+  # answer a database exception rather than a form error. Asking the user here puts its verdict on
+  # the field the form drew, and leaves `User` the one place the rules for an address live.
+  validate :new_user_is_valid, on: :create, if: -> { user&.new_record? }
+
+  # The unique index on `user_id` and `group_id` already refuses a second membership, but as an
+  # exception. This is the same rule with a message, on the field the person typed into, and it
+  # guards every save rather than only the form's, so a membership moved onto a user the group
+  # already holds is refused the same way. Every status counts, an `inactive` one included:
+  # setting a status back is the member page's job.
+  validate :not_already_in_the_group
+
+  delegate :email, to: :user, allow_nil: true
   delegate :full_name, :short_name, to: :profile
 
   # The one question a policy asks. It learns nothing about how the answer is stored, which is what
@@ -94,6 +117,18 @@ class Member < ApplicationRecord
   def owner? = roles.any?(&:owner?)
 
   private
+    def new_user_is_valid
+      return if user.valid?
+
+      user.errors.where(:email).each { errors.add(:email, it.message) }
+    end
+
+    def not_already_in_the_group
+      return unless user&.persisted? && group&.persisted?
+
+      errors.add(:email, "already belongs to a member of this group") if group.members.where.not(id:).exists?(user:)
+    end
+
     # Destroying the group destroys its members, and a group on its way out needs no owner.
     # `destroyed_by_association` is what tells the two cases apart.
     def group_keeps_an_active_owner

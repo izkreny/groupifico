@@ -40,6 +40,52 @@ RSpec.describe "Members", type: :request do
         expect(response.body).to include(ActionView::RecordIdentifier.dom_id(member))
         expect(response.body).not_to include(ActionView::RecordIdentifier.dom_id(other_member))
       end
+
+      it "does not say who has not signed in yet" do
+        member = create(:member, :active)
+        create(:member, group: member.group, user: create(:user, first_signed_in_at: nil))
+        sign_in_as(member.user)
+
+        get group_members_path(member.group)
+
+        expect(response.body).not_to include "not signed in yet"
+      end
+    end
+
+    context "when signed in as a members administrator" do
+      it "marks a member who has never signed in" do
+        actor = create(:member, :active, :members_administrator)
+        added = create(:member, group: actor.group, user: create(:user, first_signed_in_at: nil))
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group)
+
+        row = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(added, :row)}")
+        expect(row.text).to include "not signed in yet"
+      end
+
+      # The mark is a read, and a paused member keeps every read.
+      it "still marks a member who has never signed in while the reader is paused" do
+        actor = create(:member, :paused, :members_administrator)
+        added = create(:member, group: actor.group, user: create(:user, first_signed_in_at: nil))
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group)
+
+        row = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(added, :row)}")
+        expect(row.text).to include "not signed in yet"
+      end
+
+      it "leaves unmarked a member who has signed in" do
+        actor  = create(:member, :active, :members_administrator)
+        joined = create(:member, group: actor.group, user: create(:user, first_signed_in_at: 1.day.ago))
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group)
+
+        row = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(joined, :row)}")
+        expect(row.text).not_to include "not signed in yet"
+      end
     end
   end
 
@@ -73,6 +119,19 @@ RSpec.describe "Members", type: :request do
         get group_member_path(member.group, member)
 
         expect(response).to have_http_status :ok
+      end
+    end
+
+    # The mark belongs to the members list alone, per #208's criterion.
+    context "when signed in as a members administrator" do
+      it "leaves the mark off the page of a member who has never signed in" do
+        actor = create(:member, :active, :members_administrator)
+        added = create(:member, group: actor.group, user: create(:user, first_signed_in_at: nil))
+        sign_in_as(actor.user)
+
+        get group_member_path(actor.group, added)
+
+        expect(response.body).not_to include "not signed in yet"
       end
     end
 
@@ -134,13 +193,13 @@ RSpec.describe "Members", type: :request do
     end
 
     context "when signed in as a members administrator" do
-      it "shows the new member page" do
+      it "asks for the new member's email address" do
         member = create(:member, :active, :members_administrator)
         sign_in_as(member.user)
 
         get new_group_member_path(member.group)
 
-        expect(response).to have_http_status :ok
+        expect(Nokogiri::HTML(response.body).css("input[type=email][name='member[email]']")).to be_one
       end
 
       it "offers no role checkboxes" do
@@ -202,13 +261,14 @@ RSpec.describe "Members", type: :request do
     end
 
     context "when signed in as a members administrator" do
-      it "shows the edit member page" do
+      it "shows the edit member page without an email field, since a membership keeps its user" do
         member = create(:member, :active, :members_administrator)
         sign_in_as(member.user)
 
         get edit_group_member_path(member.group, member)
 
         expect(response).to have_http_status :ok
+        expect(Nokogiri::HTML(response.body).css("[name='member[email]']")).to be_empty
       end
 
       it "offers no role checkboxes" do
@@ -250,7 +310,7 @@ RSpec.describe "Members", type: :request do
       it "redirects to the sign-in page" do
         group = create(:group)
 
-        post group_members_path(group), params: { member: { user_id: create(:user).id } }
+        post group_members_path(group), params: { member: { email: create(:user).email } }
 
         expect(response).to redirect_to new_session_path
       end
@@ -262,7 +322,7 @@ RSpec.describe "Members", type: :request do
         user  = create(:user)
         sign_in_as(user)
 
-        expect { post group_members_path(group), params: { member: { user_id: user.id } } }
+        expect { post group_members_path(group), params: { member: { email: user.email } } }
           .not_to change(Member, :count)
 
         expect(response).to have_http_status :not_found
@@ -275,7 +335,7 @@ RSpec.describe "Members", type: :request do
         invitee = create(:user)
         sign_in_as(actor.user)
 
-        expect { post group_members_path(actor.group), params: { member: { user_id: invitee.id, roles: [ "events_administrator", "bogus" ] } } }
+        expect { post group_members_path(actor.group), params: { member: { email: invitee.email, roles: [ "events_administrator", "bogus" ] } } }
           .not_to change(Member, :count)
 
         expect(response).to have_http_status :unprocessable_content
@@ -286,7 +346,7 @@ RSpec.describe "Members", type: :request do
         invitee = create(:user)
         sign_in_as(actor.user)
 
-        post group_members_path(actor.group), params: { member: { user_id: invitee.id, roles: [ "events_administrator" ] } }
+        post group_members_path(actor.group), params: { member: { email: invitee.email, roles: [ "events_administrator" ] } }
 
         expect(Member.find_by(user: invitee).roles.map(&:name)).to eq [ "events_administrator" ]
       end
@@ -298,17 +358,57 @@ RSpec.describe "Members", type: :request do
         invitee = create(:user)
         sign_in_as(actor.user)
 
-        expect { post group_members_path(actor.group), params: { member: { user_id: invitee.id } } }
+        expect { post group_members_path(actor.group), params: { member: { email: invitee.email } } }
           .to change(Member, :count).by(1)
 
         expect(response).to redirect_to group_member_path(actor.group, Member.find_by!(user: invitee, group: actor.group))
+      end
+
+      it "creates the user too when no account holds the address" do
+        actor = create(:member, :active, :members_administrator)
+        sign_in_as(actor.user)
+
+        expect { post group_members_path(actor.group), params: { member: { email: "new.person@example.com" } } }
+          .to change(User, :count).by(1)
+
+        expect(actor.group.members.where(user: User.find_by!(email: "new.person@example.com"))).to exist
+      end
+
+      it "emails the person added a link to the sign-in form" do
+        actor = create(:member, :active, :members_administrator)
+        sign_in_as(actor.user)
+
+        expect { post group_members_path(actor.group), params: { member: { email: "new.person@example.com" } } }
+          .to have_enqueued_mail(MemberMailer, :welcome)
+      end
+
+      it "emails nobody when the member is added as inactive, since they could not see the group" do
+        actor = create(:member, :active, :members_administrator)
+        sign_in_as(actor.user)
+
+        expect { post group_members_path(actor.group), params: { member: { email: "new.person@example.com", status: "inactive" } } }
+          .not_to have_enqueued_mail(MemberMailer, :welcome)
+
+        expect(actor.group.members.inactive.sole.user.email).to eq "new.person@example.com"
+      end
+
+      it "refuses an address that already belongs to the group, saying so and emailing nobody" do
+        actor    = create(:member, :active, :members_administrator)
+        existing = create(:member, group: actor.group)
+        sign_in_as(actor.user)
+
+        expect { post group_members_path(actor.group), params: { member: { email: existing.user.email } } }
+          .not_to have_enqueued_mail(MemberMailer, :welcome)
+
+        expect(response).to have_http_status :unprocessable_content
+        expect(response.body).to include "already belongs to a member of this group"
       end
 
       it "re-renders the new page when the member is invalid" do
         actor = create(:member, :active, :members_administrator)
         sign_in_as(actor.user)
 
-        expect { post group_members_path(actor.group), params: { member: { user_id: "" } } }
+        expect { post group_members_path(actor.group), params: { member: { email: "" } } }
           .not_to change(Member, :count)
 
         expect(response).to have_http_status :unprocessable_content
@@ -324,7 +424,7 @@ RSpec.describe "Members", type: :request do
         invitee = create(:user)
         sign_in_as(actor.user)
 
-        expect { post group_members_path(actor.group), params: { member: { user_id: invitee.id } } }
+        expect { post group_members_path(actor.group), params: { member: { email: invitee.email } } }
           .to change(Member, :count).by(1)
       end
 
@@ -333,7 +433,7 @@ RSpec.describe "Members", type: :request do
         invitee = create(:user)
         sign_in_as(actor.user)
 
-        expect { post group_members_path(actor.group), params: { member: { user_id: invitee.id, roles: [ "events_administrator" ] } } }
+        expect { post group_members_path(actor.group), params: { member: { email: invitee.email, roles: [ "events_administrator" ] } } }
           .not_to change(Member, :count)
 
         expect(response).to redirect_to root_path
@@ -346,7 +446,7 @@ RSpec.describe "Members", type: :request do
         invitee = create(:user)
         sign_in_as(actor.user)
 
-        expect { post group_members_path(actor.group), params: { member: { user_id: invitee.id } } }
+        expect { post group_members_path(actor.group), params: { member: { email: invitee.email } } }
           .not_to change(Member, :count)
 
         expect(response).to redirect_to root_path
@@ -359,7 +459,7 @@ RSpec.describe "Members", type: :request do
         invitee = create(:user)
         sign_in_as(actor.user)
 
-        expect { post group_members_path(actor.group), params: { member: { user_id: invitee.id } } }
+        expect { post group_members_path(actor.group), params: { member: { email: invitee.email } } }
           .not_to change(Member, :count)
 
         expect(response).to redirect_to root_path
@@ -497,6 +597,18 @@ RSpec.describe "Members", type: :request do
         sign_in_as(actor.user)
 
         patch group_member_path(member.group, member), params: { member: { user_id: other_user.id } }
+
+        expect(member.reload.user).to eq original_user
+      end
+
+      it "ignores a posted email, leaving the membership with the user it had" do
+        actor  = create(:member, :active, :members_administrator)
+        member = create(:member, group: actor.group)
+        original_user = member.user
+        other_user = create(:user)
+        sign_in_as(actor.user)
+
+        patch group_member_path(member.group, member), params: { member: { email: other_user.email } }
 
         expect(member.reload.user).to eq original_user
       end

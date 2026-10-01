@@ -10,6 +10,16 @@ RSpec.describe "Sessions", type: :request do
         expect(response.body).not_to include('type="password"')
       end
 
+      # The welcome mail's link, which ADR 0004 makes safe only while opening it sends nothing: a
+      # mail filter follows every link in a message before the person does.
+      it "fills in the address it is opened with, and mails nothing until the form is submitted" do
+        create(:user, email: "added@example.com")
+
+        expect { get new_session_path(email: "added@example.com") }.not_to have_enqueued_mail
+
+        expect(Nokogiri::HTML(response.body).at_css("input[type=email]")["value"]).to eq "added@example.com"
+      end
+
       # Criterion 8: the shell's chrome belongs to a reader inside a group, and this is the
       # signed-out screen it must stay off. The header row itself renders on every screen.
       it "carries none of the shell's chrome" do

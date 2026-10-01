@@ -3,6 +3,13 @@
     <fieldset class="fieldset">
       <legend class="fieldset-legend">Member details</legend>
 
+      <%# A new record only: the controller's update never takes an address, so a membership is
+          never handed to somebody else, and drawing the field there would offer what it ignores. %>
+      <% if member.new_record? %>
+        <%= form.field :email, as: :email_field, required: true, autocomplete: "off",
+              hint: "They are emailed a link to sign in, and an account is made for a new address." %>
+      <% end %>
+
       <%= form.field :status, as: :select, choices: member_statuses %>
     </fieldset>
 

@@ -8,9 +8,20 @@
 
   <div id="members" class="min-w-full divide-y divide-base-300 space-y-5">
     <% if @members.any? %>
+      <%# Asked once, before the loop: the answer depends on the group alone, and a per-row
+          `allowed_to?` builds a policy and looks up the reader's membership for every member.
+          `edit?` rather than `create?`, because the mark is a read and a paused manager keeps
+          every read, while `create?` is one of the writes the pause refuses. %>
+      <% marks_first_sign_in = allowed_to?(:edit?, Member.new(group: @group)) %>
       <% @members.each do |member| %>
-        <div class="flex flex-col sm:flex-row justify-between items-center pb-5 sm:pb-0">
+        <div id="<%= dom_id member, :row %>" class="flex flex-col sm:flex-row justify-between items-center pb-5 sm:pb-0">
           <%= render "members/member", member: member %>
+          <%# The list alone, never the shared partial the member page also renders, and only for a
+              reader who manages members: they are the ones who added this person and who would
+              chase them, and frame 3a draws the count on the owner's roster alone. %>
+          <% if marks_first_sign_in && !member.user.first_signed_in_at? %>
+            <span class="badge badge-ghost">not signed in yet</span>
+          <% end %>
           <div class="w-full sm:w-auto flex flex-col sm:flex-row space-x-2 space-y-2">
             <%= link_to "Show", group_member_path(@group, member), class: "btn btn-ghost" %>
             <%= link_to "Edit", edit_group_member_path(@group, member), class: "btn btn-ghost" %>
