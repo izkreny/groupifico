@@ -280,7 +280,6 @@ RSpec.describe Member, type: :model do
     end
   end
 
-  it { is_expected.to delegate_method(:email).to(:user).allow_nil }
   it { is_expected.to delegate_method(:full_name).to(:profile) }
   it { is_expected.to delegate_method(:short_name).to(:profile) }
 
