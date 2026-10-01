@@ -125,28 +125,32 @@ RSpec.describe "The Me screen", type: :system do
     # Frame 9h2's state, with one real refusal per record: the mobile is the profile's, the email
     # the account's. The email is a taken address rather than a malformed one, because the email
     # field's own constraint stops a malformed one in the browser before the server sees it.
-    context "when a save is refused" do
-      before do
-        create(:user, email: "taken@example.com")
-        sign_in_as create(:user)
-        prefer_colour_scheme :light
+    it "paints a refused save's messages under their fields and the summary on top" do
+      create(:user, email: "taken@example.com")
+      sign_in_as create(:user)
 
-        visit edit_user_profile_path
-        fill_in "Mobile", with: "1" * 51
-        fill_in "Email", with: "taken@example.com"
-        click_button "Save"
-      end
+      visit edit_user_profile_path
+      fill_in "Mobile", with: "1" * 51
+      fill_in "Email", with: "taken@example.com"
+      click_button "Save"
 
-      it "paints the messages under their fields and the summary on top" do
-        expect(page).to have_css "#user_profile_mobile_phone_error", text: "Mobile phone is too long"
-        expect(page).to have_css "#user_profile_user_attributes_email_error", text: "Email has already been taken"
-        expect(page).to paint "#error_explanation"
-      end
+      expect(page).to have_css "#user_profile_mobile_phone_error", text: "Mobile phone is too long"
+      expect(page).to have_css "#user_profile_user_attributes_email_error", text: "Email has already been taken"
+      expect(page).to paint "#error_explanation"
+    end
 
-      it "has no accessibility violations in light" do
-        expect(rendered_colour_scheme).to eq "light"
-        expect(page).to be_accessible
-      end
+    it "has no accessibility violations after a refused save, in light" do
+      create(:user, email: "taken@example.com")
+      sign_in_as create(:user)
+      prefer_colour_scheme :light
+
+      visit edit_user_profile_path
+      fill_in "Mobile", with: "1" * 51
+      fill_in "Email", with: "taken@example.com"
+      click_button "Save"
+
+      expect(rendered_colour_scheme).to eq "light"
+      expect(page).to be_accessible
     end
   end
 end
