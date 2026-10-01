@@ -17,12 +17,6 @@ class MembersController < ApplicationController
     authorize! @group, to: :show?
 
     @members = authorized_scope(@group.members) # TODO: Set up active and paused ones as default
-
-    # WHY: asked once for the page rather than per row. The answer depends on the group alone, and
-    # a per-row `allowed_to?` builds a policy, and looks up the reader's membership, for every
-    # member listed. `edit?` rather than `create?`: the mark is a read, and a paused manager keeps
-    # every read while `create?` is one of the writes the pause refuses.
-    @marks_first_sign_in = allowed_to?(:edit?, Member.new(group: @group))
   end
 
   def show
