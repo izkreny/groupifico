@@ -610,8 +610,8 @@ RSpec.describe "Events", type: :request do
         get group_event_path(event.group, event)
 
         fragment = Nokogiri::HTML(response.body)
-        expect(fragment.at_css("button[aria-label='Invite Ben Cole']")["class"]).to include "btn-ghost"
-        expect(fragment.at_css("button[aria-label='Carla Duke is invited, no reply yet']")["class"]).to include "btn-primary"
+        expect(fragment.at_css("button[aria-label='Invite Ben Cole']")["class"]).not_to include "text-primary"
+        expect(fragment.at_css("button[aria-label='Carla Duke is invited, no reply yet']")["class"]).to include "text-primary"
       end
 
       it "offers Invite the rest only while an active member has no registration" do

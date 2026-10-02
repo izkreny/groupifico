@@ -43,7 +43,7 @@
           <% if may_invite && !registration.answered? %>
             <% asked = registration.invited? %>
             <%= button_to group_event_registration_invitation_path(event.group, event, registration),
-                  class: "btn btn-sm btn-square#{asked ? " btn-soft btn-primary" : " btn-ghost"}",
+                  class: "btn btn-ghost btn-sm btn-square#{" text-primary" if asked}",
                   title: registration_status_label(registration),
                   aria: { label: asked ? "#{name} is invited, no reply yet" : "Invite #{name}" } do %>
               <%= icon :invited, class: "size-4" %>
