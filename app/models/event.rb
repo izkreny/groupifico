@@ -162,6 +162,31 @@ class Event < ApplicationRecord
     end
   end
 
+  # WHY: the form's "Invite all active members" box is a request to act after the save, not a fact
+  # about the event, so it is a virtual attribute `EventsController` reads rather than a column.
+  attribute :invite_active_members, :boolean, default: false
+
+  # WHY: `insert_all` rather than `invite`, because this set is computed rather than ticked, so a
+  # member registered while the request runs is skipped on the unique index instead of refusing
+  # the whole set. Returns how many were invited.
+  def invite_all_active_members
+    invitees = group.members.active.without_registration_for(self).ids
+
+    if invitees.any?
+      registrations.insert_all(invitees.map { { member_id: it, status: :invited } }).length
+    else
+      0
+    end
+  end
+
+  # WHY: a held place becomes a question, and only a held place does: an answer is the member's own
+  # and somebody who is merely filling the event never overrules it. Only an active member's place,
+  # as for `invite_all_active_members`: a paused or inactive one is never asked. Returns how many
+  # were moved.
+  def invite_reserved
+    registrations.reserved.where(member: group.members.active).update_all(status: :invited, updated_at: Time.current)
+  end
+
   # TODO: add event's time_zone context
   def same_day?
     starts_at.to_date == ends_at.to_date

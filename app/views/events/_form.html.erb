@@ -51,6 +51,17 @@
       <%= form.field :manager_id, as: :select, choices: manager_choices(event) %>
       <%= form.field :description, as: :text_area %>
     </div>
+
+    <%# Frames 4e, 4f and 4k: asks everyone who is active and not yet on the list, once the event is
+        saved. Drawn for a reader the invitation row admits, the question `EventsController` asks. %>
+    <% if allowed_to?(:create?, Registration.new(event: event)) %>
+      <fieldset class="fieldset">
+        <label class="label">
+          <%= form.check_box :invite_active_members, class: "checkbox" %>
+          Invite all active members
+        </label>
+      </fieldset>
+    <% end %>
   <% end %>
 
   <div class="flex flex-wrap items-center gap-2 mt-4">

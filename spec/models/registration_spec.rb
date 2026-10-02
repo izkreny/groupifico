@@ -76,4 +76,29 @@ RSpec.describe Registration, type: :model do
       expect(build(:registration, status: :invited)).not_to be_answered
     end
   end
+
+  describe "#invite" do
+    it "moves a reserved registration to invited" do
+      registration = create(:registration, status: :reserved)
+
+      expect(registration.invite).to be true
+      expect(registration.reload).to be_invited
+    end
+
+    it "leaves an invited or answered registration as it was" do
+      invited = create(:registration, status: :invited)
+      answered = create(:registration, event: create(:event, status: :confirmed), status: :yes)
+
+      expect([ invited.invite, answered.invite ]).to eq [ false, false ]
+      expect([ invited.reload.status, answered.reload.status ]).to eq %w[ invited yes ]
+    end
+
+    it "leaves a paused or inactive member's held place reserved" do
+      paused = create(:registration, member: create(:member, :paused), status: :reserved)
+      gone = create(:registration, member: create(:member, :inactive), status: :reserved)
+
+      expect([ paused.invite, gone.invite ]).to eq [ false, false ]
+      expect([ paused.reload.status, gone.reload.status ]).to eq %w[ reserved reserved ]
+    end
+  end
 end

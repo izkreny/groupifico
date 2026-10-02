@@ -66,8 +66,11 @@ class EventsController < ApplicationController
     @event = @group.events.new(event_params)
 
     authorize! @event
+    authorize_invitation!
 
     if @event.save
+      @event.invite_all_active_members if @event.invite_active_members
+
       redirect_to group_event_path(@group, @event),
         notice: "Event was successfully created."
     else
@@ -79,8 +82,11 @@ class EventsController < ApplicationController
 
   def update
     authorize! @event
+    authorize_invitation!
 
     if @event.update(event_params)
+      @event.invite_all_active_members if @event.invite_active_members
+
       redirect_to group_event_path(@group, @event),
         notice: "Event was successfully updated.",
         status: :see_other
@@ -130,7 +136,7 @@ class EventsController < ApplicationController
     def event_params
       params.expect(
         event: [ :name, :description, :starts_at, :ends_at, :status, :category,
-          :manager_id, :address_id,
+          :manager_id, :address_id, :invite_active_members,
           address_attributes: [
             :name, :street_name, :building_number, :city, :postal_code, :state_code, :country_code, :latitude, :longitude
           ]
@@ -140,6 +146,13 @@ class EventsController < ApplicationController
         permitted.delete(:address_id) if foreign_address?(permitted[:address_id])
         permitted.delete(:address_attributes) if permitted[:address_id].present?
       end
+    end
+
+    # WHY: on `update` this is asked before anything is assigned, so a `manager_id` changed in the same
+    # request cannot decide whether this reader may invite. On `create` the event is already built from
+    # the params, and `EventPolicy#create?` admitting `can_manage?(:events)` alone is what keeps it safe.
+    def authorize_invitation!
+      authorize! Registration.new(event: @event), to: :create? if ActiveModel::Type::Boolean.new.cast(params.dig(:event, :invite_active_members))
     end
 
     # Present and not ours. A blank passes straight through so the model decides what it means:

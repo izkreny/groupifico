@@ -69,6 +69,13 @@ class Registration < ApplicationRecord
     ANSWERS.include?(status)
   end
 
+  # WHY: the roster row's paper plane is reachable by anyone the invitation row admits, the event's
+  # manager included, who may not overrule an answer; so only a held place moves, and only an active
+  # member's, since a paused or inactive one is never asked. Whether it moved is the return value.
+  def invite
+    reserved? && member.active? && invited!
+  end
+
   private
     def event_must_be_open_to_answers
       errors.add(:status, "cannot be answered once the event is over") unless event&.open_to_answers?

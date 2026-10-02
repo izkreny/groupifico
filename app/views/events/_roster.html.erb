@@ -10,7 +10,10 @@
   `event.registrations.new`, which would join the loaded association `events/_counts` sizes.
 
   A row whose pills already say where it stands draws no badge beside them. An unanswered row keeps
-  its badge whoever reads it, because no pill is current there to tell `reserved` from `invited`.
+  its badge, because no pill is current there to tell `reserved` from `invited` - except for a
+  reader who may invite, where frame 4l puts the paper plane in its place: plain on a `reserved` row,
+  which it asks, and tinted on an `invited` one, which is already asked and stays as it is. A paused
+  or inactive member's row keeps its badge, because they are never asked.
 
   The pills also wait on `Event#open_to_answers?`, as on `events/_row`: `Registration` refuses every
   answer on an event that is over, so a pill there is a control certain to fail. The take-off does
@@ -20,6 +23,7 @@
 <% may_invite = allowed_to?(:create?, unattached) %>
 <% may_answer = event.open_to_answers? && allowed_to?(:update?, unattached) %>
 <% may_remove = allowed_to?(:destroy?, unattached) %>
+<% uninvited = may_invite && event.group.members.active.without_registration_for(event).exists? %>
 <% roster = event.roster %>
 
 <div class="flex flex-col gap-2">
@@ -37,7 +41,15 @@
         <li id="<%= dom_id registration, :roster %>" class="list-row items-center px-0">
           <span class="list-col-grow"><%= name %></span>
 
-          <% unless may_answer && registration.answered? %>
+          <% if may_invite && !registration.answered? && registration.member.active? %>
+            <% asked = registration.invited? %>
+            <%= button_to group_event_registration_invitation_path(event.group, event, registration),
+                  class: "btn btn-ghost btn-sm btn-square#{" text-primary" if asked}",
+                  title: registration_status_label(registration),
+                  aria: { label: asked ? "#{name} is invited, no reply yet" : "Invite #{name}" } do %>
+              <%= icon :invited, class: "size-4" %>
+            <% end %>
+          <% elsif !may_answer || !registration.answered? %>
             <span class="badge badge-sm" title="<%= registration_status_label(registration) %>">
               <%= status_icon registration, label: registration_status_label(registration), class: "size-4" %>
             </span>
@@ -74,8 +86,17 @@
   <% end %>
 
   <% if may_invite %>
-    <%= link_to new_group_event_registration_path(event.group, event), class: "btn btn-sm self-start" do %>
-      <%= icon :add_member, class: "size-4" %>Add someone
-    <% end %>
+    <div class="flex flex-wrap gap-2">
+      <%= link_to new_group_event_registration_path(event.group, event), class: "btn btn-sm" do %>
+        <%= icon :add_member, class: "size-4" %>Add someone
+      <% end %>
+
+      <%# Only while it can do something: every active member already on the list leaves it nothing. %>
+      <% if uninvited %>
+        <%= button_to group_event_invitation_path(event.group, event), class: "btn btn-sm" do %>
+          <%= icon :invited, class: "size-4" %>Invite the rest
+        <% end %>
+      <% end %>
+    </div>
   <% end %>
 </div>

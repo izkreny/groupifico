@@ -71,6 +71,10 @@ module ContrastHelper
   # everywhere it can see.
   WCAG_AA = 4.5
 
+  # The ratio WCAG 2.1 SC 1.4.11 asks of a control that says itself by a glyph alone, which axe does
+  # not check: an icon-only ghost button has no face for `paint` to read, so its glyph is the claim.
+  WCAG_NON_TEXT = 3
+
   # The selector travels as an argument rather than interpolated into the source, exactly as
   # `PaintMatcher::SCRIPT` passes its own: interpolation closes the JavaScript string literal on the
   # first double quote a selector carries, which every attribute selector does.
