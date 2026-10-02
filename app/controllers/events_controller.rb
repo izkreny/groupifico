@@ -148,8 +148,9 @@ class EventsController < ApplicationController
       end
     end
 
-    # WHY: asked of the posted box before anything is assigned, so a `manager_id` changed in the same
-    # request cannot decide whether this reader may invite.
+    # WHY: on `update` this is asked before anything is assigned, so a `manager_id` changed in the same
+    # request cannot decide whether this reader may invite. On `create` the event is already built from
+    # the params, and `EventPolicy#create?` admitting `can_manage?(:events)` alone is what keeps it safe.
     def authorize_invitation!
       authorize! Registration.new(event: @event), to: :create? if ActiveModel::Type::Boolean.new.cast(params.dig(:event, :invite_active_members))
     end
