@@ -78,6 +78,25 @@ RSpec.describe "The events list", type: :system do
     expect(registration.reload).to be_yes
   end
 
+  # Frame 4n. Which reader is offered it is `spec/requests/events_spec.rb`'s; where pressing it lands
+  # is what a browser adds. No `paint` assertion, measured rather than assumed: it is a plain `btn`,
+  # whose base-200 face sits on the hero's own base-200 and scores exactly 1, as `Add someone` does on
+  # the event's roster.
+  it "offers Invite everyone with no accessibility violations, and lands back on the list" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    create(:registration, event: next_event_for(member), member:, status: :reserved)
+    sign_in_as member.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_events_path(member.group)
+
+    expect(page).to be_accessible
+    click_button "Invite everyone"
+
+    expect(page).to have_current_path group_events_path(member.group)
+    expect(page).to have_text "1 member invited."
+  end
+
   # The select is this screen's title as well as its filter, so whether it paints as a surface of
   # its own is what tells a pill from one whose classes compiled to nothing.
   it "paints the select" do
