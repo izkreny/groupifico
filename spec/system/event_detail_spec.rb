@@ -12,9 +12,11 @@ require "rails_helper"
 #
 # Neither paper plane nor Invite the rest takes a `paint` assertion, and both were measured rather
 # than assumed: the planes are ghost buttons, like the take-off beside them, and Invite the rest is a
-# plain `btn` whose base-200 face sits on the card's own base-200, so each scores exactly 1. A soft
-# primary face on the invited plane scored 1.01 in one theme, which is a tint nobody can see, so the
-# tint is the glyph's colour and is compared directly.
+# plain `btn` whose base-200 face sits on the card's own base-200, so each scores exactly 1. A
+# face-less control is seen by its glyph and its label, so that is what they assert instead: the
+# planes against the 3:1 WCAG asks of an icon, Invite the rest against the 4.5:1 it asks of text.
+# A soft primary face on the invited plane scored 1.01 in organic, which is a tint nobody can see, so
+# the tint is the glyph's colour and is compared directly.
 #
 # `.card` rather than `.card.bg-base-200`, so the assertion reads the rendered colour rather than
 # the class that asks for it, as `spec/system/events_list_spec.rb` explains.
@@ -31,6 +33,34 @@ RSpec.describe "The event detail", type: :system do
     expect(page).to paint ".card"
     expect(page).to paint "##{roster_row(owner)} .join .btn-primary"
     expect(colour_of("Carla Duke is invited, no reply yet")).not_to eq colour_of("Invite Ben Cole")
+  end
+
+  it "shows the planes and Invite the rest by their glyphs and label in light" do
+    owner, event, = rostered_event
+    sign_in_as owner.user
+    prefer_colour_scheme :light
+
+    visit group_event_path(event.group, event)
+    open_roster
+
+    expect(rendered_colour_scheme).to eq "light"
+    expect(text_contrast("[aria-label='Carla Duke is invited, no reply yet']")).to be >= ContrastHelper::WCAG_NON_TEXT
+    expect(text_contrast("[aria-label='Invite Ben Cole']")).to be >= ContrastHelper::WCAG_NON_TEXT
+    expect(text_contrast(invite_the_rest(event))).to be >= ContrastHelper::WCAG_AA
+  end
+
+  it "shows the same three in dark" do
+    owner, event, = rostered_event
+    sign_in_as owner.user
+    prefer_colour_scheme :dark
+
+    visit group_event_path(event.group, event)
+    open_roster
+
+    expect(rendered_colour_scheme).to eq "dark"
+    expect(text_contrast("[aria-label='Carla Duke is invited, no reply yet']")).to be >= ContrastHelper::WCAG_NON_TEXT
+    expect(text_contrast("[aria-label='Invite Ben Cole']")).to be >= ContrastHelper::WCAG_NON_TEXT
+    expect(text_contrast(invite_the_rest(event))).to be >= ContrastHelper::WCAG_AA
   end
 
   it "paints the same two and tints the same plane in dark" do
@@ -171,6 +201,10 @@ RSpec.describe "The event detail", type: :system do
 
   def open_roster
     find("summary", text: "Who’s coming").click
+  end
+
+  def invite_the_rest(event)
+    "form[action='#{group_event_invitation_path(event.group, event)}'] .btn"
   end
 
   # The rendered colour the glyph inherits, read off the button that names it.
