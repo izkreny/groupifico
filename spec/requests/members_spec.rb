@@ -256,7 +256,7 @@ RSpec.describe "Members", type: :request do
         get group_member_path(target.group, target)
 
         html = Nokogiri::HTML(response.body)
-        expect(html.css("dd").map(&:text)).to eq [ target.email, target.mobile_phone, "14 Mar 2024" ]
+        expect(html.css("dd").map { it.text.strip }).to eq [ target.email, target.mobile_phone, "14 Mar 2024" ]
         expect(html.css("##{ActionView::RecordIdentifier.dom_id(target)} .badge").map(&:text)).to eq [ "events admin", "active" ]
       end
 

@@ -36,27 +36,29 @@
 
   <div class="card card-sm bg-base-200">
     <dl class="card-body gap-3">
-      <div class="flex items-center justify-between gap-2">
-        <div>
-          <dt class="text-xs">Email</dt>
-          <dd><%= @member.email %></dd>
-        </div>
+      <%# Each row is one `div` holding only its `dt` and `dd`, the one wrapper a `dl` admits, so
+          the contact button sits inside the `dd` beside the value it acts on. %>
+      <div>
+        <dt class="text-xs">Email</dt>
+        <dd class="flex items-center justify-between gap-2">
+          <span><%= @member.email %></span>
 
-        <%= mail_to @member.email, class: "btn btn-ghost btn-circle btn-sm flex-none", aria: { label: "Email #{name}" } do %>
-          <%= icon :email, class: "size-4" %>
-        <% end %>
+          <%= mail_to @member.email, class: "btn btn-ghost btn-circle btn-sm flex-none", aria: { label: "Email #{name}" } do %>
+            <%= icon :email, class: "size-4" %>
+          <% end %>
+        </dd>
       </div>
 
       <% if @member.mobile_phone %>
-        <div class="flex items-center justify-between gap-2">
-          <div>
-            <dt class="text-xs">Mobile</dt>
-            <dd><%= @member.mobile_phone %></dd>
-          </div>
+        <div>
+          <dt class="text-xs">Mobile</dt>
+          <dd class="flex items-center justify-between gap-2">
+            <span><%= @member.mobile_phone %></span>
 
-          <%= phone_to @member.mobile_phone, class: "btn btn-ghost btn-circle btn-sm flex-none", aria: { label: "Call #{name}" } do %>
-            <%= icon :call, class: "size-4" %>
-          <% end %>
+            <%= phone_to @member.mobile_phone, class: "btn btn-ghost btn-circle btn-sm flex-none", aria: { label: "Call #{name}" } do %>
+              <%= icon :call, class: "size-4" %>
+            <% end %>
+          </dd>
         </div>
       <% end %>
 
