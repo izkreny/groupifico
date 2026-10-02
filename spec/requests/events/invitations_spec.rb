@@ -161,6 +161,18 @@ RSpec.describe "Events::Invitations", type: :request do
         expect(response).to redirect_to group_events_path(event.group)
         expect(flash[:notice]).to eq "1 member invited."
       end
+
+      # The group home draws the same Next up card, so pressing it there lands back there.
+      it "returns to the group home when pressed there" do
+        actor = create(:member, :active)
+        event = create(:event, group: actor.group, creator: actor, manager: actor)
+        create(:registration, event:, member: actor, status: :reserved)
+        sign_in_as(actor.user)
+
+        patch group_event_invitation_path(event.group, event), headers: { "HTTP_REFERER" => group_url(event.group) }
+
+        expect(response).to redirect_to group_url(event.group)
+      end
     end
   end
 end

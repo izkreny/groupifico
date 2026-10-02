@@ -12,10 +12,12 @@ class Events::InvitationsController < ApplicationController
     redirect_to group_event_path(@group, @event), notice: invited_notice(@event.invite_all_active_members)
   end
 
+  # WHY: back to where it was pressed, because the group home draws the same Next up card as the
+  # events list; the list is the fallback for a request that names no page.
   def update
     authorize! Registration.new(event: @event), to: :create?
 
-    redirect_to group_events_path(@group), notice: invited_notice(@event.invite_reserved), status: :see_other
+    redirect_back_or_to group_events_path(@group), notice: invited_notice(@event.invite_reserved), status: :see_other
   end
 
   private
