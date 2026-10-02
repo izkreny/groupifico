@@ -43,7 +43,7 @@ For more information, check out the [backlog](https://github.com/izkreny/groupif
 
 #### Member aka _Group membership_
 - Members belong to the Group, have a status, and hold any number of roles
-- They are registered for the group's Events and answer those registrations; with the right role they create and manage the Events
+- They are registered for the group's Events and answer those registrations; creating an Event takes a role, and managing one takes a role or being that one event's manager
 - What a status and a role each permit is [the authorization model](./docs/AUTHORIZATION.md), which holds the capability tables and the two questions every request asks
 
 #### Event
