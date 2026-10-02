@@ -438,6 +438,48 @@ RSpec.describe Event, type: :model do
     end
   end
 
+  describe "#invite_all_active_members" do
+    it "invites every active member who has no registration" do
+      event = create(:event)
+      first = create(:member, :active, group: event.group)
+      second = create(:member, :active, group: event.group)
+
+      expect(event.invite_all_active_members).to eq 3
+      expect(event.registrations.invited.pluck(:member_id)).to contain_exactly(event.creator_id, first.id, second.id)
+    end
+
+    it "touches no existing registration" do
+      event = create(:event)
+      reserved = create(:registration, event:, member: event.creator, status: :reserved)
+      answered = create(:registration, event:, member: create(:member, group: event.group), status: :no)
+
+      expect(event.invite_all_active_members).to eq 0
+      expect([ reserved.reload.status, answered.reload.status ]).to eq %w[ reserved no ]
+    end
+
+    it "leaves out paused and inactive members, and other groups' members" do
+      event = create(:event)
+      create(:member, :paused, group: event.group)
+      create(:member, :inactive, group: event.group)
+      create(:member)
+
+      event.invite_all_active_members
+
+      expect(event.registrations.pluck(:member_id)).to eq [ event.creator_id ]
+    end
+  end
+
+  describe "#invite_reserved" do
+    it "moves every reserved registration to invited and leaves the others as they were" do
+      event = create(:event, status: :confirmed)
+      held = create(:registration, event:, member: event.creator, status: :reserved)
+      answered = create(:registration, event:, member: create(:member, group: event.group), status: :maybe)
+
+      expect(event.invite_reserved).to eq 1
+      expect([ held.reload.status, answered.reload.status ]).to eq %w[ invited maybe ]
+    end
+  end
+
   describe "#duplicate" do
     let(:event)            { create(:event, status: :confirmed) }
     let(:duplicated_event) { event.duplicate }
