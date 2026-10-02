@@ -72,3 +72,6 @@ None.
 - "Show inactive" is drawn for a reader who may edit members, as 3a draws it and 3b leaves it out, while the parameter is honoured for anyone, since reading an inactive row is still seeing the member list.
 - "N members" counts active and paused members whatever the toggle says.
 - "Manages" lists every event the member manages, past ones included, earliest first, and is left out when there are none.
+- Dimmed rows and greyed roles use theme colours, never an opacity utility: the theme's `base-content` at 70%, 5.67:1 on light `base-100` and 7.09:1 on dark, since no grey token passes in both. The role labels drop daisyUI's `.label`, whose own 65% tone left no room for a grey above AA.
+- The members administrator's hint reads "members only", derived from `Role::NAMES` like every other hint, rather than frame 3d's "roster only".
+- The rejected-status example asserts no coloured border, because no segmented field in the app colours one on error.
