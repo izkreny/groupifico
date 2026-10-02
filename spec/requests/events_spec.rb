@@ -225,6 +225,62 @@ RSpec.describe "Events", type: :request do
           expect(response.body).not_to include "no reply"
         end
       end
+
+      it "offers Invite everyone while every registration is still reserved" do
+        freeze_time do
+          owner = create(:member, :owner)
+          next_up = confirmed_event(owner, days: 2)
+          create(:registration, event: next_up, member: owner, status: :reserved)
+          sign_in_as(owner.user)
+
+          get group_events_path(owner.group)
+
+          expect(response.body).to include "Invite everyone", group_event_invitation_path(owner.group, next_up)
+        end
+      end
+
+      it "offers no Invite everyone once somebody has been asked" do
+        freeze_time do
+          owner = create(:member, :owner)
+          next_up = confirmed_event(owner, days: 2)
+          create(:registration, event: next_up, member: owner, status: :invited)
+          create(:registration, event: next_up, member: create(:member, group: owner.group), status: :reserved)
+          sign_in_as(owner.user)
+
+          get group_events_path(owner.group)
+
+          expect(response.body).to include "Next up · in 2 days"
+          expect(response.body).not_to include "Invite everyone"
+        end
+      end
+
+      # "Every registration is reserved" holds of an empty list, which has nobody to ask.
+      it "offers no Invite everyone while nobody is on the list" do
+        freeze_time do
+          owner = create(:member, :owner)
+          confirmed_event(owner, days: 2)
+          sign_in_as(owner.user)
+
+          get group_events_path(owner.group)
+
+          expect(response.body).to include "Next up · in 2 days"
+          expect(response.body).not_to include "Invite everyone"
+        end
+      end
+
+      it "offers a plain member no Invite everyone" do
+        freeze_time do
+          member = create(:member, :active)
+          next_up = confirmed_event(member, days: 2)
+          create(:registration, event: next_up, member:, status: :reserved)
+          sign_in_as(member.user)
+
+          get group_events_path(member.group)
+
+          expect(response.body).to include "Nobody asked yet · 1 on the list"
+          expect(response.body).not_to include "Invite everyone"
+        end
+      end
     end
 
     # A negative offset is what makes an event past: `confirmed_event` reads `days:` as a distance
@@ -477,6 +533,7 @@ RSpec.describe "Events", type: :request do
 
         expect(page_text(response.body)).to include "Ben Cole"
         expect(response.body).not_to include "Take Ben Cole off the list", "Yes for Ben Cole", "Add someone", "Delete event"
+        expect(response.body).not_to include "Invite Ben Cole", "Invite the rest"
       end
     end
 
@@ -545,6 +602,32 @@ RSpec.describe "Events", type: :request do
         expect(response.body).to include %(title="Yes")
       end
 
+      it "puts a plain paper plane on a reserved row and the tinted one on an invited row" do
+        owner = create(:member, :active, :owner)
+        event = detailed_event(owner)
+        sign_in_as(owner.user)
+
+        get group_event_path(event.group, event)
+
+        fragment = Nokogiri::HTML(response.body)
+        expect(fragment.at_css("button[aria-label='Invite Ben Cole']")["class"]).to include "btn-ghost"
+        expect(fragment.at_css("button[aria-label='Carla Duke is invited, no reply yet']")["class"]).to include "btn-primary"
+      end
+
+      it "offers Invite the rest only while an active member has no registration" do
+        owner = create(:member, :active, :owner)
+        event = detailed_event(owner)
+        sign_in_as(owner.user)
+
+        get group_event_path(event.group, event)
+        offered_with_everyone_listed = response.body.include?("Invite the rest")
+        create(:member, :active, group: owner.group)
+        get group_event_path(event.group, event)
+
+        expect(offered_with_everyone_listed).to be false
+        expect(response.body).to include "Invite the rest", group_event_invitation_path(event.group, event)
+      end
+
       it "names a paused member with no registration as left out above the rows" do
         owner = create(:member, :active, :owner)
         event = detailed_event(owner)
@@ -587,7 +670,7 @@ RSpec.describe "Events", type: :request do
         expect(page_text(response.body)).to match(/Alice Bird.*Carla Duke.*Ben Cole/)
         expect(response.body).to include "Place reserved, not asked yet", "Invited, no reply yet"
         expect(response.body).not_to include "Take Ben Cole off the list", "Yes for Ben Cole", "Add someone"
-        expect(response.body).not_to include "Yes for #{member.full_name}"
+        expect(response.body).not_to include "Yes for #{member.full_name}", "Invite Ben Cole", "Invite the rest"
       end
 
       it "offers no Duplicate, Edit or Delete" do
@@ -641,6 +724,18 @@ RSpec.describe "Events", type: :request do
 
         expect(response.body).to include %(aria-label="Edit"), new_group_event_registration_path(event.group, event)
         expect(response.body).not_to include %(aria-label="Duplicate"), "Delete event", "Yes for Ben Cole", "Take Ben Cole off the list"
+      end
+
+      it "offers the paper plane and Invite the rest, because filling the event is the manager's job" do
+        manager = create(:member, :active)
+        event = detailed_event(manager)
+        event.update!(manager:)
+        create(:member, :active, group: manager.group)
+        sign_in_as(manager.user)
+
+        get group_event_path(event.group, event)
+
+        expect(response.body).to include "Invite Ben Cole", "Invite the rest"
       end
     end
   end
