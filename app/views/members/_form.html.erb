@@ -27,17 +27,17 @@
       <fieldset class="fieldset" data-controller="role-implications" data-action="change->role-implications#grey">
         <legend class="fieldset-legend">Roles</legend>
 
-        <%= form.collection_check_boxes :roles, role_choices, :first, :second, checked: member.roles.map(&:name) do |box| %>
-          <% _name, _label, hint, implied = box.object %>
+        <%= form.collection_check_boxes :roles, role_choices, :name, :label, checked: member.roles.map(&:name) do |box| %>
+          <% choice = box.object %>
           <% hint_id = form.field_id(:roles, box.value, :hint) %>
           <div class="group flex items-center justify-between gap-2"
-               data-role-implications-target="role" data-implies="<%= implied.to_json %>">
+               data-role-implications-target="role" data-implies="<%= choice.implied.to_json %>">
             <%= box.label class: "inline-flex items-center gap-1.5 group-data-implied:text-base-content/70" do %>
               <%= box.check_box class: "checkbox", aria: { describedby: hint_id } %>
               <%= box.text %>
             <% end %>
 
-            <span id="<%= hint_id %>" class="text-xs group-data-implied:text-base-content/70"><%= hint %></span>
+            <span id="<%= hint_id %>" class="text-xs group-data-implied:text-base-content/70"><%= choice.hint %></span>
           </div>
         <% end %>
       </fieldset>

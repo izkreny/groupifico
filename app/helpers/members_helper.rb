@@ -1,6 +1,8 @@
 module MembersHelper
   JOINED_FORMAT = "%-d %b %Y"
 
+  RoleChoice = Data.define(:name, :label, :hint, :implied)
+
   # The tag a role reads as on the roster and the member screen, per the frames' legend: `owner`,
   # `admin`, `events admin`, `members admin`. Derived rather than listed, so a further module role
   # in `Role::NAMES` gets its tag with no change here.
@@ -15,7 +17,7 @@ module MembersHelper
     Role::NAMES.map do |name|
       role = Role.new(name:)
 
-      [ name, name.humanize, role_hint(name), Role::NAMES.select { role.implies?(it) } ]
+      RoleChoice.new(name:, label: name.humanize, hint: role_hint(name), implied: Role::NAMES.select { role.implies?(it) })
     end
   end
 
