@@ -868,6 +868,30 @@ RSpec.describe "Events", type: :request do
         expect(response.body).to include %(value="Save changes")
         expect(response.body).not_to include "Delete event"
       end
+
+      it "offers Invite all active members, because inviting is the manager's too" do
+        actor = create(:member, :active)
+        event = create(:event, group: actor.group, manager: actor)
+        sign_in_as(actor.user)
+
+        get edit_group_event_path(event.group, event)
+
+        expect(response.body).to include "Invite all active members"
+      end
+    end
+
+    # A paused member keeps the read that opens the form and loses the write the box would make.
+    context "when signed in as a paused events administrator" do
+      it "shows the form without Invite all active members" do
+        actor = create(:member, :paused, :events_administrator)
+        event = create(:event, group: actor.group)
+        sign_in_as(actor.user)
+
+        get edit_group_event_path(event.group, event)
+
+        expect(response.body).to include %(value="Save changes")
+        expect(response.body).not_to include "Invite all active members"
+      end
     end
 
     # Creating an event is a record of who made it and confers nothing afterwards: the role that
@@ -972,6 +996,30 @@ RSpec.describe "Events", type: :request do
       end
     end
 
+    context "when signed in as an events administrator ticking Invite all active members" do
+      it "invites every active member and leaves out a paused one" do
+        creator = create(:member, :active, :events_administrator)
+        active = create(:member, :active, group: creator.group)
+        create(:member, :paused, group: creator.group)
+        sign_in_as(creator.user)
+        params = { name: "Rehearsal", starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour, invite_active_members: "1" }
+
+        post group_events_path(creator.group), params: { event: params }
+
+        expect(Event.sole.registrations.invited.pluck(:member_id)).to contain_exactly(creator.id, active.id)
+      end
+
+      it "invites nobody when the box is left unticked" do
+        creator = create(:member, :active, :events_administrator)
+        sign_in_as(creator.user)
+        params = { name: "Rehearsal", starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour, invite_active_members: "0" }
+
+        post group_events_path(creator.group), params: { event: params }
+
+        expect(Event.sole.registrations).to be_empty
+      end
+    end
+
     context "when signed in as a paused member" do
       it "refuses with a redirect carrying an alert, and does not create the event" do
         member = create(:member, :paused)
@@ -1053,6 +1101,35 @@ RSpec.describe "Events", type: :request do
         patch group_event_path(event.group, event), params: { event: { group_id: other_group.id } }
 
         expect(event.reload.group).to eq actor.group
+      end
+    end
+
+    context "when signed in as the event's manager ticking Invite all active members" do
+      it "invites the members still missing and touches no existing registration" do
+        actor = create(:member, :active)
+        event = create(:event, group: actor.group, manager: actor, status: :confirmed)
+        answered = create(:registration, event:, member: actor, status: :no)
+        missing = create(:member, :active, group: event.group)
+        sign_in_as(actor.user)
+
+        patch group_event_path(event.group, event), params: { event: { invite_active_members: "1" } }
+
+        expect(answered.reload).to be_no
+        expect(event.registrations.invited.pluck(:member_id)).to contain_exactly(event.creator_id, missing.id)
+      end
+
+      # The invitation is asked of the event as it was loaded, so handing it on in the same save
+      # does not take the manager's own invitation away from them.
+      it "still invites when the same save hands the event to somebody else" do
+        actor = create(:member, :active)
+        event = create(:event, group: actor.group, manager: actor)
+        successor = create(:member, :active, group: event.group)
+        sign_in_as(actor.user)
+
+        patch group_event_path(event.group, event), params: { event: { manager_id: successor.id, invite_active_members: "1" } }
+
+        expect(event.reload.manager).to eq successor
+        expect(event.registrations.invited.count).to eq 3
       end
     end
 
