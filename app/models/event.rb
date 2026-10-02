@@ -180,9 +180,11 @@ class Event < ApplicationRecord
   end
 
   # WHY: a held place becomes a question, and only a held place does: an answer is the member's own
-  # and somebody who is merely filling the event never overrules it. Returns how many were moved.
+  # and somebody who is merely filling the event never overrules it. Only an active member's place,
+  # as for `invite_all_active_members`: a paused or inactive one is never asked. Returns how many
+  # were moved.
   def invite_reserved
-    registrations.reserved.update_all(status: :invited, updated_at: Time.current)
+    registrations.reserved.where(member: group.members.active).update_all(status: :invited, updated_at: Time.current)
   end
 
   # TODO: add event's time_zone context

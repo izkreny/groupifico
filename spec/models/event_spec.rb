@@ -478,6 +478,15 @@ RSpec.describe Event, type: :model do
       expect(event.invite_reserved).to eq 1
       expect([ held.reload.status, answered.reload.status ]).to eq %w[ invited maybe ]
     end
+
+    it "leaves a paused or inactive member's held place reserved" do
+      event = create(:event)
+      paused = create(:registration, event:, member: create(:member, :paused, group: event.group), status: :reserved)
+      gone = create(:registration, event:, member: create(:member, :inactive, group: event.group), status: :reserved)
+
+      expect(event.invite_reserved).to eq 0
+      expect([ paused.reload.status, gone.reload.status ]).to eq %w[ reserved reserved ]
+    end
   end
 
   describe "#duplicate" do
