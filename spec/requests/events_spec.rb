@@ -614,6 +614,21 @@ RSpec.describe "Events", type: :request do
         expect(fragment.at_css("button[aria-label='Carla Duke is invited, no reply yet']")["class"]).to include "text-primary"
       end
 
+      it "draws the badge rather than the paper plane on a paused member's held row" do
+        owner = create(:member, :active, :owner)
+        event = detailed_event(owner)
+        dan = create(:member, :active, group: owner.group, user: create(:user, :with_full_profile, first_name: "Dan", last_name: "Ellis"))
+        create(:registration, event:, member: dan, status: :reserved)
+        dan.update!(status: :paused)
+        sign_in_as(owner.user)
+
+        get group_event_path(event.group, event)
+
+        expect(page_text(response.body)).to include "Dan Ellis"
+        expect(response.body).to include "Invite Ben Cole"
+        expect(response.body).not_to include "Invite Dan Ellis"
+      end
+
       it "offers Invite the rest only while an active member has no registration" do
         owner = create(:member, :active, :owner)
         event = detailed_event(owner)

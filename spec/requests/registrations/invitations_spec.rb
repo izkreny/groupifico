@@ -78,6 +78,19 @@ RSpec.describe "Registrations::Invitations", type: :request do
         expect(response).to redirect_to group_event_path(event.group, event)
       end
 
+      it "refuses to ask a paused member, and leaves their held place as it was" do
+        actor = create(:member, :active)
+        event = create(:event, group: actor.group, creator: actor, manager: actor)
+        held = create(:registration, event:, member: create(:member, :paused, group: event.group), status: :reserved)
+        sign_in_as(actor.user)
+
+        post group_event_registration_invitation_path(event.group, event, held)
+
+        expect(held.reload).to be_reserved
+        expect(response).to redirect_to group_event_path(event.group, event)
+        expect(flash[:alert]).to end_with "is paused, so they are not asked."
+      end
+
       it "leaves an answer as it was, because a manager does not overrule one" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, creator: actor, manager: actor, status: :confirmed)

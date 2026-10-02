@@ -9,9 +9,15 @@ class Registrations::InvitationsController < ApplicationController
   def create
     authorize! @registration, to: :create?
 
-    name = @registration.member.full_name
-    redirect_to group_event_path(@group, @registration.event),
-      notice: @registration.invite ? "#{name} invited." : "#{name} was already asked."
+    member = @registration.member
+
+    if member.active?
+      redirect_to group_event_path(@group, @registration.event),
+        notice: @registration.invite ? "#{member.full_name} invited." : "#{member.full_name} was already asked."
+    else
+      redirect_to group_event_path(@group, @registration.event),
+        alert: "#{member.full_name} is #{member.status}, so they are not asked."
+    end
   end
 
   private

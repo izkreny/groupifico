@@ -12,7 +12,8 @@
   A row whose pills already say where it stands draws no badge beside them. An unanswered row keeps
   its badge, because no pill is current there to tell `reserved` from `invited` - except for a
   reader who may invite, where frame 4l puts the paper plane in its place: plain on a `reserved` row,
-  which it asks, and tinted on an `invited` one, which is already asked and stays as it is.
+  which it asks, and tinted on an `invited` one, which is already asked and stays as it is. A paused
+  or inactive member's row keeps its badge, because they are never asked.
 
   The pills also wait on `Event#open_to_answers?`, as on `events/_row`: `Registration` refuses every
   answer on an event that is over, so a pill there is a control certain to fail. The take-off does
@@ -40,7 +41,7 @@
         <li id="<%= dom_id registration, :roster %>" class="list-row items-center px-0">
           <span class="list-col-grow"><%= name %></span>
 
-          <% if may_invite && !registration.answered? %>
+          <% if may_invite && !registration.answered? && registration.member.active? %>
             <% asked = registration.invited? %>
             <%= button_to group_event_registration_invitation_path(event.group, event, registration),
                   class: "btn btn-ghost btn-sm btn-square#{" text-primary" if asked}",

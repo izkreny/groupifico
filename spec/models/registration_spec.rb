@@ -92,5 +92,13 @@ RSpec.describe Registration, type: :model do
       expect([ invited.invite, answered.invite ]).to eq [ false, false ]
       expect([ invited.reload.status, answered.reload.status ]).to eq %w[ invited yes ]
     end
+
+    it "leaves a paused or inactive member's held place reserved" do
+      paused = create(:registration, member: create(:member, :paused), status: :reserved)
+      gone = create(:registration, member: create(:member, :inactive), status: :reserved)
+
+      expect([ paused.invite, gone.invite ]).to eq [ false, false ]
+      expect([ paused.reload.status, gone.reload.status ]).to eq %w[ reserved reserved ]
+    end
   end
 end
