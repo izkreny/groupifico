@@ -17,7 +17,7 @@
 <div class="flex flex-col gap-3">
   <% if may_add %>
     <div class="flex items-center justify-between gap-2.5">
-      <p><%= pluralize @group.members.current.count, "member" %></p>
+      <p><%= pluralize @group.current_members.count, "member" %></p>
 
       <%= link_to new_group_member_path(@group), class: "btn btn-primary btn-sm" do %>
         <%= icon :new, class: "size-4" %>Invite
