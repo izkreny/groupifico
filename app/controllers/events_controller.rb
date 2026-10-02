@@ -151,7 +151,7 @@ class EventsController < ApplicationController
     # WHY: asked of the posted box before anything is assigned, so a `manager_id` changed in the same
     # request cannot decide whether this reader may invite.
     def authorize_invitation!
-      authorize! Registration.new(event: @event), to: :create? if params.dig(:event, :invite_active_members) == "1"
+      authorize! Registration.new(event: @event), to: :create? if ActiveModel::Type::Boolean.new.cast(params.dig(:event, :invite_active_members))
     end
 
     # Present and not ours. A blank passes straight through so the model decides what it means:

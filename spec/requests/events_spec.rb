@@ -1213,6 +1213,17 @@ RSpec.describe "Events", type: :request do
         expect(event.registrations.invited.pluck(:member_id)).to contain_exactly(event.creator_id, missing.id)
       end
 
+      # The attribute casts "true", "on" and "yes" as it casts "1", so the gate has to read the box
+      # the same way or a differently spelled tick invites without the invitation row being asked.
+      it "asks the invitation row however the tick is spelled" do
+        actor = create(:member, :active)
+        event = create(:event, group: actor.group, manager: actor)
+        sign_in_as(actor.user)
+
+        expect { patch group_event_path(event.group, event), params: { event: { invite_active_members: "true" } } }
+          .to be_authorized_to(:create?, have_attributes(event_id: event.id)).with(RegistrationPolicy)
+      end
+
       # The invitation is asked of the event as it was loaded, so handing it on in the same save
       # does not take the manager's own invitation away from them.
       it "still invites when the same save hands the event to somebody else" do
