@@ -137,6 +137,19 @@ RSpec.describe "The Me screen", type: :system do
       expect(page).to have_css "#user_profile_mobile_phone_error", text: "Mobile phone is too long"
       expect(page).to have_css "#user_profile_user_attributes_email_error", text: "Email has already been taken"
       expect(page).to paint "#error_explanation"
+    end
+
+    it "has no accessibility violations after a refused save, in light" do
+      create(:user, email: "taken@example.com")
+      sign_in_as create(:user)
+      prefer_colour_scheme :light
+
+      visit edit_user_profile_path
+      fill_in "Mobile", with: "1" * 51
+      fill_in "Email", with: "taken@example.com"
+      click_button "Save"
+
+      expect(rendered_colour_scheme).to eq "light"
       expect(page).to be_accessible
     end
   end

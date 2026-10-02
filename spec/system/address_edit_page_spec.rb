@@ -19,6 +19,7 @@ RSpec.describe "The address edit page", type: :system do
   context "when a submission is rejected" do
     before do
       sign_in_as member.user
+      prefer_colour_scheme :light
 
       visit edit_address_path(member.group.address)
       fill_in "address_name", with: ""
@@ -67,7 +68,8 @@ RSpec.describe "The address edit page", type: :system do
       expect(page).to have_field "address_city", with: "Springfield"
     end
 
-    it "has no accessibility violations" do
+    it "has no accessibility violations in light" do
+      expect(rendered_colour_scheme).to eq "light"
       expect(page).to be_accessible
     end
   end

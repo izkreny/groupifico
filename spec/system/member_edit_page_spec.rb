@@ -8,14 +8,16 @@ RSpec.describe "The member edit page", type: :system do
     before do
       member = create(:member, :owner, :with_all_attributes)
       sign_in_as member.user
+      prefer_colour_scheme :light
 
       visit edit_group_member_path(member.group, member)
       find(".join input[type=radio][value='inactive']").click
       click_button "Save member"
     end
 
-    it "has no accessibility violations" do
+    it "has no accessibility violations in light" do
       expect(page).to have_css "#member_status_error"
+      expect(rendered_colour_scheme).to eq "light"
       expect(page).to be_accessible
     end
   end
