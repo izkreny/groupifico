@@ -1,36 +1,41 @@
 <% content_for :title, "Members" %>
 
-<div class="w-full">
-  <div class="flex justify-between items-center">
-    <h1 class="font-bold text-4xl"><%= link_to @group.name, group_path(@group) %> Members</h1>
-    <%= link_to "New member", new_group_member_path(@group), class: "btn btn-primary" %>
-  </div>
+<%#
+  The group's roster. The shell's header already carries the group's name, so this tab draws no
+  title of its own, as the events list draws none.
 
-  <div id="members" class="min-w-full divide-y divide-base-300 space-y-5">
-    <% if @members.any? %>
-      <%# Asked once, before the loop: the answer depends on the group alone, and a per-row
-          `allowed_to?` builds a policy and looks up the reader's membership for every member.
-          `edit?` rather than `create?`, because the mark is a read and a paused manager keeps
-          every read, while `create?` is one of the writes the pause refuses. %>
-      <% marks_first_sign_in = allowed_to?(:edit?, Member.new(group: @group)) %>
-      <% @members.each do |member| %>
-        <div id="<%= dom_id member, :row %>" class="flex flex-col sm:flex-row justify-between items-center pb-5 sm:pb-0">
-          <%= render "members/member", member: member %>
-          <%# The list alone, never the shared partial the member page also renders, and only for a
-              reader who manages members: they are the ones who added this person and who would
-              chase them, and frame 3a draws the count on the owner's roster alone. %>
-          <% if marks_first_sign_in && !member.user.first_signed_in_at? %>
-            <span class="badge badge-ghost">not signed in yet</span>
-          <% end %>
-          <div class="w-full sm:w-auto flex flex-col sm:flex-row space-x-2 space-y-2">
-            <%= link_to "Show", group_member_path(@group, member), class: "btn btn-ghost" %>
-            <%= link_to "Edit", edit_group_member_path(@group, member), class: "btn btn-ghost" %>
-            <%= button_to "Destroy", group_member_path(@group, member), method: :delete, class: "btn btn-error", data: { turbo_confirm: "Are you sure?" } %>
-          </div>
-        </div>
+  Both capabilities are the reader's rather than a row's, so each is asked once, of a member with
+  nothing on it but the group: a per-row `allowed_to?` builds a policy and looks up the reader's
+  membership for every member. `create?` decides the count and Invite, a write a paused manager is
+  refused. `edit?` decides the pencil, the inactive toggle and the "not signed in yet" mark, which
+  are reads a paused manager keeps.
+%>
+<% unattached = Member.new(group: @group) %>
+<% may_add = allowed_to?(:create?, unattached) %>
+<% manages = allowed_to?(:edit?, unattached) %>
+
+<div class="flex flex-col gap-3">
+  <% if may_add %>
+    <div class="flex items-center justify-between gap-2.5">
+      <p><%= pluralize @group.current_members.count, "member" %></p>
+
+      <%= link_to new_group_member_path(@group), class: "btn btn-primary btn-sm" do %>
+        <%= icon :new, class: "size-4" %>Invite
       <% end %>
-    <% else %>
-      <p class="text-center my-10">No members found.</p>
-    <% end %>
-  </div>
+    </div>
+  <% end %>
+
+  <% if @members.any? %>
+    <ul id="members" class="list">
+      <%= render partial: "members/member", collection: @members, locals: { manages: } %>
+    </ul>
+  <% else %>
+    <p>No members found.</p>
+  <% end %>
+
+  <% if manages %>
+    <%= link_to (@inactive_shown ? "Hide inactive" : "Show inactive"),
+          group_members_path(@group, inactive: (1 unless @inactive_shown)),
+          class: "link link-hover self-start" %>
+  <% end %>
 </div>

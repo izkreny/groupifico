@@ -1,12 +1,24 @@
-<% content_for :title, "Editing member" %>
+<% content_for :title, "Edit member" %>
 
-<div class="md:w-2/3 w-full">
-  <h1 class="font-bold text-4xl">Editing member</h1>
+<%= render "shared/page_header", title: "Edit member" %>
 
-  <%= render "members/form", group: @group, member: @member %>
+<div class="flex flex-col gap-4 w-full">
+  <h2 class="text-record"><%= @member.full_name %></h2>
 
-  <div class="flex flex-wrap gap-2">
-    <%= link_to "Show this member", group_member_path(@group, @member), class: "btn btn-ghost" %>
-    <%= link_to "Back to members", group_members_path(@group), class: "btn btn-ghost" %>
-  </div>
+  <%= render "members/form", group: @group, member: @member, submit: "Save member", cancel: group_member_path(@group, @member) %>
+
+  <%# Below the form rather than in its button row, where frame 3d draws it: the sheet's trigger is
+      a `button_to`, and a form cannot hold another. `destroy?` rather than the `edit?` that
+      admitted the reader, because a paused manager reads this screen and is refused every write. %>
+  <% if allowed_to?(:destroy?, @member) %>
+    <div class="mt-6">
+      <%= render "shared/confirm_sheet",
+            id: dom_id(@member, :confirm_delete),
+            url: group_member_path(@group, @member),
+            confirm: "Remove",
+            title: "Remove this member?",
+            body: "They lose access to the group, and every registration they made goes with them. This can't be undone.",
+            dismiss: "Keep member" %>
+    </div>
+  <% end %>
 </div>

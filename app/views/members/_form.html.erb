@@ -1,3 +1,4 @@
+<%# locals: (group:, member:, submit:, cancel:) %>
 <%= form_with(model: [group, member], class: "contents") do |form| %>
   <%= form.with_error_summary do %>
     <fieldset class="fieldset">
@@ -10,24 +11,41 @@
               hint: "They are emailed a link to sign in, and an account is made for a new address." %>
       <% end %>
 
-      <%= form.field :status, as: :select, choices: member_statuses %>
+      <%= form.segmented_field :status, choices: member_status_choices %>
     </fieldset>
 
+    <%# The hint sits outside the label and reaches the box through `aria-describedby`, so each
+        box's accessible name stays the role's own. A greyed row is presentation alone: its box
+        stays enabled and posts what it shows, per `role_implications_controller.js`.
+
+        The grey is the theme's `base-content` at 70%, 5.67:1 on light `base-100` and 7.09:1 on
+        dark. No grey token in the theme passes in both: `neutral` is 2.14:1 on dark `base-100`.
+        WHY the box's label is not daisyUI's `.label`: that component draws its text at 65% of the
+        colour it inherits, ahead of any utility, so the grey on top of it fell below AA. These
+        are its layout utilities without its colour. %>
     <% if allowed_to?(:manage_roles?, member) %>
-      <fieldset class="fieldset">
+      <fieldset class="fieldset" data-controller="role-implications" data-action="change->role-implications#grey">
         <legend class="fieldset-legend">Roles</legend>
 
-        <%= form.collection_check_boxes :roles, Role::NAMES, :itself, :humanize, checked: member.roles.map(&:name) do |box| %>
-          <%= box.label class: "label" do %>
-            <%= box.check_box class: "checkbox" %>
-            <%= box.text %>
-          <% end %>
+        <%= form.collection_check_boxes :roles, role_choices, :name, :label, checked: member.roles.map(&:name) do |box| %>
+          <% choice = box.object %>
+          <% hint_id = form.field_id(:roles, box.value, :hint) %>
+          <div class="group flex items-center justify-between gap-2"
+               data-role-implications-target="role" data-implies="<%= choice.implied.to_json %>">
+            <%= box.label class: "inline-flex items-center gap-1.5 group-data-implied:text-base-content/70" do %>
+              <%= box.check_box class: "checkbox", aria: { describedby: hint_id } %>
+              <%= box.text %>
+            <% end %>
+
+            <span id="<%= hint_id %>" class="text-xs group-data-implied:text-base-content/70"><%= choice.hint %></span>
+          </div>
         <% end %>
       </fieldset>
     <% end %>
   <% end %>
 
-  <div class="inline">
-    <%= form.submit class: "btn btn-primary" %>
+  <div class="flex gap-2">
+    <%= link_to "Cancel", cancel, class: "btn btn-ghost" %>
+    <%= form.submit submit, class: "btn btn-primary" %>
   </div>
 <% end %>

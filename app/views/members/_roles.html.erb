@@ -1,0 +1,5 @@
+<%# locals: (member:) %>
+<%# One tag per role held, in `Role::NAMES` order, which `&` keeps from its left side. %>
+<% (Role::NAMES & member.roles.map(&:name)).each do |name| %>
+  <span class="badge badge-sm badge-soft"><%= role_tag name %></span>
+<% end %>

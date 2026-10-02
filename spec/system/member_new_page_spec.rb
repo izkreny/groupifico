@@ -10,7 +10,7 @@ RSpec.describe "The new member page", type: :system do
 
       visit new_group_member_path(actor.group)
       fill_in "Email", with: actor.user.email
-      click_button "Create Member"
+      click_button "Send invite"
     end
 
     it "colours the rejected field's border to match its message" do
@@ -42,7 +42,7 @@ RSpec.describe "The new member page", type: :system do
 
     visit new_group_member_path(actor.group)
     fill_in "Email", with: "new.person@example.com"
-    click_button "Create Member"
+    click_button "Send invite"
 
     expect(page).to have_text "Member was successfully created."
   end

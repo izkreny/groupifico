@@ -82,4 +82,38 @@ RSpec.describe Role, type: :model do
       expect(role.owner?).to be false
     end
   end
+
+  describe "#implies?" do
+    it "answers true for every other name when the role is owner" do
+      role = build(:role, name: "owner")
+
+      expect(role.implies?("administrator")).to be true
+      expect(role.implies?("members_administrator")).to be true
+    end
+
+    it "answers true for a module role when the role is administrator" do
+      role = build(:role, name: "administrator")
+
+      expect(role.implies?("events_administrator")).to be true
+    end
+
+    it "answers false for owner when the role is administrator" do
+      role = build(:role, name: "administrator")
+
+      expect(role.implies?("owner")).to be false
+    end
+
+    it "answers false for a different module role when the role is a module role" do
+      role = build(:role, name: "events_administrator")
+
+      expect(role.implies?("members_administrator")).to be false
+      expect(role.implies?("administrator")).to be false
+    end
+
+    it "answers false for its own name" do
+      role = build(:role, name: "owner")
+
+      expect(role.implies?("owner")).to be false
+    end
+  end
 end

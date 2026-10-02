@@ -1,9 +1,7 @@
-<% content_for :title, "New member" %>
+<% content_for :title, "Invite a member" %>
 
-<div class="md:w-2/3 w-full">
-  <h1 class="font-bold text-4xl">New member</h1>
+<%= render "shared/page_header", title: "Invite a member" %>
 
-  <%= render "members/form", group: @group, member: @member %>
-
-  <%= link_to "Back to members", group_members_path(@group), class: "btn btn-ghost" %>
+<div class="w-full">
+  <%= render "members/form", group: @group, member: @member, submit: "Send invite", cancel: group_members_path(@group) %>
 </div>
