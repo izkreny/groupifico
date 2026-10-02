@@ -43,16 +43,15 @@ For more information, check out the [backlog](https://github.com/izkreny/groupif
 
 #### Member aka _Group membership_
 - Members belong to the Group, have a status, and hold any number of roles
-- They can create/interact with Events, Polls, etc.
+- They are registered for the group's Events and answer those registrations; with the right role they create and manage the Events
 - What a status and a role each permit is [the authorization model](./docs/AUTHORIZATION.md), which holds the capability tables and the two questions every request asks
 
 #### Event
 - Main organizational group entity
 
 #### Registration
-- Member registers for an Event
-- Member can be invited to an Event and respond
-- A registration can be reserved and the presence later confirmed
+- A place at an Event is reserved for a Member, or the Member is invited to it, by whoever fills the event
+- The Member answers with yes, maybe or no, while the Event is still open to answers
 
 ### Other Domain Models
 
@@ -79,7 +78,7 @@ Attributes read `type name "key, comment"`: type before name, which is mermaid's
 > - Foreign key attributes are omitted where a relationship line already shows the link, and the rule runs both ways: **no line means no database foreign key**, in either diagram. `creator_id` and `manager_id` are why the rule names the database rather than the reference - both point at `MEMBER`, so their names cannot say where they point and they are drawn as `FK: ENTITY` attributes instead, but neither has a constraint behind it. This bullet owns the convention for both diagrams; the one below points here rather than restating it.
 > - No authentication table is drawn here. `sessions`, `sign_in_tokens` and `sign_ups` have a diagram of their own, [below](#authentication-entity-relationship-diagram), rather than crowding this one, so what is left here is the domain.
 > - Column limits are Rails-level facts. SQLite does not enforce a declared length, so a limit is what the model validations are set from and what a move to another database engine would need, not a constraint the database applies.
-> - `MEMBER 1+ to 1 GROUP` is what the create path guarantees, not what the database enforces. A group is created with its creator as an `owner` member, so it never starts empty; nothing stops the last member being removed afterwards, and no constraint or validation upholds the `1+`.
+> - `MEMBER 1+ to 1 GROUP` is what the models guarantee, not what the database enforces. A group is created with its creator as an `owner` member, so it never starts empty, and the guards on `Member`, `Role` and `User` refuse every move that would leave it without an active owner, so it never empties afterwards either; no database constraint upholds the `1+`, and destroying the group is the one route past the guards. Who may attempt each move is [the authorization model](./docs/AUTHORIZATION.md).
 
 ```mermaid
 ---
@@ -102,15 +101,15 @@ erDiagram
   %% RELATIONSHIPS
   %% A line is an Active Record association. Every one drawn here also has an add_foreign_key
   %% behind it, but nothing enforces that pairing, so read a line as an association first
-  USER    1   to  0+  MEMBER        :  "↓ become … belong ↑"
-  USER    1   to  1   USER_PROFILE  :  "↓ has    … belong ↑"
-  MEMBER  1+  to  1   GROUP         :  "↓ belong … has ↑"
-  MEMBER  1   to  0+  ROLE          :  "↓ has    … belong ↑"
-  GROUP   1   to  0+  EVENT         :  "↓ has    … belong ↑"
-  EVENT   1   to  0+  REGISTRATION  :  "↓ has    … belong ↑"
-  MEMBER  1   to  0+  REGISTRATION  :  "↓ has    … belong ↑"
-  GROUP   0+  to  1   ADDRESS       :  "↓ has    … belong ↑"
-  EVENT   0+  to  1   ADDRESS       :  "↓ has    … belong ↑"
+  USER    1            to  0+           MEMBER        :  "↓ become … belong ↑"
+  USER    1            to  1            USER_PROFILE  :  "↓ has    … belong ↑"
+  MEMBER  1+           to  1            GROUP         :  "↓ belong … has ↑"
+  MEMBER  1            to  0+           ROLE          :  "↓ has    … belong ↑"
+  GROUP   1            to  0+           EVENT         :  "↓ has    … belong ↑"
+  EVENT   1            to  0+           REGISTRATION  :  "↓ has    … belong ↑"
+  MEMBER  1            to  0+           REGISTRATION  :  "↓ has    … belong ↑"
+  GROUP   zero or one  to  zero or one  ADDRESS       :  "↓ has    … belong ↑"
+  EVENT   0+           to  zero or one  ADDRESS       :  "↓ has    … belong ↑"
 
   %% ENTITIES
 
@@ -119,7 +118,9 @@ erDiagram
   %% FK: sessions and sign_in_tokens also reference users; their rules are in the authentication ERD below
   USER {
     %% email limit: 250 chars. Normalised to stripped lowercase, uniqueness validated case-insensitively
-    STRING email "UK, NN"
+    STRING   email              "UK, NN"
+    %% first_signed_in_at is null until the account's first session is created, which is how the roster marks a member who has never signed in
+    DATETIME first_signed_in_at "NULL"
   }
 
   %% UNIQUE INDEX (user_id), UNIQUE INDEX (mobile_phone)
@@ -153,7 +154,7 @@ erDiagram
   %% UNIQUE INDEX (member_id, name): a Member cannot hold the same Role twice
   %% FK: member_id references members, ON DELETE CASCADE, ON UPDATE CASCADE
   ROLE {
-    %% name has no limit declared. Validated for inclusion in Role::NAMES: owner | administrator | events_administrator
+    %% name has no limit declared. Validated for inclusion in Role::NAMES: owner | administrator | events_administrator | members_administrator
     STRING name "NN"
   }
 
@@ -244,7 +245,9 @@ erDiagram
   %% FK: sessions and sign_in_tokens both reference users, with the rules noted on each below
   USER {
     %% email limit: 250 chars. Normalised to stripped lowercase, uniqueness validated case-insensitively
-    STRING email "UK, NN"
+    STRING   email              "UK, NN"
+    %% first_signed_in_at is null until the account's first session is created; SESSION's after_create writes it once
+    DATETIME first_signed_in_at "NULL"
   }
 
   %% FK: user_id references users with no options, so NO ACTION; has_many dependent: :destroy cleans them up
