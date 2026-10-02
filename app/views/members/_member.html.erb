@@ -1,7 +1,7 @@
 <%# locals: (member:, manages:) %>
 <%#
-  One roster row. A member who is not active is still drawn, dimmed and tagged with their status.
-  Call and Email are every reader's; Call only where the member has a mobile, since every member
+  One roster row. A member who is not active is still drawn, tagged with their status and dimmed to
+  the theme's `base-content` at 70%, which holds AA in both themes. Call and Email are every reader's; Call only where the member has a mobile, since every member
   has an address and not every one a number. The detail is every reader's too, so the name links
   there, and only the pencil opens the edit form.
 
@@ -9,7 +9,7 @@
   reader who manages members: they are the ones who added this person and would chase them.
 %>
 <% name = member.full_name %>
-<li id="<%= dom_id member, :row %>" class="list-row items-center<%= " opacity-80" unless member.active? %>">
+<li id="<%= dom_id member, :row %>" class="list-row items-center<%= " text-base-content/70" unless member.active? %>">
   <div class="avatar avatar-placeholder">
     <div class="bg-base-300 text-base-content w-10 rounded-full">
       <span><%= member.initials %></span>

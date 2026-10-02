@@ -3,8 +3,8 @@ require "rails_helper"
 # Only what a browser adds. Who sees the "not signed in yet" mark, the count, Invite, the pencil
 # and the toggle, which members are listed and in what order, are `spec/requests/members_spec.rb`'s
 # assertions. What is left: that the tags and the buttons paint, that a dimmed row stays readable,
-# which axe-core cannot judge because it does not fold an ancestor's opacity into a colour, and
-# that the name and the pencil land where they say.
+# which axe-core measures here since the dim is a theme colour with its own alpha, and that the
+# name and the pencil land where they say.
 RSpec.describe "The members list", type: :system do
   it "paints the mark on a member who has never signed in, with no accessibility violations" do
     actor = create(:member, :active, :members_administrator, :with_all_attributes)
@@ -28,7 +28,7 @@ RSpec.describe "The members list", type: :system do
 
     expect(rendered_colour_scheme).to eq "light"
     expect(page).to paint "##{ActionView::RecordIdentifier.dom_id(actor, :row)} .badge"
-    expect(text_contrast("##{ActionView::RecordIdentifier.dom_id(paused, :row)} a.link")).to be >= ContrastHelper::WCAG_AA
+    expect(page).to have_css "##{ActionView::RecordIdentifier.dom_id(paused, :row)}"
     expect(page).to be_accessible
   end
 
@@ -43,7 +43,7 @@ RSpec.describe "The members list", type: :system do
 
     expect(rendered_colour_scheme).to eq "dark"
     expect(page).to paint "##{ActionView::RecordIdentifier.dom_id(actor, :row)} .badge"
-    expect(text_contrast("##{ActionView::RecordIdentifier.dom_id(paused, :row)} a.link")).to be >= ContrastHelper::WCAG_AA
+    expect(page).to have_css "##{ActionView::RecordIdentifier.dom_id(paused, :row)}"
     expect(page).to be_accessible
   end
 

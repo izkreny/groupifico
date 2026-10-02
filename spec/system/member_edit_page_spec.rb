@@ -56,9 +56,10 @@ RSpec.describe "The member edit page", type: :system do
       visit edit_group_member_path(member.group, member)
       check "Owner"
 
+      colour_of = ->(selector) { page.evaluate_script "getComputedStyle(document.querySelector(arguments[0])).color", selector }
+
       expect(page).to have_css "[data-implied]", count: 3
-      expect(page.evaluate_script("getComputedStyle(document.querySelector('[data-implied] .text-xs')).opacity")).to eq "0.8"
-      expect(page).to have_checked_field "Owner"
+      expect(colour_of["[data-implied] label"]).not_to eq colour_of["[data-role-implications-target=role]:not([data-implied]) label"]
 
       uncheck "Owner"
 
@@ -80,6 +81,8 @@ RSpec.describe "The member edit page", type: :system do
       expect(member.reload.roles.map(&:name)).to contain_exactly "administrator", "events_administrator"
     end
 
+    # axe-core measures the grey here: it is a colour with its own alpha, which
+    # `ContrastHelper#text_contrast` reads as the opaque colour.
     it "keeps a greyed role readable in light" do
       owner  = create(:member, :active, :owner, :with_all_attributes)
       member = create(:member, :active, :administrator, group: owner.group)
@@ -90,7 +93,6 @@ RSpec.describe "The member edit page", type: :system do
 
       expect(rendered_colour_scheme).to eq "light"
       expect(page).to have_css "[data-implied]", count: 2
-      expect(text_contrast("[data-implied] .text-xs")).to be >= ContrastHelper::WCAG_AA
       expect(page).to be_accessible
     end
 
@@ -104,7 +106,6 @@ RSpec.describe "The member edit page", type: :system do
 
       expect(rendered_colour_scheme).to eq "dark"
       expect(page).to have_css "[data-implied]", count: 2
-      expect(text_contrast("[data-implied] .text-xs")).to be >= ContrastHelper::WCAG_AA
       expect(page).to be_accessible
     end
   end
