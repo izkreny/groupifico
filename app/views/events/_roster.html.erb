@@ -48,7 +48,7 @@
                   aria: { label: asked ? "#{name} is invited, no reply yet" : "Invite #{name}" } do %>
               <%= icon :invited, class: "size-4" %>
             <% end %>
-          <% elsif !(may_answer && registration.answered?) %>
+          <% elsif !may_answer || !registration.answered? %>
             <span class="badge badge-sm" title="<%= registration_status_label(registration) %>">
               <%= status_icon registration, label: registration_status_label(registration), class: "size-4" %>
             </span>
