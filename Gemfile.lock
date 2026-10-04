@@ -150,7 +150,7 @@ GEM
     hashdiff (1.2.1)
     i18n (1.15.2)
       concurrent-ruby (~> 1.0)
-    icons (0.9.0)
+    icons (0.11.0)
       nokogiri (~> 1.16, >= 1.16.4)
     image_processing (2.2.0)
     importmap-rails (2.2.3)
@@ -271,8 +271,8 @@ GEM
     rails-html-sanitizer (1.7.1)
       loofah (~> 2.25, >= 2.25.2)
       nokogiri (>= 1.15.7, != 1.16.7, != 1.16.6, != 1.16.5, != 1.16.4, != 1.16.3, != 1.16.2, != 1.16.1, != 1.16.0.rc1, != 1.16.0)
-    rails_icons (1.9.0)
-      icons (~> 0.9.0)
+    rails_icons (1.10.0)
+      icons (~> 0.11.0)
       rails (>= 7.0)
     railties (8.1.4)
       actionpack (= 8.1.4)
@@ -461,7 +461,7 @@ DEPENDENCIES
   propshaft
   puma (>= 5.0)
   rails (~> 8.1.1)
-  rails_icons (~> 1.9)
+  rails_icons (~> 1.10)
   rspec-rails (~> 8.0.0)
   rubocop-capybara
   rubocop-rails-omakase
@@ -532,7 +532,7 @@ CHECKSUMS
   globalid (1.4.0) sha256=037f12fbf1d9d7a014d501c2d5c77356fd4ddd96d7a7991d6700bba96706f427
   hashdiff (1.2.1) sha256=9c079dbc513dfc8833ab59c0c2d8f230fa28499cc5efb4b8dd276cf931457cd1
   i18n (1.15.2) sha256=00f9eb62412fe593b2a65a97daa75300d37abb8f7202ec748e94b6d46a9dd1b5
-  icons (0.9.0) sha256=128365c3414a1b76de4ea1913ef9190163fec1f8c701fa9a37fa301c04f4c9dc
+  icons (0.11.0) sha256=148c70233ebcea2dc638766626e6fdd8e3667386dd93d986f2b0dffb950df84d
   image_processing (2.2.0) sha256=e0cb9892a4395ac2b7bb2fac5c6f5bc63361f2f18ed08773e21fce5b111c6974
   importmap-rails (2.2.3) sha256=7101be2a4dc97cf1558fb8f573a718404c5f6bcfe94f304bf1f39e444feeb16a
   io-console (0.9.4) sha256=a403304f32928ee85e56d457b4612ca43f2703b561a3258844992bd24085fbb1
@@ -582,7 +582,7 @@ CHECKSUMS
   rails (8.1.4) sha256=5f3ecdf9a2a3b79b2e31b8fee3b64a00f7284d76e5631f87d0e58e665911a33b
   rails-dom-testing (2.3.0) sha256=8acc7953a7b911ca44588bf08737bc16719f431a1cc3091a292bca7317925c1d
   rails-html-sanitizer (1.7.1) sha256=e797a7c9b01e567307e317c576b49ab4168017e63eea4dba9ce3cb587e2f22c2
-  rails_icons (1.9.0) sha256=f62aa09908a978d76756c13b610b8596bb953fc622dc224ea8bd5a8c6899a4d1
+  rails_icons (1.10.0) sha256=682a7b9e3c26b890cf91406993fbf019c83267b221341cd9ae7c3feea68c200a
   railties (8.1.4) sha256=b5e7a8e8984e33114d68af62227971960aae1e6c02bd7c9d826ffad97fff583c
   rainbow (3.1.1) sha256=039491aa3a89f42efa1d6dec2fc4e62ede96eb6acd95e52f1ad581182b79bc6a
   rake (13.4.2) sha256=cb825b2bd5f1f8e91ca37bddb4b9aaf345551b4731da62949be002fa89283701
