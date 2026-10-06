@@ -448,13 +448,13 @@ RSpec.describe Event, type: :model do
       expect(event.registrations.invited.pluck(:member_id)).to contain_exactly(event.creator_id, first.id, second.id)
     end
 
-    it "touches no existing registration" do
-      event = create(:event)
-      reserved = create(:registration, event:, member: event.creator, status: :reserved)
+    it "moves an active member's held place to invited and leaves an answer as it was" do
+      event = create(:event, status: :confirmed)
+      held = create(:registration, event:, member: event.creator, status: :reserved)
       answered = create(:registration, event:, member: create(:member, group: event.group), status: :no)
 
-      expect(event.invite_all_active_members).to eq 0
-      expect([ reserved.reload.status, answered.reload.status ]).to eq %w[ reserved no ]
+      expect(event.invite_all_active_members).to eq 1
+      expect([ held.reload.status, answered.reload.status ]).to eq %w[ invited no ]
     end
 
     it "leaves out paused and inactive members, and other groups' members" do
@@ -467,25 +467,38 @@ RSpec.describe Event, type: :model do
 
       expect(event.registrations.pluck(:member_id)).to eq [ event.creator_id ]
     end
-  end
-
-  describe "#invite_reserved" do
-    it "moves every reserved registration to invited and leaves the others as they were" do
-      event = create(:event, status: :confirmed)
-      held = create(:registration, event:, member: event.creator, status: :reserved)
-      answered = create(:registration, event:, member: create(:member, group: event.group), status: :maybe)
-
-      expect(event.invite_reserved).to eq 1
-      expect([ held.reload.status, answered.reload.status ]).to eq %w[ invited maybe ]
-    end
 
     it "leaves a paused or inactive member's held place reserved" do
       event = create(:event)
       paused = create(:registration, event:, member: create(:member, :paused, group: event.group), status: :reserved)
       gone = create(:registration, event:, member: create(:member, :inactive, group: event.group), status: :reserved)
+      create(:registration, event:, member: event.creator, status: :yes)
 
-      expect(event.invite_reserved).to eq 0
+      expect(event.invite_all_active_members).to eq 0
       expect([ paused.reload.status, gone.reload.status ]).to eq %w[ reserved reserved ]
+    end
+  end
+
+  describe "#anyone_left_to_invite?" do
+    it "answers true while an active member has no registration" do
+      event = create(:event)
+
+      expect(event).to be_anyone_left_to_invite
+    end
+
+    it "answers true while an active member's place is only held" do
+      event = create(:event)
+      create(:registration, event:, member: event.creator, status: :reserved)
+
+      expect(event).to be_anyone_left_to_invite
+    end
+
+    it "answers false once every active member is asked, whoever else is held" do
+      event = create(:event)
+      create(:registration, event:, member: event.creator, status: :invited)
+      create(:registration, event:, member: create(:member, :paused, group: event.group), status: :reserved)
+
+      expect(event).not_to be_anyone_left_to_invite
     end
   end
 

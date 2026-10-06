@@ -629,18 +629,26 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include "Invite Dan Ellis"
       end
 
-      it "offers Invite the rest only while an active member has no registration" do
+      it "offers Invite the rest while an active member's place is only held" do
         owner = create(:member, :active, :owner)
         event = detailed_event(owner)
         sign_in_as(owner.user)
 
         get group_event_path(event.group, event)
-        offered_with_everyone_listed = response.body.include?("Invite the rest")
-        create(:member, :active, group: owner.group)
+
+        expect(response.body).to include "Invite the rest", group_event_invitation_path(event.group, event)
+      end
+
+      it "offers no Invite the rest once every active member is asked" do
+        owner = create(:member, :active, :owner)
+        event = detailed_event(owner)
+        event.registrations.reserved.update_all(status: :invited)
+        sign_in_as(owner.user)
+
         get group_event_path(event.group, event)
 
-        expect(offered_with_everyone_listed).to be false
-        expect(response.body).to include "Invite the rest", group_event_invitation_path(event.group, event)
+        expect(response.body).to include "Add someone"
+        expect(response.body).not_to include "Invite the rest"
       end
 
       it "names a paused member with no registration as left out above the rows" do

@@ -166,25 +166,29 @@ class Event < ApplicationRecord
   # about the event, so it is a virtual attribute `EventsController` reads rather than a column.
   attribute :invite_active_members, :boolean, default: false
 
-  # WHY: `insert_all` rather than `invite`, because this set is computed rather than ticked, so a
-  # member registered while the request runs is skipped on the unique index instead of refusing
-  # the whole set. Returns how many were invited.
+  # WHY: asks every active member nobody has asked yet, in one transaction: a held place becomes a
+  # question, and an active member with no registration gets one. An answer is the member's own and
+  # is never overruled, and a paused or inactive member is never asked. `insert_all` rather than
+  # `invite`, because this set is computed rather than ticked, so a member registered while the
+  # request runs is skipped on the unique index instead of refusing the whole set. Returns how many
+  # were invited.
   def invite_all_active_members
-    invitees = group.members.active.without_registration_for(self).ids
+    active = group.members.active
 
-    if invitees.any?
-      registrations.insert_all(invitees.map { { member_id: it, status: :invited } }).length
-    else
-      0
+    transaction do
+      held = registrations.reserved.where(member: active).update_all(status: :invited, updated_at: Time.current)
+      missing = active.without_registration_for(self).ids
+
+      held + (missing.any? ? registrations.insert_all(missing.map { { member_id: it, status: :invited } }).length : 0)
     end
   end
 
-  # WHY: a held place becomes a question, and only a held place does: an answer is the member's own
-  # and somebody who is merely filling the event never overrules it. Only an active member's place,
-  # as for `invite_all_active_members`: a paused or inactive one is never asked. Returns how many
-  # were moved.
-  def invite_reserved
-    registrations.reserved.where(member: group.members.active).update_all(status: :invited, updated_at: Time.current)
+  # Whether `invite_all_active_members` would ask anybody, asked by the roster before it offers
+  # "Invite the rest".
+  def anyone_left_to_invite?
+    active = group.members.active
+
+    registrations.reserved.exists?(member: active) || active.without_registration_for(self).exists?
   end
 
   # TODO: add event's time_zone context

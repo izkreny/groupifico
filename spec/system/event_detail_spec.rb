@@ -185,8 +185,9 @@ RSpec.describe "The event detail", type: :system do
     open_roster
     click_button "Invite the rest"
 
+    # WHY: Ben's held place and the member with none are both asked.
     expect(page).to have_current_path group_event_path(event.group, event)
-    expect(page).to have_text "1 member invited."
+    expect(page).to have_text "2 members invited."
   end
 
   it "lands on the edit form from the pencil" do

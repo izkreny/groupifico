@@ -23,7 +23,7 @@
 <% may_invite = allowed_to?(:create?, unattached) %>
 <% may_answer = event.open_to_answers? && allowed_to?(:update?, unattached) %>
 <% may_remove = allowed_to?(:destroy?, unattached) %>
-<% uninvited = may_invite && event.group.members.active.without_registration_for(event).exists? %>
+<% uninvited = may_invite && event.anyone_left_to_invite? %>
 <% roster = event.roster %>
 
 <div class="flex flex-col gap-2">
@@ -91,7 +91,7 @@
         <%= icon :add_member, class: "size-4" %>Add someone
       <% end %>
 
-      <%# Only while it can do something: every active member already on the list leaves it nothing. %>
+      <%# Only while it can do something: every active member already asked leaves it nothing. %>
       <% if uninvited %>
         <%= button_to group_event_invitation_path(event.group, event), class: "btn btn-sm" do %>
           <%= icon :invited, class: "size-4" %>Invite the rest

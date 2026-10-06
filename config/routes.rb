@@ -45,9 +45,9 @@ Rails.application.routes.draw do
       resources :registrations, only: %i[ new create update destroy ] do
         resource :invitation, only: :create, module: :registrations
       end
-      # WHY: asking the whole list at once is a resource of the event's: `create` invites every
-      # active member still missing a registration, `update` moves every held place to invited.
-      resource :invitation, only: %i[ create update ], module: :events
+      # WHY: asking the whole list at once is a resource of the event's: `create` asks every active
+      # member nobody has asked yet, whether their place is held or they have none.
+      resource :invitation, only: :create, module: :events
     end
   end
 
