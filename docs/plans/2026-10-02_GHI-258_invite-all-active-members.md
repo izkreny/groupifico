@@ -49,4 +49,9 @@ The gates cannot see whether an owner reads the tinted plane as "already asked" 
 
 ## Open questions
 
-- **Routing.** The issue's note says "a member route on events", and `get "duplicate", on: :member` is the precedent for that reading. This plan builds nested singular `invitation` resources instead, the house style's resource-per-action, and the row's plane needs one under registrations either way; the alternative is `post :invite_all` and `patch :invite_reserved` on the event's member routes.
+None.
+
+## Settled
+
+- **Routing.** Nested singular `invitation` resources, kept: the house style's "no custom member actions", and the row's plane needs a resource under the registration in any case. Settled by the owner in the session on 2026-10-06.
+- **One invitation for every active member.** "Invite the rest", "Invite everyone" and the form's "Invite all active members" are one action: `Event#invite_all_active_members` moves every active member's `reserved` place to `invited` and creates an `invited` registration for every active member without one, leaving answers alone. A held place was never asked, so moving it nudges nobody, which frame 4l asks of "Invite the rest". `Event#invite_reserved` and `Events::InvitationsController#update` go. Settled by the owner in the session on 2026-10-06.
