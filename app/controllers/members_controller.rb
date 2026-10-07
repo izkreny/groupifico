@@ -21,7 +21,7 @@ class MembersController < ApplicationController
     # WHY: sorted in Ruby rather than ordered in SQL, because `full_name` falls back to the address
     # when the profile has no name, and ordering on the profile's columns would misplace that member.
     members  = @inactive_shown ? @group.members : @group.current_members
-    @members = authorized_scope(members).includes(:roles, :user, :profile).sort_by { it.full_name.downcase }
+    @members = authorized_scope(members).includes(:roles, :user, :profile).strict_loading.sort_by { it.full_name.downcase }
   end
 
   def show
