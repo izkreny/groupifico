@@ -77,6 +77,31 @@ RSpec.describe "The event detail", type: :system do
     expect(colour_of("Carla Duke is invited, no reply yet")).not_to eq colour_of("Invite Ben Cole")
   end
 
+  # WHY: the glyph rather than the pill, so the surface measured against is the pill's own face.
+  it "shows a row's lit pill by its glyph in light" do
+    owner, event, = rostered_event
+    sign_in_as owner.user
+    prefer_colour_scheme :light
+
+    visit group_event_path(event.group, event)
+    open_roster
+
+    expect(rendered_colour_scheme).to eq "light"
+    expect(text_contrast("##{roster_row(owner)} .join .btn-primary svg")).to be >= ContrastHelper::WCAG_NON_TEXT
+  end
+
+  it "shows the same glyph in dark" do
+    owner, event, = rostered_event
+    sign_in_as owner.user
+    prefer_colour_scheme :dark
+
+    visit group_event_path(event.group, event)
+    open_roster
+
+    expect(rendered_colour_scheme).to eq "dark"
+    expect(text_contrast("##{roster_row(owner)} .join .btn-primary svg")).to be >= ContrastHelper::WCAG_NON_TEXT
+  end
+
   it "has no accessibility violations with an owner's roster open, in light" do
     owner, event, = rostered_event
     sign_in_as owner.user

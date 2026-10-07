@@ -68,6 +68,8 @@ end
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "annotaterb"
+  # Live reload of HTML, CSS and Stimulus controllers on file change [https://github.com/hotwired/spark]
+  gem "hotwire-spark"
   gem "ruby-lsp-rspec", require: false
   gem "web-console"
 end

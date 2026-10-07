@@ -107,6 +107,33 @@ module ContrastHelper
       })(arguments[0])
     JAVASCRIPT
   end
+
+  # WHY: `text_contrast` measures against the first opaque ancestor, which for a filled control whose
+  # label is its own text is the surface around it rather than its face, and axe returns such a
+  # control as incomplete rather than measured, because every daisyUI `btn` carries a noise image.
+  def label_contrast(selector)
+    page.evaluate_script(<<~JAVASCRIPT, selector)
+      (function(selector) {
+        const element = document.querySelector(selector);
+        if (!element) return null;
+
+        #{Contrast::CANVAS}
+        #{Contrast::SURFACE}
+        #{Contrast::LUMINANCE}
+
+        context.clearRect(0, 0, 1, 1);
+        fill(surface);
+        fill(getComputedStyle(element).backgroundColor);
+        const face = Array.from(pixel());
+
+        context.clearRect(0, 0, 1, 1);
+        fill(getComputedStyle(element).color);
+        const ink = Array.from(pixel());
+
+        return ratio(ink, face);
+      })(arguments[0])
+    JAVASCRIPT
+  end
 end
 
 RSpec.configure do |config|
