@@ -104,6 +104,8 @@ That is a domain invariant rather than an authorization rule - it refuses the la
 
 **A manager invites and does not un-invite.** `manager` is marked for registering another member for their event and is deliberately not marked for changing that member's answer or removing their registration. Filling an event is the manager's job; overruling somebody's own answer, or taking a registration away once it exists, stays with the group's administrators and its events administrators, and a mistaken invitation is undone by one of them rather than by the person who made it.
 
+**Asking a held place is inviting, not changing an answer.** Moving a `reserved` registration to `invited`, from one roster row's paper plane or for the whole list at once, is the invitation row, so `RegistrationPolicy#create?` decides it and the event's manager may do it where `update?` would refuse them. It never reaches an answer: `Registration#invite` and `Event#invite_all_active_members` move a held place and nothing else, which is what keeps the manager clear of the change-answer row.
+
 **Editing an event includes handing it on.** `events.manager_id` is an attribute of the event like its status and its location, so the edit row decides it and no separate row exists: a manager may pass their event to another member or take one on, and the same three roles may reassign it over their head.
 
 **A capability appears once, at the grain the mechanism can enforce.** `duplicate` authorizes `create?`, so it shares the create row rather than getting its own; an event's status and location are ordinary attributes of an update, so they share the edit row. Splitting either into its own row would allow two marks that no rule can tell apart.

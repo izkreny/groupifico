@@ -162,6 +162,28 @@ class Event < ApplicationRecord
     end
   end
 
+  # WHY: the form's "Invite all active members" box is a request to act after the save, not a fact
+  # about the event, so it is a virtual attribute `EventsController` reads rather than a column.
+  attribute :invite_active_members, :boolean, default: false
+
+  # WHY: asks every active member nobody has asked yet, in one transaction: a held place becomes a
+  # question, and an active member with no registration gets one. An answer is the member's own and
+  # is never overruled, and a paused or inactive member is never asked. Record by record rather than
+  # `update_all` and `insert_all`, so every registration runs its callbacks, which a notification
+  # will hang off. The read and the writes share one transaction, which SQLite opens immediate, so
+  # no registration can land between them. Returns how many were invited.
+  def invite_all_active_members
+    transaction do
+      active_members_reserved_registrations.count(&:invite) + invite(unregistered_active_members).size
+    end
+  end
+
+  # Whether `invite_all_active_members` would ask anybody, asked by the roster before it offers
+  # "Invite the rest". Reads the same two sets, so the offer and the action cannot disagree.
+  def anyone_left_to_invite?
+    active_members_reserved_registrations.exists? || unregistered_active_members.exists?
+  end
+
   # TODO: add event's time_zone context
   def same_day?
     starts_at.to_date == ends_at.to_date
@@ -182,4 +204,8 @@ class Event < ApplicationRecord
       event.manager = nil unless manager&.active?
     end
   end
+
+  private
+    def active_members_reserved_registrations = registrations.reserved.where(member: group.members.active)
+    def unregistered_active_members = group.members.active.without_registration_for(self)
 end

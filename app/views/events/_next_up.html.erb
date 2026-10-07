@@ -29,6 +29,14 @@
 
     <%= render "events/counts", event: event %>
 
+    <%# Frame 4n: an event whose every registration is a place held and nobody asked. It needs one
+        registration at least, since "every" holds of an empty list that has nobody to ask. %>
+    <% if event.registrations.any? && event.registrations.all?(&:reserved?) && allowed_to?(:create?, Registration.new(event: event)) %>
+      <%= button_to group_event_invitation_path(event.group, event), class: "btn btn-sm self-start" do %>
+        <%= icon :invited, class: "size-4" %>Invite everyone
+      <% end %>
+    <% end %>
+
     <% if (said_yes = said_yes_line(event)) %>
       <p class="text-sm"><%= said_yes %></p>
     <% end %>
