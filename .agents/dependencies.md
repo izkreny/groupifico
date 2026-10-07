@@ -8,7 +8,7 @@ Read this before opening or working an update issue, bumping a gem or any other 
 
 **One update issue covers every upgradable package in the repository**: Ruby and its toolchain, the gems, Node and the npm packages, the vendored daisyUI and the GitHub Actions. A round is never split per ecosystem. The inventory below is taken whole before the issue's scope is fixed, and whatever it finds either moves in that round or is named in the issue as deliberately left where it is, so no ecosystem waits for someone to notice it.
 
-**Every Ruby and Node command in a round runs as `mise exec -- <command>`**, so the worktree's `.ruby-version` and `.node-version` decide which Ruby and Node answer, rather than whatever the shell started with. It matters most in a round that moves Ruby or Node, where the shell still carries the version the branch is replacing. Every Ruby and Node command in this file is written that way.
+**Every Ruby and Node command in a round runs as `mise exec -- <command>`**, so the worktree's `.ruby-version` and `.node-version` decide which Ruby and Node answer, rather than whatever the shell started with. It matters most in a round that moves Ruby or Node, where the shell still carries the version the branch is replacing. The commands in this section and in *The update order* are written that way, and a Ruby or Node command this file names elsewhere, `bin/ci` included, runs the same way.
 
 ### The inventory
 
