@@ -174,8 +174,7 @@ class Event < ApplicationRecord
   # no registration can land between them. Returns how many were invited.
   def invite_all_active_members
     transaction do
-      reserved = active_members_reserved_registrations.each(&:invited!)
-      reserved.size + invite(unregistered_active_members).size
+      active_members_reserved_registrations.count(&:invite) + invite(unregistered_active_members).size
     end
   end
 

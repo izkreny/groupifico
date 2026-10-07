@@ -69,9 +69,11 @@ class Registration < ApplicationRecord
     ANSWERS.include?(status)
   end
 
-  # WHY: the roster row's paper plane is reachable by anyone the invitation row admits, the event's
-  # manager included, who may not overrule an answer; so only a held place moves, and only an active
-  # member's, since a paused or inactive one is never asked. Whether it moved is the return value.
+  # WHY: the one rule for asking a registration, read by the roster row's paper plane and by
+  # `Event#invite_all_active_members` alike. Both are reachable by anyone the invitation row admits,
+  # the event's manager included, who may not overrule an answer; so only a held place moves, and
+  # only an active member's, since a paused or inactive one is never asked. Whether it moved is the
+  # return value.
   def invite
     reserved? && member.active? && invited!
   end
