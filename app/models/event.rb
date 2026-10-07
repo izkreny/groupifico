@@ -174,15 +174,15 @@ class Event < ApplicationRecord
   # no registration can land between them. Returns how many were invited.
   def invite_all_active_members
     transaction do
-      held = held_places.each(&:invited!)
-      held.size + invite(unregistered_active_members).size
+      reserved = active_members_reserved_registrations.each(&:invited!)
+      reserved.size + invite(unregistered_active_members).size
     end
   end
 
   # Whether `invite_all_active_members` would ask anybody, asked by the roster before it offers
   # "Invite the rest". Reads the same two sets, so the offer and the action cannot disagree.
   def anyone_left_to_invite?
-    held_places.exists? || unregistered_active_members.exists?
+    active_members_reserved_registrations.exists? || unregistered_active_members.exists?
   end
 
   # TODO: add event's time_zone context
@@ -207,6 +207,6 @@ class Event < ApplicationRecord
   end
 
   private
-    def held_places = registrations.reserved.where(member: group.members.active)
+    def active_members_reserved_registrations = registrations.reserved.where(member: group.members.active)
     def unregistered_active_members = group.members.active.without_registration_for(self)
 end
