@@ -96,6 +96,8 @@ class Event < ApplicationRecord
   scope :current_and_upcoming, -> { where(ends_at: Time.current..) }
   scope :past,                 -> { where(ends_at: ...Time.current) }
 
+  scope :preloaded, -> { includes(:address, :group, :registrations, creator: :profile, manager: :profile) }
+
   # The tallies the event card draws, in one query, with a zero for a status nobody holds so the
   # card draws the same tags whatever the answers are. `reserved` is not among them: a place held
   # that nobody has been asked about is the absence of an answer rather than one, and it is the one
