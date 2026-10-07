@@ -68,8 +68,12 @@ class Group < ApplicationRecord
   # `confirmed` alone: an unconfirmed event is not yet a commitment and a canceled one is not an
   # event, so neither belongs under a group's name. `status` defaults to `unconfirmed`, so a newly
   # created event stays out of here until somebody confirms it.
+  #
+  # WHY: `strict_loading(false)` because this answers one event, so reading its associations lazily
+  # costs a query each and never one per row; preloading them here would also charge every group
+  # card that only reads the event's date.
   def featured_event
-    events.confirmed.current_and_upcoming.order(:starts_at).first
+    events.strict_loading(false).confirmed.current_and_upcoming.order(:starts_at).first
   end
 
   # Whoever starts a group owns it, and both routes to a group say so through here rather than

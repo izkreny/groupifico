@@ -114,7 +114,7 @@ class EventsController < ApplicationController
 
   private
     def set_event
-      @event = @group.events.find(params.expect(:id))
+      @event = @group.events.includes(:address, :group, :registrations, creator: :profile, manager: :profile).find(params.expect(:id))
     end
 
     # The foreign keys the form submits are checked rather than trusted. Each picker is already

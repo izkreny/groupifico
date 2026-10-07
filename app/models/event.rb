@@ -200,12 +200,14 @@ class Event < ApplicationRecord
   # active is not handed the copy, which starts with nobody in charge instead. Settled on #312.
   def duplicate
     self.dup.tap do |event|
+      # WHY: `dup` copies `group_id` but not the loaded group, which the form reads.
+      event.group = group
       event.status = Event.new.status
       event.manager = nil unless manager&.active?
     end
   end
 
   private
-    def active_members_reserved_registrations = registrations.reserved.where(member: group.members.active)
+    def active_members_reserved_registrations = registrations.reserved.where(member: group.members.active).includes(:member)
     def unregistered_active_members = group.members.active.without_registration_for(self)
 end
