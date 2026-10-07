@@ -170,8 +170,8 @@ class Event < ApplicationRecord
   # question, and an active member with no registration gets one. An answer is the member's own and
   # is never overruled, and a paused or inactive member is never asked. Record by record rather than
   # `update_all` and `insert_all`, so every registration runs its callbacks, which a notification
-  # will hang off; a member registered while the request runs reaches the unique index and rolls
-  # the whole set back, as `invite` does. Returns how many were invited.
+  # will hang off. The read and the writes share one transaction, which SQLite opens immediate, so
+  # no registration can land between them. Returns how many were invited.
   def invite_all_active_members
     active = group.members.active
 

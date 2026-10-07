@@ -13,10 +13,6 @@ class Events::InvitationsController < ApplicationController
     authorize! Registration.new(event: @event), to: :create?
 
     redirect_back_or_to group_event_path(@group, @event), notice: invited_notice(@event.invite_all_active_members)
-  rescue ActiveRecord::RecordNotUnique
-    # WHY: somebody registered a member while this request was inviting; the transaction rolled the
-    # whole set back, so nobody was invited and pressing again finishes the job.
-    redirect_back_or_to group_event_path(@group, @event), alert: "Nobody was invited: the list changed while inviting. Try again."
   end
 
   private
