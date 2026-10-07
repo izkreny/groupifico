@@ -44,6 +44,32 @@ RSpec.describe "The events list", type: :system do
     expect(page).to be_accessible
   end
 
+  it "shows the lit pill by its label in light" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    create(:registration, event: next_event_for(member), member:, status: :yes)
+    sign_in_as member.user
+    prefer_colour_scheme :light
+    resize_to ViewportHelper::MOBILE
+
+    visit group_events_path(member.group)
+
+    expect(rendered_colour_scheme).to eq "light"
+    expect(label_contrast(".join .btn-primary")).to be >= ContrastHelper::WCAG_AA
+  end
+
+  it "shows the same label in dark" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    create(:registration, event: next_event_for(member), member:, status: :yes)
+    sign_in_as member.user
+    prefer_colour_scheme :dark
+    resize_to ViewportHelper::MOBILE
+
+    visit group_events_path(member.group)
+
+    expect(rendered_colour_scheme).to eq "dark"
+    expect(label_contrast(".join .btn-primary")).to be >= ContrastHelper::WCAG_AA
+  end
+
   # The card is drawn for a phone and the pills are a `join` of three, so whether the row of them
   # fits beside the tags is geometry: the markup is identical at both widths and no request spec
   # can tell the two apart.
