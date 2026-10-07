@@ -1129,7 +1129,6 @@ RSpec.describe "Events", type: :request do
         expect(fragment.at_xpath("//a[normalize-space()='Cancel']")["href"]).to eq group_event_path(member.group, original)
       end
 
-      # The original's id is carried again, so a second refused save is still the duplicate screen.
       it "keeps every typed value of a refused copy, the message under its field and the summary" do
         member   = create(:member, :active, :events_administrator)
         original = create(:event, group: member.group)
@@ -1141,7 +1140,16 @@ RSpec.describe "Events", type: :request do
         expect(fragment.at_css("textarea#event_description").text.strip).to eq "Bring the scores"
         expect(fragment.at_css("p#event_name_error").text).to eq "Name can't be blank"
         expect(fragment.at_css("#error_explanation[role=alert]")).to be_present
-        expect(fragment.at_css("input[name=original_id]")["value"]).to eq original.id.to_s
+      end
+
+      it "carries the original again, so a second refused copy is still the duplicate screen" do
+        member   = create(:member, :active, :events_administrator)
+        original = create(:event, group: member.group)
+        sign_in_as(member.user)
+
+        post group_events_path(member.group), params: { original_id: original.id, event: { name: "" } }
+
+        expect(Nokogiri::HTML(response.body).at_css("input[name=original_id]")["value"]).to eq original.id.to_s
       end
 
       it "re-renders the new event screen for an original that belongs to another group" do
