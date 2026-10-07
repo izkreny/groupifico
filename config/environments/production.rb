@@ -79,8 +79,9 @@ Rails.application.configure do
   config.active_record.attributes_for_inspect = [ :id ]
 
   # WHY: strict loading stays off by default here, but a list query that calls `.strict_loading`
-  # marks its rows in every environment. Logged rather than raised, so a lazy read the specs missed
-  # costs a query instead of a 500.
+  # marks its rows in every environment. `:log` lets a lazy read the specs missed run, costing a
+  # query instead of a 500; Rails reports it at debug, so it reaches the log only when
+  # `RAILS_LOG_LEVEL` is `debug`.
   config.active_record.action_on_strict_loading_violation = :log
 
   # Enable DNS rebinding protection and other `Host` header attacks.
