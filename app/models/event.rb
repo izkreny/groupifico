@@ -173,20 +173,16 @@ class Event < ApplicationRecord
   # will hang off. The read and the writes share one transaction, which SQLite opens immediate, so
   # no registration can land between them. Returns how many were invited.
   def invite_all_active_members
-    active = group.members.active
-
     transaction do
-      held = registrations.reserved.where(member: active).each(&:invited!)
-      held.size + invite(active.without_registration_for(self)).size
+      held = held_places.each(&:invited!)
+      held.size + invite(unregistered_active_members).size
     end
   end
 
   # Whether `invite_all_active_members` would ask anybody, asked by the roster before it offers
-  # "Invite the rest".
+  # "Invite the rest". Reads the same two sets, so the offer and the action cannot disagree.
   def anyone_left_to_invite?
-    active = group.members.active
-
-    registrations.reserved.exists?(member: active) || active.without_registration_for(self).exists?
+    held_places.exists? || unregistered_active_members.exists?
   end
 
   # TODO: add event's time_zone context
@@ -209,4 +205,8 @@ class Event < ApplicationRecord
       event.manager = nil unless manager&.active?
     end
   end
+
+  private
+    def held_places = registrations.reserved.where(member: group.members.active)
+    def unregistered_active_members = group.members.active.without_registration_for(self)
 end
