@@ -8,6 +8,8 @@ The toolchain moves first, and the repository only has to name what the owner al
 
 The gems follow `.agents/dependencies.md`'s order with `--conservative`, all in one commit, since nothing in the round is a major: rails_icons 1.10.0 with the icons 0.11.0 it requires, thruster 0.1.27, net-ssh 7.3.6 and parallel 2.3.0. icons arrives transitively on a 0.x minor, so its changelog is read before the bump, and rails_icons' too, since it syncs the icon files the app renders. `diff-lcs` and `marcel` stay held upstream and are not touched.
 
+`npm audit fix` patches `source-map-js` to 1.2.2 in `package-lock.json`, the one npm change in the round, per `## Settled`.
+
 Dependabot #333 announces the rails_icons bump and closes itself once `main` carries it.
 
 ## Steps
@@ -17,6 +19,7 @@ Dependabot #333 announces the rails_icons bump and closes itself once `main` car
 - Run `bundle update --bundler=4.0.22`, in its own commit
 - Bump the gems in one commit: `bundle update --conservative rails_icons icons thruster net-ssh parallel`
 - Check the `Gemfile.lock` diff against `main` by eye: nothing beyond the named gems, `BUNDLED WITH` and the `bundler` checksum line moved
+- Run `npm audit fix`, without `--force`, in its own commit: `source-map-js` moves from 1.2.1 to 1.2.2 in `package-lock.json`, and `package.json` stays as it is
 
 ## Verification
 
@@ -26,6 +29,8 @@ Dependabot #333 announces the rails_icons bump and closes itself once `main` car
 - `mise exec -- bundle outdated rails_icons icons thruster net-ssh parallel` exits 0, having been seen to exit 1 before the bumps
 - `grep -A1 '^BUNDLED WITH' Gemfile.lock | grep -q '4\.0\.22' && grep -q 'bundler (4\.0\.22) sha256=' Gemfile.lock` exits 0, having been seen to exit 1 against 4.0.21
 - `grep -q '^    diff-lcs (1\.6\.2)$' Gemfile.lock && grep -q '^    marcel (1\.2\.1)$' Gemfile.lock` exits 0, having been seen to exit 1 with a wrong version substituted into the pattern
+- `mise exec -- npm audit` exits 0, having been seen to exit 1 on GHSA-68fv-2mgg-jv7q before the fix
+- `git diff --exit-code origin/main -- package.json` exits 0, having been seen to exit 1 with a scratch edit to `package.json`
 - `python3 <skill-dir>/scripts/docs-check.py --root . --ignore '~/*' docs/plans/2026-10-07_GHI-340_update-node-to-26-and-gems.md` exits 0
 
 No gate here builds the Docker image, so thruster 0.1.27 goes untested until a deploy runs it under Puma. Node 26 runs only `herb-lint`, so the gates cover everything it does here. Dependabot's self-close happens on `main` after the merge, and gets checked there.
@@ -38,3 +43,4 @@ None.
 
 - **Node 26 lands before it turns LTS on 2026-10-28**, which the owner chose on 2026-10-07, since all Node does here is run the Herb linter.
 - **The owner ran `gem update --system` and `gem install bundler -v 4.0.22` by hand on 2026-10-07**, and Node 26 is already installed on the owner's machine.
+- **The `source-map-js` advisory folds into this branch**, which the owner decided on 2026-10-07 once `npm audit` showed GHSA-68fv-2mgg-jv7q (high) on 1.2.1, reached through `@herb-tools/linter` and `postcss`. `npm audit fix` without `--force` stays inside the declared ranges, so it moves that one lockfile entry to 1.2.2 and nothing else.
