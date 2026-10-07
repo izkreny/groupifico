@@ -135,4 +135,32 @@ RSpec.describe "Sessions", type: :request do
       end
     end
   end
+
+  describe "GET /session" do
+    it "is not routable" do
+      expect { Rails.application.routes.recognize_path("/session", method: :get) }
+        .to raise_error(ActionController::RoutingError)
+    end
+  end
+
+  describe "GET /session/edit" do
+    it "is not routable" do
+      expect { Rails.application.routes.recognize_path("/session/edit", method: :get) }
+        .to raise_error(ActionController::RoutingError)
+    end
+  end
+
+  describe "PATCH /session" do
+    it "is not routable" do
+      expect { Rails.application.routes.recognize_path("/session", method: :patch) }
+        .to raise_error(ActionController::RoutingError)
+    end
+  end
+
+  describe "PUT /session" do
+    it "is not routable" do
+      expect { Rails.application.routes.recognize_path("/session", method: :put) }
+        .to raise_error(ActionController::RoutingError)
+    end
+  end
 end
