@@ -60,6 +60,12 @@ Authorization tests assert the negative space: forbidden access returns the redi
 - **`travel_to`/`freeze_time`** for anything time-dependent; a time assertion without them is a red flag.
 - External HTTP is blocked suite-wide: the `webmock` gem and `WebMock.disable_net_connect!` in `spec/rails_helper.rb` close the net as standing setup, not need-driven.
 
+## Lazy loading
+
+- **A lazy load that would be an N+1 query raises under test.** `config/environments/test.rb` turns on `strict_loading_by_default` in `:n_plus_one_only` mode, which marks every record that arrived through a `has_many`, so a list row, `@group.events.find` and each record a `dependent: :destroy` cascade loads all raise on an association they did not preload. `config/environments/development.rb` sets the same rule to log instead, so it shows up while working without stopping the page.
+- **Fix it with a preload where the records are loaded**: `includes` in the controller or the scope, or the parent's own preload before a destroy cascade. A spec that reads an association through one does the same. Never `strict_loading!(false)` on a record.
+- **The one opt-out is `strict_loading(false)` on a relation, with a `WHY:` comment at the call site.** `Group#featured_event` is the example: it answers one record, so its lazy reads never cost a query per row.
+
 ## Factories
 
 - **Minimal factories**: only required fields with sensible defaults. No "just in case" attributes, no factories-as-fixtures like `create(:admin_user_with_premium_subscription)`; variation comes from traits, uniqueness from sequences, and associations are declared sparingly because they cascade record creation.
