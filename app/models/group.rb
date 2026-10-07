@@ -55,7 +55,9 @@ class Group < ApplicationRecord
 
   # WHY: `dependent: :destroy` loads each member and event and then each of their own dependents, a
   # query per row. Preloaded first, the cascade reuses the loaded records; `prepend: true` because
-  # the associations above registered their own before_destroy already.
+  # the associations above registered their own before_destroy already. The events' registrations
+  # are left out: the members cascade, declared first, has deleted them by then, and preloaded
+  # copies would be deleted a second time.
   before_destroy :preload_what_destroying_reads, prepend: true
 
   validates_associated :address
@@ -107,6 +109,6 @@ class Group < ApplicationRecord
 
   private
     def preload_what_destroying_reads
-      ActiveRecord::Associations::Preloader.new(records: [ self ], associations: { members: %i[ roles registrations ], events: %i[ registrations address ] }).call
+      ActiveRecord::Associations::Preloader.new(records: [ self ], associations: { members: %i[ roles registrations ], events: :address }).call
     end
 end
