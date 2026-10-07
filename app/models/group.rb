@@ -53,6 +53,11 @@ class Group < ApplicationRecord
   # should have refused it.
   before_validation -> { self[:group_type] ||= Current.brand.group_type }, on: :create
 
+  # WHY: `dependent: :destroy` loads each member and event and then each of their own dependents, a
+  # query per row. Preloaded first, the cascade reuses the loaded records; `prepend: true` because
+  # the associations above registered their own before_destroy already.
+  before_destroy :preload_what_destroying_reads, prepend: true
+
   validates_associated :address
   validates :name, presence: true, length: { maximum: 250 }
   validates :description, length: { maximum: 25_000 }
@@ -99,4 +104,9 @@ class Group < ApplicationRecord
   def owned_by_anyone_but?(member)
     members.active.owners.where.not(id: member.id).exists?
   end
+
+  private
+    def preload_what_destroying_reads
+      ActiveRecord::Associations::Preloader.new(records: [ self ], associations: { members: %i[ roles registrations ], events: %i[ registrations address ] }).call
+    end
 end
