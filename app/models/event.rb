@@ -168,18 +168,16 @@ class Event < ApplicationRecord
 
   # WHY: asks every active member nobody has asked yet, in one transaction: a held place becomes a
   # question, and an active member with no registration gets one. An answer is the member's own and
-  # is never overruled, and a paused or inactive member is never asked. `insert_all` rather than
-  # `invite`, because this set is computed rather than ticked, so a member registered while the
-  # request runs is skipped on the unique index instead of refusing the whole set. Returns how many
-  # were invited.
+  # is never overruled, and a paused or inactive member is never asked. Record by record rather than
+  # `update_all` and `insert_all`, so every registration runs its callbacks, which a notification
+  # will hang off; a member registered while the request runs reaches the unique index and rolls
+  # the whole set back, as `invite` does. Returns how many were invited.
   def invite_all_active_members
     active = group.members.active
 
     transaction do
-      held = registrations.reserved.where(member: active).update_all(status: :invited, updated_at: Time.current)
-      missing = active.without_registration_for(self).ids
-
-      held + (missing.any? ? registrations.insert_all(missing.map { { member_id: it, status: :invited } }).length : 0)
+      held = registrations.reserved.where(member: active).each(&:invited!)
+      held.size + invite(active.without_registration_for(self)).size
     end
   end
 
