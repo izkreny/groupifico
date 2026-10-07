@@ -874,6 +874,7 @@ RSpec.describe "Events", type: :request do
 
         expect(response.body).to include "Duplicate event", "Copied from Wed 2 Sep. Dates moved on 7 days, status back to unconfirmed, nobody registered yet."
         expect(response.body).to include %(value="2026-09-09T19:00:00"), %(value="Create copy")
+        expect(Nokogiri::HTML(response.body).at_css("input[name=original_id]")["value"]).to eq event.id.to_s
       end
 
       # `Event#duplicate` is `dup`, so the copy carries the original's `creator_id`. Nothing submits
@@ -1099,6 +1100,67 @@ RSpec.describe "Events", type: :request do
         expect(fragment.css("input[type=radio][checked]").map { it["value"] }).to include "confirmed", "gig"
         expect(fragment.at_css("textarea#event_description").text.strip).to eq "Bring the scores"
         expect(fragment.at_css("select#event_manager_id option[selected]")["value"]).to eq member.id.to_s
+      end
+
+      it "re-renders the new event screen when a new event is refused" do
+        member = create(:member, :active, :events_administrator)
+        sign_in_as(member.user)
+
+        post group_events_path(member.group), params: { event: { name: "" } }
+
+        fragment = Nokogiri::HTML(response.body)
+        expect(headings(response.body)).to include "New event"
+        expect(response.body).to include %(value="Create event")
+        expect(fragment.at_xpath("//a[normalize-space()='Cancel']")["href"]).to eq group_events_path(member.group)
+        expect(page_text(response.body)).not_to include "Copied from"
+      end
+
+      it "re-renders the duplicate screen when a copy is refused" do
+        member   = create(:member, :active, :events_administrator)
+        original = create(:event, group: member.group, starts_at: Time.zone.local(2026, 9, 2, 19), ends_at: Time.zone.local(2026, 9, 2, 21))
+        sign_in_as(member.user)
+
+        post group_events_path(member.group), params: { original_id: original.id, event: { name: "" } }
+
+        fragment = Nokogiri::HTML(response.body)
+        expect(headings(response.body)).to include "Duplicate event"
+        expect(page_text(response.body)).to include "Copied from Wed 2 Sep."
+        expect(response.body).to include %(value="Create copy")
+        expect(fragment.at_xpath("//a[normalize-space()='Cancel']")["href"]).to eq group_event_path(member.group, original)
+      end
+
+      it "keeps every typed value of a refused copy, the message under its field and the summary" do
+        member   = create(:member, :active, :events_administrator)
+        original = create(:event, group: member.group)
+        sign_in_as(member.user)
+
+        post group_events_path(member.group), params: { original_id: original.id, event: { name: "", description: "Bring the scores" } }
+
+        fragment = Nokogiri::HTML(response.body)
+        expect(fragment.at_css("textarea#event_description").text.strip).to eq "Bring the scores"
+        expect(fragment.at_css("p#event_name_error").text).to eq "Name can't be blank"
+        expect(fragment.at_css("#error_explanation[role=alert]")).to be_present
+      end
+
+      it "carries the original again, so a second refused copy is still the duplicate screen" do
+        member   = create(:member, :active, :events_administrator)
+        original = create(:event, group: member.group)
+        sign_in_as(member.user)
+
+        post group_events_path(member.group), params: { original_id: original.id, event: { name: "" } }
+
+        expect(Nokogiri::HTML(response.body).at_css("input[name=original_id]")["value"]).to eq original.id.to_s
+      end
+
+      it "re-renders the new event screen for an original that belongs to another group" do
+        member  = create(:member, :active, :events_administrator)
+        foreign = create(:event, starts_at: Time.zone.local(2026, 8, 19, 19), ends_at: Time.zone.local(2026, 8, 19, 21))
+        sign_in_as(member.user)
+
+        post group_events_path(member.group), params: { original_id: foreign.id, event: { name: "" } }
+
+        expect(headings(response.body)).to include "New event"
+        expect(page_text(response.body)).not_to include "Copied from", "Wed 19 Aug"
       end
 
       it "creates no event for a member who manages one but holds no role" do
