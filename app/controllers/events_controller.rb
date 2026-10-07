@@ -76,7 +76,12 @@ class EventsController < ApplicationController
     else
       @event.build_address unless @event.address
 
-      render :new, status: :unprocessable_content
+      # WHY: looked up within the group, so a forged id cannot draw another group's event, and with
+      # `find_by`, so one that resolves to nothing falls back to the new event screen rather than
+      # throwing away what was typed.
+      @original = @group.events.find_by(id: params[:original_id])
+
+      render(@original ? :duplicate : :new, status: :unprocessable_content)
     end
   end
 

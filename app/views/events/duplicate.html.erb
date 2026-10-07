@@ -9,5 +9,5 @@
     <span>Copied from <%= @original.starts_at.strftime(EventsHelper::DATE_FORMAT) %>. Dates moved on 7 days, status back to unconfirmed, nobody registered yet.</span>
   </div>
 
-  <%= render "events/form", group: @group, event: @event, submit: "Create copy", cancel: group_event_path(@group, @original) %>
+  <%= render "events/form", group: @group, event: @event, submit: "Create copy", cancel: group_event_path(@group, @original), original: @original %>
 </div>

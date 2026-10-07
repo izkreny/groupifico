@@ -1,6 +1,12 @@
-<%# locals: (group:, event:, submit:, cancel:, namespace: nil) %>
+<%# locals: (group:, event:, submit:, cancel:, original: nil, namespace: nil) %>
 <%# `namespace` is the styleguide's, which draws this form once per theme; every screen leaves it out and keeps its ids. %>
 <%= form_with(model: [group, event], namespace:, class: "contents") do |form| %>
+  <%# WHY: posted beside the event rather than in it, because it names the duplicate screen's source,
+      which only a refused save in `EventsController#create` reads, to draw that screen again. %>
+  <% if original %>
+    <%= hidden_field_tag :original_id, original.id %>
+  <% end %>
+
   <%= form.with_error_summary do %>
     <div class="fieldset">
       <%= form.field :name %>
