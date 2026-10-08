@@ -25,7 +25,7 @@ A combination is a role set the member form can produce, held under one `Member`
 
 - **The sample groups** grow to 44 members each, `NUMBER_OF_MEMBERS_PER_GROUP` rising to match the events. 18 users belong to both and hold every combination once per group, rotated in the second, so one user holds a different combination in each. The other 26 in each group are its own, hold no role and draw `active`, `paused` or `inactive` with the odds rigged toward `active`.
 - **A second active owner**, one of the first group's own members, is the one duplicate combination: with two the last-active-owner guard in `Member` and `Role` lets an owner step down, with one it refuses, and the second group keeps a single active owner so manual testing reaches both sides.
-- **The styleguide group** has 36 members: the 18 combinations, a second active owner, and 17 plain members with no role. The member factory defaults to `active` and draws nothing, so the plain members draw their status with the sample groups' odds.
+- **The styleguide group** has `NUMBER_OF_MEMBERS_PER_GROUP` members too, 44: the 18 combinations, a second active owner, and 25 plain members with no role. The member factory defaults to `active` and draws nothing, so the plain members draw their status with the sample groups' odds.
 
 ## The fixed key
 
@@ -55,5 +55,5 @@ Both gates run against the test database and never the development one, which ho
 ## Settled
 
 - Do the seeds carry roles? Yes: every role set the member form can produce, under every `Member` status, and #300's criteria now name them.
-- How many members, and who is shared? 44 in each sample group, 18 of them users in both groups holding a different combination in each; 36 in the styleguide group, its 17 plain members drawing their status rather than all being `active`.
+- How many members, and who is shared? 44 in each sample group, 18 of them users in both groups holding a different combination in each; 44 in the styleguide group too, its 25 plain members drawing their status rather than all being `active`.
 - Are two members with identical roles worth seeding? Only for owners: the first sample group and the styleguide group each carry a second active owner, and the second sample group keeps one.
