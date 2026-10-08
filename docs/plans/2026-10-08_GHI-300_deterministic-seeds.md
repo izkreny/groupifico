@@ -8,7 +8,7 @@
 
 ## One clock
 
-The whole run sits inside `travel_to(Time.current)`, required from `active_support/testing/time_helpers` as Fizzy does, so every `ago`, `from_now`, `created_at` and `updated_at` reads the same instant. The event traits still anchor to a day, `Faker::Date.between(...) + 10.hours`, which is a fixed offset from midnight rather than from the moment, so the seeds pass the `past_datetime` and `future_datetime` transients themselves as whole days drawn from the generator. The traits keep the status odds and stay the authority on a valid event; the specs keep their ten o'clock events.
+The whole run sits inside `travel_to(Time.current)`, required from `active_support/testing/time_helpers` as Fizzy does, so every `ago`, `from_now`, `created_at` and `updated_at` reads the same instant and the run cannot straddle midnight. The event traits anchor to the day, `Faker::Date.between(...) + 10.hours`, and with the day drawn from the seeded generator that is a fixed offset from the day of seeding, so events keep the traits' ten o'clock and the seeds pass no times of their own.
 
 ## The layout
 
@@ -26,7 +26,7 @@ The whole run sits inside `travel_to(Time.current)`, required from `active_suppo
 ## Steps
 
 - Write the determinism gate and the coverage gate in the session scratchpad, and watch both fail against the unchanged seeds on the test database.
-- Swap `Faker::Config.random` for `srand` and wrap the run in `travel_to`, then pass the event times as whole days drawn from the generator.
+- Swap `Faker::Config.random` for `srand` and wrap the run in `travel_to`.
 - Move the sample groups into `db/seeds/sample_groups.rb` (new), with the drawn registration and member statuses and the address step per group.
 - Write `db/seeds/styleguide.rb` (new) with the styleguide group under its fixed key.
 - Rerun both gates and watch them pass, then reset the test database with `bin/rails db:test:prepare`.
@@ -34,7 +34,7 @@ The whole run sits inside `travel_to(Time.current)`, required from `active_suppo
 
 ## Verification
 
-- The determinism gate exits 0: two `env RAILS_ENV=test bin/rails db:seed:replant` runs, each followed by a `bin/rails runner` digest of every name, status and relation and of every time as its offset from the seeding instant, compare equal, having differed on the unchanged seeds
+- The determinism gate exits 0: two `env RAILS_ENV=test bin/rails db:seed:replant` runs, each followed by a `bin/rails runner` digest of every name, status and relation and of every event time as its offset from the day of seeding, compare equal, having differed on the unchanged seeds
 - The coverage gate exits 0: a `bin/rails runner` script finds every `Event`, `Registration` and `Member` status in the seeds and again inside the group under `ActiveRecord::FixtureSet.identify(:styleguide)`, having failed on the unchanged seeds
 - `bin/ci` is green
 
@@ -43,4 +43,3 @@ Both gates run against the test database and never the development one, which ho
 ## Open questions
 
 - Where does the key's label live once #301 reads it? Recommended: the styleguide seed file alone for now, since it is the one reader this issue has, and #301 moves it when it becomes the second.
-- Events in the sample groups now land at the clock time of seeding, say 14:37, rather than at ten o'clock, because a day-anchored time is not a fixed offset from the moment. Recommended: accept it, as the criterion asks for exactly that.
