@@ -52,11 +52,11 @@ Rails.application.configure do
   # Append comments with runtime information tags to SQL queries in logs.
   config.active_record.query_log_tags_enabled = true
 
-  # WHY: logged rather than raised, so a lazy load the test suite would refuse is visible while
-  # working without stopping the page.
+  # WHY: the same rule the test suite raises on, and raised here too rather than logged, because a
+  # page clicked through in development is the one place a view no spec renders still runs.
+  # `action_on_strict_loading_violation` is left at its `:raise` default.
   config.active_record.strict_loading_by_default = true
   config.active_record.strict_loading_mode = :n_plus_one_only
-  config.active_record.action_on_strict_loading_violation = :log
 
   # Highlight code that enqueued background job in logs.
   config.active_job.verbose_enqueue_logs = true
