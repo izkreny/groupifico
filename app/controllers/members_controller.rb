@@ -86,7 +86,7 @@ class MembersController < ApplicationController
 
   private
     def set_member
-      @member = @group.members.includes(:roles, :user, :profile, :registrations).find(params.expect(:id))
+      @member = @group.members.includes(:roles, :profile).find(params.expect(:id))
     end
 
     # Used on create: deciding which person a membership is for is what creating one means, and the

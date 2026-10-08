@@ -69,6 +69,11 @@ class Member < ApplicationRecord
   # sole owner delete themselves.
   before_destroy :ensure_the_group_keeps_an_owner, prepend: true
 
+  # WHY: `dependent: :destroy` loads this member's registrations, which a member read through
+  # `group.members` may not do lazily. Preloaded here, so only a destroy pays for them rather than
+  # every screen that loads the member; `prepend: true` for the ordering the guard above documents.
+  before_destroy :preload_what_destroying_reads, prepend: true
+
   # The same invariant on the other move that reaches it. Removing the last owner and revoking their
   # role are both destructions and are guarded as such; leaving `active` is an ordinary update, and
   # without this a group's only owner could pause themselves and lock the group permanently - they
@@ -117,6 +122,10 @@ class Member < ApplicationRecord
   def owner? = roles.any?(&:owner?)
 
   private
+    def preload_what_destroying_reads
+      ActiveRecord::Associations::Preloader.new(records: [ self ], associations: :registrations).call
+    end
+
     def new_user_is_valid
       return if user.valid?
 
