@@ -39,7 +39,10 @@ FactoryBot.define do
     trait :with_all_attributes do
       first_name   { Faker::Name.first_name }
       last_name    { Faker::Name.last_name }
-      mobile_phone { Faker::PhoneNumber.unique.cell_phone_in_e164 }
+      # WHY: a sequence rather than Faker's `unique`, which retries over a finite pool and raises once
+      # it runs dry; this trait gives every profile a phone, and the unique index forbids two alike.
+      # Twelve digits after the `+`, so E.164.
+      sequence(:mobile_phone) { |n| format("+38591%07d", n) }
     end
   end
 end
