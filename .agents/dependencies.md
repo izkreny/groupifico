@@ -48,8 +48,6 @@ A package that ships markup or CSS, such as daisyUI or `rails_icons`, can change
 - **The views each one reaches**, found by searching for it, as in `grep -rln '<class or attribute>' app`.
 - **The specs that cover those views**, by path, with any view no spec covers named as such.
 
-A styling change of this kind, such as a component gaining an active look from an attribute the app already sets, shows nowhere else once the package's own files leave the diff.
-
 ## The `BUNDLED WITH` trap
 
 `bundle help config` documents the `version` key as defaulting to `lockfile`, so inside this repository Bundler re-execs whatever `BUNDLED WITH` declares. A newly installed Bundler is therefore invisible until the lockfile names it: `bundle --version` answers the locked version, and a bare `bundle update --bundler` writes that same locked version straight back rather than moving it. Name the version.
