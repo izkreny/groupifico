@@ -212,6 +212,60 @@ RSpec.describe "Members", type: :request do
 
         expect(response.body).not_to include new_group_member_path(actor.group)
       end
+
+      it "keeps each member's edit form while the reader is paused" do
+        actor = create(:member, :paused, :members_administrator)
+        other = create(:member, group: actor.group)
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group)
+
+        expect(response.body).to include edit_group_member_path(actor.group, other)
+      end
+    end
+
+    # The three columns the members table marks for adding, changing and removing a member are
+    # `owner`, `administrator` and `members_administrator`; the last is proven above.
+    context "when signed in as an owner" do
+      it "offers Invite, each member's edit form and the inactive toggle" do
+        actor = create(:member, :active, :owner)
+        other = create(:member, group: actor.group)
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group)
+
+        expect(response.body).to include new_group_member_path(actor.group)
+        expect(response.body).to include edit_group_member_path(actor.group, other)
+        expect(response.body).to include "Show inactive"
+      end
+    end
+
+    context "when signed in as an administrator" do
+      it "offers Invite, each member's edit form and the inactive toggle" do
+        actor = create(:member, :active, :administrator)
+        other = create(:member, group: actor.group)
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group)
+
+        expect(response.body).to include new_group_member_path(actor.group)
+        expect(response.body).to include edit_group_member_path(actor.group, other)
+        expect(response.body).to include "Show inactive"
+      end
+    end
+
+    context "when signed in as an events administrator" do
+      it "offers no Invite, no edit link and no inactive toggle" do
+        actor = create(:member, :active, :events_administrator)
+        other = create(:member, group: actor.group)
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group)
+
+        expect(response.body).not_to include new_group_member_path(actor.group)
+        expect(response.body).not_to include edit_group_member_path(actor.group, other)
+        expect(response.body).not_to include "Show inactive"
+      end
     end
   end
 
@@ -317,6 +371,30 @@ RSpec.describe "Members", type: :request do
       end
     end
 
+    context "when signed in as an owner" do
+      it "offers the edit link" do
+        actor  = create(:member, :active, :owner)
+        target = create(:member, group: actor.group)
+        sign_in_as(actor.user)
+
+        get group_member_path(target.group, target)
+
+        expect(response.body).to include edit_group_member_path(target.group, target)
+      end
+    end
+
+    context "when signed in as an administrator" do
+      it "offers the edit link" do
+        actor  = create(:member, :active, :administrator)
+        target = create(:member, group: actor.group)
+        sign_in_as(actor.user)
+
+        get group_member_path(target.group, target)
+
+        expect(response.body).to include edit_group_member_path(target.group, target)
+      end
+    end
+
     context "when signed in as a paused member" do
       it "shows the member page" do
         target = create(:member)
@@ -394,6 +472,17 @@ RSpec.describe "Members", type: :request do
       end
     end
 
+    context "when signed in as an administrator" do
+      it "offers no role checkboxes" do
+        member = create(:member, :active, :administrator)
+        sign_in_as(member.user)
+
+        get new_group_member_path(member.group)
+
+        expect(Nokogiri::HTML(response.body).css("[name='member[roles][]']")).to be_empty
+      end
+    end
+
     context "when signed in as a member who cannot add anybody" do
       it "refuses the form rather than offering one the submission would reject" do
         member = create(:member, :active)
@@ -452,6 +541,16 @@ RSpec.describe "Members", type: :request do
         rows  = html.css("[data-role-implications-target=role]").map { JSON.parse(it["data-implies"]) }
         expect(hints).to eq [ "everything", "all modules", "events only", "members only" ]
         expect(rows).to eq [ %w[administrator events_administrator members_administrator], %w[events_administrator members_administrator], [], [] ]
+      end
+
+      it "offers Remove" do
+        actor  = create(:member, :active, :owner)
+        target = create(:member, group: actor.group)
+        sign_in_as(actor.user)
+
+        get edit_group_member_path(target.group, target)
+
+        expect(Nokogiri::HTML(response.body).at_css("form[action='#{group_member_path(target.group, target)}'] button").text).to eq "Remove"
       end
     end
 
@@ -519,6 +618,16 @@ RSpec.describe "Members", type: :request do
         get edit_group_member_path(member.group, member)
 
         expect(Nokogiri::HTML(response.body).css("[name='member[roles][]']")).to be_empty
+      end
+
+      it "offers Remove" do
+        actor  = create(:member, :active, :administrator)
+        target = create(:member, group: actor.group)
+        sign_in_as(actor.user)
+
+        get edit_group_member_path(target.group, target)
+
+        expect(Nokogiri::HTML(response.body).at_css("form[action='#{group_member_path(target.group, target)}'] button").text).to eq "Remove"
       end
     end
 

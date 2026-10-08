@@ -96,6 +96,64 @@ RSpec.describe "Events", type: :request do
       end
     end
 
+    # The create row of the events table marks `owner`, `administrator` and `events_administrator`,
+    # and leaves `members_administrator` and `manager` blank; the owner and the plain member are
+    # proven above.
+    context "when signed in as an administrator" do
+      it "offers the New button" do
+        actor = create(:member, :active, :administrator)
+        sign_in_as(actor.user)
+
+        get group_events_path(actor.group)
+
+        expect(response.body).to include %(href="#{new_group_event_path(actor.group)}")
+      end
+    end
+
+    context "when signed in as an events administrator" do
+      it "offers the New button" do
+        actor = create(:member, :active, :events_administrator)
+        sign_in_as(actor.user)
+
+        get group_events_path(actor.group)
+
+        expect(response.body).to include %(href="#{new_group_event_path(actor.group)}")
+      end
+
+      it "offers no New button while the reader is paused" do
+        actor = create(:member, :paused, :events_administrator)
+        sign_in_as(actor.user)
+
+        get group_events_path(actor.group)
+
+        expect(response.body).not_to include %(href="#{new_group_event_path(actor.group)}")
+      end
+    end
+
+    context "when signed in as a members administrator" do
+      it "offers no New button" do
+        actor = create(:member, :active, :members_administrator)
+        sign_in_as(actor.user)
+
+        get group_events_path(actor.group)
+
+        expect(response.body).not_to include %(href="#{new_group_event_path(actor.group)}")
+      end
+    end
+
+    # Managing one event is a grant on that event alone, never on making new ones.
+    context "when signed in as the manager of an event" do
+      it "offers no New button" do
+        actor = create(:member, :active)
+        create(:event, group: actor.group, manager: actor)
+        sign_in_as(actor.user)
+
+        get group_events_path(actor.group)
+
+        expect(response.body).not_to include %(href="#{new_group_event_path(actor.group)}")
+      end
+    end
+
     # Times are frozen because the card states the distance to the event in words, so "in 2 days"
     # would otherwise depend on how long the suite takes to reach this file. What the freeze does
     # not do is decide which hour it stops at, which is `confirmed_event`'s job below.
@@ -535,6 +593,30 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include "Take Ben Cole off the list", "Yes for Ben Cole", "Add someone", "Delete event"
         expect(response.body).not_to include "Invite Ben Cole", "Invite the rest"
       end
+
+      # Opening the edit form is a read a paused owner keeps; copying the event is a create, which
+      # the pause refuses.
+      it "keeps Edit and offers no Duplicate" do
+        member = create(:member, :paused, :owner)
+        event = detailed_event(member)
+        sign_in_as(member.user)
+
+        get group_event_path(event.group, event)
+
+        expect(response.body).to include %(aria-label="Edit")
+        expect(response.body).not_to include %(aria-label="Duplicate")
+      end
+
+      it "draws no answer row for their own registration" do
+        member = create(:member, :paused)
+        event = detailed_event(member, reader_status: :maybe)
+        sign_in_as(member.user)
+
+        get group_event_path(event.group, event)
+
+        expect(page_text(response.body)).to include "Who’s coming"
+        expect(page_text(response.body)).not_to include "Your answer:"
+      end
     end
 
     context "when signed in as an inactive member" do
@@ -759,6 +841,69 @@ RSpec.describe "Events", type: :request do
         get group_event_path(event.group, event)
 
         expect(response.body).to include "Invite Ben Cole", "Invite the rest"
+      end
+    end
+
+    # The two other columns the events table marks wherever it marks the owner, and the one role
+    # column it leaves blank on every write row.
+    context "when signed in as an administrator" do
+      it "offers Duplicate, Edit and Delete" do
+        actor = create(:member, :active, :administrator)
+        event = detailed_event(actor)
+        sign_in_as(actor.user)
+
+        get group_event_path(event.group, event)
+
+        expect(response.body).to include %(aria-label="Duplicate"), %(aria-label="Edit")
+        expect(page_text(response.body)).to include "Delete event"
+      end
+    end
+
+    context "when signed in as an events administrator" do
+      it "offers Duplicate, Edit and Delete" do
+        actor = create(:member, :active, :events_administrator)
+        event = detailed_event(actor)
+        sign_in_as(actor.user)
+
+        get group_event_path(event.group, event)
+
+        expect(response.body).to include %(aria-label="Duplicate"), %(aria-label="Edit")
+        expect(page_text(response.body)).to include "Delete event"
+      end
+
+      it "draws the answer pills and a take-off on another member's row, and Add someone" do
+        actor = create(:member, :active, :events_administrator)
+        event = detailed_event(actor)
+        sign_in_as(actor.user)
+
+        get group_event_path(event.group, event)
+
+        expect(response.body).to include "Yes for Ben Cole", "Take Ben Cole off the list"
+        expect(response.body).to include new_group_event_registration_path(event.group, event)
+      end
+
+      it "draws the answer row for their own registration" do
+        actor = create(:member, :active, :events_administrator)
+        event = detailed_event(actor, reader_status: :maybe)
+        sign_in_as(actor.user)
+
+        get group_event_path(event.group, event)
+
+        expect(page_text(response.body)).to include "Your answer:"
+      end
+    end
+
+    context "when signed in as a members administrator" do
+      it "offers nothing that changes the event or its roster" do
+        actor = create(:member, :active, :members_administrator)
+        event = detailed_event(actor)
+        sign_in_as(actor.user)
+
+        get group_event_path(event.group, event)
+
+        expect(page_text(response.body)).to include "Tuesday rehearsal"
+        expect(response.body).not_to include %(aria-label="Duplicate"), %(aria-label="Edit"), "Delete event"
+        expect(response.body).not_to include "Yes for Ben Cole", "Take Ben Cole off the list", "Add someone"
       end
     end
   end
@@ -996,6 +1141,18 @@ RSpec.describe "Events", type: :request do
         get edit_group_event_path(event.group, event)
 
         expect(response.body).to include "Invite all active members"
+      end
+    end
+
+    context "when signed in as an administrator" do
+      it "ends with Delete" do
+        actor = create(:member, :active, :administrator)
+        event = create(:event, group: actor.group)
+        sign_in_as(actor.user)
+
+        get edit_group_event_path(event.group, event)
+
+        expect(response.body).to include "Delete this event?"
       end
     end
 

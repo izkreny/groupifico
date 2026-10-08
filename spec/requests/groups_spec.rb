@@ -311,6 +311,26 @@ RSpec.describe "Groups", type: :request do
         expect(response.body).not_to include 'aria-label="Edit group"'
       end
 
+      it "offers no pencil to a plain member" do
+        member = create(:member)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(response.body).not_to include 'aria-label="Edit group"'
+      end
+
+      # Opening the edit form is a read, so a paused owner keeps the way to it and is stopped at the
+      # submission, where `PATCH /groups/:id` proves the refusal.
+      it "keeps the pencil for a paused owner" do
+        member = create(:member, :paused, :owner)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(response.body).to include 'aria-label="Edit group"'
+      end
+
       it "offers the switcher chevron to a reader with a second group" do
         member = create(:member)
         create(:member, user: member.user, group: create(:group))
