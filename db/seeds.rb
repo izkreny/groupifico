@@ -69,7 +69,7 @@ def populate_empty_database
   extend ActiveSupport::Testing::TimeHelpers
   travel_to(Time.current) do
     require_relative "seeds/sample_groups"
-    # Last, because SQLite's `AUTOINCREMENT` continues from the highest id and this group's id is fixed.
+    # Last, because its id is fixed and SQLite's `AUTOINCREMENT` continues from the highest id.
     require_relative "seeds/styleguide"
   end
 end

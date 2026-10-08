@@ -1,7 +1,11 @@
 # The group the styleguide draws, for checking the visual style and the themes against every state
 # a screen can show. Literal names throughout, so a screenshot of it reads the same on every run,
-# and found by a fixed key rather than by its name, which nothing makes unique.
-STYLEGUIDE_GROUP_ID = ActiveRecord::FixtureSet.identify(:styleguide)
+# and found by a fixed id rather than by its name, which nothing makes unique.
+#
+# WHY: 3, the id after the sample groups on a fresh database, so every id stays small. A replant
+# continues SQLite's sequence past it rather than reusing it, so it never collides there either; a
+# third sample group would take 3 first and fail this create loudly.
+STYLEGUIDE_GROUP_ID = 3
 
 STYLEGUIDE_NAMES = [
   "Ana Horvat", "Ivan Kovačević", "Marija Babić", "Luka Marić", "Petra Jurić", "Marko Novak",
