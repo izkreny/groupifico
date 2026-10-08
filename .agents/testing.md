@@ -66,7 +66,7 @@ Authorization tests assert the negative space: forbidden access returns the redi
 - **A trait that exists is used.** Building inline what a trait already names is a second spelling of one fact, and the next reader cannot tell which is intended. When an example needs a variation no trait covers, that is the signal to add one - or, where the combination is genuinely one-off, to be explicit and say so.
 - **`build`/`build_stubbed` over `create`** when the database is not the point.
 - **Faker fills descriptive, unconstrained fields and the seeds**; anything a validation constrains or an assertion reads gets a sequence or a literal, because random data deciding a test's outcome makes failures unreproducible.
-- **Faker's own `unique` is not a sequence.** It is a retry loop over a finite pool, and once the pool runs dry it raises `Faker::UniqueGenerator::RetryLimitExceeded` in whichever example happens to be running. A field a validation or a unique index constrains takes a sequence instead; an unconstrained field, such as a name, drops `unique` and keeps the plain generator, since it never needed a distinct value.
+- **Faker's `unique` is not a sequence**: it retries over a finite pool and raises once the pool runs dry. A constrained field takes a sequence; an unconstrained one drops `unique`.
 - Use the bare `FactoryBot::Syntax::Methods` forms: `create(:user)`, never `FactoryBot.create(:user)`.
 - One factory per model, in `spec/factories/`.
 
