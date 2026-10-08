@@ -28,12 +28,11 @@ class GroupPolicy < ApplicationPolicy
   def show? = true
 
   # `edit?` spells the same question out rather than reaching `update?` through an alias or a
-  # `check?`, and both routes were tried. `write_rule?` matches whichever rule the running result
-  # names, and both routes rename it: an alias resolves `edit?` to `update?` before the pre-checks
-  # see it, and `check?` goes through `Reasons#allowed_to?`, which calls `apply_r` and pushes a
-  # fresh result of its own. Either way a paused owner is refused the form they are allowed to
-  # read - watched failing as `<GroupPolicy#edit?: false (reasons: {group: [:update?]})>`. Three
-  # words of repetition keep the read and the write answering under their own names.
+  # `check?`. Both routes rename the running rule: an alias resolves `edit?` to `update?` before
+  # the pre-checks see it, and `check?` goes through `Reasons#allowed_to?`, which calls `apply_r`
+  # and pushes a fresh result of its own. Both rules are in `WRITE_RULES`, so neither route would
+  # change a paused owner's verdict, and three words of repetition keep each answering under its
+  # own name.
   def edit?    = membership.owner?
   def update?  = membership.owner?
   def destroy? = membership.owner?

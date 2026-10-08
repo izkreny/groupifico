@@ -11,9 +11,9 @@
 class ApplicationPolicy < ActionPolicy::Base
   # Rules whose whole point is changing the record. `new?` counts as one of them and is absent
   # only because Action Policy already aliases it to `create?`: offering somebody a creation form
-  # they will be refused at submission is worse than refusing them at the link. What is left -
-  # `show?`, `edit?`, and `index?` where it reaches this far - is read, and a `paused` member
-  # keeps read.
+  # they will be refused at submission is worse than refusing them at the link. `edit?` is here for
+  # the same reason, since an edit form exists only to be submitted. What is left - `show?`, and
+  # `index?` where it reaches this far - is read, and a `paused` member keeps read.
   #
   # `manage_roles?` and `manage_answers?` are here because granting a role and writing a status
   # nobody may say about themselves are writes like any other, and a rule absent from this list is
@@ -21,7 +21,7 @@ class ApplicationPolicy < ActionPolicy::Base
   # must never allow. Neither is reachable that way today, since the pre-check refuses the ordinary
   # write first - the entries cost nothing now and the flow that needs them is one `allowed_to?` in
   # a view away.
-  WRITE_RULES = %i[ create? update? destroy? manage_roles? manage_answers? ].freeze
+  WRITE_RULES = %i[ create? edit? update? destroy? manage_roles? manage_answers? ].freeze
 
   # `authorize!` resolves its `to:` rule against the policy *before* the pre-checks below ever run,
   # so a rule nobody defines here does not reach `verify_active_membership!` as itself - it falls

@@ -217,16 +217,36 @@ RSpec.describe "Addresses", type: :request do
     end
 
     context "when signed in and the address is reachable" do
-      it "shows the edit address page" do
+      it "shows the edit address page to a member who may correct it" do
         address = create(:address)
-        group   = create(:group, address: address)
-        member  = create(:member, group:)
-
+        member  = create(:member, :owner, group: create(:group, address:))
         sign_in_as(member.user)
 
         get edit_address_path(address)
 
         expect(response).to have_http_status :ok
+      end
+
+      # The form is asked of the rule its Save is, so a member who may only read the address is
+      # refused it rather than offered a Save certain to fail.
+      it "refuses the form to a member who may not correct the address" do
+        address = create(:address)
+        member  = create(:member, group: create(:group, address:))
+        sign_in_as(member.user)
+
+        get edit_address_path(address)
+
+        expect(response).to redirect_to root_path
+      end
+
+      it "refuses the form to a paused owner" do
+        address = create(:address)
+        member  = create(:member, :paused, :owner, group: create(:group, address:))
+        sign_in_as(member.user)
+
+        get edit_address_path(address)
+
+        expect(response).to redirect_to root_path
       end
 
       # Frame 9l's five, and none of the columns it leaves out: the state and the coordinates keep

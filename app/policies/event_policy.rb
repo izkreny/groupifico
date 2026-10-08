@@ -16,8 +16,7 @@ class EventPolicy < ApplicationPolicy
   # its status and its location, so no separate rule exists for reassigning it.
   #
   # Spelled out rather than aliased or composed, for the reason GroupPolicy's own comment gives:
-  # both routes rename the running rule and a paused member would be refused the form they may
-  # read.
+  # both routes rename the running rule.
   def edit?   = membership.can_manage?(:events) || manages?
   def update? = membership.can_manage?(:events) || manages?
 

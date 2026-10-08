@@ -33,14 +33,14 @@ RSpec.describe AddressPolicy, type: :policy do
     end
   end
 
-  # Only `edit?` is an alias now. Opening a form is a read, so it follows show?; submitting is a
-  # write, so update? has a body of its own and asks the owners for `update?` rather than `show?`.
-  # Action Policy drops an alias the moment a real method of that name is defined - this list has
-  # now caught that twice, destroy? and update?, each time the rule stopped delegating.
+  # Only `edit?` is an alias now. An edit form exists only to be submitted, so opening it follows
+  # update?, the rule its Save is decided by. Action Policy drops an alias the moment a real method
+  # of that name is defined - this list has now caught that twice, destroy? and update?, each time
+  # the rule stopped delegating.
   describe "rule aliases" do
     subject(:policy) { described_class.new(record, **context) }
 
-    it { expect(:edit?).to be_an_alias_of(policy, :show?) }
+    it { expect(:edit?).to be_an_alias_of(policy, :update?) }
   end
 
   # Inherited from the owner, so the read/write split arrives without this policy asking about

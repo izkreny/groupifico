@@ -131,7 +131,7 @@ RSpec.describe EventPolicy, type: :policy do
       let(:actor) { create(:member, :events_administrator, group:) }
     end
 
-    succeed "for a paused events administrator, because opening the form is a read" do
+    failed "for a paused events administrator, who may not use the form" do
       let(:actor) { create(:member, :paused, :events_administrator, group:) }
     end
   end

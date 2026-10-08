@@ -15,14 +15,15 @@
 class AddressPolicy < ApplicationPolicy
   skip_pre_check :verify_membership!, :verify_active_membership!
 
-  alias_rule :edit?, to: :show?
+  # An edit form exists only to be submitted, so opening it is asked the question its Save is: a
+  # member who may not correct the address, a paused owner among them, is refused the form rather
+  # than offered a Save certain to fail.
+  alias_rule :edit?, to: :update?
 
   def show? = owners.any? { |owner| allowed_to?(:show?, owner) }
 
   # Not aliased to show?: `write_rule?` matches the rule that actually runs, so an aliased update?
-  # arrives as show? and the read/write split never sees it. `edit?` stays aliased, because opening
-  # a form is a read - a paused member is stopped at submission, the same place `duplicate` stops
-  # them.
+  # arrives as show? and the read/write split never sees it.
   #
   # A group's home address answers to that group alone. An event may point at it - `Group#addresses`
   # offers every address the group reaches, its own among them - but pointing at an address is using
