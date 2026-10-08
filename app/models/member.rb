@@ -47,6 +47,8 @@ class Member < ApplicationRecord
   # owner. Two spellings of one join are two places a later role change has to find.
   scope :owners, -> { joins(:roles).where(roles: { name: Role::OWNER }) }
 
+  scope :preloaded, -> { includes(:roles, :user, :profile, :group) }
+
   # Members with no registration on the event, never invited or taken off. The whole of what it
   # decides, so each caller states its own status rule beside it rather than inheriting one the
   # name does not mention: the invitation screen keeps paused members, who are listed and cannot
@@ -68,6 +70,11 @@ class Member < ApplicationRecord
   # this guard asks `owner?` of a member who no longer holds anything - watched letting a group's
   # sole owner delete themselves.
   before_destroy :ensure_the_group_keeps_an_owner, prepend: true
+
+  # WHY: `dependent: :destroy` loads this member's registrations, which a member read through
+  # `group.members` may not do lazily. Preloaded here, so only a destroy pays for them rather than
+  # every screen that loads the member; `prepend: true` for the ordering the guard above documents.
+  before_destroy :preload_what_destroying_reads, prepend: true
 
   # The same invariant on the other move that reaches it. Removing the last owner and revoking their
   # role are both destructions and are guarded as such; leaving `active` is an ordinary update, and
@@ -117,6 +124,10 @@ class Member < ApplicationRecord
   def owner? = roles.any?(&:owner?)
 
   private
+    def preload_what_destroying_reads
+      ActiveRecord::Associations::Preloader.new(records: [ self ], associations: :registrations).call
+    end
+
     def new_user_is_valid
       return if user.valid?
 

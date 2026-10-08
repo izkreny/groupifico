@@ -42,6 +42,8 @@ class Registration < ApplicationRecord
 
   enum :status, %i[ reserved invited yes maybe no ], default: :reserved, validate: true
 
+  scope :preloaded, -> { includes(member: :profile) }
+
   # An answer belongs to an event that can still take one, whoever is writing it. A domain
   # invariant rather than an authorization rule, and it lives here for the reason
   # `docs/AUTHORIZATION.md` gives for the last-active-owner guard: the tables decide who may act,

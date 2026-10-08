@@ -8,7 +8,7 @@ class GroupsController < ApplicationController
     # The reader's own standing in each group, which is what the card's tag says. Loaded once and
     # keyed by group, because a card that looked its own membership up would cost a query each -
     # the same association and the same preload the layout already makes for the switcher.
-    @memberships = Current.user.current_memberships.includes(:roles).index_by(&:group_id)
+    @memberships = Current.user.current_memberships.preloaded.index_by(&:group_id)
   end
 
   def show

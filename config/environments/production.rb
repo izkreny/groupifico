@@ -78,6 +78,12 @@ Rails.application.configure do
   # Only use :id for inspections in production.
   config.active_record.attributes_for_inspect = [ :id ]
 
+  # WHY: strict loading stays off by default here, but `ApplicationController#authorized_scope`
+  # marks every list's rows in every environment. `:log` lets a lazy read the specs missed run, costing a
+  # query instead of a 500; Rails reports it at debug, so it reaches the log only when
+  # `RAILS_LOG_LEVEL` is `debug`.
+  config.active_record.action_on_strict_loading_violation = :log
+
   # Enable DNS rebinding protection and other `Host` header attacks.
   # config.hosts = [
   #   "example.com",     # Allow requests from example.com

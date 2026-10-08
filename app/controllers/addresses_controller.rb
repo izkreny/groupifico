@@ -4,7 +4,7 @@ class AddressesController < ApplicationController
   def show
     authorize! @address
 
-    @events = @address.events.includes(:group).order(:starts_at)
+    @events = @address.events.preloaded.order(:starts_at)
   end
 
   def edit

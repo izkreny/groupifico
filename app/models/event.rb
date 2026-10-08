@@ -96,6 +96,8 @@ class Event < ApplicationRecord
   scope :current_and_upcoming, -> { where(ends_at: Time.current..) }
   scope :past,                 -> { where(ends_at: ...Time.current) }
 
+  scope :preloaded, -> { includes(:address, :group, :registrations, creator: :profile, manager: :profile) }
+
   # The tallies the event card draws, in one query, with a zero for a status nobody holds so the
   # card draws the same tags whatever the answers are. `reserved` is not among them: a place held
   # that nobody has been asked about is the absence of an answer rather than one, and it is the one
@@ -146,7 +148,7 @@ class Event < ApplicationRecord
   def roster
     order = Registration::ANSWERS + (Registration.statuses.keys - Registration::ANSWERS).reverse
 
-    registrations.includes(member: :profile).sort_by { [ order.index(it.status), it.member.full_name.downcase ] }
+    registrations.preloaded.sort_by { [ order.index(it.status), it.member.full_name.downcase ] }
   end
 
   # Filling the event, all or nothing: a set refused part way through leaves nobody half-invited.
@@ -200,12 +202,14 @@ class Event < ApplicationRecord
   # active is not handed the copy, which starts with nobody in charge instead. Settled on #312.
   def duplicate
     self.dup.tap do |event|
+      # WHY: `dup` copies `group_id` but not the loaded group, which the form reads.
+      event.group = group
       event.status = Event.new.status
       event.manager = nil unless manager&.active?
     end
   end
 
   private
-    def active_members_reserved_registrations = registrations.reserved.where(member: group.members.active)
+    def active_members_reserved_registrations = registrations.reserved.where(member: group.members.active).preloaded
     def unregistered_active_members = group.members.active.without_registration_for(self)
 end
