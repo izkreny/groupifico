@@ -45,10 +45,10 @@ class ApplicationController < ActionController::Base
   rescue_from ActionPolicy::AuthorizationContextMissing, with: :deny_access
 
   # WHY: `:n_plus_one_only` leaves rows fetched off a model class and records a preload brought in
-  # unmarked, so a list's per-row lazy read would pass every spec. Every index list goes through
-  # here - `verify_authorized_scoped` above refuses an index that skips it - so marking the scope
-  # here covers each one without a call site having to remember it. A list a show action builds
-  # does not come through here.
+  # unmarked, so a list's per-row lazy read would pass every spec. The list each index scopes goes
+  # through here - `verify_authorized_scoped` above refuses an index that skips it - so marking the
+  # scope here covers it without a call site having to remember. The guard counts one call per
+  # action, so a second list an index builds, and a list a show action builds, do not come through.
   def authorized_scope(...) = super.strict_loading
 
   private
