@@ -594,17 +594,15 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include "Invite Ben Cole", "Invite the rest"
       end
 
-      # Opening the edit form is a read a paused owner keeps; copying the event is a create, which
-      # the pause refuses.
-      it "keeps Edit and offers no Duplicate" do
+      it "offers neither Duplicate nor Edit" do
         member = create(:member, :paused, :owner)
         event = detailed_event(member)
         sign_in_as(member.user)
 
         get group_event_path(event.group, event)
 
-        expect(response.body).to include %(aria-label="Edit")
-        expect(response.body).not_to include %(aria-label="Duplicate")
+        expect(page_text(response.body)).to include "Tuesday rehearsal"
+        expect(response.body).not_to include %(aria-label="Duplicate"), %(aria-label="Edit")
       end
 
       it "draws no answer row for their own registration" do
@@ -1156,17 +1154,17 @@ RSpec.describe "Events", type: :request do
       end
     end
 
-    # A paused member keeps the read that opens the form and loses the write the box would make.
+    # Opening the form is a write rule, so a paused member is refused a form whose Save they could
+    # not use, whatever roles they hold.
     context "when signed in as a paused events administrator" do
-      it "shows the form without Invite all active members" do
+      it "refuses the form" do
         actor = create(:member, :paused, :events_administrator)
         event = create(:event, group: actor.group)
         sign_in_as(actor.user)
 
         get edit_group_event_path(event.group, event)
 
-        expect(response.body).to include %(value="Save changes")
-        expect(response.body).not_to include "Invite all active members"
+        expect(response).to redirect_to root_path
       end
     end
 

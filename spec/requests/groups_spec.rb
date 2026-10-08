@@ -320,15 +320,13 @@ RSpec.describe "Groups", type: :request do
         expect(response.body).not_to include 'aria-label="Edit group"'
       end
 
-      # Opening the edit form is a read, so a paused owner keeps the way to it and is stopped at the
-      # submission, where `PATCH /groups/:id` proves the refusal.
-      it "keeps the pencil for a paused owner" do
+      it "offers no pencil to a paused owner" do
         member = create(:member, :paused, :owner)
         sign_in_as(member.user)
 
         get group_path(member.group)
 
-        expect(response.body).to include 'aria-label="Edit group"'
+        expect(response.body).not_to include 'aria-label="Edit group"'
       end
 
       it "offers the switcher chevron to a reader with a second group" do
@@ -501,17 +499,15 @@ RSpec.describe "Groups", type: :request do
         expect(response).to have_http_status :ok
       end
 
-      # Opening the form is a read, so the status pre-check lets a paused owner through and stops
-      # them at the submission instead. `edit?` therefore answers `membership.owner?` under its own
-      # name rather than through an alias or a `check?`, both of which rename the running rule to
-      # `update?` and refuse this.
-      it "shows the edit group page to a paused owner, who is stopped at the submission" do
+      # `edit?` is a write rule, so the status pre-check refuses a paused owner the form rather than
+      # letting them fill it in and refusing the Save.
+      it "refuses a paused owner the form" do
         member = create(:member, :paused, :owner)
         sign_in_as(member.user)
 
         get edit_group_path(member.group)
 
-        expect(response).to have_http_status :ok
+        expect(response).to redirect_to root_path
       end
 
       it "states the type rather than offering it, since it is set once" do
@@ -560,17 +556,6 @@ RSpec.describe "Groups", type: :request do
         get edit_group_path(member.group)
 
         expect(page_text(response.body)).to include "Delete group"
-      end
-
-      # The distinction the gate exists for: `edit?` is a read and admitted them, `destroy?` is a
-      # write the status pre-check refuses, so the form opens without a control they cannot use.
-      it "offers no delete to a paused owner, who is refused every write" do
-        member = create(:member, :paused, :owner)
-        sign_in_as(member.user)
-
-        get edit_group_path(member.group)
-
-        expect(page_text(response.body)).not_to include "Delete group"
       end
 
       # The confirm sheet's trigger is the delete form's own submit button, which is what makes the

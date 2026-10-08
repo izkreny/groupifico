@@ -4,11 +4,11 @@
   The group's roster. The shell's header already carries the group's name, so this tab draws no
   title of its own, as the events list draws none.
 
-  Both capabilities are the reader's rather than a row's, so each is asked once, of a member with
-  nothing on it but the group: a per-row `allowed_to?` builds a policy and looks up the reader's
-  membership for every member. `create?` decides the count and Invite, a write a paused manager is
-  refused. `edit?` decides the pencil, the inactive toggle and the "not signed in yet" mark, which
-  are reads a paused manager keeps.
+  Both capabilities are the acting member's rather than a row's, so each is asked once, of a member
+  with nothing on it but the group: a per-row `allowed_to?` builds a policy and looks up the acting
+  member's membership for every member. `create?` decides the count and Invite. `edit?` decides the
+  pencil, the inactive toggle and the "not signed in yet" mark. Both are write rules, so a paused
+  manager sees none of these.
 %>
 <% unattached = Member.new(group: @group) %>
 <% may_add = allowed_to?(:create?, unattached) %>

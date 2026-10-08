@@ -10,28 +10,22 @@ require "rails_helper"
 # assertion below is what goes red. Measured, not assumed: that edit was made, both layers were
 # run, and only this one failed.
 RSpec.describe "Refusing a paused member", type: :system do
-  # Paused *and* an owner, which is the only way to reach the form at all. `edit?` is a read, so
-  # the status pre-check lets a paused member through it, and `GroupPolicy#edit?` then wants an
-  # owner; `update?` is a write, so the same member is refused on submit. A paused non-owner never
-  # sees the form, which is a different refusal and the request specs' to assert.
-  let(:member) { create(:member, :paused, :owner, group: create(:group, name: "Original")) }
+  # Paused *and* an owner, so the refusal is the status pre-check's rather than the owner rule's:
+  # `edit?` is a write rule, and a paused member is refused the form itself.
+  let(:member) { create(:member, :paused, :owner) }
 
   before do
     sign_in_as member.user
   end
 
-  it "lands on the root page rather than the form that refused the edit" do
+  it "lands on the root page rather than on the form" do
     visit edit_group_path(member.group)
-    fill_in "group_name", with: "Renamed"
-    click_button "Save changes"
 
     expect(page).to have_current_path root_path
   end
 
   it "paints the alert, rather than merely rendering it" do
     visit edit_group_path(member.group)
-    fill_in "group_name", with: "Renamed"
-    click_button "Save changes"
 
     expect(page).to have_css "#alert"
     expect(page).to paint "#alert"
