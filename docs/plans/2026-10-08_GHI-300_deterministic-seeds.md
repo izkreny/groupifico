@@ -44,7 +44,7 @@ A combination is a role set the member form can produce, held under one `Member`
 ## Verification
 
 - The determinism gate exits 0: two `env RAILS_ENV=test bin/rails db:seed:replant` runs, each followed by a `bin/rails runner` digest of every name, status and relation and of every event time as its offset from the day of seeding, compare equal, having differed on the unchanged seeds
-- The coverage gate exits 0: a `bin/rails runner` script finds every `Event` and `Registration` status and every combination in each sample group, held there by users who belong to both, and again inside the group under `ActiveRecord::FixtureSet.identify(:styleguide)`, with two active owners in the first sample group and one in the second, and each fixed owner address an active owner of its group, having failed on the unchanged seeds
+- The coverage gate exits 0: a `bin/rails runner` script finds every `Event` and `Registration` status, an ongoing event and every combination in each sample group, held there by users who belong to both, and again inside the group under `ActiveRecord::FixtureSet.identify(:styleguide)`, with two active owners in the first sample group and one in the second, and each fixed owner address an active owner of its group, having failed on the unchanged seeds
 - `bin/ci` is green
 
 Both gates run against the test database and never the development one, which holds the owner's data, and stay in the scratchpad rather than the repository: whether anything committed reads the seeds is #346's question. No gate sees whether the styleguide group draws well on `/styleguide`, which is #301's work, or whether two replants a few seconds apart stand in for two on different days.
@@ -59,3 +59,4 @@ Both gates run against the test database and never the development one, which ho
 - How many members, and who is shared? 44 in each sample group, 18 of them users in both groups holding a different combination in each; 44 in the styleguide group too, its 25 plain members drawing their status rather than all being `active`.
 - Are two members with identical roles worth seeding? Only for owners: the first sample group and the styleguide group each carry a second active owner, and the second sample group keeps one.
 - How does somebody sign in as a seeded owner? By a fixed address per active owner, five across the three groups; any other member's address is on their member page.
+- Do the sample groups get an ongoing event too? Yes, one each, taking one of the past half so each group still has 44 events.
