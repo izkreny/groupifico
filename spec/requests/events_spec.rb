@@ -120,7 +120,7 @@ RSpec.describe "Events", type: :request do
         expect(response.body).to include %(href="#{new_group_event_path(actor.group)}")
       end
 
-      it "offers no New button while the reader is paused" do
+      it "offers no New button while the member is paused" do
         actor = create(:member, :paused, :events_administrator)
         sign_in_as(actor.user)
 

@@ -213,7 +213,7 @@ RSpec.describe "Members", type: :request do
         expect(response.body).not_to include new_group_member_path(actor.group)
       end
 
-      it "keeps each member's edit form while the reader is paused" do
+      it "keeps each member's edit form while the member is paused" do
         actor = create(:member, :paused, :members_administrator)
         other = create(:member, group: actor.group)
         sign_in_as(actor.user)
