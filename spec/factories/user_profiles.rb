@@ -40,7 +40,8 @@ FactoryBot.define do
       first_name   { Faker::Name.first_name }
       last_name    { Faker::Name.last_name }
       # WHY: a sequence rather than Faker's `unique`, which retries over a finite pool and raises once
-      # it runs dry; the unique index needs a value per row. Twelve digits after the `+`, so E.164.
+      # it runs dry; this trait gives every profile a phone, and the unique index forbids two alike.
+      # Twelve digits after the `+`, so E.164.
       sequence(:mobile_phone) { |n| format("+38591%07d", n) }
     end
   end
