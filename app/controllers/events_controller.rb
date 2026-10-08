@@ -23,7 +23,7 @@ class EventsController < ApplicationController
     #
     # The two scopes partition the group's events between them, so an event it is in the middle of
     # is on the upcoming list rather than on neither: still ahead of its members, not behind them.
-    events = authorized_scope(@group.events).includes(:address, :registrations)
+    events = authorized_scope(@group.events).preloaded
     @events = @past ? events.past.order(starts_at: :desc) : events.current_and_upcoming.order(:starts_at)
 
     # The group decides which event the hero draws, not the list: the filter is

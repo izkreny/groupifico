@@ -76,7 +76,7 @@ Authorization tests assert the negative space: forbidden access returns the redi
   | Rows chained off that record's own `has_many`, `@member.managed_events.order(:starts_at)` | no     | that owner is strict in `:all` mode, which hands the rows `strict_loading!(false)` |
   | Rows off the model class, `Member.where(group:).each { it.roles }`                        | no     | unmarked, unless the relation calls `.strict_loading`                              |
   | Preloaded rows, `Group.includes(:members)` … `member.roles`                               | no     | unmarked, unless the relation calls `.strict_loading`                              |
-- **Fix it with a preload where the records are loaded**: `includes` in the controller or the scope, or the parent's own preload before a destroy cascade. A spec that reads an association through one does the same. Never `strict_loading!(false)` on a record.
+- **Fix it with a preload where the records are loaded**: the model's `preloaded` scope, which holds what its screens read (`Event.preloaded`, `Member.preloaded`), or the parent's own preload before a destroy cascade. A spec that reads an association through one uses the same scope. Never `strict_loading!(false)` on a record.
 - **The one opt-out is `strict_loading(false)` on a relation, with a `WHY:` comment at the call site.** `Group#featured_event` is the example: the hero screens read its associations once per page, and the one caller that runs per row, the `groups#index` card, reads only the event's own columns. A caller that reads an association per row preloads it instead.
 
 ## Factories
