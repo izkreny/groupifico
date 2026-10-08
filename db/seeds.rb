@@ -19,7 +19,7 @@ ACTIVE_RECORDS_MODELS = [
   User,
   UserProfile
 ].freeze
-NUMBER_OF_MEMBERS_PER_GROUP = 44  # Every combination below, plus a second active owner!
+NUMBER_OF_MEMBERS_PER_GROUP = 44  # Every combination below, plus a second active owner! Also `STYLEGUIDE_NAMES`' length.
 NUMBER_OF_EVENTS_PER_GROUP  = 44  # Use even number!
 
 

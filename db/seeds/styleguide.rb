@@ -17,6 +17,7 @@ STYLEGUIDE_NAMES = [
   "Paula Đurić", "Vito Ćosić", "Hana Lončar", "Toni Zorić", "Rita Kolar", "Mateo Bašić",
   "Zara Varga", "Gabrijel Žagar"
 ].freeze
+raise "STYLEGUIDE_NAMES holds #{STYLEGUIDE_NAMES.size} names for #{NUMBER_OF_MEMBERS_PER_GROUP} members" unless STYLEGUIDE_NAMES.size == NUMBER_OF_MEMBERS_PER_GROUP
 
 hall = FactoryBot.create(:address, name: "Community hall", street_name: "Obala", building_number: "14", postal_code: "10000", city: "Zagreb")
 
