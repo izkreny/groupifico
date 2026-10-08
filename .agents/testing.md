@@ -63,7 +63,18 @@ Authorization tests assert the negative space: forbidden access returns the redi
 ## Lazy loading
 
 - **A lazy load on a record that a `has_many` loaded lazily raises under test.** `config/environments/test.rb` turns on `strict_loading_by_default` in `:n_plus_one_only` mode, which marks those records, so a row of `@group.events`, `@group.events.find` and each record a `dependent: :destroy` cascade loads by itself all raise on an association they did not preload. `config/environments/development.rb` sets the same rule to log instead, so it shows up while working without stopping the page.
-- **A list query ends in `.strict_loading`.** The mode leaves two kinds of record unmarked: a list fetched straight off a model class, such as `authorized_scope(Group.all)` on `groups#index`, and a record an `includes`, `preload` or `eager_load` brought in, so a preload one level short - `@group.events.includes(:registrations)` with each registration's `member` left out - is an N+1 the default would never catch. `.strict_loading` on the query marks every row it returns and every record its preloads bring in, which closes both; `groups#index`, `events#index` and `members#index` carry it.
+- **Every list is strict, through `authorized_scope`.** The mode leaves two kinds of record unmarked: a list fetched straight off a model class, such as `Group.all` on `groups#index`, and a record an `includes`, `preload` or `eager_load` brought in, so a preload one level short - `@group.events.includes(:registrations)` with each registration's `member` left out - is an N+1 the default would never catch. `ApplicationController#authorized_scope` appends `.strict_loading`, which marks every row a list returns and every record its preloads bring in, and `verify_authorized_scoped` already refuses an index that skips `authorized_scope`, so no list query needs the call written out. In production the violation action is `:log`, which Rails reports at debug level, so there a missed read costs a query rather than a 500.
+
+  Which reads raise under test, as measured on this setup:
+
+  | Read                                                                    | Raises | Why                                                        |
+  |-------------------------------------------------------------------------|--------|------------------------------------------------------------|
+  | One record loaded alone, `Session.find(id).user`                        | no     | one query, never one per row                               |
+  | A record a spec just built, `create(:member).roles`                     | no     | the same                                                   |
+  | Rows through a `has_many`, `group.members.each { it.roles }`            | yes    | each row a `has_many` loads lazily is marked               |
+  | One record through a `has_many`, `group.members.find(id).roles`         | yes    | the same marking, though it is one record                  |
+  | Rows off the model class, `Member.where(group:).each { it.roles }`      | no     | unmarked, unless the relation calls `.strict_loading`      |
+  | Preloaded rows, `Group.includes(:members)` … `member.roles`             | no     | unmarked, unless the relation calls `.strict_loading`      |
 - **Fix it with a preload where the records are loaded**: `includes` in the controller or the scope, or the parent's own preload before a destroy cascade. A spec that reads an association through one does the same. Never `strict_loading!(false)` on a record.
 - **The one opt-out is `strict_loading(false)` on a relation, with a `WHY:` comment at the call site.** `Group#featured_event` is the example: it answers one record, so its lazy reads never cost a query per row.
 
