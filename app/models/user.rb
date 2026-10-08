@@ -54,6 +54,11 @@ class User < ApplicationRecord
   # without it the memberships are destroyed first and this asks a user who no longer owns anything.
   before_destroy :ensure_no_group_loses_its_only_owner, prepend: true
 
+  # WHY: `dependent: :destroy` loads each membership and then each of its own dependents, a query
+  # per row. Preloaded first, the cascade reuses the loaded records; `prepend: true` for the same
+  # ordering as the guard above.
+  before_destroy :preload_what_destroying_reads, prepend: true
+
   # Asked of the user rather than of the member, because the refusal has to name every group the
   # account would orphan and a member sees one group at a time. One statement rather than the
   # group's own predicate per membership, which is the same question asked N times; `Member.owners`
@@ -72,6 +77,10 @@ class User < ApplicationRecord
   private
     def consume_outstanding_sign_in_tokens
       sign_in_tokens.consume_all
+    end
+
+    def preload_what_destroying_reads
+      ActiveRecord::Associations::Preloader.new(records: [ self ], associations: { members: %i[ roles registrations ] }).call
     end
 
     def ensure_no_group_loses_its_only_owner

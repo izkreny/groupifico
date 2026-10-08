@@ -60,6 +60,25 @@ Authorization tests assert the negative space: forbidden access returns the redi
 - **`travel_to`/`freeze_time`** for anything time-dependent; a time assertion without them is a red flag.
 - External HTTP is blocked suite-wide: the `webmock` gem and `WebMock.disable_net_connect!` in `spec/rails_helper.rb` close the net as standing setup, not need-driven.
 
+## Lazy loading
+
+- **A lazy load on a record that a `has_many` loaded lazily raises under test.** `config/environments/test.rb` turns on `strict_loading_by_default` in `:n_plus_one_only` mode, which marks those records, so a row of `@group.events`, `@group.events.find` and each record a `dependent: :destroy` cascade loads by itself all raise on an association they did not preload. `config/environments/development.rb` sets the same rule and raises too, so a page clicked through while working stops on a view no spec renders.
+- **The list an index scopes is strict, through `authorized_scope`.** The mode leaves two kinds of record unmarked: a list fetched straight off a model class, such as `Group.all` on `groups#index`, and a record an `includes`, `preload` or `eager_load` brought in, so a preload one level short - `@group.events.includes(:registrations)` with each registration's `member` left out - is an N+1 the default would never catch. `ApplicationController#authorized_scope` appends `.strict_loading`, which marks every row a list returns and every record its preloads bring in, and `verify_authorized_scoped` already refuses an index that skips `authorized_scope`, so no index needs the call written out. The guard counts one `authorized_scope` call per action, so a second list an index builds outside it - `groups#index`'s `@memberships` today - is not marked, and neither is a list a show action builds - `members#show`'s managed events and `addresses#show`'s events; their per-row reads are the author's to preload. In production the violation action is `:log`, which Rails reports at debug level, so there a missed read costs a query rather than a 500.
+
+  Which reads raise under test, as measured on this setup:
+
+  | Read                                                                                      | Raises | Why                                                                                |
+  |-------------------------------------------------------------------------------------------|--------|------------------------------------------------------------------------------------|
+  | One record loaded alone, `Session.find(id).user`                                          | no     | one query, never one per row                                                       |
+  | A record a spec just built, `create(:member).roles`                                       | no     | the same                                                                           |
+  | Rows through a `has_many`, `group.members.each { it.roles }`                              | yes    | each row a `has_many` loads lazily is marked                                       |
+  | One record through a `has_many`, `group.members.find(id).roles`                           | yes    | the same marking, though it is one record                                          |
+  | Rows chained off that record's own `has_many`, `@member.managed_events.order(:starts_at)` | no     | that owner is strict in `:all` mode, which hands the rows `strict_loading!(false)` |
+  | Rows off the model class, `Member.where(group:).each { it.roles }`                        | no     | unmarked, unless the relation calls `.strict_loading`                              |
+  | Preloaded rows, `Group.includes(:members)` … `member.roles`                               | no     | unmarked, unless the relation calls `.strict_loading`                              |
+- **Fix it with a preload where the records are loaded**: the model's `preloaded` scope, which holds what its screens read (`Event.preloaded`, `Member.preloaded`), or the parent's own preload before a destroy cascade. A spec that reads an association through one uses the same scope. Never `strict_loading!(false)` on a record.
+- **The one opt-out is `strict_loading(false)` on a relation, with a `WHY:` comment at the call site.** `Group#featured_event` is the example: the hero screens read its associations once per page, and the one caller that runs per row, the `groups#index` card, reads only the event's own columns. A caller that reads an association per row preloads it instead.
+
 ## Factories
 
 - **Minimal factories**: only required fields with sensible defaults. No "just in case" attributes, no factories-as-fixtures like `create(:admin_user_with_premium_subscription)`; variation comes from traits, uniqueness from sequences, and associations are declared sparingly because they cascade record creation.

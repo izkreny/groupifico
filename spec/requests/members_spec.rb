@@ -618,7 +618,7 @@ RSpec.describe "Members", type: :request do
         expect { post group_members_path(actor.group), params: { member: { email: "new.person@example.com", status: "inactive" } } }
           .not_to have_enqueued_mail(MemberMailer, :welcome)
 
-        expect(actor.group.members.inactive.sole.user.email).to eq "new.person@example.com"
+        expect(actor.group.members.inactive.preloaded.sole.user.email).to eq "new.person@example.com"
       end
 
       it "refuses an address that already belongs to the group, saying so and emailing nobody" do

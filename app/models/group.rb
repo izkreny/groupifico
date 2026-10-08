@@ -53,6 +53,13 @@ class Group < ApplicationRecord
   # should have refused it.
   before_validation -> { self[:group_type] ||= Current.brand.group_type }, on: :create
 
+  # WHY: `dependent: :destroy` loads each member and event and then each of their own dependents, a
+  # query per row. Preloaded first, the cascade reuses the loaded records; `prepend: true` because
+  # the associations above registered their own before_destroy already. The events' registrations
+  # are the exception, left to cost one SELECT per event that finds nothing: the members cascade,
+  # declared first, has deleted them by then, and preloaded copies would be deleted a second time.
+  before_destroy :preload_what_destroying_reads, prepend: true
+
   validates_associated :address
   validates :name, presence: true, length: { maximum: 250 }
   validates :description, length: { maximum: 25_000 }
@@ -68,8 +75,13 @@ class Group < ApplicationRecord
   # `confirmed` alone: an unconfirmed event is not yet a commitment and a canceled one is not an
   # event, so neither belongs under a group's name. `status` defaults to `unconfirmed`, so a newly
   # created event stays out of here until somebody confirms it.
+  #
+  # WHY: `strict_loading(false)` because the screens that draw this event as a hero read its
+  # associations once per page. `groups#index` calls it once per card, and the card reads only the
+  # event's own columns, so preloading here would charge every card for reads it never makes; a card
+  # that starts reading an association must preload it rather than lean on this opt-out.
   def featured_event
-    events.confirmed.current_and_upcoming.order(:starts_at).first
+    events.strict_loading(false).confirmed.current_and_upcoming.order(:starts_at).first
   end
 
   # Whoever starts a group owns it, and both routes to a group say so through here rather than
@@ -95,4 +107,9 @@ class Group < ApplicationRecord
   def owned_by_anyone_but?(member)
     members.active.owners.where.not(id: member.id).exists?
   end
+
+  private
+    def preload_what_destroying_reads
+      ActiveRecord::Associations::Preloader.new(records: [ self ], associations: { members: %i[ roles registrations ], events: :address }).call
+    end
 end

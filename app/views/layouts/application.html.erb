@@ -15,7 +15,7 @@
       included - and the header would rename the group the save just refused to rename, while the
       switcher beside it loads its own row and keeps the stored name. %>
   <% group_name = group.name_in_database if group %>
-  <% memberships = Current.user.current_memberships.includes(:roles, :group).to_a if group %>
+  <% memberships = Current.user.current_memberships.preloaded.to_a if group %>
   <% switcher_id = "group-switcher" if memberships&.many? %>
   <% tabs = shell_tabs?(group) %>
 

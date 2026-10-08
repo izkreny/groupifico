@@ -44,6 +44,13 @@ class ApplicationController < ActionController::Base
   # a refusal rather than a fault, so it lands on the same handler.
   rescue_from ActionPolicy::AuthorizationContextMissing, with: :deny_access
 
+  # WHY: `:n_plus_one_only` leaves rows fetched off a model class and records a preload brought in
+  # unmarked, so a list's per-row lazy read would pass every spec. The list each index scopes goes
+  # through here - `verify_authorized_scoped` above refuses an index that skips it - so marking the
+  # scope here covers it without a call site having to remember. The guard counts one call per
+  # action, so a second list an index builds, and a list a show action builds, do not come through.
+  def authorized_scope(...) = super.strict_loading
+
   private
     # Branches on the denial's own reason rather than on the controller. A policy that denies for
     # non-membership sets details[:not_found] before calling deny!, per ApplicationPolicy - that is

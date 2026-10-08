@@ -23,7 +23,7 @@ class EventsController < ApplicationController
     #
     # The two scopes partition the group's events between them, so an event it is in the middle of
     # is on the upcoming list rather than on neither: still ahead of its members, not behind them.
-    events = authorized_scope(@group.events).includes(:address, :registrations)
+    events = authorized_scope(@group.events).preloaded
     @events = @past ? events.past.order(starts_at: :desc) : events.current_and_upcoming.order(:starts_at)
 
     # The group decides which event the hero draws, not the list: the filter is
@@ -114,7 +114,7 @@ class EventsController < ApplicationController
 
   private
     def set_event
-      @event = @group.events.find(params.expect(:id))
+      @event = @group.events.preloaded.find(params.expect(:id))
     end
 
     # The foreign keys the form submits are checked rather than trusted. Each picker is already

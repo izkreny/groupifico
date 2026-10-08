@@ -62,4 +62,13 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions.
   config.action_controller.raise_on_missing_callback_actions = true
+
+  # WHY: `:n_plus_one_only` rather than the default `:all`, which also raises on a record loaded
+  # alone reading its own association - no N+1, and nothing a preload could fix for a record a spec
+  # built itself. It still covers every record a `has_many` loaded lazily, so a lazy load on a row
+  # of `@group.events`, or on `@group.events.find`, raises in the spec that renders it.
+  # `.agents/testing.md` names what it leaves uncovered.
+  # `action_on_strict_loading_violation` is left at its `:raise` default.
+  config.active_record.strict_loading_by_default = true
+  config.active_record.strict_loading_mode = :n_plus_one_only
 end

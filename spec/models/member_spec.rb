@@ -223,7 +223,7 @@ RSpec.describe Member, type: :model do
       expect { described_class.create!(group:, email: " Known.Person@Example.com ") }
         .not_to change(User, :count)
 
-      expect(group.members.sole.user).to eq user
+      expect(group.members.preloaded.sole.user).to eq user
     end
 
     it "refuses an address no account could hold, on the email field, creating nobody" do
