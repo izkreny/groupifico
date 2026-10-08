@@ -148,7 +148,7 @@ class Event < ApplicationRecord
   def roster
     order = Registration::ANSWERS + (Registration.statuses.keys - Registration::ANSWERS).reverse
 
-    registrations.includes(member: :profile).sort_by { [ order.index(it.status), it.member.full_name.downcase ] }
+    registrations.preloaded.sort_by { [ order.index(it.status), it.member.full_name.downcase ] }
   end
 
   # Filling the event, all or nothing: a set refused part way through leaves nobody half-invited.
@@ -210,6 +210,6 @@ class Event < ApplicationRecord
   end
 
   private
-    def active_members_reserved_registrations = registrations.reserved.where(member: group.members.active).includes(:member)
+    def active_members_reserved_registrations = registrations.reserved.where(member: group.members.active).preloaded
     def unregistered_active_members = group.members.active.without_registration_for(self)
 end

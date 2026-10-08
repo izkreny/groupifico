@@ -63,7 +63,7 @@ module EventsHelper
   # no screen's preload reaches, and `Member` gets its name through `user` - so selecting in memory
   # walked two queries per answer.
   def said_yes_line(event)
-    names = event.registrations.yes.includes(member: :profile).map { it.member.full_name }
+    names = event.registrations.yes.preloaded.map { it.member.full_name }
 
     "#{names.to_sentence} said yes" if names.any?
   end
@@ -95,7 +95,7 @@ module EventsHelper
   # event to somebody else on any save. The blank is what `EventsController#foreign_member?` lets
   # through for the model to clear.
   def manager_choices(event)
-    members = event.group.members.active.or(event.group.members.where(id: event.manager_id)).includes(:profile)
+    members = event.group.members.active.or(event.group.members.where(id: event.manager_id)).preloaded
 
     members.map { [ it.full_name, it.id ] } + [ [ "nobody", "" ] ]
   end

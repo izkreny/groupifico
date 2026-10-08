@@ -47,7 +47,7 @@ class Member < ApplicationRecord
   # owner. Two spellings of one join are two places a later role change has to find.
   scope :owners, -> { joins(:roles).where(roles: { name: Role::OWNER }) }
 
-  scope :preloaded, -> { includes(:roles, :user, :profile) }
+  scope :preloaded, -> { includes(:roles, :user, :profile, :group) }
 
   # Members with no registration on the event, never invited or taken off. The whole of what it
   # decides, so each caller states its own status rule beside it rather than inheriting one the
