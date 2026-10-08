@@ -1,10 +1,6 @@
-# The group the styleguide draws, for checking the visual style and the themes against every state
-# a screen can show. Literal names throughout, so a screenshot of it reads the same on every run,
-# and found by a fixed id rather than by its name, which nothing makes unique.
+# The group the styleguide draws, for checking the visual style and the themes against every state a screen can show. Literal names throughout, so a screenshot of it reads the same on every run, and found by a fixed id rather than by its name, which nothing makes unique.
 #
-# WHY: 3, the id after the sample groups on a fresh database, so every id stays small. A replant
-# continues SQLite's sequence past it rather than reusing it, so it never collides there either; a
-# third sample group would take 3 first and fail this create loudly.
+# WHY: 3, the id after the sample groups on a fresh database, so every id stays small. A replant continues SQLite's sequence past it rather than reusing it, so it never collides there either; a third sample group would take 3 first and fail this create loudly.
 STYLEGUIDE_GROUP_ID = 3
 
 STYLEGUIDE_NAMES = [
@@ -25,8 +21,7 @@ group = Current.set(brand: Brand.new("chorifico.com")) do
   FactoryBot.create(:group, id: STYLEGUIDE_GROUP_ID, name: "Sample choir", description: "Thursday rehearsals, concerts in spring and before Christmas.", address: hall)
 end
 
-# Every combination once, a second active owner, and plain members filling the group to the size of
-# the sample groups. The owners' addresses are fixed so signing in as one needs no lookup.
+# Every combination once, a second active owner, and plain members filling the group to the size of the sample groups. The owners' addresses are fixed so signing in as one needs no lookup.
 memberships = member_combinations.map { |combination| { combination: } }
 memberships << { combination: [ [ Role::OWNER ], "active" ], email: "co-owner.styleguide@example.com" }
 memberships += Array.new(NUMBER_OF_MEMBERS_PER_GROUP - memberships.size) { { combination: [ [], drawn_member_status ] } }
@@ -40,8 +35,7 @@ members = STYLEGUIDE_NAMES.zip(memberships).map do |full_name, attributes|
 end
 owner, co_owner = members.select { it.active? && it.owner? }
 
-# One event per status, and the one the group is at right now. The names are the ones the
-# styleguide drew before it read the database.
+# One event per status, and the one the group is at right now. The names are the ones the styleguide drew before it read the database.
 [
   { name: "Autumn concert rehearsal", tense: :from_the_future, status: :confirmed, category: :rehearsal, address: hall,
     description: "A full run of the programme, coats off by seven." },
@@ -52,9 +46,7 @@ owner, co_owner = members.select { it.active? && it.owner? }
 ].each_with_index do |attributes, index|
   event = FactoryBot.create(:event, attributes[:tense], group:, creator: owner, manager: co_owner, **attributes.except(:tense))
 
-  # WHY: every status on every event, shifted by one per event so each member answers differently
-  # from one event to the next. `reserved` and `invited` on an event that is over are what nobody
-  # answering leaves behind, which `Registration` allows.
+  # WHY: every status on every event, shifted by one per event so each member answers differently from one event to the next. `reserved` and `invited` on an event that is over are what nobody answering leaves behind, which `Registration` allows.
   statuses = Registration.statuses.keys.rotate(index)
   answer_then_settle(event, members.each_with_index.to_h { |member, position| [ member, statuses[position % statuses.size] ] })
 end
