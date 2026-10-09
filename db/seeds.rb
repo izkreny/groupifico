@@ -18,9 +18,9 @@ NUMBER_OF_EVENTS_PER_GROUP  = 44  # Use even number!
 # Every common-sense role set, held under every member status. A set where one role already implies another, such as `owner` with `administrator`, adds nothing the first role does not grant, so it stays out. Derived from `Role::NAMES` rather than listed, so a new role arrives seeded.
 def member_combinations
   role_sets = (0..Role::NAMES.size).flat_map { Role::NAMES.combination(it).to_a }
-  common_sense = role_sets.reject { |names| names.any? { |name| names.any? { Role.new(name:).implies?(it) } } }
+  common_sense_role_sets = role_sets.reject { |names| names.any? { |name| names.any? { Role.new(name:).implies?(it) } } }
 
-  common_sense.product(Member.statuses.keys)
+  common_sense_role_sets.product(Member.statuses.keys)
 end
 
 def create_member(group:, user:, combination:)
