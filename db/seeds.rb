@@ -15,12 +15,12 @@ NUMBER_OF_MEMBERS_PER_GROUP = 44  # Every combination below, plus a second activ
 NUMBER_OF_EVENTS_PER_GROUP  = 44  # Use even number!
 
 
-# Every role set the member form can produce, held under every member status. The form greys a role that another one it holds already implies, so a set where one role implies another is one nobody can reach, and derived from `Role::NAMES` rather than listed, a new role arrives seeded.
+# Every common-sense role set, held under every member status. A set where one role already implies another, such as `owner` with `administrator`, adds nothing the first role does not grant, so it stays out. Derived from `Role::NAMES` rather than listed, so a new role arrives seeded.
 def member_combinations
   role_sets = (0..Role::NAMES.size).flat_map { Role::NAMES.combination(it).to_a }
-  reachable = role_sets.reject { |names| names.any? { |name| names.any? { Role.new(name:).implies?(it) } } }
+  common_sense = role_sets.reject { |names| names.any? { |name| names.any? { Role.new(name:).implies?(it) } } }
 
-  reachable.product(Member.statuses.keys)
+  common_sense.product(Member.statuses.keys)
 end
 
 def create_member(group:, user:, combination:)
