@@ -15,10 +15,10 @@ STYLEGUIDE_NAMES = [
 ].freeze
 raise "STYLEGUIDE_NAMES holds #{STYLEGUIDE_NAMES.size} names for #{NUMBER_OF_MEMBERS_PER_GROUP} members" unless STYLEGUIDE_NAMES.size == NUMBER_OF_MEMBERS_PER_GROUP
 
-hall = FactoryBot.create(:address, name: "Community hall", street_name: "Obala", building_number: "14", postal_code: "10000", city: "Zagreb")
+community_hall = FactoryBot.create(:address, name: "Community hall", street_name: "Obala", building_number: "14", postal_code: "10000", city: "Zagreb")
 
 group = Current.set(brand: Brand.new("chorifico.com")) do
-  FactoryBot.create(:group, id: STYLEGUIDE_GROUP_ID, name: "Sample choir", description: "Thursday rehearsals, concerts in spring and before Christmas.", address: hall)
+  FactoryBot.create(:group, id: STYLEGUIDE_GROUP_ID, name: "Sample choir", description: "Thursday rehearsals, concerts in spring and before Christmas.", address: community_hall)
 end
 
 # Every combination once, a second active owner, and plain members filling the group to the size of the sample groups. The owners' addresses are fixed so signing in as one needs no lookup.
@@ -37,11 +37,11 @@ owner, co_owner = members.select { it.active? && it.owner? }
 
 # One event per status, and the one the group is at right now. The names are the ones the styleguide drew before it read the database.
 [
-  { name: "Autumn concert rehearsal", tense: :from_the_future, status: :confirmed, category: :rehearsal, address: hall,
+  { name: "Autumn concert rehearsal", tense: :from_the_future, status: :confirmed, category: :rehearsal, address: community_hall,
     description: "A full run of the programme, coats off by seven." },
-  { name: "Christmas gig", tense: :from_the_future, status: :unconfirmed, category: :gig, address: hall, manager: nil },
+  { name: "Christmas gig", tense: :from_the_future, status: :unconfirmed, category: :gig, address: community_hall, manager: nil },
   { name: "Sectional", tense: :ongoing, status: :confirmed },
-  { name: "Summer concert", tense: :from_the_past, status: :concluded, category: :gig, address: hall },
+  { name: "Summer concert", tense: :from_the_past, status: :concluded, category: :gig, address: community_hall },
   { name: "Open rehearsal", tense: :from_the_future, status: :canceled, category: :rehearsal }
 ].each_with_index do |attributes, index|
   event = FactoryBot.create(:event, attributes[:tense], group:, creator: owner, manager: co_owner, **attributes.except(:tense))
