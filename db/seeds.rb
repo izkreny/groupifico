@@ -29,10 +29,6 @@ def create_member(group:, user:, combination:)
   FactoryBot.create(:member, group:, user:, status:, roles: names.map { Role.new(name: it) })
 end
 
-def drawn_member_status
-  %i[ active active active active active active paused inactive ].sample # Rig the odds for :active 🎲
-end
-
 # Everyone answers, and only then is the event settled, because that is the order it happens in: people say whether they are coming, and afterwards somebody concludes it or calls it off. `Registration` refuses an answer to an event that is already over, so writing the outcome first would seed a history that could not have occurred. The caller decides which status each member holds, and the factory traits stay the authority on which outcome each event ends up with.
 def answer_then_settle(event, statuses)
   outcome = event.status

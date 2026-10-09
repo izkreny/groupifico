@@ -27,7 +27,7 @@ groups.each_with_index do |group, group_index|
   end
 
   members += Array.new(NUMBER_OF_MEMBERS_PER_GROUP - members.size) do
-    FactoryBot.create(:member, :with_all_attributes, group:, status: drawn_member_status)
+    FactoryBot.create(:member, :with_all_attributes, :any_status, group:)
   end
 
   addresses = [ group.address, FactoryBot.create(:address, :with_all_attributes) ]

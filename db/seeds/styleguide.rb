@@ -24,14 +24,18 @@ end
 # Every combination once, a second active owner, and plain members filling the group to the size of the sample groups. The owners' addresses are fixed so signing in as one needs no lookup.
 memberships = member_combinations.map { |combination| { combination: } }
 memberships << { combination: [ [ Role::OWNER ], "active" ], email: "co-owner.styleguide@example.com" }
-memberships += Array.new(NUMBER_OF_MEMBERS_PER_GROUP - memberships.size) { { combination: [ [], drawn_member_status ] } }
+memberships += Array.new(NUMBER_OF_MEMBERS_PER_GROUP - memberships.size) { {} }
 memberships.find { it[:combination] == [ [ Role::OWNER ], "active" ] }[:email] = "owner.styleguide@example.com"
 
 members = STYLEGUIDE_NAMES.zip(memberships).map do |full_name, attributes|
   first_name, last_name = full_name.split
   user = FactoryBot.create(:user, :with_full_profile, first_name:, last_name:, **attributes.slice(:email))
 
-  create_member(group:, user:, combination: attributes[:combination])
+  if combination = attributes[:combination]
+    create_member(group:, user:, combination:)
+  else
+    FactoryBot.create(:member, :any_status, group:, user:)
+  end
 end
 owner, co_owner = members.select { it.active? && it.owner? }
 
