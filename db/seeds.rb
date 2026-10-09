@@ -1,4 +1,4 @@
-# This file should ensure the existence of records required to run the application in every environment (production, development, test). The code here should be idempotent so that it can be executed at any point in every environment. The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
+# Sample data for development and test, written by `bin/rails db:seed` into an empty database and never into production, whose records are people's own. It is idempotent: one transaction seeds everything or nothing, and a run against a seeded database changes nothing.
 
 require "active_support/testing/time_helpers"
 
@@ -46,14 +46,19 @@ def populate_empty_database
   srand(666)
 
   extend ActiveSupport::Testing::TimeHelpers
-  travel_to(Time.current) do
-    require_relative "seeds/sample_groups"
-    # Last, because its id is fixed and SQLite's `AUTOINCREMENT` continues from the highest id.
-    require_relative "seeds/styleguide"
+  ActiveRecord::Base.transaction do
+    travel_to(Time.current) do
+      require_relative "seeds/sample_groups"
+      # Last, because its id is fixed and SQLite's `AUTOINCREMENT` continues from the highest id.
+      require_relative "seeds/styleguide"
+    end
   end
 end
 
-if ACTIVE_RECORDS_MODELS.all?(&:none?)
+# WHY: `bin/docker-entrypoint` runs `db:prepare`, which seeds a database it creates, and FactoryBot and Faker are not in production's bundle.
+if !Rails.env.local?
+  puts "Sample data is for development and test only, so the '#{Rails.env}' database gets none."
+elsif ACTIVE_RECORDS_MODELS.all?(&:none?)
   puts "Loading sample data from the 'db/seeds.rb' file..."
   populate_empty_database
 else
