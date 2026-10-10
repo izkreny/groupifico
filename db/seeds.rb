@@ -41,6 +41,11 @@ def answer_then_settle(event, statuses)
   event.update!(status: outcome)
 end
 
+# Every seeded account has signed in, so no screen marks one as never having done so. One statement for every user rather than one update per record; `insert_all` would write new rows, and these already exist.
+def sign_everyone_in
+  User.update_all(first_signed_in_at: Time.current)
+end
+
 # WHY: every random choice, Faker's included, draws from Ruby's one global generator, which `srand` seeds: Faker falls back to the `Random` class when nothing configures it, and `Array#sample` reads the same generator. One frozen clock makes every `ago` and every timestamp the same instant, so two runs write the same rows at the same offsets from the day they ran.
 def populate_empty_database
   srand(666)
@@ -51,6 +56,7 @@ def populate_empty_database
       require_relative "seeds/sample_groups"
       # Last, because its id is fixed and SQLite's `AUTOINCREMENT` continues from the highest id.
       require_relative "seeds/styleguide"
+      sign_everyone_in
     end
   end
 end
