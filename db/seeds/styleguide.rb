@@ -39,6 +39,10 @@ members = STYLEGUIDE_NAMES.zip(memberships).map do |full_name, attributes|
 end
 owner, co_owner = members.select { it.active? && it.owner? }
 
+# Four plain members have never signed in, so the member list draws that state for a manager.
+never_signed_in = members.select { it.roles.empty? }.last(4)
+sign_in(User.where(id: (members - never_signed_in).map(&:user_id)))
+
 # One event per status, and the one the group is at right now. The names are the ones the styleguide drew before it read the database.
 [
   { name: "Autumn concert rehearsal", tense: :from_the_future, status: :confirmed, category: :rehearsal, address: community_hall,

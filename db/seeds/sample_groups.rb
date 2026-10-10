@@ -60,3 +60,5 @@ groups.each_with_index do |group, group_index|
     answer_then_settle(event, members.index_with { Registration.statuses.keys.sample })
   end
 end
+
+sign_in(User.where(id: Member.where(group: groups).select(:user_id)))
