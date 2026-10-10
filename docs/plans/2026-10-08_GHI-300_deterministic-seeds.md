@@ -61,3 +61,6 @@ Both gates run against the test database and never the development one, which ho
 - How does somebody sign in as a seeded owner? By a fixed address per active owner, five across the three groups; any other member's address is on their member page.
 - Do the sample groups get an ongoing event too? Yes, one each, taking one of the past half so each group still has 44 events.
 - Which id keys the styleguide group? 3 rather than `ActiveRecord::FixtureSet.identify(:styleguide)`, whose 943179490 pushed every group id seeded after a replant past it.
+- How are the sample groups' events laid out? Half are rehearsals on the Tuesdays and Thursdays either side of the day of seeding, at the group's own address: the last past one confirmed, one earlier one canceled, the rest concluded, every upcoming one confirmed. The rest share four addresses of their own.
+- When does every event start? At 6 pm rather than ten o'clock, and the ongoing event runs from the day before seeding to two days after it, as category "other".
+- Has every seeded account signed in? Yes, one `update_all` sets `first_signed_in_at` for all of them.
