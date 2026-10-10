@@ -30,17 +30,33 @@ groups.each_with_index do |group, group_index|
     FactoryBot.create(:member, :with_all_attributes, :any_status, group:)
   end
 
-  addresses = [ group.address, FactoryBot.create(:address, :with_all_attributes) ]
-  options   = { group:, creator: owner, address: nil }
+  options = { group:, creator: owner }
 
-  # One of the past half is the ongoing event instead, so the group has an event it is at right now.
-  tenses = [ :from_the_past ] * (NUMBER_OF_EVENTS_PER_GROUP / 2 - 1) + [ :ongoing ] + [ :from_the_future ] * (NUMBER_OF_EVENTS_PER_GROUP / 2)
-  events = tenses.map do |tense|
-    FactoryBot.create(:event, tense, :with_all_attributes, manager: members.sample, **options)
+  # Half are rehearsals at the group's own address, on the Tuesdays and Thursdays either side of today at 6 pm. The last one before today happened and nobody has concluded it yet, one earlier one was called off, the rest are concluded, and every one still to come is confirmed.
+  rehearsal_count = NUMBER_OF_EVENTS_PER_GROUP / 2
+  days = ((Date.current - 90)..(Date.current + 90)).select { it.tuesday? || it.thursday? }
+  past_days, upcoming_days = days.partition { it < Date.current }
+  past_days = past_days.last(rehearsal_count / 2)
+  upcoming_days = upcoming_days.first(rehearsal_count - past_days.size)
+
+  past_statuses = Array.new(past_days.size, :concluded)
+  past_statuses[-1] = :confirmed
+  past_statuses[rand(past_days.size - 1)] = :canceled
+
+  scheduled = past_days.zip(past_statuses) + upcoming_days.map { [ it, :confirmed ] }
+  rehearsals = scheduled.map do |day, status|
+    FactoryBot.create(:event, :rehearsal, :with_all_attributes, starts_at: day + 18.hours, status:, address: group.address, manager: members.sample, **options)
   end
 
-  events.each do |event|
+  # The rest are other events at four addresses of their own, the one the group is at right now taking a place among the past half.
+  other_count = NUMBER_OF_EVENTS_PER_GROUP - rehearsal_count
+  other_addresses = FactoryBot.create_list(:address, 4, :with_all_attributes)
+  tenses = [ :from_the_past ] * (other_count / 2 - 1) + [ :ongoing ] + [ :from_the_future ] * (other_count / 2)
+  others = tenses.map do |tense|
+    FactoryBot.create(:event, tense, :with_all_attributes, address: other_addresses.sample, manager: members.sample, **options)
+  end
+
+  (rehearsals + others).each do |event|
     answer_then_settle(event, members.index_with { Registration.statuses.keys.sample })
-    event.update!(address: addresses.sample)
   end
 end
