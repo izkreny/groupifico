@@ -1,12 +1,6 @@
-# This file should ensure the existence of records required to run the application in every environment (production,
-# development, test). The code here should be idempotent so that it can be executed at any point in every environment.
-# The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
-#
-# Example:
-#
-#   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
-#     MovieGenre.find_or_create_by!(name: genre_name)
-#   end
+# Sample data for development and test, written by `bin/rails db:seed` into an empty database and never into production, whose records are people's own. It is idempotent: one transaction seeds everything or nothing, and a run against a seeded database changes nothing.
+
+require "active_support/testing/time_helpers"
 
 ACTIVE_RECORDS_MODELS = [
   Address,
@@ -17,85 +11,54 @@ ACTIVE_RECORDS_MODELS = [
   User,
   UserProfile
 ].freeze
-NUMBER_OF_GROUPS            = 2   # DO NOT CHANGE THIS! :) TODO: Make this configurable as well
-NUMBER_OF_MEMBERS_PER_GROUP = 22  # Minimum is two!
+NUMBER_OF_MEMBERS_PER_GROUP = 44  # Every combination below, plus a second active owner! Also `STYLEGUIDE_NAMES`' length.
 NUMBER_OF_EVENTS_PER_GROUP  = 44  # Use even number!
 
 
-# Everyone answers, and only then is the event settled, because that is the order it happens in:
-# people say whether they are coming, and afterwards somebody concludes it or calls it off.
-# `Registration` refuses an answer to an event that is already over, so writing the outcome first
-# would seed a history that could not have occurred. The factory traits stay the authority on which
-# outcome each event ends up with.
-def answer_then_settle(event, members)
+# Every common-sense role set, held under every member status. A set where one role already implies another, such as `owner` with `administrator`, adds nothing the first role does not grant, so it stays out. Derived from `Role::NAMES` rather than listed, so a new role arrives seeded.
+def member_combinations
+  role_sets = (0..Role::NAMES.size).flat_map { Role::NAMES.combination(it).to_a }
+  common_sense_role_sets = role_sets.reject { |names| names.any? { |name| names.any? { Role.new(name:).implies?(it) } } }
+
+  common_sense_role_sets.product(Member.statuses.keys)
+end
+
+def create_member(group:, user:, combination:)
+  names, status = combination
+
+  FactoryBot.create(:member, group:, user:, status:, roles: names.map { Role.new(name: it) })
+end
+
+# Everyone answers, and only then is the event settled, because that is the order it happens in: people say whether they are coming, and afterwards somebody concludes it or calls it off. `Registration` refuses an answer to an event that is already over, so writing the outcome first would seed a history that could not have occurred. The caller decides which status each member holds, and the factory traits stay the authority on which outcome each event ends up with.
+def answer_then_settle(event, statuses)
   outcome = event.status
   event.update!(status: :confirmed)
 
-  members.each do |member|
-    FactoryBot.create(:registration, event: event, member: member, status: [ :yes, :maybe, :no ].sample)
+  statuses.each do |member, status|
+    FactoryBot.create(:registration, event:, member:, status:)
   end
 
   event.update!(status: outcome)
 end
 
+# WHY: every random choice, Faker's included, draws from Ruby's one global generator, which `srand` seeds: Faker falls back to the `Random` class when nothing configures it, and `Array#sample` reads the same generator. One frozen clock makes every `ago` and every timestamp the same instant, so two runs write the same rows at the same offsets from the day they ran.
 def populate_empty_database
-  # Make Faker always produce same results aka enable deterministic output
-  Faker::Config.random = Random.new(666)
+  srand(666)
 
-  # Create groups with unique members in each group. Seeded as if started on `chorifico.com`, so
-  # development data looks like the domain the product is being built for rather than carrying the
-  # unbranded default: `Brand` answers the type, exactly as it does for a real request, instead of
-  # a literal type being named here.
-  groups = Current.set(brand: Brand.new("chorifico.com")) do
-    FactoryBot.create_list(:group, NUMBER_OF_GROUPS, :with_all_attributes) do |group|
-      FactoryBot.create_list(:member, NUMBER_OF_MEMBERS_PER_GROUP - 1, :with_all_attributes, group: group)
+  extend ActiveSupport::Testing::TimeHelpers
+  ActiveRecord::Base.transaction do
+    travel_to(Time.current) do
+      require_relative "seeds/sample_groups"
+      # Last, because its id is fixed and SQLite's `AUTOINCREMENT` continues from the highest id.
+      require_relative "seeds/styleguide"
     end
   end
-
-  # Create one member that belongs to each group
-  FactoryBot.create_list(:user, 1, :with_full_profile) do |user|
-    groups.each do |group|
-      FactoryBot.create(:member, user: user, group: group)
-    end
-  end
-
-  # Assign owner role to the first member of each group
-  groups.each { it.members.first.roles.create!(name: "owner") }
-
-  # Create past concluded events for groups and add registrations
-  groups.each do |group|
-    options = {
-      group: group,
-      creator: group.members.first,
-      manager: group.members.sample,
-      address: nil
-    }
-    FactoryBot.create_list(:event, NUMBER_OF_EVENTS_PER_GROUP / 2, :from_the_past, :with_all_attributes, options) do |event|
-      answer_then_settle(event, group.members)
-    end
-  end
-
-  # Create future events for groups and add registrations
-  groups.each do |group|
-    options = {
-      group: group,
-      creator: group.members.first,
-      manager: group.members.sample,
-      address: nil
-    }
-    FactoryBot.create_list(:event, NUMBER_OF_EVENTS_PER_GROUP / 2, :from_the_future, :with_all_attributes, options) do |event|
-      answer_then_settle(event, group.members)
-    end
-  end
-
-  # Create two extra addresses, one for each group, and assign them randomly to all events for each group
-  first_group_addresses  = [ groups.first.address,  FactoryBot.create(:address, :with_all_attributes) ]
-  second_group_addresses = [ groups.second.address, FactoryBot.create(:address, :with_all_attributes) ]
-  groups.first.events.each  { it.address = first_group_addresses.sample;  it.save }
-  groups.second.events.each { it.address = second_group_addresses.sample; it.save }
 end
 
-if ACTIVE_RECORDS_MODELS.all?(&:none?)
+# WHY: `bin/docker-entrypoint` runs `db:prepare`, which seeds a database it creates, and FactoryBot and Faker are not in production's bundle.
+if !Rails.env.local?
+  puts "Sample data is for development and test only, so the '#{Rails.env}' database gets none."
+elsif ACTIVE_RECORDS_MODELS.all?(&:none?)
   puts "Loading sample data from the 'db/seeds.rb' file..."
   populate_empty_database
 else

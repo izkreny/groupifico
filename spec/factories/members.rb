@@ -52,6 +52,11 @@ FactoryBot.define do
       status { :inactive }
     end
 
+    # WHY: a drawn status is for the seeds, never a spec, where chance would decide the outcome.
+    trait :any_status do
+      status { %i[ active active active active active active paused inactive ].sample } # Rig the odds for :active 🎲
+    end
+
     # One trait per role in Role::NAMES, because a spec that names the capability it is proving
     # reads better than one assembling a roles array inline. A member holding several roles builds
     # its own array, which is rare enough not to earn a trait of its own.
