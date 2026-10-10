@@ -2,15 +2,6 @@
 
 require "active_support/testing/time_helpers"
 
-ACTIVE_RECORDS_MODELS = [
-  Address,
-  Event,
-  Group,
-  Member,
-  Registration,
-  User,
-  UserProfile
-].freeze
 NUMBER_OF_MEMBERS_PER_GROUP = 44  # Every combination below, plus a second active owner! Also `STYLEGUIDE_NAMES`' length.
 NUMBER_OF_EVENTS_PER_GROUP  = 44  # Use even number!
 
@@ -46,6 +37,12 @@ def sign_in(users)
   users.update_all(first_signed_in_at: Time.current)
 end
 
+# Every model the application has, asked directly, so a model added later is covered the moment it exists. Development loads a model only when something first names it, hence the eager load.
+def empty_database?
+  Rails.application.eager_load!
+  ApplicationRecord.descendants.all?(&:none?)
+end
+
 # WHY: every random choice, Faker's included, draws from Ruby's one global generator, which `srand` seeds: Faker falls back to the `Random` class when nothing configures it, and `Array#sample` reads the same generator. One frozen clock makes every `ago` and every timestamp the same instant, so two runs write the same rows at the same offsets from the day they ran.
 def populate_empty_database
   srand(666)
@@ -63,7 +60,7 @@ end
 # WHY: `bin/docker-entrypoint` runs `db:prepare`, which seeds a database it creates, and FactoryBot and Faker are not in production's bundle.
 if !Rails.env.local?
   puts "Sample data is for development and test only, so the '#{Rails.env}' database gets none."
-elsif ACTIVE_RECORDS_MODELS.all?(&:none?)
+elsif empty_database?
   puts "Loading sample data from the 'db/seeds.rb' file..."
   populate_empty_database
 else
