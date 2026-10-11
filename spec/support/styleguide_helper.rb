@@ -3,7 +3,7 @@ module StyleguideHelper
   #
   # WHY: the members' names are arguments, so an example asserting one passes it and its precondition sits in its own body; the defaults serve the examples that assert none.
   def plant_styleguide_group(manager: "Ana Horvat", invited: "Ivan Kovačević", said_yes: "Marija Babić")
-    group  = create(:group, id: StyleguidesController::GROUP_ID, name: StyleguidesController::GROUP_NAME)
+    group  = create(:group, name: StyleguidesController::GROUP_NAME)
     owner  = create(:member, :active, :owner, group:, user: planted_user(manager))
     asked  = create(:member, :active, group:, user: planted_user(invited))
     coming = create(:member, :active, group:, user: planted_user(said_yes))

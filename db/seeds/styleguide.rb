@@ -1,4 +1,4 @@
-# The group the styleguide draws, for checking the visual style and the themes against every state a screen can show. Literal names throughout, so a screenshot of it reads the same on every run, and found by `StyleguidesController::GROUP_ID` and `GROUP_NAME` together, since nothing makes the name unique on its own.
+# The group the styleguide draws, for checking the visual style and the themes against every state a screen can show. Literal names throughout, so a screenshot of it reads the same on every run, and found by `StyleguidesController::GROUP_NAME` rather than by an id, so it takes whatever id the database hands it.
 
 STYLEGUIDE_NAMES = [
   "Ana Horvat", "Ivan Kovačević", "Marija Babić", "Luka Marić", "Petra Jurić", "Marko Novak",
@@ -15,7 +15,7 @@ raise "STYLEGUIDE_NAMES holds #{STYLEGUIDE_NAMES.size} names for #{NUMBER_OF_MEM
 community_hall = FactoryBot.create(:address, name: "Community hall", street_name: "Obala", building_number: "14", postal_code: "10000", city: "Zagreb")
 
 group = Current.set(brand: Brand.new("chorifico.com")) do
-  FactoryBot.create(:group, id: StyleguidesController::GROUP_ID, name: StyleguidesController::GROUP_NAME, description: "Thursday rehearsals, concerts in spring and before Christmas.", address: community_hall)
+  FactoryBot.create(:group, name: StyleguidesController::GROUP_NAME, description: "Thursday rehearsals, concerts in spring and before Christmas.", address: community_hall)
 end
 
 # Every combination once, a second active owner, and plain members filling the group to the size of the sample groups. The owners' addresses are fixed so signing in as one needs no lookup.
