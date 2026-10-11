@@ -1,14 +1,16 @@
 class StyleguidesController < ApplicationController
-  # The group `db/seeds/styleguide.rb` creates for this page to draw.
+  # The group `db/seeds/styleguide.rb` creates for this page to draw, found by both.
   #
   # WHY: 3, the id after the sample groups on a fresh database, so every id stays small. A replant continues SQLite's sequence past it rather than reusing it, so it never collides there either; a third sample group would take 3 first and fail the seed's create loudly.
   GROUP_ID = 3
+  # WHY: the name as well as the id, because a database seeded before the styleguide group existed hands id 3 to the next group created through the app, and drawing that group would show somebody's real data as the styleguide.
+  GROUP_NAME = "Sample choir"
 
   # Permanent. The page draws seeded sample data for whoever opens it, a developer's page rather than a member's, so there is no decision for a policy to make. Named actions rather than a bare skip, so an action added later cannot inherit an exemption nobody chose for it - same reason `SessionsController` names its own.
   skip_verify_authorized only: %i[ show ]
 
   def show
-    @group = Group.find_by(id: GROUP_ID)
+    @group = Group.find_by(id: GROUP_ID, name: GROUP_NAME)
     @next_up, @unconfirmed, @ongoing, @concluded, @canceled = pick_events
 
     if [ @next_up, @unconfirmed, @ongoing, @concluded, @canceled ].all?

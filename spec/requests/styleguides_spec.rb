@@ -70,6 +70,16 @@ RSpec.describe "The styleguide", type: :request do
 
         expect(page_text(response.body)).to include "bin/rails db:seed:replant"
       end
+
+      # A database seeded before the styleguide group existed hands its id to the next group created through the app.
+      it "names the seed command when another group holds the styleguide group's id" do
+        plant_styleguide_group.update!(name: "Our own choir")
+        sign_in_as(create(:user))
+
+        get "/styleguide"
+
+        expect(page_text(response.body)).to include "bin/rails db:seed:replant"
+      end
     end
 
     context "when not signed in" do
