@@ -1,7 +1,4 @@
-# The group the styleguide draws, for checking the visual style and the themes against every state a screen can show. Literal names throughout, so a screenshot of it reads the same on every run, and found by a fixed id rather than by its name, which nothing makes unique.
-#
-# WHY: 3, the id after the sample groups on a fresh database, so every id stays small. A replant continues SQLite's sequence past it rather than reusing it, so it never collides there either; a third sample group would take 3 first and fail this create loudly.
-STYLEGUIDE_GROUP_ID = 3
+# The group the styleguide draws, for checking the visual style and the themes against every state a screen can show. Literal names throughout, so a screenshot of it reads the same on every run, and found by `StyleguidesController::GROUP_ID` rather than by its name, which nothing makes unique.
 
 STYLEGUIDE_NAMES = [
   "Ana Horvat", "Ivan Kovačević", "Marija Babić", "Luka Marić", "Petra Jurić", "Marko Novak",
@@ -18,7 +15,7 @@ raise "STYLEGUIDE_NAMES holds #{STYLEGUIDE_NAMES.size} names for #{NUMBER_OF_MEM
 community_hall = FactoryBot.create(:address, name: "Community hall", street_name: "Obala", building_number: "14", postal_code: "10000", city: "Zagreb")
 
 group = Current.set(brand: Brand.new("chorifico.com")) do
-  FactoryBot.create(:group, id: STYLEGUIDE_GROUP_ID, name: "Sample choir", description: "Thursday rehearsals, concerts in spring and before Christmas.", address: community_hall)
+  FactoryBot.create(:group, id: StyleguidesController::GROUP_ID, name: "Sample choir", description: "Thursday rehearsals, concerts in spring and before Christmas.", address: community_hall)
 end
 
 # Every combination once, a second active owner, and plain members filling the group to the size of the sample groups. The owners' addresses are fixed so signing in as one needs no lookup.

@@ -1,4 +1,9 @@
 class StyleguidesController < ApplicationController
+  # The group `db/seeds/styleguide.rb` creates for this page to draw.
+  #
+  # WHY: 3, the id after the sample groups on a fresh database, so every id stays small. A replant continues SQLite's sequence past it rather than reusing it, so it never collides there either; a third sample group would take 3 first and fail the seed's create loudly.
+  GROUP_ID = 3
+
   # Permanent. Every record on the page is a sample built for it and belongs to nobody, so there is
   # no decision for a policy to make. Named actions rather than a bare skip, so an action added
   # later cannot inherit an exemption nobody chose for it - same reason `SessionsController` names
