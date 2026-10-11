@@ -35,12 +35,12 @@
 FactoryBot.define do
   factory :event do
     transient do
-      past_datetime   { Faker::Date.between(from: 180.days.ago, to: 7.days.ago) + 10.hours }
-      future_datetime { Faker::Date.between(from: 7.days.from_now, to: 180.days.from_now) + 10.hours }
+      past_datetime   { Faker::Date.between(from: 180.days.ago, to: 7.days.ago) + 18.hours }
+      future_datetime { Faker::Date.between(from: 7.days.from_now, to: 180.days.from_now) + 18.hours }
     end
 
     name      { Faker::TvShows::Simpsons.episode_title }
-    starts_at { Faker::Date.between_except(from: 180.days.ago, to: 180.days.from_now, excepted: Date.today) + 10.hours }
+    starts_at { Faker::Date.between_except(from: 180.days.ago, to: 180.days.from_now, excepted: Date.today) + 18.hours }
     ends_at   { starts_at + 1.hour }
     group     { association :group }
     creator   { association :creator, group: }
@@ -51,14 +51,20 @@ FactoryBot.define do
     end
 
     trait :ongoing do
-      starts_at { past_datetime }
-      ends_at   { future_datetime }
+      starts_at { Date.yesterday + 18.hours }
+      ends_at   { 2.days.from_now.to_date + 18.hours }
       status    { :confirmed }
+      category  { :other }
     end
 
     trait :from_the_future do
       starts_at { future_datetime }
       status    { [ :unconfirmed, :confirmed, :confirmed, :canceled ].sample } # Rig the odds for :confirmed 🎲
+    end
+
+    trait :rehearsal do
+      name     { "Rehearsal - #{Faker::TvShows::Simpsons.episode_title}" }
+      category { :rehearsal }
     end
 
     trait :with_all_attributes do
