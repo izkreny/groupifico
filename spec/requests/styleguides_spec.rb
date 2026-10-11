@@ -112,6 +112,16 @@ RSpec.describe "The styleguide", type: :request do
         expect(page_text(response.body)).to include "bin/rails db:seed:replant"
       end
 
+      it "names the seed command when the owner is paused in no second group" do
+        group = plant_styleguide_group
+        Member.where.not(group:).delete_all
+        sign_in_as(create(:user))
+
+        get "/styleguide"
+
+        expect(page_text(response.body)).to include "bin/rails db:seed:replant"
+      end
+
       it "names the seed command when no group carries the styleguide group's name" do
         plant_styleguide_group.update!(name: "Our own choir")
         sign_in_as(create(:user))

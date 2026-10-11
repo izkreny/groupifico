@@ -11,9 +11,10 @@ class StyleguidesController < ApplicationController
     @group = Group.find_by(name: GROUP_NAME)
     @next_up, @unconfirmed, @ongoing, @concluded, @canceled = pick_events
     @owner, @paused = pick_members
+    # WHY: the owner is active here, so a paused membership is in another group, which is what gives the switcher both a row that is not current and a paused one.
     @memberships = @owner ? @owner.user.current_memberships.preloaded.to_a : []
 
-    if [ @next_up, @unconfirmed, @ongoing, @concluded, @canceled, @owner, @paused, @group&.address ].all?
+    if [ @next_up, @unconfirmed, @ongoing, @concluded, @canceled, @owner, @paused, @group&.address, @memberships.find(&:paused?) ].all?
       flash.now[:notice] = "Event was successfully updated."
       flash.now[:alert]  = "You are not allowed to do that."
     else
