@@ -144,7 +144,7 @@
             switcher_id: "group_switcher_#{theme}",
             tabs: true,
             section: :events %>
-      <%= render "layouts/group_switcher", id: "group_switcher_#{theme}", memberships: [ @owner, @paused ], current_group: @group %>
+      <%= render "layouts/group_switcher", id: "group_switcher_#{theme}", memberships: @memberships, current_group: @group %>
     <% end %>
   <% end %>
 

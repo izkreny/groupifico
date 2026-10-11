@@ -11,6 +11,7 @@ class StyleguidesController < ApplicationController
     @group = Group.find_by(name: GROUP_NAME)
     @next_up, @unconfirmed, @ongoing, @concluded, @canceled = pick_events
     @owner, @paused = pick_members
+    @memberships = @owner ? @owner.user.current_memberships.preloaded.to_a : []
 
     if [ @next_up, @unconfirmed, @ongoing, @concluded, @canceled, @owner, @paused, @group&.address ].all?
       flash.now[:notice] = "Event was successfully updated."

@@ -67,6 +67,17 @@ RSpec.describe "The styleguide", type: :request do
         expect(dark).to include "primary #e09675 6.00:1 on primary-content"
       end
 
+      # The switcher's commonest row is a group that is not the current one, which a switcher listing only the current group never draws.
+      it "draws the owner's groups in the switcher, one of them current" do
+        plant_styleguide_group
+        sign_in_as(create(:user))
+
+        get "/styleguide"
+
+        rows = Nokogiri::HTML(response.body).css("#group_switcher_organic .menu a")
+        expect(rows.map { it["aria-current"] }).to contain_exactly "true", nil
+      end
+
       # What holds the page to every daisyUI component the app uses, in each variant, as the template example holds it to every partial. The classes are read from `class` attributes only, since the same words run through the comments, and a variant prefix such as `sm:` is dropped. The form builder is read for every quoted literal too, because it picks `textarea` and `select` from a map rather than writing them in a `class`. The stems are daisyUI 5's components, by hand.
       it "draws every daisyUI class the app's views use" do
         plant_styleguide_group
