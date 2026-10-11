@@ -6,6 +6,7 @@ RSpec.describe "The styleguide", type: :request do
   describe "GET /styleguide" do
     context "when signed in" do
       it "draws the page" do
+        plant_styleguide_group
         sign_in_as(create(:user))
 
         get "/styleguide"
@@ -16,6 +17,7 @@ RSpec.describe "The styleguide", type: :request do
       # Every section is drawn twice, so an id a partial mints for itself is on the page twice unless
       # the twin names it; a label pointing at a repeated id labels the first twin's control only.
       it "points every label at exactly one control" do
+        plant_styleguide_group
         sign_in_as(create(:user))
 
         get "/styleguide"
@@ -23,6 +25,59 @@ RSpec.describe "The styleguide", type: :request do
         html = Nokogiri::HTML(response.body)
         ids = html.css("[id]").map { it["id"] }.tally
         expect(html.css("label[for]").map { it["for"] }.uniq.reject { ids[it] == 1 }).to be_empty
+      end
+
+      # What reads through SQL: the roster's rows, the said-yes line, the credits and the count tags.
+      it "draws the styleguide group's records" do
+        plant_styleguide_group(manager: "Ana Horvat", invited: "Ivan Kovačević", said_yes: "Marija Babić")
+        sign_in_as(create(:user))
+
+        get "/styleguide"
+
+        html = Nokogiri::HTML(response.body)
+        expect(html.css("[id^='roster_registration_']").map { it.text.squish }).to include "Ivan Kovačević"
+        expect(page_text(response.body)).to include "Marija Babić said yes"
+        expect(page_text(response.body)).to include "Managed by Ana H."
+        expect(html.css(".badge [aria-label='no reply']")).not_to be_empty
+      end
+
+      # A signed-in user who belongs to no group still gets every control a permitted member would.
+      it "draws the roster's controls on every row" do
+        plant_styleguide_group(invited: "Ivan Kovačević", said_yes: "Marija Babić")
+        sign_in_as(create(:user))
+
+        get "/styleguide"
+
+        html = Nokogiri::HTML(response.body)
+        expect(html.css("button[aria-label='Yes for Ivan Kovačević']")).not_to be_empty
+        expect(html.css("button[aria-label='Take Marija Babić off the list']")).not_to be_empty
+      end
+
+      it "names the seed command when the styleguide group is missing" do
+        sign_in_as(create(:user))
+
+        get "/styleguide"
+
+        expect(page_text(response.body)).to include "bin/rails db:seed:replant"
+      end
+
+      it "names the seed command once the styleguide group's ongoing event has ended" do
+        plant_styleguide_group
+        sign_in_as(create(:user))
+        travel 4.days
+
+        get "/styleguide"
+
+        expect(page_text(response.body)).to include "bin/rails db:seed:replant"
+      end
+
+      it "names the seed command when no group carries the styleguide group's name" do
+        plant_styleguide_group.update!(name: "Our own choir")
+        sign_in_as(create(:user))
+
+        get "/styleguide"
+
+        expect(page_text(response.body)).to include "bin/rails db:seed:replant"
       end
     end
 
