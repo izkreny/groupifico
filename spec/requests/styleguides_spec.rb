@@ -53,7 +53,7 @@ RSpec.describe "The styleguide", type: :request do
         expect(html.css("button[aria-label='Take Marija Babić off the list']")).not_to be_empty
       end
 
-      # Each twin draws its own theme's tokens, so a twin printing the other's palette fails here.
+      # Each twin draws its own theme's tokens, so a twin printing the other's palette fails here. The ratios were derived outside `StyleguidesHelper`, so a cell reading the wrong pair fails too.
       it "draws every colour token of both themes with its hex" do
         plant_styleguide_group
         sign_in_as(create(:user))
@@ -63,8 +63,8 @@ RSpec.describe "The styleguide", type: :request do
         html = Nokogiri::HTML(response.body)
         light, dark = %w[ organic organic-dark ].map { |theme| html.css("[data-theme='#{theme}'] tbody tr").map { it.text.squish } }
         expect([ light.size, dark.size ]).to eq [ 20, 20 ]
-        expect(light).to include a_string_starting_with("primary #8c491a")
-        expect(dark).to include a_string_starting_with("primary #e09675")
+        expect(light).to include "primary #8c491a 6.22:1 on primary-content"
+        expect(dark).to include "primary #e09675 6.00:1 on primary-content"
       end
 
       # What holds the page to every daisyUI component the app uses, in each variant, as the template example holds it to every partial. The classes are read from `class` attributes only, since the same words run through the comments, and a variant prefix such as `sm:` is dropped. The stems are daisyUI 5's components, by hand.
