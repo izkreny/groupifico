@@ -1,4 +1,5 @@
-<%# locals: (address:) %>
+<%# locals: (address:, namespace: nil) %>
+<%# `namespace` is the styleguide's, which draws this form once per theme; every screen leaves it out and keeps its ids. %>
 <%#
   Frame 9l's five fields, drawn here rather than through `addresses/form_fields`, which is #239's
   and draws the record's whole shape down to the coordinates. The columns this form leaves out keep
@@ -7,7 +8,7 @@
   The note counts the events that move with a correction, and is left out when none do: "used by 0
   events" says nothing a reader can act on.
 %>
-<%= form_with(model: address, class: "contents") do |form| %>
+<%= form_with(model: address, namespace:, class: "contents") do |form| %>
   <%= form.with_error_summary do %>
     <div class="fieldset">
       <%= form.field :name, hint: "As it reads on cards" %>
