@@ -8,6 +8,7 @@ require "rails_helper"
 # daisyUI theme sets, read as `ColourSchemeHelper#rendered_colour_scheme` reads the root's.
 RSpec.describe "The styleguide", type: :system do
   it "paints the hero card and the lit RSVP pill in the light twin" do
+    plant_styleguide_group
     sign_in_as create(:user)
 
     visit styleguide_path
@@ -18,6 +19,7 @@ RSpec.describe "The styleguide", type: :system do
   end
 
   it "paints the same two in the dark twin" do
+    plant_styleguide_group
     sign_in_as create(:user)
 
     visit styleguide_path
@@ -29,6 +31,7 @@ RSpec.describe "The styleguide", type: :system do
 
   # One audit covers both themes, since both twins of every section are on the page.
   it "has no accessibility violations" do
+    plant_styleguide_group
     sign_in_as create(:user)
     prefer_colour_scheme :light
 
