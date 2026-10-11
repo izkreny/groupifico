@@ -193,6 +193,36 @@
     <%= render "user_profiles/form", user_profile: @owner.profile, namespace: "#{theme}_profile" %>
   <% end %>
 
+  <%= render layout: "styleguides/section", locals: { title: "Components no partial draws, as their screens use them" } do |theme| %>
+    <div class="flex flex-col gap-4">
+      <div role="status" class="alert">
+        <%= icon :duplicate, class: "size-6 shrink-0" %>
+        <span>Copied from an earlier event. Dates moved on 7 days, status back to unconfirmed, nobody registered yet.</span>
+      </div>
+
+      <%= select_tag :scope,
+            options_for_select([ [ "Upcoming events", "upcoming" ], [ "Past events", "past" ] ], "upcoming"),
+            id: "scope_#{theme}",
+            class: "select select-ghost bg-base-200 rounded-full",
+            aria: { label: "Which events to show" } %>
+
+      <div class="card card-sm bg-base-200">
+        <div class="card-body">
+          <details class="collapse collapse-arrow">
+            <summary class="collapse-title flex flex-col gap-2 px-0">
+              <span class="font-semibold">Who&rsquo;s coming</span>
+              <%= render "events/counts", event: @next_up %>
+            </summary>
+          </details>
+        </div>
+      </div>
+
+      <%= link_to new_group_path, class: "btn btn-primary btn-block" do %>
+        <%= icon :new, class: "size-4" %>New group
+      <% end %>
+    </div>
+  <% end %>
+
   <%= render layout: "styleguides/section", locals: { title: "Legend icons" } do %>
     <ul class="grid grid-cols-3 gap-4 sm:grid-cols-4">
       <% IconsHelper::ICONS.each_key do |meaning| %>
