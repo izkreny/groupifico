@@ -40,4 +40,14 @@ RSpec.describe "The styleguide", type: :system do
     expect(page).to have_css "h1", text: "Styleguide"
     expect(page).to be_accessible
   end
+
+  it "names the seed command, accessibly, without the styleguide group" do
+    sign_in_as create(:user)
+    prefer_colour_scheme :light
+
+    visit styleguide_path
+
+    expect(page).to have_text "bin/rails db:seed:replant"
+    expect(page).to be_accessible
+  end
 end
