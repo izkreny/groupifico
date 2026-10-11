@@ -60,6 +60,16 @@ RSpec.describe "The styleguide", type: :request do
 
         expect(page_text(response.body)).to include "bin/rails db:seed:replant"
       end
+
+      it "names the seed command once the styleguide group's ongoing event has ended" do
+        plant_styleguide_group
+        sign_in_as(create(:user))
+        travel 4.days
+
+        get "/styleguide"
+
+        expect(page_text(response.body)).to include "bin/rails db:seed:replant"
+      end
     end
 
     context "when not signed in" do

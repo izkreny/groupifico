@@ -1,25 +1,21 @@
 <% content_for :title, "Styleguide" %>
 
 <%#
-  The styleguide group's records, each picked by status rather than by name, so the page draws any group holding one event per status: the one `db/seeds/styleguide.rb` creates, or the smaller one a spec plants. The hero is the confirmed event still ahead, and the ongoing one stands for confirmed among the rows. Each registration comes from its event's loaded `registrations`, because nobody acts on this page, so no pick goes through a member.
+  Each registration comes from its event's loaded `registrations`, because nobody acts on this page, so no pick goes through a member.
 
   The two forms draw events not yet saved, so theirs are built here rather than read.
 %>
 <%
-  events = @group.events.preloaded.to_a
-  soon   = 2.days.from_now.change(hour: 19)
+  soon = 2.days.from_now.change(hour: 19)
 
-  next_up  = events.find { it.confirmed? && it.starts_at.future? }
-  question = next_up.registrations.find(&:invited?)
-  answer   = next_up.registrations.find(&:yes?)
+  question = @next_up.registrations.find(&:invited?)
+  answer   = @next_up.registrations.find(&:yes?)
 
-  unconfirmed = events.find(&:unconfirmed?)
-  ongoing     = events.find(&:ongoing?)
   rows = [
-    [ unconfirmed,               unconfirmed.registrations.find(&:invited?) ],
-    [ ongoing,                   ongoing.registrations.find(&:yes?) ],
-    [ events.find(&:concluded?), nil ],
-    [ events.find(&:canceled?),  nil ]
+    [ @unconfirmed, @unconfirmed.registrations.find(&:invited?) ],
+    [ @ongoing,     @ongoing.registrations.find(&:yes?) ],
+    [ @concluded,   nil ],
+    [ @canceled,    nil ]
   ]
 
   unsaved = Event.new(group: @group, name: "Autumn concert", starts_at: soon, ends_at: soon + 2.hours)
@@ -44,11 +40,11 @@
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Hero card" } do %>
-    <%= render "events/next_up", event: next_up, registration: question %>
+    <%= render "events/next_up", event: @next_up, registration: question %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Record facts" } do %>
-    <%= render "events/event", event: next_up %>
+    <%= render "events/event", event: @next_up %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Compact rows, one per event status" } do %>
@@ -60,18 +56,18 @@
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Counts" } do %>
-    <%= render "events/counts", event: next_up %>
+    <%= render "events/counts", event: @next_up %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "RSVP, question and answer" } do %>
     <div class="flex flex-col gap-4">
-      <%= render "events/rsvp", event: next_up, registration: question %>
-      <%= render "events/rsvp", event: next_up, registration: answer %>
+      <%= render "events/rsvp", event: @next_up, registration: question %>
+      <%= render "events/rsvp", event: @next_up, registration: answer %>
     </div>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Roster" } do %>
-    <%= render "events/roster", event: next_up %>
+    <%= render "events/roster", event: @next_up %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Fields, with a hint and with an error" } do |theme| %>
@@ -91,7 +87,7 @@
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Confirm sheet" } do |theme| %>
-    <%= render "events/delete", group: @group, event: next_up, id: "confirm_delete_#{theme}" %>
+    <%= render "events/delete", group: @group, event: @next_up, id: "confirm_delete_#{theme}" %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Legend icons" } do %>
