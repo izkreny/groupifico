@@ -1,10 +1,12 @@
 module StyleguideHelper
   # The group `/styleguide` draws, planted for one example. The suite runs on a database `bin/ci` has just reset, so the group `db/seeds/styleguide.rb` creates is not there; this is the smallest group that gives every section a record to draw. Factories rather than the seed file, because whether specs read the seeds is #346's question.
-  def plant_styleguide_group
+  #
+  # WHY: the members' names are arguments, so an example asserting one passes it and its precondition sits in its own body; the defaults serve the examples that assert none.
+  def plant_styleguide_group(manager: "Ana Horvat", invited: "Ivan Kovačević", said_yes: "Marija Babić")
     group  = create(:group, id: StyleguidesController::GROUP_ID, name: StyleguidesController::GROUP_NAME)
-    owner  = create(:member, :active, :owner, group:, user: create(:user, :with_full_profile, first_name: "Ana", last_name: "Horvat"))
-    asked  = create(:member, :active, group:, user: create(:user, :with_full_profile, first_name: "Ivan", last_name: "Kovačević"))
-    coming = create(:member, :active, group:, user: create(:user, :with_full_profile, first_name: "Marija", last_name: "Babić"))
+    owner  = create(:member, :active, :owner, group:, user: planted_user(manager))
+    asked  = create(:member, :active, group:, user: planted_user(invited))
+    coming = create(:member, :active, group:, user: planted_user(said_yes))
 
     next_up = create(:event, :from_the_future, group:, status: :confirmed, address: create(:address), creator: owner, manager: owner)
     create(:registration, event: next_up, member: asked, status: :invited)
@@ -21,4 +23,10 @@ module StyleguideHelper
 
     group
   end
+
+  private
+    def planted_user(full_name)
+      first_name, last_name = full_name.split
+      create(:user, :with_full_profile, first_name:, last_name:)
+    end
 end

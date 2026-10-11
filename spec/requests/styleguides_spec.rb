@@ -29,7 +29,7 @@ RSpec.describe "The styleguide", type: :request do
 
       # What reads through SQL: the roster's rows, the said-yes line, the credits and the count tags.
       it "draws the styleguide group's records" do
-        plant_styleguide_group
+        plant_styleguide_group(manager: "Ana Horvat", invited: "Ivan Kovačević", said_yes: "Marija Babić")
         sign_in_as(create(:user))
 
         get "/styleguide"
@@ -43,7 +43,7 @@ RSpec.describe "The styleguide", type: :request do
 
       # A signed-in user who belongs to no group still gets every control a permitted member would.
       it "draws the roster's controls on every row" do
-        plant_styleguide_group
+        plant_styleguide_group(invited: "Ivan Kovačević", said_yes: "Marija Babić")
         sign_in_as(create(:user))
 
         get "/styleguide"
