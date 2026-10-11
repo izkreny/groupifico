@@ -29,6 +29,31 @@ RSpec.describe "The styleguide", type: :system do
     expect(page).to paint "[data-theme=organic-dark] .join .btn-primary"
   end
 
+  # The hex a row prints is read from the stylesheet, so this is what holds the printed value to the colour the theme paints.
+  it "paints every swatch in the colour its row prints, in both twins" do
+    plant_styleguide_group
+    sign_in_as create(:user)
+
+    visit styleguide_path
+
+    rows = page.evaluate_script(<<~JS)
+      [...document.querySelectorAll("[data-theme] tbody tr")].map(row => [row.querySelector("td:nth-child(3)").textContent, getComputedStyle(row.querySelector("td:nth-child(2) span")).backgroundColor])
+    JS
+    expect(rows.size).to eq 40
+    expect(rows.reject { |hex, painted| painted == "rgb(#{hex.delete_prefix("#").scan(/../).map { it.to_i(16) }.join(", ")})" }).to be_empty
+  end
+
+  it "sets the type ladder's titles in Caprasimo and its text in Figtree" do
+    plant_styleguide_group
+    sign_in_as create(:user)
+
+    visit styleguide_path
+
+    ladder = find("section", text: "Type ladder")
+    expect(ladder.all(".font-heading").map { it.evaluate_script("getComputedStyle(this).fontFamily") }).to match [ a_string_starting_with("Caprasimo") ] * 8
+    expect(ladder.all("p:not(.font-heading)").map { it.evaluate_script("getComputedStyle(this).fontFamily") }).to match [ a_string_starting_with("Figtree") ] * 6
+  end
+
   # One audit covers both themes, since both twins of every section are on the page.
   it "has no accessibility violations" do
     plant_styleguide_group

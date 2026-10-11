@@ -30,8 +30,49 @@
 <div class="flex flex-col gap-8">
   <div>
     <h1 class="text-hero">Styleguide</h1>
-    <p class="text-meta">Every shared partial, drawn from sample records under the light and the dark theme.</p>
+    <p class="text-meta">Every colour, type size, component and partial, drawn from sample records under the light and the dark theme.</p>
   </div>
+
+  <%= render layout: "styleguides/section", locals: { title: "Colour tokens" } do |theme| %>
+    <% colours = theme_colours(theme) %>
+    <div class="max-w-full overflow-x-auto">
+      <table class="table table-sm">
+        <%# WHY: daisyUI greys a table's header at 60% of the base content, 4.1:1 on the light ground; 70% is the theme's grey that holds AA in both. %>
+        <thead class="text-base-content/70">
+          <tr>
+            <th>Token</th>
+            <th>Swatch</th>
+            <th>Hex</th>
+            <th>Contrast</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% colours.each do |name, hex| %>
+            <% pair = contrast_pair(name) %>
+            <tr>
+              <td><code><%= name %></code></td>
+              <%# WHY: inline, because the token is data read from the stylesheet, and a utility per token would be a second list of them for Tailwind to find. %>
+              <td><span class="inline-block size-8 rounded-full border border-base-300 align-middle" style="background-color: var(--color-<%= name %>)"></span></td>
+              <td><code><%= hex %></code></td>
+              <td><%= number_with_precision contrast_ratio(hex, colours.fetch(pair)), precision: 2 %>:1 on <code><%= pair %></code></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+
+  <%= render layout: "styleguides/section", locals: { title: "Type ladder" } do %>
+    <div class="flex flex-col gap-1">
+      <p class="font-heading text-record">Record title, text-record</p>
+      <p class="font-heading text-hero">Hero title, text-hero</p>
+      <p class="font-heading text-shell">Shell title, text-shell</p>
+      <p class="font-heading text-row-title">Row title, text-row-title</p>
+      <p>Body at the default size, regular. <span class="font-semibold">Semibold.</span> <span class="font-bold">Bold.</span></p>
+      <p class="text-card-fact">Card fact, text-card-fact</p>
+      <p class="text-meta">Meta, text-meta</p>
+    </div>
+  <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Page header" } do %>
     <%= render "shared/page_header", title: "Event" %>

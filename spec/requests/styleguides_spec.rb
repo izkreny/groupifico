@@ -11,7 +11,7 @@ RSpec.describe "The styleguide", type: :request do
 
         get "/styleguide"
 
-        expect(response.body).to include "Every shared partial, drawn from sample records"
+        expect(response.body).to include "Every colour, type size, component and partial, drawn from sample records"
       end
 
       # Every section is drawn twice, so an id a partial mints for itself is on the page twice unless
@@ -51,6 +51,20 @@ RSpec.describe "The styleguide", type: :request do
         html = Nokogiri::HTML(response.body)
         expect(html.css("button[aria-label='Yes for Ivan Kovačević']")).not_to be_empty
         expect(html.css("button[aria-label='Take Marija Babić off the list']")).not_to be_empty
+      end
+
+      # Each twin draws its own theme's tokens, so a twin printing the other's palette fails here.
+      it "draws every colour token of both themes with its hex" do
+        plant_styleguide_group
+        sign_in_as(create(:user))
+
+        get "/styleguide"
+
+        html = Nokogiri::HTML(response.body)
+        light, dark = %w[ organic organic-dark ].map { |theme| html.css("[data-theme='#{theme}'] tbody tr").map { it.text.squish } }
+        expect([ light.size, dark.size ]).to eq [ 20, 20 ]
+        expect(light).to include a_string_starting_with("primary #8c491a")
+        expect(dark).to include a_string_starting_with("primary #e09675")
       end
 
       it "names the seed command when the styleguide group is missing" do
