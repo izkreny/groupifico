@@ -36,9 +36,10 @@ members = STYLEGUIDE_NAMES.zip(memberships).map do |full_name, attributes|
 end
 owner, co_owner = members.select { it.active? && it.owner? }
 
-# A second group the owner runs, so the styleguide's group switcher draws a group that is not the current one.
+# A second group the co-owner runs and the owner is paused in, so the styleguide's group switcher draws a group that is not the current one, and a paused row.
 second_group = Current.set(brand: Brand.new("chorifico.com")) { FactoryBot.create(:group, name: "Samplifiband") }
-create_member(group: second_group, user: owner.user, combination: [ [ Role::OWNER ], "active" ])
+create_member(group: second_group, user: co_owner.user, combination: [ [ Role::OWNER ], "active" ])
+create_member(group: second_group, user: owner.user, combination: [ [], "paused" ])
 
 # Four plain members have never signed in, so the member list draws that state for a manager.
 never_signed_in = members.select { it.roles.empty? }.last(4)
