@@ -23,6 +23,8 @@
   invalid = Event.new(group: @group, name: "Autumn concert")
   invalid.errors.add(:starts_at, :blank)
   invalid.errors.add(:creator, :required)
+
+  newcomer = Member.new(group: @group)
 %>
 
 <div class="flex flex-col gap-8">
@@ -88,6 +90,66 @@
 
   <%= render layout: "styleguides/section", locals: { title: "Confirm sheet" } do |theme| %>
     <%= render "events/delete", group: @group, event: @next_up, id: "confirm_delete_#{theme}" %>
+  <% end %>
+
+  <%= render layout: "styleguides/section", locals: { title: "Header, with the group switcher and the tabs" } do |theme| %>
+    <%= tag.div data: { controller: "group-switcher" } do %>
+      <%= render "layouts/header",
+            brand_name: Current.brand.name,
+            group: @group,
+            group_name: @group.name,
+            initials: @owner.initials,
+            editable: true,
+            switcher_id: "group_switcher_#{theme}",
+            tabs: true,
+            section: :events %>
+      <%= render "layouts/group_switcher", id: "group_switcher_#{theme}", memberships: [ @owner, @paused ], current_group: @group %>
+    <% end %>
+  <% end %>
+
+  <%= render layout: "styleguides/section", locals: { title: "Tabs in the dock" } do %>
+    <%# WHY: `static`, because the dock is fixed to the viewport's foot on a screen and would leave its twin here. %>
+    <nav class="dock static" aria-label="Group sections">
+      <%= render "layouts/group_tabs", group: @group, section: :events, in_dock: true %>
+    </nav>
+  <% end %>
+
+  <%= render layout: "styleguides/section", locals: { title: "Group cards, owner and paused" } do %>
+    <div class="flex flex-col gap-2">
+      <%= render "groups/group", group: @group, membership: @owner %>
+      <%= render "groups/group", group: @group, membership: @paused %>
+    </div>
+  <% end %>
+
+  <%= render layout: "styleguides/section", locals: { title: "Group form" } do |theme| %>
+    <%= render "groups/form", group: @group, namespace: "#{theme}_group" %>
+  <% end %>
+
+  <%= render layout: "styleguides/section", locals: { title: "Address" } do %>
+    <%= render "addresses/address", address: @group.address %>
+  <% end %>
+
+  <%= render layout: "styleguides/section", locals: { title: "Address form" } do |theme| %>
+    <%= render "addresses/form", address: @group.address, namespace: "#{theme}_address" %>
+  <% end %>
+
+  <%= render layout: "styleguides/section", locals: { title: "Member rows, owner and paused" } do %>
+    <ul class="list">
+      <%= render "members/member", member: @owner, manages: true %>
+      <%= render "members/member", member: @paused, manages: true %>
+    </ul>
+  <% end %>
+
+  <%= render layout: "styleguides/section", locals: { title: "Member form" } do |theme| %>
+    <%= render "members/form", group: @group, member: newcomer, submit: "Send invite", cancel: "#", namespace: "#{theme}_member" %>
+  <% end %>
+
+  <%= render layout: "styleguides/section", locals: { title: "Profile" } do %>
+    <%= render "user_profiles/user_profile", user_profile: @owner.profile %>
+  <% end %>
+
+  <%= render layout: "styleguides/section", locals: { title: "Profile form" } do |theme| %>
+    <%= render "user_profiles/form", user_profile: @owner.profile, namespace: "#{theme}_profile" %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Legend icons" } do %>

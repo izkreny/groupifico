@@ -10,8 +10,9 @@ class StyleguidesController < ApplicationController
   def show
     @group = Group.find_by(name: GROUP_NAME)
     @next_up, @unconfirmed, @ongoing, @concluded, @canceled = pick_events
+    @owner, @paused = pick_members
 
-    if [ @next_up, @unconfirmed, @ongoing, @concluded, @canceled ].all?
+    if [ @next_up, @unconfirmed, @ongoing, @concluded, @canceled, @owner, @paused, @group&.address ].all?
       flash.now[:notice] = "Event was successfully updated."
       flash.now[:alert]  = "You are not allowed to do that."
     else
@@ -33,6 +34,13 @@ class StyleguidesController < ApplicationController
         events.find(&:concluded?),
         events.find(&:canceled?)
       ]
+    end
+
+    # An active owner, whose membership draws the owner tags and whose profile the account sections draw, and a paused member for the status tags. Each picked by status as the events are.
+    def pick_members
+      members = @group ? @group.members.preloaded.to_a : []
+
+      [ members.find { it.active? && it.owner? }, members.find(&:paused?) ]
     end
 
     # Every control a permitted member sees, whoever opens the page. The visitor is rarely a member of the styleguide group, so the real policies would refuse most of them and the RSVP pills, among others, would vanish. Who is permitted is the policies' business and their specs', never this page's.

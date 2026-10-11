@@ -94,17 +94,18 @@ RSpec.describe "The styleguide", type: :request do
   # styleguide's own file. What it holds the page to is that its template renders every partial it
   # exists to show.
   describe "its template" do
-    it "renders every partial under app/views/events and app/views/shared" do
+    it "renders every partial under app/views but the head and its own section" do
       template = Rails.root.join("app/views/styleguides/show.html.erb").read
-      partials = Rails.root.glob("app/views/{events,shared}/_*.html.erb").map do |path|
-        "#{path.dirname.basename}/#{path.basename.to_s.delete_prefix("_").delete_suffix(".html.erb")}"
+      partials = Rails.root.glob("app/views/**/_*.html.erb").map do |path|
+        "#{path.dirname.relative_path_from(Rails.root.join("app/views"))}/#{path.basename.to_s.delete_prefix("_").delete_suffix(".html.erb")}"
       end
       # The summary is reached only through the builder, which draws it after the fields it reads,
       # and the confirm sheet through the event's delete partial, which is where its strings live.
-      rendered_by = { "shared/errors" => "form.with_error_summary", "shared/confirm_sheet" => %(render "events/delete") }
+      # The address fields and the role tags are each drawn by the one partial that renders them.
+      rendered_by = { "shared/errors" => "form.with_error_summary", "shared/confirm_sheet" => %(render "events/delete"), "addresses/form_fields" => %(render "events/form"), "members/roles" => %(render "members/member") }
 
       expect(partials).not_to be_empty
-      expect(partials.reject { template.include?(rendered_by.fetch(it, %(render "#{it}"))) }).to be_empty
+      expect((partials - %w[ layouts/head styleguides/section ]).reject { template.include?(rendered_by.fetch(it, %(render "#{it}"))) }).to be_empty
     end
   end
 end
