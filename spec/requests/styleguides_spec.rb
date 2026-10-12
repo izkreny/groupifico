@@ -132,15 +132,36 @@ RSpec.describe "The styleguide", type: :request do
         )
       end
 
-      it "draws every legend icon as a row naming its Heroicons glyph and the meaning it is used for" do
+      it "draws every legend glyph once, beside its Heroicons name" do
         plant_styleguide_group
         sign_in_as(create(:user))
 
         get "/styleguide"
 
-        section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Legend icons" }
-        expect(section.css("[data-theme=organic] tbody tr").map { |row| [ row.at_css("td svg").present?, *row.css("td").drop(1).map { it.text.squish } ] }).to eq(IconsHelper::ICONS.map { |meaning, name| [ true, name, meaning.to_s ] })
-        expect(section.css("a[href='https://heroicons.com']").map(&:text)).to eq [ "The rest of Heroicons" ]
+        rows = legend_section(response.body).css("[data-theme=organic] tbody tr")
+        expect(rows.map { it.css("td")[1].text.squish }).to eq IconsHelper::ICONS.values.uniq
+        expect(rows.map { it.at_css("td svg").present? }.uniq).to eq [ true ]
+      end
+
+      # A glyph serving two meanings lists both in one row, each with where the app draws it.
+      it "lists each meaning a legend glyph is used for, with where the app draws it" do
+        plant_styleguide_group
+        sign_in_as(create(:user))
+
+        get "/styleguide"
+
+        used = legend_section(response.body).css("[data-theme=organic] tbody tr").to_h { [ it.css("td")[1].text.squish, it.css("td")[2] ] }
+        expect(used.values_at("check-circle", "calendar", "plus").map { |cell| cell.css("li code").map(&:text) }).to eq [ %w[ confirmed yes ], %w[ when events ], [] ]
+        expect(IconsHelper::ICONS.reject { |meaning, name| used.fetch(name).text.squish.include?("#{meaning} #{StyleguidesHelper::ICON_USES.fetch(meaning)}") }).to be_empty
+      end
+
+      it "links the rest of Heroicons from the legend's header" do
+        plant_styleguide_group
+        sign_in_as(create(:user))
+
+        get "/styleguide"
+
+        expect(legend_section(response.body).css("a[href='https://heroicons.com']").map(&:text)).to eq [ "The rest of Heroicons" ]
       end
 
       # The members' names are Croatian, so the letters a font may lack are drawn in every rung a name is set in.
@@ -221,6 +242,10 @@ RSpec.describe "The styleguide", type: :request do
         expect(response).to redirect_to new_session_path
       end
     end
+  end
+
+  def legend_section(html)
+    Nokogiri::HTML(html).css("section").find { it.at_css("h2")&.text == "Legend icons" }
   end
 
   # Not a request, and here anyway: `spec/views` is banned by `.agents/testing.md`, and this is the

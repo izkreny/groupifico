@@ -10,11 +10,22 @@
       </tr>
     </thead>
     <tbody>
-      <% IconsHelper::ICONS.each do |meaning, name| %>
+      <% IconsHelper::ICONS.group_by(&:last).each do |name, uses| %>
+        <% meanings = uses.map(&:first) %>
         <tr>
-          <td><%= icon meaning, class: "size-6" %></td>
+          <td><%= icon meanings.first, class: "size-6" %></td>
           <td><code><%= name %></code></td>
-          <td><code><%= meaning %></code></td>
+          <td>
+            <% if meanings.one? %>
+              <code><%= meanings.first %></code> <%= StyleguidesHelper::ICON_USES.fetch(meanings.first) %>
+            <% else %>
+              <ul class="list-disc pl-4">
+                <% meanings.each do |meaning| %>
+                  <li><code><%= meaning %></code> <%= StyleguidesHelper::ICON_USES.fetch(meaning) %></li>
+                <% end %>
+              </ul>
+            <% end %>
+          </td>
         </tr>
       <% end %>
     </tbody>
