@@ -112,7 +112,7 @@ RSpec.describe "The styleguide", type: :system do
     select "Ivan Kovačević - active", from: "Sign in as"
     click_button "Switch"
 
-    expect(page).to have_select "Sign in as", selected: "Ivan Kovačević - active"
+    expect(page).to have_text "Signed in as Ivan Kovačević"
   end
 
   # One audit covers both themes, since both twins of every section are on the page.
