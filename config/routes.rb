@@ -63,7 +63,13 @@ Rails.application.routes.draw do
   mount RailsIcons::Engine, at: "/rails_icons" if Rails.env.development?
 
   # Every shared partial on one page, drawn from sample records rather than anybody's data, so it is a developer's page and nobody else's. Test as well, because `spec/styleguide` drives it in a browser.
-  resource :styleguide, only: :show if Rails.env.local?
+  #
+  # The session beside it is the member switcher, signing in as one of the styleguide group's members so the page draws what their policies allow.
+  if Rails.env.local?
+    resource :styleguide, only: :show do
+      resource :session, only: :create, module: :styleguides
+    end
+  end
 
   # Defines the root path route ("/")
   root "groups#index"
