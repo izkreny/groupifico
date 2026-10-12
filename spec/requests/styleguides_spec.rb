@@ -67,6 +67,17 @@ RSpec.describe "The styleguide", type: :request do
         expect(dark).to include "primary #e09675 6.00:1 vs primary-content 5.90:1"
       end
 
+      # A surface is read against nothing, so it stays untagged however faint it is on the page, where a colour as faint is tagged; a cell asking with the wrong token's name turns one of them.
+      it "tags every faint colour on the page but the surfaces" do
+        plant_styleguide_group
+        sign_in_as(create(:user))
+
+        get "/styleguide"
+
+        tagged = Nokogiri::HTML(response.body).css("[data-theme='organic'] tbody tr").to_h { [ it.at_css("code").text, it.css(".badge").any? ] }
+        expect(tagged.values_at("base-200", "base-300", "warning")).to eq [ false, false, true ]
+      end
+
       # The switcher's commonest row is a group that is not the current one, which a switcher listing only the current group never draws.
       it "draws the owner's groups in the switcher, one current and one paused" do
         plant_styleguide_group
