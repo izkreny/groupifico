@@ -37,13 +37,14 @@ RSpec.describe "Styleguides::Sessions", type: :request do
         expect(response).to redirect_to root_path
       end
 
-      # WHY: `Rails.env` stubbed, because the route is drawn only where the environment is local, so this is the one way to reach the action as production would if a route ever drew it there.
+      # WHY: `Rails.env` stubbed, because the route is drawn only where the environment is local, so this is the one way to reach the action as production would if a route ever drew it there. The path is read through its helper before the stub, which draws the routes if nothing has yet: they load lazily, and a first draw under the stub would be production's for every later example in the process.
       it "answers 404 outside development and test, and signs nobody in" do
         member = create(:member, group: plant_styleguide_group)
         sign_in_as(create(:user))
+        path = styleguide_session_path
         allow(Rails).to receive(:env).and_return(ActiveSupport::EnvironmentInquirer.new("production"))
 
-        expect { post "/styleguide/session", params: { member_id: member.id } }.not_to change { member.user.sessions.count }
+        expect { post path, params: { member_id: member.id } }.not_to change { member.user.sessions.count }
         expect(response).to have_http_status :not_found
       end
     end
