@@ -174,6 +174,19 @@ RSpec.describe "The event detail", type: :system do
     expect(gap_to_row_end("##{roster_row(ben)} [aria-label='Take Ben Cole off the list']", ".card-body")).to be >= 0
   end
 
+  # A word wider than the phone cannot wrap unless the heading lets it break, and then it pushes the Duplicate and Edit buttons beside it off the screen. Found by the styleguide drawing this Faker title.
+  it "fits a long one-word name and its buttons on a phone" do
+    owner = create(:member, :active, :owner)
+    event = create(:event, group: owner.group, creator: owner, name: "Simpsoncalifragilisticexpiala(Annoyed Grunt)cious")
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_event_path(event.group, event)
+
+    expect(page).to have_css "[aria-label='Edit']"
+    expect(horizontal_overflow).to eq 0
+  end
+
   # That the row was written is `spec/requests/registrations_spec.rb`'s; the landing is the part a
   # browser adds.
   it "answers for somebody from their row and lands back on the event" do
