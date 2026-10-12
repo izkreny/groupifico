@@ -47,6 +47,17 @@ RSpec.describe StyleguidesHelper, type: :helper do
     end
   end
 
+  # The base content is the body text, so it is read against the surfaces like any other colour, and only the three surfaces themselves go unflagged.
+  describe "#surface?" do
+    it "counts the three bases as surfaces" do
+      expect(%w[ base-100 base-200 base-300 ].map { helper.surface?(it) }).to eq [ true, true, true ]
+    end
+
+    it "counts the base content, the body text, as a colour" do
+      expect(helper.surface?("base-content")).to be false
+    end
+  end
+
   describe "#contrast_pair" do
     it "reads a colour against its content colour and back" do
       expect(helper.contrast_pair("primary")).to eq "primary-content"

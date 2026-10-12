@@ -14,7 +14,7 @@
     </thead>
     <tbody>
       <% colours.each do |name, hex| %>
-        <% pair, flagged = contrast_pair(name), !name.start_with?("base-") %>
+        <% pair, flagged = contrast_pair(name), !surface?(name) %>
         <tr>
           <td><code><%= name %></code></td>
           <%# WHY: inline, because the token is data read from the stylesheet, and a utility per token would be a second list of them for Tailwind to find. %>
