@@ -4,7 +4,7 @@ class StyleguidesController < ApplicationController
   # WHY: found by its name alone, so the seed takes whatever id the database hands it. Nothing makes a group's name unique, so it is one nobody would give their own group, which keeps a group created through the app from being drawn as the styleguide.
   GROUP_NAME = "Samplifichoir"
 
-  # Permanent. The page draws seeded sample data for whoever opens it, a developer's page rather than a member's, so there is no decision for a policy to make. Named actions rather than a bare skip, so an action added later cannot inherit an exemption nobody chose for it - same reason `SessionsController` names its own.
+  # Permanent. Opening the page is no decision: any signed-in developer may, and each control on it asks the signed-in user's own policies, which is what the member switcher is for. Named actions rather than a bare skip, so an action added later cannot inherit an exemption nobody chose for it - same reason `SessionsController` names its own.
   skip_verify_authorized only: %i[ show ]
 
   def show
@@ -67,7 +67,4 @@ class StyleguidesController < ApplicationController
 
       [ members.find { it.active? && it.owner? }, members.find(&:paused?) ]
     end
-
-    # Every control a permitted member sees, whoever opens the page. The visitor is rarely a member of the styleguide group, so the real policies would refuse most of them and the RSVP pills, among others, would vanish. Who is permitted is the policies' business and their specs', never this page's.
-    def allowed_to?(*) = true
 end

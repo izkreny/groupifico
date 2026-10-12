@@ -52,6 +52,18 @@ RSpec.describe "The styleguide", type: :request do
         expect(html.css("button[aria-label='Take Marija Babić off the list']")).not_to be_empty
       end
 
+      # The page asks the signed-in user's own policies, so a user outside the group is offered nothing they could not do.
+      it "draws none of the roster's controls for a user outside the group" do
+        plant_styleguide_group(invited: "Ivan Kovačević", said_yes: "Marija Babić")
+        sign_in_as(create(:user))
+
+        get "/styleguide"
+
+        html = Nokogiri::HTML(response.body)
+        expect(html.css("button[aria-label='Yes for Ivan Kovačević']")).to be_empty
+        expect(html.css("button[aria-label='Take Marija Babić off the list']")).to be_empty
+      end
+
       # Each twin draws its own theme's tokens, so a twin printing the other's palette fails here. The ratios were derived outside `StyleguidesHelper`, so a cell reading the wrong pair fails too.
       it "draws every colour token of both themes with its hex" do
         plant_styleguide_group
