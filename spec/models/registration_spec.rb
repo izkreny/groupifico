@@ -46,6 +46,34 @@ RSpec.describe Registration, type: :model do
     end
   end
 
+  # After the end, whether somebody went is a yes or a no, so `maybe` is the one answer an ended event no longer takes.
+  describe "(answering maybe after the event)" do
+    it "refuses maybe to an event that has ended" do
+      event = create(:event, status: :confirmed, starts_at: 9.days.ago, ends_at: 9.days.ago + 2.hours)
+      registration = create(:registration, status: :invited, event:)
+
+      expect(registration.update(status: :maybe)).to be false
+      expect(registration.errors[:status]).to eq [ "cannot be maybe once the event has ended" ]
+    end
+
+    it "takes maybe until the event ends" do
+      event = create(:event, status: :confirmed, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
+      registration = create(:registration, status: :invited, event:)
+
+      expect(registration.update(status: :maybe)).to be true
+    end
+
+    # One reason is enough: an event somebody concluded takes no answer at all, so naming maybe beside that would describe a choice the member does not have.
+    it "gives only the over reason on a concluded event that has ended" do
+      event = create(:event, status: :concluded, starts_at: 9.days.ago, ends_at: 9.days.ago + 2.hours)
+      registration = create(:registration, status: :invited, event:)
+
+      registration.update(status: :maybe)
+
+      expect(registration.errors[:status]).to eq [ "cannot be answered once the event is over" ]
+    end
+  end
+
   describe ".answer?" do
     # Written out rather than read from `Registration::ANSWERS`, for the reason the sibling below
     # gives: an example iterating the constant agrees with whatever it holds.
@@ -74,6 +102,46 @@ RSpec.describe Registration, type: :model do
     it "answers false while the registration is reserved or invited" do
       expect(build(:registration, status: :reserved)).not_to be_answered
       expect(build(:registration, status: :invited)).not_to be_answered
+    end
+  end
+
+  describe "#asked?" do
+    it "asks an invitation before the event ends" do
+      freeze_time do
+        ahead = build(:event, starts_at: 1.hour.from_now, ends_at: 2.hours.from_now)
+
+        expect(build(:registration, event: ahead, status: :invited)).to be_asked
+      end
+    end
+
+    it "asks neither a held place nor an answer before the event ends" do
+      freeze_time do
+        ahead = build(:event, starts_at: 1.hour.from_now, ends_at: 2.hours.from_now)
+
+        expect(build(:registration, event: ahead, status: :reserved)).not_to be_asked
+        expect(build(:registration, event: ahead, status: :yes)).not_to be_asked
+        expect(build(:registration, event: ahead, status: :maybe)).not_to be_asked
+        expect(build(:registration, event: ahead, status: :no)).not_to be_asked
+      end
+    end
+
+    it "asks a held place, an invitation and a maybe once the event has ended" do
+      freeze_time do
+        over = build(:event, starts_at: 2.hours.ago, ends_at: 1.hour.ago)
+
+        expect(build(:registration, event: over, status: :reserved)).to be_asked
+        expect(build(:registration, event: over, status: :invited)).to be_asked
+        expect(build(:registration, event: over, status: :maybe)).to be_asked
+      end
+    end
+
+    it "asks neither a yes nor a no once the event has ended" do
+      freeze_time do
+        over = build(:event, starts_at: 2.hours.ago, ends_at: 1.hour.ago)
+
+        expect(build(:registration, event: over, status: :yes)).not_to be_asked
+        expect(build(:registration, event: over, status: :no)).not_to be_asked
+      end
     end
   end
 

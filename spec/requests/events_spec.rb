@@ -387,6 +387,47 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include "Did you go?", "Are you coming?"
       end
 
+      # Once an event has ended, whoever has not said yes or no is asked, a held place nobody asked included.
+      it "asks a held place and an invitation whether they went, with yes and no only" do
+        member = create(:member, :active)
+        held = confirmed_event(member, days: -9, name: "Spring concert")
+        asked = confirmed_event(member, days: -6, name: "Summer gig")
+        create(:registration, event: held, member:, status: :reserved)
+        create(:registration, event: asked, member:, status: :invited)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group, scope: "past")
+
+        expect(response.body.scan("Did you go?").size).to eq 2
+        expect(response.body).to include %(name="registration[status]" value="yes"), %(name="registration[status]" value="no")
+        expect(response.body).not_to include %(name="registration[status]" value="maybe")
+      end
+
+      # The maybe is written the day before the event started, because an ended event takes no maybe.
+      it "asks again whoever said maybe before the event" do
+        member = create(:member, :active)
+        unsure = confirmed_event(member, days: -3, name: "Autumn fair")
+        travel_to(unsure.starts_at - 1.day) { create(:registration, event: unsure, member:, status: :maybe) }
+        sign_in_as(member.user)
+
+        get group_events_path(member.group, scope: "past")
+
+        expect(response.body).to include "Autumn fair", "Did you go?"
+        expect(response.body).not_to include %(name="registration[status]" value="maybe")
+      end
+
+      it "leaves a yes given before the event standing, without asking again" do
+        member = create(:member, :active)
+        over = confirmed_event(member, days: -9, name: "Spring concert")
+        create(:registration, event: over, member:, status: :yes)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group, scope: "past")
+
+        expect(response.body).to include "Spring concert", "your answer: yes"
+        expect(response.body).not_to include "Did you go?"
+      end
+
       # The select states which list is open, so a reader who lands on the past one by a typed URL
       # sees the control agreeing with what is under it.
       it "shows the past option as the select's own value" do
@@ -605,15 +646,18 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include %(aria-label="Duplicate"), %(aria-label="Edit")
       end
 
+      # The day before `detailed_event`, since an event that has ended takes no `maybe`.
       it "draws no answer row for their own registration" do
-        member = create(:member, :paused)
-        event = detailed_event(member, reader_status: :maybe)
-        sign_in_as(member.user)
+        travel_to Time.zone.parse("2026-09-01 12:00") do
+          member = create(:member, :paused)
+          event = detailed_event(member, reader_status: :maybe)
+          sign_in_as(member.user)
 
-        get group_event_path(event.group, event)
+          get group_event_path(event.group, event)
 
-        expect(page_text(response.body)).to include "Who’s coming"
-        expect(page_text(response.body)).not_to include "Your answer:"
+          expect(page_text(response.body)).to include "Who’s coming"
+          expect(page_text(response.body)).not_to include "Your answer:"
+        end
       end
     end
 
@@ -654,16 +698,31 @@ RSpec.describe "Events", type: :request do
         expect(page_text(response.body)).to include "Delete event"
       end
 
+      # The day before `detailed_event`, since an event that has ended offers no Maybe pill.
       it "draws the answer pills and a take-off on every roster row, and Add someone" do
+        travel_to Time.zone.parse("2026-09-01 12:00") do
+          owner = create(:member, :active, :owner)
+          event = detailed_event(owner)
+          sign_in_as(owner.user)
+
+          get group_event_path(event.group, event)
+
+          expect(response.body).to include "Yes for Ben Cole", "Maybe for Carla Duke", "No for Alice Bird"
+          expect(response.body).to include "Take Ben Cole off the list", "Take Carla Duke off the list"
+          expect(response.body).to include new_group_event_registration_path(event.group, event)
+        end
+      end
+
+      # After the end the pills are Yes and No, so a maybe given before the event has no pill to light, and the badge says where that row stands instead.
+      it "offers yes and no on an ended event's roster, and a badge on a row that said maybe" do
         owner = create(:member, :active, :owner)
-        event = detailed_event(owner)
+        event = travel_to(Time.zone.parse("2026-09-01 12:00")) { detailed_event(owner, reader_status: :maybe) }
         sign_in_as(owner.user)
 
         get group_event_path(event.group, event)
 
-        expect(response.body).to include "Yes for Ben Cole", "Maybe for Carla Duke", "No for Alice Bird"
-        expect(response.body).to include "Take Ben Cole off the list", "Take Carla Duke off the list"
-        expect(response.body).to include new_group_event_registration_path(event.group, event)
+        expect(response.body).to include "Yes for Ben Cole", "No for Ben Cole", %(title="Maybe")
+        expect(response.body).not_to include "Maybe for Ben Cole", "Maybe for #{owner.full_name}"
       end
 
       # `Registration` refuses every answer on an event that is over, so a pill there is a control
@@ -776,6 +835,43 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include "Yes for #{member.full_name}", "Invite Ben Cole", "Invite the rest"
       end
 
+      # `detailed_event` has ended, so a place held for the reader is now a question about whether they went.
+      it "asks a held place whether they went, with yes and no only" do
+        member = create(:member, :active)
+        event = detailed_event(member, reader_status: :reserved)
+        sign_in_as(member.user)
+
+        get group_event_path(event.group, event)
+
+        expect(page_text(response.body)).to include "Did you go?"
+        expect(response.body).to include %(name="registration[status]" value="yes"), %(name="registration[status]" value="no")
+        expect(response.body).not_to include %(name="registration[status]" value="maybe")
+      end
+
+      it "keeps a yes given before the event as the answer, with no maybe beside it" do
+        member = create(:member, :active)
+        event = detailed_event(member)
+        sign_in_as(member.user)
+
+        get group_event_path(event.group, event)
+
+        expect(page_text(response.body)).to include "Your answer:"
+        expect(response.body).not_to include %(name="registration[status]" value="maybe")
+      end
+
+      # `Registration` refuses every answer on a concluded event, so its screen asks nothing.
+      it "asks nothing on an event somebody has concluded" do
+        member = create(:member, :active)
+        event = detailed_event(member, reader_status: :invited)
+        event.update!(status: :concluded)
+        sign_in_as(member.user)
+
+        get group_event_path(event.group, event)
+
+        expect(page_text(response.body)).to include "Tuesday rehearsal"
+        expect(page_text(response.body)).not_to include "Did you go?"
+      end
+
       it "offers no Duplicate, Edit or Delete" do
         member = create(:member, :active)
         event = detailed_event(member)
@@ -789,14 +885,17 @@ RSpec.describe "Events", type: :request do
 
       # The frames' order, which the markup has to carry because the disclosure cannot: its summary
       # is the counts, and the roster it unfolds is drawn after the answer row rather than inside it.
+      # The day before `detailed_event`, since an event that has ended takes no `maybe`.
       it "draws the answer row between the counts and the roster" do
-        member = create(:member, :active)
-        event = detailed_event(member, reader_status: :maybe)
-        sign_in_as(member.user)
+        travel_to Time.zone.parse("2026-09-01 12:00") do
+          member = create(:member, :active)
+          event = detailed_event(member, reader_status: :maybe)
+          sign_in_as(member.user)
 
-        get group_event_path(event.group, event)
+          get group_event_path(event.group, event)
 
-        expect(page_text(response.body)).to match(/Who’s coming.*Your answer:.*Who’s invited/)
+          expect(page_text(response.body)).to match(/Who’s coming.*Your answer:.*Who’s invited/)
+        end
       end
 
       it "draws the four count tags and the reader's own question" do
@@ -880,14 +979,17 @@ RSpec.describe "Events", type: :request do
         expect(response.body).to include new_group_event_registration_path(event.group, event)
       end
 
+      # The day before `detailed_event`, since an event that has ended takes no `maybe`.
       it "draws the answer row for their own registration" do
-        actor = create(:member, :active, :events_administrator)
-        event = detailed_event(actor, reader_status: :maybe)
-        sign_in_as(actor.user)
+        travel_to Time.zone.parse("2026-09-01 12:00") do
+          actor = create(:member, :active, :events_administrator)
+          event = detailed_event(actor, reader_status: :maybe)
+          sign_in_as(actor.user)
 
-        get group_event_path(event.group, event)
+          get group_event_path(event.group, event)
 
-        expect(page_text(response.body)).to include "Your answer:"
+          expect(page_text(response.body)).to include "Your answer:"
+        end
       end
     end
 

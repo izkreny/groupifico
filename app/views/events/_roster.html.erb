@@ -15,6 +15,8 @@
   which it asks, and tinted on an `invited` one, which is already asked and stays as it is. A paused
   or inactive member's row keeps its badge, because they are never asked.
 
+  The pills are `Event#available_registration_answers`, so once the event has ended a maybe given before it has no pill to light, and its row keeps the badge as an unanswered one does.
+
   The pills also wait on `Event#open_to_answers?`, as on `events/_row`: `Registration` refuses every
   answer on an event that is over, so a pill there is a control certain to fail. The take-off does
   not, since correcting a roster after the fact is still the three roles' business.
@@ -23,6 +25,7 @@
 <% may_invite = allowed_to?(:create?, unattached) %>
 <% may_answer = event.open_to_answers? && allowed_to?(:update?, unattached) %>
 <% may_remove = allowed_to?(:destroy?, unattached) %>
+<% answers = event.available_registration_answers %>
 <% uninvited = may_invite && event.anyone_left_to_invite? %>
 <% roster = event.roster %>
 
@@ -49,7 +52,7 @@
                   aria: { label: asked ? "#{name} is invited, no reply yet" : "Invite #{name}" } do %>
               <%= icon :invited, class: "size-4" %>
             <% end %>
-          <% elsif !may_answer || !registration.answered? %>
+          <% elsif !may_answer || answers.exclude?(registration.status) %>
             <span class="badge badge-sm" title="<%= registration_status_label(registration) %>">
               <%= status_icon registration, label: registration_status_label(registration), class: "size-4" %>
             </span>
@@ -57,7 +60,7 @@
 
           <% if may_answer %>
             <div class="join">
-              <% Registration::ANSWERS.each do |answer| %>
+              <% answers.each do |answer| %>
                 <% current = registration.status == answer %>
                 <%= button_to group_event_registration_path(event.group, event, registration),
                       method: :patch,

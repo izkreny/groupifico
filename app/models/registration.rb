@@ -54,6 +54,9 @@ class Registration < ApplicationRecord
   # and correcting a roster after the fact is their business rather than this rule's.
   validate :event_must_be_open_to_answers, if: -> { answered? && will_save_change_to_status? }
 
+  # WHY: the screens offer `Event#available_registration_answers` and this holds a stale form to the same list. It stays quiet where the rule above already refuses, so a concluded event gives one reason, not two.
+  validate :answer_must_be_one_the_event_takes, if: -> { answered? && will_save_change_to_status? && event&.open_to_answers? }
+
   # Whether a status somebody posted is one they are saying about themselves, which no record can
   # answer because a posted status is not on the record yet. A blank counts: `reserved` is the
   # model's default, so somebody answering without naming a status has claimed nothing.
@@ -64,11 +67,14 @@ class Registration < ApplicationRecord
     status.nil? || ANSWERS.include?(status)
   end
 
-  # Whether this member has said anything, asked by the event card to choose between the question
-  # and the answer it draws. The two unanswered statuses are not a "no": `reserved` is a place held
-  # before anybody was asked and `invited` is a question still waiting.
+  # WHY: whether this member has said anything, which the event card shows as their answer. It is a separate question from `asked?`, because once an event has ended a `maybe` is both answered and asked again. The two unanswered statuses are not a "no": `reserved` is a place held before anybody was asked and `invited` is a question still waiting.
   def answered?
     ANSWERS.include?(status)
+  end
+
+  # WHY: whether the answer row puts the question to this member rather than showing their answer. Before the event ends that is an invitation still waiting, and a held place is not asked. Once it has ended it is anyone whose attendance is still unknown: a held place, an invitation nobody answered, and a `maybe`, none of which `Event#available_registration_answers` offers any more.
+  def asked?
+    event.ended? ? event.available_registration_answers.exclude?(status) : invited?
   end
 
   # WHY: the one rule for asking a registration, read by the roster row's paper plane and by
@@ -83,5 +89,9 @@ class Registration < ApplicationRecord
   private
     def event_must_be_open_to_answers
       errors.add(:status, "cannot be answered once the event is over") unless event&.open_to_answers?
+    end
+
+    def answer_must_be_one_the_event_takes
+      errors.add(:status, "cannot be #{status} once the event has ended") unless event.available_registration_answers.include?(status)
     end
 end

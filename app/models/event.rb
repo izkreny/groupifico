@@ -125,6 +125,9 @@ class Event < ApplicationRecord
     starts_at.past? && ends_at.future?
   end
 
+  # WHY: the one reading of "this event is over" by the clock, so the question's tense, the answers offered and who is asked switch at the same moment.
+  def ended? = ends_at.past?
+
   # Whether this event can still take an answer, which is a question about its status alone. An
   # event that has ended and that nobody has concluded is still worth answering - the roster is
   # what it is for - so the clock decides the tense of the question rather than whether it is
@@ -134,6 +137,11 @@ class Event < ApplicationRecord
   # unable to take answers until somebody decides it should.
   def open_to_answers?
     unconfirmed? || confirmed?
+  end
+
+  # WHY: the answers this event takes now, read by every answer row and by `Registration`'s own check, so the screens and the model offer the same list. Once the event has ended, whether somebody went is a yes or a no; a `maybe` given before it leaves that unknown, so it is not offered and its holder is asked again.
+  def available_registration_answers
+    ended? ? Registration::ANSWERS.excluding("maybe") : Registration::ANSWERS
   end
 
   # Everyone on the list, in the order the event screen draws them: grouped by where each stands,

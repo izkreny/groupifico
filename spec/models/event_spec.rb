@@ -241,6 +241,20 @@ RSpec.describe Event, type: :model do
     end
   end
 
+  describe "#ended?" do
+    it "is false while the event runs" do
+      freeze_time do
+        expect(build(:event, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)).not_to be_ended
+      end
+    end
+
+    it "is true once its end has passed" do
+      freeze_time do
+        expect(build(:event, starts_at: 2.hours.ago, ends_at: 1.hour.ago)).to be_ended
+      end
+    end
+  end
+
   # A question about the status alone: an event that has ended and that nobody has concluded is
   # still worth a roster, so the clock decides the tense of the question rather than whether it is
   # asked. `EventsHelper#answer_prompt` carries that half.
@@ -272,6 +286,21 @@ RSpec.describe Event, type: :model do
     it "is false for an event that has been called off, however far ahead" do
       freeze_time do
         expect(build(:event, status: :canceled, starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours)).not_to be_open_to_answers
+      end
+    end
+  end
+
+  # Written out rather than read from `Registration::ANSWERS`, which the method answers with: an example comparing against the constant agrees with whatever it holds.
+  describe "#available_registration_answers" do
+    it "offers yes, maybe and no until the event ends" do
+      freeze_time do
+        expect(build(:event, starts_at: 1.hour.ago, ends_at: 1.hour.from_now).available_registration_answers).to eq %w[ yes maybe no ]
+      end
+    end
+
+    it "offers yes and no once the event has ended" do
+      freeze_time do
+        expect(build(:event, starts_at: 2.hours.ago, ends_at: 1.hour.ago).available_registration_answers).to eq %w[ yes no ]
       end
     end
   end
@@ -387,8 +416,9 @@ RSpec.describe Event, type: :model do
   end
 
   describe "#roster" do
+    # Upcoming, because an event that has ended takes no `maybe` and the factory's date is random.
     it "lists the answers first, then the invited, then the reserved, reserved ones included" do
-      event = create(:event)
+      event = create(:event, starts_at: 1.day.from_now)
       reserved = registration_named("Adam", on: event, status: :reserved)
       invited = registration_named("Bea", on: event, status: :invited)
       declined = registration_named("Carl", on: event, status: :no)
