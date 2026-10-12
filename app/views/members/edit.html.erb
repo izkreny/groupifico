@@ -8,8 +8,8 @@
   <%= render "members/form", group: @group, member: @member, submit: "Save member", cancel: group_member_path(@group, @member) %>
 
   <%# Below the form rather than in its button row, where frame 3d draws it: the sheet's trigger is
-      a `button_to`, and a form cannot hold another. `destroy?` rather than the `edit?` that
-      admitted the reader, because a paused manager reads this screen and is refused every write. %>
+      a `button_to`, and a form cannot hold another. `destroy?`, the rule the removal authorizes,
+      rather than the `edit?` that admitted the member. %>
   <% if allowed_to?(:destroy?, @member) %>
     <div class="mt-6">
       <%= render "shared/confirm_sheet",

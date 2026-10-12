@@ -4,15 +4,12 @@
   The group's roster. The shell's header already carries the group's name, so this tab draws no
   title of its own, as the events list draws none.
 
-  Both capabilities are the reader's rather than a row's, so each is asked once, of a member with
-  nothing on it but the group: a per-row `allowed_to?` builds a policy and looks up the reader's
-  membership for every member. `create?` decides the count and Invite, a write a paused manager is
-  refused. `edit?` decides the pencil, the inactive toggle and the "not signed in yet" mark, which
-  are reads a paused manager keeps.
+  Each capability is the acting member's rather than a row's, so each is asked once, of a member with nothing on it but the group: a per-row `allowed_to?` builds a policy and looks up the acting member's membership for every member. `create?` decides the count and Invite, and `edit?` the pencil; both are write rules, so a paused manager sees neither. `oversee?` decides the inactive toggle and the "not signed in yet" mark, and is a read a paused manager keeps.
 %>
 <% unattached = Member.new(group: @group) %>
 <% may_add = allowed_to?(:create?, unattached) %>
 <% manages = allowed_to?(:edit?, unattached) %>
+<% oversees = allowed_to?(:oversee?, unattached) %>
 
 <div class="flex flex-col gap-3">
   <% if may_add %>
@@ -27,13 +24,13 @@
 
   <% if @members.any? %>
     <ul id="members" class="list">
-      <%= render partial: "members/member", collection: @members, locals: { manages: } %>
+      <%= render partial: "members/member", collection: @members, locals: { manages:, oversees: } %>
     </ul>
   <% else %>
     <p>No members found.</p>
   <% end %>
 
-  <% if manages %>
+  <% if oversees %>
     <%= link_to (@inactive_shown ? "Hide inactive" : "Show inactive"),
           group_members_path(@group, inactive: (1 unless @inactive_shown)),
           class: "link link-hover self-start" %>

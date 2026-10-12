@@ -1,12 +1,11 @@
-<%# locals: (member:, manages:) %>
+<%# locals: (member:, manages:, oversees:) %>
 <%#
   One roster row. A member who is not active is still drawn, tagged with their status and dimmed to
   the theme's `base-content` at 70%, which holds AA in both themes. Call and Email are every reader's; Call only where the member has a mobile, since every member
   has an address and not every one a number. The detail is every reader's too, so the name links
   there, and only the pencil opens the edit form.
 
-  The "not signed in yet" mark is the roster's alone, never the member screen's, and only for a
-  reader who manages members: they are the ones who added this person and would chase them.
+  The "not signed in yet" mark is the roster's alone, never the member screen's, and only for a member who oversees the list: they are the ones who added this person and would chase them, and seeing that is a read a paused one keeps.
 %>
 <% name = member.full_name %>
 <li id="<%= dom_id member, :row %>" class="list-row items-center<%= " text-base-content/70" unless member.active? %>">
@@ -26,7 +25,7 @@
         <span class="badge badge-sm badge-ghost"><%= member.status %></span>
       <% end %>
 
-      <% if manages && !member.user.first_signed_in_at? %>
+      <% if oversees && !member.user.first_signed_in_at? %>
         <span class="badge badge-sm badge-ghost">not signed in yet</span>
       <% end %>
     </div>

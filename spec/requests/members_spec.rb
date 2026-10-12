@@ -86,14 +86,15 @@ RSpec.describe "Members", type: :request do
         expect(row.css(".badge").map(&:text)).to include "paused"
       end
 
-      it "lists inactive members too when asked to" do
-        reader   = create(:member, :active)
-        inactive = create(:member, :inactive, group: reader.group)
-        sign_in_as(reader.user)
+      # Seeing who has left is `MemberPolicy#oversee?`, so the URL refuses a plain member rather than leaving the hidden toggle as the only guard.
+      it "refuses the inactive members to a member who may not oversee the list" do
+        member = create(:member, :active)
+        create(:member, :inactive, group: member.group)
+        sign_in_as(member.user)
 
-        get group_members_path(reader.group, inactive: 1)
+        get group_members_path(member.group, inactive: 1)
 
-        expect(response.body).to include ActionView::RecordIdentifier.dom_id(inactive, :row)
+        expect(response).to redirect_to root_path
       end
 
       it "tags each member with the roles they hold, by their short names" do
@@ -146,8 +147,8 @@ RSpec.describe "Members", type: :request do
         expect(row.text).to include "not signed in yet"
       end
 
-      # The mark is a read, and a paused member keeps every read.
-      it "still marks a member who has never signed in while the reader is paused" do
+      # The mark is asked of `MemberPolicy#oversee?`, a read, so a paused member keeps it.
+      it "still marks a member who has never signed in while the member is paused" do
         actor = create(:member, :paused, :members_administrator)
         added = create(:member, group: actor.group, user: create(:user, first_signed_in_at: nil))
         sign_in_as(actor.user)
@@ -156,6 +157,26 @@ RSpec.describe "Members", type: :request do
 
         row = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(added, :row)}")
         expect(row.text).to include "not signed in yet"
+      end
+
+      it "lists inactive members when asked to" do
+        actor    = create(:member, :active, :members_administrator)
+        inactive = create(:member, :inactive, group: actor.group)
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group, inactive: 1)
+
+        expect(response.body).to include ActionView::RecordIdentifier.dom_id(inactive, :row)
+      end
+
+      it "still lists inactive members while the member is paused" do
+        actor    = create(:member, :paused, :members_administrator)
+        inactive = create(:member, :inactive, group: actor.group)
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group, inactive: 1)
+
+        expect(response.body).to include ActionView::RecordIdentifier.dom_id(inactive, :row)
       end
 
       it "leaves unmarked a member who has signed in" do
@@ -203,7 +224,6 @@ RSpec.describe "Members", type: :request do
         expect(Nokogiri::HTML(response.body).at_css("main a.link[href='#{group_members_path(actor.group)}']").text).to eq "Hide inactive"
       end
 
-      # Adding somebody is a write, which the pause refuses; the edit form is a read it keeps.
       it "offers no Invite while the reader is paused" do
         actor = create(:member, :paused, :members_administrator)
         sign_in_as(actor.user)
@@ -211,6 +231,61 @@ RSpec.describe "Members", type: :request do
         get group_members_path(actor.group)
 
         expect(response.body).not_to include new_group_member_path(actor.group)
+      end
+
+      it "keeps the inactive toggle and offers no edit link while the member is paused" do
+        actor = create(:member, :paused, :members_administrator)
+        other = create(:member, group: actor.group)
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group)
+
+        expect(response.body).not_to include edit_group_member_path(actor.group, other)
+        expect(response.body).to include "Show inactive"
+      end
+    end
+
+    # The three columns the members table marks for adding, changing and removing a member are
+    # `owner`, `administrator` and `members_administrator`; the last is proven above.
+    context "when signed in as an owner" do
+      it "offers Invite, each member's edit form and the inactive toggle" do
+        actor = create(:member, :active, :owner)
+        other = create(:member, group: actor.group)
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group)
+
+        expect(response.body).to include new_group_member_path(actor.group)
+        expect(response.body).to include edit_group_member_path(actor.group, other)
+        expect(response.body).to include "Show inactive"
+      end
+    end
+
+    context "when signed in as an administrator" do
+      it "offers Invite, each member's edit form and the inactive toggle" do
+        actor = create(:member, :active, :administrator)
+        other = create(:member, group: actor.group)
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group)
+
+        expect(response.body).to include new_group_member_path(actor.group)
+        expect(response.body).to include edit_group_member_path(actor.group, other)
+        expect(response.body).to include "Show inactive"
+      end
+    end
+
+    context "when signed in as an events administrator" do
+      it "offers no Invite, no edit link and no inactive toggle" do
+        actor = create(:member, :active, :events_administrator)
+        other = create(:member, group: actor.group)
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group)
+
+        expect(response.body).not_to include new_group_member_path(actor.group)
+        expect(response.body).not_to include edit_group_member_path(actor.group, other)
+        expect(response.body).not_to include "Show inactive"
       end
     end
   end
@@ -317,6 +392,30 @@ RSpec.describe "Members", type: :request do
       end
     end
 
+    context "when signed in as an owner" do
+      it "offers the edit link" do
+        actor  = create(:member, :active, :owner)
+        target = create(:member, group: actor.group)
+        sign_in_as(actor.user)
+
+        get group_member_path(target.group, target)
+
+        expect(response.body).to include edit_group_member_path(target.group, target)
+      end
+    end
+
+    context "when signed in as an administrator" do
+      it "offers the edit link" do
+        actor  = create(:member, :active, :administrator)
+        target = create(:member, group: actor.group)
+        sign_in_as(actor.user)
+
+        get group_member_path(target.group, target)
+
+        expect(response.body).to include edit_group_member_path(target.group, target)
+      end
+    end
+
     context "when signed in as a paused member" do
       it "shows the member page" do
         target = create(:member)
@@ -394,6 +493,17 @@ RSpec.describe "Members", type: :request do
       end
     end
 
+    context "when signed in as an administrator" do
+      it "offers no role checkboxes" do
+        member = create(:member, :active, :administrator)
+        sign_in_as(member.user)
+
+        get new_group_member_path(member.group)
+
+        expect(Nokogiri::HTML(response.body).css("[name='member[roles][]']")).to be_empty
+      end
+    end
+
     context "when signed in as a member who cannot add anybody" do
       it "refuses the form rather than offering one the submission would reject" do
         member = create(:member, :active)
@@ -453,6 +563,16 @@ RSpec.describe "Members", type: :request do
         expect(hints).to eq [ "everything", "all modules", "events only", "members only" ]
         expect(rows).to eq [ %w[administrator events_administrator members_administrator], %w[events_administrator members_administrator], [], [] ]
       end
+
+      it "offers Remove" do
+        actor  = create(:member, :active, :owner)
+        target = create(:member, group: actor.group)
+        sign_in_as(actor.user)
+
+        get edit_group_member_path(target.group, target)
+
+        expect(Nokogiri::HTML(response.body).at_css("form[action='#{group_member_path(target.group, target)}'] button").text).to eq "Remove"
+      end
     end
 
     context "when signed in as a members administrator" do
@@ -488,16 +608,14 @@ RSpec.describe "Members", type: :request do
         expect(Nokogiri::HTML(response.body).at_css("form[action='#{group_member_path(target.group, target)}'] button").text).to eq "Remove"
       end
 
-      # The edit form is a read a paused manager keeps; removing somebody is a write it refuses.
-      it "offers no Remove while the reader is paused" do
+      it "refuses the form while the member is paused" do
         actor  = create(:member, :paused, :members_administrator)
         target = create(:member, group: actor.group)
         sign_in_as(actor.user)
 
         get edit_group_member_path(target.group, target)
 
-        expect(response).to have_http_status :ok
-        expect(Nokogiri::HTML(response.body).css("button").map(&:text)).not_to include "Remove"
+        expect(response).to redirect_to root_path
       end
 
       it "offers no role checkboxes" do
@@ -519,6 +637,16 @@ RSpec.describe "Members", type: :request do
         get edit_group_member_path(member.group, member)
 
         expect(Nokogiri::HTML(response.body).css("[name='member[roles][]']")).to be_empty
+      end
+
+      it "offers Remove" do
+        actor  = create(:member, :active, :administrator)
+        target = create(:member, group: actor.group)
+        sign_in_as(actor.user)
+
+        get edit_group_member_path(target.group, target)
+
+        expect(Nokogiri::HTML(response.body).at_css("form[action='#{group_member_path(target.group, target)}'] button").text).to eq "Remove"
       end
     end
 
