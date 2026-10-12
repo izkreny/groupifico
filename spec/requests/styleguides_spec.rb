@@ -79,7 +79,7 @@ RSpec.describe "The styleguide", type: :request do
         expect(rows.flat_map { it.css(".badge").map(&:text) }).to contain_exactly "owner", "paused"
       end
 
-      # What holds the page to every daisyUI component the app uses, in each variant, as the template example holds it to every partial. The classes are read from `class` attributes only, since the same words run through the comments, and a variant prefix such as `sm:` is dropped. The form builder is read for every quoted literal too, because it picks `textarea` and `select` from a map rather than writing them in a `class`. The stems are daisyUI 5's components, by hand, and the Tailwind utilities that share a stem's prefix are dropped, also by hand.
+      # What holds the page to every daisyUI component the app uses, in each variant, as the template example holds it to every partial. The classes are read from `class` attributes only, since the same words run through the comments, and a variant prefix such as `sm:` is dropped. The form builder is read for every quoted literal too, because it picks `textarea` and `select` from a map rather than writing them in a `class`. The stems are daisyUI 5's components, by hand, and a class counts only where the vendored daisyUI bundle defines it, which leaves out every Tailwind utility sharing a stem's prefix, such as `list-disc` or `mask-none`.
       it "draws every daisyUI class the app's views use" do
         plant_styleguide_group
         sign_in_as(create(:user))
@@ -91,8 +91,8 @@ RSpec.describe "The styleguide", type: :request do
         used = sources.flat_map { it.read.scan(/class(?:=|:\s*)("[^"]*"|\[[^\]]*\]|\{[^}]*\}|\([^)]*\))/).flatten.flat_map { it.scan(%r{[\w:/-]+}) } }.map { it[/[^:]*\z/] }
         used += Rails.root.join("app/form_builders/app_form_builder.rb").read.scan(/"([^"#]*)"/).flatten.flat_map(&:split)
         drawn = Nokogiri::HTML(response.body).css("[class]").flat_map { it["class"].split }.map { it[/[^:]*\z/] }
-        tailwind = /\A(list-(disc|decimal|none|inside|outside|image-.+)|select-(none|text|all|auto)|table-(auto|fixed|caption|cell|column|column-group|footer-group|header-group|row|row-group)|filter-none)\z/
-        expect(used.uniq.select { |name| stems.any? { name == it || name.start_with?("#{it}-") } && !name.match?(tailwind) } - drawn).to be_empty
+        daisyui = Rails.root.join("app/assets/tailwind/daisyui.mjs").read.scan(/\.([a-z][a-z0-9-]*[a-z0-9])(?![a-z0-9-])/).flatten.to_set
+        expect(used.uniq.select { |name| daisyui.include?(name) && stems.any? { name == it || name.start_with?("#{it}-") } } - drawn).to be_empty
       end
 
       # The deleted `docs/design/organic-theme.html` drew these variants of components the app uses, and no view uses them yet; the page keeps them so the theme is still judged against them. Its `tabs-box` is left out, since no view uses tabs at all.
