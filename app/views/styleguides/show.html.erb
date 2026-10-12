@@ -41,6 +41,10 @@
     <%= render "styleguides/type_ladder" %>
   <% end %>
 
+  <%= render layout: "styleguides/section", locals: { title: "Character set" } do %>
+    <%= render "styleguides/character_set" %>
+  <% end %>
+
   <%= render layout: "styleguides/section", locals: { title: "Alert", docs: "https://daisyui.com/components/alert/" } do %>
     <%= render "styleguides/components/alert" %>
   <% end %>

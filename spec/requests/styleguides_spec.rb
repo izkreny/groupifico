@@ -118,6 +118,17 @@ RSpec.describe "The styleguide", type: :request do
         )
       end
 
+      # The members' names are Croatian, so the letters a font may lack are drawn in every rung a name is set in.
+      it "draws the Croatian letters in each body weight and in the record title" do
+        plant_styleguide_group
+        sign_in_as(create(:user))
+
+        get "/styleguide"
+
+        section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Character set" }
+        expect(section.css("[data-theme=organic] p").map(&:text).count { it.include?("ČĆĐŠŽ čćđšž") }).to eq 4
+      end
+
       it "names the seed command when the styleguide group is missing" do
         sign_in_as(create(:user))
 
