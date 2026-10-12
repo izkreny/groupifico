@@ -37,7 +37,7 @@
     <%= form_with url: styleguide_session_path, class: "flex flex-wrap items-end gap-2" do |form| %>
       <div class="fieldset py-0">
         <%= form.label :member_id, "Sign in as", class: "label" %>
-        <%= form.select :member_id, member_switch_choices(@members), { selected: @members.find { it.user_id == Current.user.id }&.id, prompt: "Pick a member" }, class: "select" %>
+        <%= form.select :member_id, member_switch_choices(@members), { selected: @members.find { it.user_id == Current.user.id }&.id, prompt: "Pick a member" }, class: "select", required: true %>
       </div>
       <%= form.submit "Switch", class: "btn btn-primary" %>
     <% end %>

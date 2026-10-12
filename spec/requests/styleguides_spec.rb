@@ -119,6 +119,16 @@ RSpec.describe "The styleguide", type: :request do
         expect(Nokogiri::HTML(response.body).at_css("#member_switcher").text.squish).to include "Signed in as Vesna Pisac"
       end
 
+      # The prompt is what a user outside the group starts on, and its blank value is a request the switch refuses as malformed, so the browser is told never to send it.
+      it "requires a member to be picked before the switch submits" do
+        plant_styleguide_group
+        sign_in_as(create(:user))
+
+        get "/styleguide"
+
+        expect(Nokogiri::HTML(response.body).at_css("#member_switcher select")["required"]).not_to be_nil
+      end
+
       it "selects the signed-in member in the switcher" do
         plant_styleguide_group(invited: "Ivan Kovačević")
         sign_in_as(planted_member("Ivan Kovačević").user)
