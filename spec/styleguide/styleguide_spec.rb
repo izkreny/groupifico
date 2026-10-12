@@ -55,6 +55,17 @@ RSpec.describe "The styleguide", type: :system do
     expect(dark["top"]).to be >= light["bottom"]
   end
 
+  it "fits a phone's width, the token tables scrolling inside their twins" do
+    plant_styleguide_group
+    sign_in_as create(:user)
+    page.driver.resize(390, 844)
+
+    visit styleguide_path
+
+    expect(page).to have_css "h1", text: "Styleguide"
+    expect(page.evaluate_script("document.documentElement.scrollWidth - window.innerWidth")).to be <= 0
+  end
+
   it "sets the type ladder's titles in Caprasimo and its text in Figtree" do
     plant_styleguide_group
     sign_in_as create(:user)

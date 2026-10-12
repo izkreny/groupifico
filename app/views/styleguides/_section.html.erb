@@ -18,7 +18,8 @@
 
   <div class="grid gap-4 <%= "lg:grid-cols-2" unless stacked %>">
     <% %w[ organic organic-dark ].each do |theme| %>
-      <div data-theme="<%= theme %>" class="bg-base-100 text-base-content rounded-box border border-base-300 p-4">
+      <%# WHY: `min-w-0`, because a grid item will not shrink below its widest content, so the token table would widen the page on a phone instead of scrolling in its own wrapper. %>
+      <div data-theme="<%= theme %>" class="min-w-0 bg-base-100 text-base-content rounded-box border border-base-300 p-4">
         <%= yield theme %>
       </div>
     <% end %>
