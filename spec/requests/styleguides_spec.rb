@@ -1,7 +1,6 @@
 require 'rails_helper'
 
-# Production is the one environment the page is kept out of, and no spec runs there; the guard in
-# `config/routes.rb` is `Rails.env.local?`, which answers true for this suite.
+# Production is the one environment the page is kept out of. The guard in `config/routes.rb` is `Rails.env.local?`, which answers true for this suite, so "its routes in production" draws them as production would.
 RSpec.describe "The styleguide", type: :request do
   describe "GET /styleguide" do
     context "when signed in" do
@@ -244,6 +243,29 @@ RSpec.describe "The styleguide", type: :request do
 
         expect(response).to redirect_to new_session_path
       end
+    end
+  end
+
+  # Not a request either, and here for the reason the template's example gives. `config/routes.rb` is drawn into a route set of its own while `Rails.env` answers production, so the application's own routes are never redrawn and both stubs end with the example.
+  describe "its routes in production" do
+    it "draws no route to the page" do
+      routes = ActionDispatch::Routing::RouteSet.new
+      allow(Rails).to receive(:env).and_return(ActiveSupport::EnvironmentInquirer.new("production"))
+      allow(Rails.application).to receive(:routes).and_return(routes)
+
+      load Rails.root.join("config/routes.rb")
+
+      expect { routes.recognize_path("/styleguide") }.to raise_error ActionController::RoutingError
+    end
+
+    it "draws no route to the member switch" do
+      routes = ActionDispatch::Routing::RouteSet.new
+      allow(Rails).to receive(:env).and_return(ActiveSupport::EnvironmentInquirer.new("production"))
+      allow(Rails.application).to receive(:routes).and_return(routes)
+
+      load Rails.root.join("config/routes.rb")
+
+      expect { routes.recognize_path("/styleguide/session", method: :post) }.to raise_error ActionController::RoutingError
     end
   end
 
