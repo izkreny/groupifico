@@ -67,9 +67,7 @@ class Registration < ApplicationRecord
     status.nil? || ANSWERS.include?(status)
   end
 
-  # Whether this member has said anything, asked by the event card to choose between the question
-  # and the answer it draws. The two unanswered statuses are not a "no": `reserved` is a place held
-  # before anybody was asked and `invited` is a question still waiting.
+  # WHY: whether this member has said anything, which the event card shows as their answer. It is a separate question from `asked?`, because once an event has ended a `maybe` is both answered and asked again. The two unanswered statuses are not a "no": `reserved` is a place held before anybody was asked and `invited` is a question still waiting.
   def answered?
     ANSWERS.include?(status)
   end
