@@ -1,4 +1,4 @@
-<%# locals: (title:, stacked: false, docs: nil) %>
+<%# locals: (title:, stacked: false, docs: nil, source: nil) %>
 <%#
   Rendered as a `render layout:`, so a section is written once and yielded to once per theme, which
   is what keeps its light and dark twins from drifting apart. The block receives the theme name for
@@ -6,6 +6,7 @@
 
   `stacked` puts the twins one above the other at every width, for a section too wide to share a row.
   `docs` is the component's page in the daisyUI documentation, for a section that draws one component.
+  `source` is the name and site of the set a section draws a few of, linked for the rest of it.
 %>
 <section class="flex flex-col gap-2">
   <div class="flex flex-wrap items-baseline justify-between gap-2">
@@ -13,6 +14,11 @@
 
     <% if docs %>
       <%= link_to "#{title} in the daisyUI docs", docs, class: "link text-meta" %>
+    <% end %>
+
+    <% if source %>
+      <% name, site_url = source %>
+      <%= link_to "The rest of #{name}", site_url, class: "link text-meta" %>
     <% end %>
   </div>
 

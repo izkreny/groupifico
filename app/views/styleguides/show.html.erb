@@ -192,7 +192,7 @@
     <%= render "user_profiles/form", user_profile: @owner.profile, namespace: "#{theme}_profile" %>
   <% end %>
 
-  <%= render layout: "styleguides/section", locals: { title: "Legend icons" } do %>
+  <%= render layout: "styleguides/section", locals: { title: "Legend icons", source: [ "Heroicons", "https://heroicons.com" ] } do %>
     <%= render "styleguides/legend_icons" %>
   <% end %>
 </div>

@@ -1,9 +1,22 @@
 <%# locals: () %>
-<ul class="grid grid-cols-3 gap-4 sm:grid-cols-4">
-  <% IconsHelper::ICONS.each_key do |meaning| %>
-    <li class="flex flex-col items-center gap-1 text-xs">
-      <%= icon meaning, class: "size-6" %>
-      <span><%= meaning %></span>
-    </li>
-  <% end %>
-</ul>
+<div class="max-w-full overflow-x-auto">
+  <table class="table table-sm">
+    <%# WHY: daisyUI greys a table's header at 60% of the base content, 4.1:1 on the light ground; 70% is the theme's grey that holds AA in both. %>
+    <thead class="text-base-content/70">
+      <tr>
+        <th>Icon</th>
+        <th>Icon name</th>
+        <th>Icon used</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% IconsHelper::ICONS.each do |meaning, name| %>
+        <tr>
+          <td><%= icon meaning, class: "size-6" %></td>
+          <td><code><%= name %></code></td>
+          <td><code><%= meaning %></code></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

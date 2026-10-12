@@ -61,7 +61,8 @@ RSpec.describe "The styleguide", type: :request do
         get "/styleguide"
 
         html = Nokogiri::HTML(response.body)
-        light, dark = %w[ organic organic-dark ].map { |theme| html.css("[data-theme='#{theme}'] tbody tr").map { it.text.squish } }
+        section = html.css("section").find { it.at_css("h2")&.text == "Colour tokens" }
+        light, dark = %w[ organic organic-dark ].map { |theme| section.css("[data-theme='#{theme}'] tbody tr").map { it.text.squish } }
         expect([ light.size, dark.size ]).to eq [ 20, 20 ]
         expect(light).to include "primary #8c491a 6.22:1 vs primary-content 5.72:1"
         expect(dark).to include "primary #e09675 6.00:1 vs primary-content 5.90:1"
@@ -74,7 +75,8 @@ RSpec.describe "The styleguide", type: :request do
 
         get "/styleguide"
 
-        tagged = Nokogiri::HTML(response.body).css("[data-theme='organic'] tbody tr").to_h { [ it.at_css("code").text, it.css(".badge").any? ] }
+        section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Colour tokens" }
+        tagged = section.css("[data-theme='organic'] tbody tr").to_h { [ it.at_css("code").text, it.css(".badge").any? ] }
         expect(tagged.values_at("base-200", "base-300", "warning")).to eq [ false, false, true ]
       end
 
@@ -128,6 +130,17 @@ RSpec.describe "The styleguide", type: :request do
           "https://daisyui.com/components/card/", "https://daisyui.com/components/collapse/", "https://daisyui.com/components/input/",
           "https://daisyui.com/components/select/"
         )
+      end
+
+      it "draws every legend icon as a row naming its Heroicons glyph and the meaning it is used for" do
+        plant_styleguide_group
+        sign_in_as(create(:user))
+
+        get "/styleguide"
+
+        section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Legend icons" }
+        expect(section.css("[data-theme=organic] tbody tr").map { |row| [ row.at_css("td svg").present?, *row.css("td").drop(1).map { it.text.squish } ] }).to eq(IconsHelper::ICONS.map { |meaning, name| [ true, name, meaning.to_s ] })
+        expect(section.css("a[href='https://heroicons.com']").map(&:text)).to eq [ "The rest of Heroicons" ]
       end
 
       # The members' names are Croatian, so the letters a font may lack are drawn in every rung a name is set in.
