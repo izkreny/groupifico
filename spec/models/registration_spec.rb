@@ -106,21 +106,41 @@ RSpec.describe Registration, type: :model do
   end
 
   describe "#asked?" do
-    it "asks only an invitation before the event ends" do
+    it "asks an invitation before the event ends" do
       freeze_time do
         ahead = build(:event, starts_at: 1.hour.from_now, ends_at: 2.hours.from_now)
 
         expect(build(:registration, event: ahead, status: :invited)).to be_asked
-        expect(%i[ reserved yes maybe no ].map { build(:registration, event: ahead, status: it).asked? }).to eq [ false, false, false, false ]
       end
     end
 
-    it "asks whoever has not said yes or no once the event has ended" do
+    it "asks neither a held place nor an answer before the event ends" do
+      freeze_time do
+        ahead = build(:event, starts_at: 1.hour.from_now, ends_at: 2.hours.from_now)
+
+        expect(build(:registration, event: ahead, status: :reserved)).not_to be_asked
+        expect(build(:registration, event: ahead, status: :yes)).not_to be_asked
+        expect(build(:registration, event: ahead, status: :maybe)).not_to be_asked
+        expect(build(:registration, event: ahead, status: :no)).not_to be_asked
+      end
+    end
+
+    it "asks a held place, an invitation and a maybe once the event has ended" do
       freeze_time do
         over = build(:event, starts_at: 2.hours.ago, ends_at: 1.hour.ago)
 
-        expect(%i[ reserved invited maybe ].map { build(:registration, event: over, status: it).asked? }).to eq [ true, true, true ]
-        expect(%i[ yes no ].map { build(:registration, event: over, status: it).asked? }).to eq [ false, false ]
+        expect(build(:registration, event: over, status: :reserved)).to be_asked
+        expect(build(:registration, event: over, status: :invited)).to be_asked
+        expect(build(:registration, event: over, status: :maybe)).to be_asked
+      end
+    end
+
+    it "asks neither a yes nor a no once the event has ended" do
+      freeze_time do
+        over = build(:event, starts_at: 2.hours.ago, ends_at: 1.hour.ago)
+
+        expect(build(:registration, event: over, status: :yes)).not_to be_asked
+        expect(build(:registration, event: over, status: :no)).not_to be_asked
       end
     end
   end
