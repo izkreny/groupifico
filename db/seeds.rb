@@ -20,15 +20,18 @@ def create_member(group:, user:, combination:)
   FactoryBot.create(:member, group:, user:, status:, roles: names.map { Role.new(name: it) })
 end
 
-# Everyone answers, and only then is the event settled, because that is the order it happens in: people say whether they are coming, and afterwards somebody concludes it or calls it off. `Registration` refuses an answer to an event that is already over, so writing the outcome first would seed a history that could not have occurred. The caller decides which status each member holds, and the factory traits stay the authority on which outcome each event ends up with.
+# Everyone answers, and only then is the event settled, because that is the order it happens in: people say whether they are coming, and afterwards somebody concludes it or calls it off. `Registration` refuses an answer to an event that is already over, so writing the outcome first would seed a history that could not have occurred. An event that has ended takes no `maybe` either, so its answers are written the day before it started, when they were given; `travel_to` without a block, because the seeds already run inside one. The caller decides which status each member holds, and the factory traits stay the authority on which outcome each event ends up with.
 def answer_then_settle(event, statuses)
   outcome = event.status
+  now = Time.current
+  travel_to(event.starts_at - 1.day) if event.ends_at.past?
   event.update!(status: :confirmed)
 
   statuses.each do |member, status|
     FactoryBot.create(:registration, event:, member:, status:)
   end
 
+  travel_to(now)
   event.update!(status: outcome)
 end
 
