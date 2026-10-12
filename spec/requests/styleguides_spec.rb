@@ -74,6 +74,15 @@ RSpec.describe "The styleguide", type: :request do
         expect(options).to eq [ "Ana Horvat - owner, active", "Ivan Kovačević - active", "Marija Babić - active", "Luka Marić - paused" ]
       end
 
+      it "names the signed-in user above the switcher, though they are not a member" do
+        plant_styleguide_group
+        sign_in_as(create(:user, :with_full_profile, first_name: "Vesna", last_name: "Pisac"))
+
+        get "/styleguide"
+
+        expect(Nokogiri::HTML(response.body).at_css("#member_switcher").text.squish).to include "Signed in as Vesna Pisac"
+      end
+
       it "selects the signed-in member in the switcher" do
         plant_styleguide_group(invited: "Ivan Kovačević")
         sign_in_as(planted_member("Ivan Kovačević").user)
