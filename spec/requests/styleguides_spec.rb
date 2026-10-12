@@ -158,6 +158,16 @@ RSpec.describe "The styleguide", type: :request do
         expect(page_text(response.body)).to include "bin/rails db:seed:replant"
       end
 
+      it "names only what the database lacks once the group's ongoing event has ended" do
+        plant_styleguide_group
+        sign_in_as(create(:user))
+        travel 4.days
+
+        get "/styleguide"
+
+        expect(Nokogiri::HTML(response.body).css("main li").map { it.text.squish }).to eq [ "an event under way" ]
+      end
+
       it "names the seed command when no group carries the styleguide group's name" do
         plant_styleguide_group.update!(name: "Our own choir")
         sign_in_as(create(:user))
