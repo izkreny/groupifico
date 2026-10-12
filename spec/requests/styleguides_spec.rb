@@ -82,6 +82,27 @@ RSpec.describe "The styleguide", type: :request do
         expect(Nokogiri::HTML(response.body).css("a[aria-label^='Edit Ana'], a[aria-label^='Edit Luka']")).to be_empty
       end
 
+      # Nobody planted has signed in, so a member who oversees the list sees the mark on every row.
+      it "marks the member rows not signed in yet for the owner" do
+        plant_styleguide_group(manager: "Ana Horvat")
+        sign_in_as(planted_member("Ana Horvat").user)
+
+        get "/styleguide"
+
+        section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Member rows, owner and paused" }
+        expect(section.text).to include "not signed in yet"
+      end
+
+      it "draws no not-signed-in mark on the member rows for a member who does not oversee the list" do
+        plant_styleguide_group(invited: "Ivan Kovačević")
+        sign_in_as(planted_member("Ivan Kovačević").user)
+
+        get "/styleguide"
+
+        section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Member rows, owner and paused" }
+        expect(section.text).not_to include "not signed in yet"
+      end
+
       it "draws the header's Edit group link for the owner" do
         plant_styleguide_group(manager: "Ana Horvat")
         sign_in_as(planted_member("Ana Horvat").user)
