@@ -9,6 +9,16 @@ RSpec.describe "Styleguides::Sessions", type: :request do
         expect { post "/styleguide/session", params: { member_id: member.id } }.not_to change(Session, :count)
         expect(response).to redirect_to new_session_path
       end
+
+      # WHY: the path read before the stub, for the reason the signed-in 404 example below gives.
+      it "answers 404 rather than the sign-in redirect outside development and test" do
+        member = create(:member, group: plant_styleguide_group)
+        path = styleguide_session_path
+        allow(Rails).to receive(:env).and_return(ActiveSupport::EnvironmentInquirer.new("production"))
+
+        expect { post path, params: { member_id: member.id } }.not_to change(Session, :count)
+        expect(response).to have_http_status :not_found
+      end
     end
 
     context "when signed in" do
