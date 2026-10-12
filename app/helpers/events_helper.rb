@@ -48,7 +48,7 @@ module EventsHelper
   # asking a reader whether they are coming to something that finished last week reads as a screen
   # that has not noticed.
   def answer_prompt(event)
-    event.ends_at.past? ? "Did you go?" : "Are you coming?"
+    event.ended? ? "Did you go?" : "Are you coming?"
   end
 
   # Status and category on one line, the way every hero card and detail screen draws them. The

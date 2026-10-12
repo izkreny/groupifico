@@ -76,7 +76,7 @@ class Registration < ApplicationRecord
 
   # WHY: whether the answer row puts the question to this member rather than showing their answer. Before the event ends that is an invitation still waiting, and a held place is not asked. Once it has ended it is anyone whose attendance is still unknown: a held place, an invitation nobody answered, and a `maybe`, none of which `Event#answers` offers any more.
   def asked?
-    event.ends_at.past? ? event.answers.exclude?(status) : invited?
+    event.ended? ? event.answers.exclude?(status) : invited?
   end
 
   # WHY: the one rule for asking a registration, read by the roster row's paper plane and by

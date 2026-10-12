@@ -241,6 +241,20 @@ RSpec.describe Event, type: :model do
     end
   end
 
+  describe "#ended?" do
+    it "is false while the event runs" do
+      freeze_time do
+        expect(build(:event, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)).not_to be_ended
+      end
+    end
+
+    it "is true once its end has passed" do
+      freeze_time do
+        expect(build(:event, starts_at: 2.hours.ago, ends_at: 1.hour.ago)).to be_ended
+      end
+    end
+  end
+
   # A question about the status alone: an event that has ended and that nobody has concluded is
   # still worth a roster, so the clock decides the tense of the question rather than whether it is
   # asked. `EventsHelper#answer_prompt` carries that half.
