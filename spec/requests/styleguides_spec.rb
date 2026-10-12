@@ -168,6 +168,18 @@ RSpec.describe "The styleguide", type: :request do
         expect(Nokogiri::HTML(response.body).css("main li").map { it.text.squish }).to eq [ "an event under way" ]
       end
 
+      # The seed makes two active owners; the page draws the one seeded first, whose paused place in a second group the switcher needs.
+      it "draws the owner who joined first when the group has two active owners" do
+        plant_styleguide_group(manager: "Ana Horvat")
+        create(:member, :active, :owner, group: Group.find_by(name: StyleguidesController::GROUP_NAME), user: create(:user, :with_full_profile, first_name: "Zrinka", last_name: "Zec"))
+        sign_in_as(create(:user))
+
+        get "/styleguide"
+
+        section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Profile" }
+        expect(section.css("[data-theme=organic] h1").map { it.text.squish }).to eq [ "Ana Horvat" ]
+      end
+
       it "names the seed command when no group carries the styleguide group's name" do
         plant_styleguide_group.update!(name: "Our own choir")
         sign_in_as(create(:user))

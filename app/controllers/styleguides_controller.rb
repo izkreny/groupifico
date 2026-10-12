@@ -60,8 +60,10 @@ class StyleguidesController < ApplicationController
     end
 
     # An active owner, whose membership draws the owner tags and whose profile the account sections draw, and a paused member for the status tags. Each picked by status as the events are.
+    #
+    # WHY: in the order they joined, because the seed makes two active owners and only the first is paused in the second group the switcher needs; an unordered read leaves which one is drawn to the database.
     def pick_members
-      members = @group ? @group.members.preloaded.to_a : []
+      members = @group ? @group.members.preloaded.order(:id).to_a : []
 
       [ members.find { it.active? && it.owner? }, members.find(&:paused?) ]
     end
