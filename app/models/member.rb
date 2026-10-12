@@ -123,6 +123,9 @@ class Member < ApplicationRecord
   # model's business.
   def owner? = roles.any?(&:owner?)
 
+  # The roles held, in `Role::NAMES` order, which `&` keeps from its left side, so every list of a member's roles reads in one order.
+  def role_names = Role::NAMES & roles.map(&:name)
+
   private
     def preload_what_destroying_reads
       ActiveRecord::Associations::Preloader.new(records: [ self ], associations: :registrations).call

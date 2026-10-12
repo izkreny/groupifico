@@ -207,6 +207,14 @@ RSpec.describe Member, type: :model do
     end
   end
 
+  describe "#role_names" do
+    it "lists the roles held in Role::NAMES order, whatever order they were granted in" do
+      member = create(:member, roles: [ build(:role, name: "members_administrator"), build(:role, name: "owner") ])
+
+      expect(member.role_names).to eq %w[ owner members_administrator ]
+    end
+  end
+
   describe "#email=" do
     it "creates the user along with the membership when no account holds the address" do
       group = create(:group)
