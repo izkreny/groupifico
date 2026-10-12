@@ -64,6 +64,25 @@ RSpec.describe "The styleguide", type: :request do
         expect(html.css("button[aria-label='Take Marija Babić off the list']")).to be_empty
       end
 
+      it "lists every member of the group in the switcher, by name with their roles and status" do
+        plant_styleguide_group(manager: "Ana Horvat", invited: "Ivan Kovačević", said_yes: "Marija Babić")
+        sign_in_as(create(:user))
+
+        get "/styleguide"
+
+        options = Nokogiri::HTML(response.body).css("#member_switcher select option[value!='']").map(&:text)
+        expect(options).to eq [ "Ana Horvat - owner, active", "Ivan Kovačević - active", "Marija Babić - active", "Luka Marić - paused" ]
+      end
+
+      it "selects the signed-in member in the switcher" do
+        plant_styleguide_group(invited: "Ivan Kovačević")
+        sign_in_as(planted_member("Ivan Kovačević").user)
+
+        get "/styleguide"
+
+        expect(Nokogiri::HTML(response.body).css("#member_switcher select option[selected]").map(&:text)).to eq [ "Ivan Kovačević - active" ]
+      end
+
       # Each twin draws its own theme's tokens, so a twin printing the other's palette fails here. The ratios were derived outside `StyleguidesHelper`, so a cell reading the wrong pair fails too.
       it "draws every colour token of both themes with its hex" do
         plant_styleguide_group

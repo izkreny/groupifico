@@ -77,6 +77,15 @@ module StyleguidesHelper
     end
   end
 
+  # The member switcher's options: each member's name, then their role tags in `Role::NAMES` order as the member row draws them, then their status.
+  def member_switch_choices(members)
+    members.map do |member|
+      tags = (Role::NAMES & member.roles.map(&:name)).map { role_tag it } << member.status
+
+      [ "#{member.full_name} - #{tags.join(", ")}", member.id ]
+    end
+  end
+
   private
     def relative_luminance(hex)
       red, green, blue = hex.delete_prefix("#").scan(/../).map { linear(it.to_i(16) / 255.0) }
