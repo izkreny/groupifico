@@ -136,10 +136,7 @@ class Event < ApplicationRecord
     unconfirmed? || confirmed?
   end
 
-  # WHY: the answers this event takes now, read by every answer row and by `Registration`'s own
-  # check, so the screens and the model offer the same list. Once the event has ended, whether
-  # somebody went is a yes or a no; a `maybe` given before it leaves that unknown, so it is not
-  # offered and its holder is asked again.
+  # WHY: the answers this event takes now, read by every answer row and by `Registration`'s own check, so the screens and the model offer the same list. Once the event has ended, whether somebody went is a yes or a no; a `maybe` given before it leaves that unknown, so it is not offered and its holder is asked again.
   def answers
     ends_at.past? ? Registration::ANSWERS.excluding("maybe") : Registration::ANSWERS
   end

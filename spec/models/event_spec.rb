@@ -276,8 +276,7 @@ RSpec.describe Event, type: :model do
     end
   end
 
-  # Written out rather than read from `Registration::ANSWERS`, which the method answers with: an
-  # example comparing against the constant agrees with whatever it holds.
+  # Written out rather than read from `Registration::ANSWERS`, which the method answers with: an example comparing against the constant agrees with whatever it holds.
   describe "#answers" do
     it "offers yes, maybe and no until the event ends" do
       freeze_time do

@@ -46,8 +46,7 @@ RSpec.describe Registration, type: :model do
     end
   end
 
-  # After the end, whether somebody went is a yes or a no, so `maybe` is the one answer an ended
-  # event no longer takes.
+  # After the end, whether somebody went is a yes or a no, so `maybe` is the one answer an ended event no longer takes.
   describe "(answering maybe after the event)" do
     it "refuses maybe to an event that has ended" do
       event = create(:event, status: :confirmed, starts_at: 9.days.ago, ends_at: 9.days.ago + 2.hours)
@@ -64,8 +63,7 @@ RSpec.describe Registration, type: :model do
       expect(registration.update(status: :maybe)).to be true
     end
 
-    # One reason is enough: an event somebody concluded takes no answer at all, so naming maybe
-    # beside that would describe a choice the member does not have.
+    # One reason is enough: an event somebody concluded takes no answer at all, so naming maybe beside that would describe a choice the member does not have.
     it "gives only the over reason on a concluded event that has ended" do
       event = create(:event, status: :concluded, starts_at: 9.days.ago, ends_at: 9.days.ago + 2.hours)
       registration = create(:registration, status: :invited, event:)
