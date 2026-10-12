@@ -38,4 +38,4 @@ None.
 
 ## Settled
 
-None yet.
+- Does a concluded or canceled event's screen still show the member their own answer, as text without pills? No. The owner ruled in the terminal that the answer row stays hidden there, and the roster's badge is where that answer shows.
