@@ -1,0 +1,37 @@
+<%# locals: () %>
+<div class="flex flex-col gap-4">
+  <div class="flex flex-col gap-2">
+    <h3 class="text-meta">As the app uses it</h3>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <button type="button" class="btn btn-primary">Save</button>
+      <button type="button" class="btn">Correct</button>
+      <button type="button" class="btn btn-ghost">Cancel</button>
+      <button type="button" class="btn btn-error">Delete</button>
+      <button type="button" class="btn btn-sm">Invite the rest</button>
+      <button type="button" class="btn btn-ghost btn-circle btn-sm text-primary" aria-label="Edit">
+        <%= icon :edit, class: "size-4" %>
+      </button>
+      <button type="button" class="btn btn-ghost btn-sm btn-square" aria-label="Email">
+        <%= icon :email, class: "size-4" %>
+      </button>
+    </div>
+
+    <%= link_to new_group_path, class: "btn btn-primary btn-block" do %>
+      <%= icon :new, class: "size-4" %>New group
+    <% end %>
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <h3 class="text-meta">Not used yet</h3>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <button type="button" class="btn btn-sm btn-secondary">Secondary</button>
+      <button type="button" class="btn btn-sm btn-accent">Accent</button>
+      <button type="button" class="btn btn-sm btn-neutral">Neutral</button>
+      <button type="button" class="btn btn-sm btn-outline btn-primary">Outline</button>
+      <button type="button" class="btn btn-sm btn-soft btn-primary">Soft</button>
+      <button type="button" class="btn btn-sm btn-disabled" disabled>Disabled</button>
+    </div>
+  </div>
+</div>

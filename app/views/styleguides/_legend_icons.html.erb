@@ -1,0 +1,33 @@
+<%# locals: () %>
+<div class="max-w-full overflow-x-auto">
+  <table class="table table-sm">
+    <%# WHY: daisyUI greys a table's header at 60% of the base content, 4.1:1 on the light ground; 70% is the theme's grey that holds AA in both. %>
+    <thead class="text-base-content/70">
+      <tr>
+        <th>Icon</th>
+        <th>Icon name</th>
+        <th>Icon used</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% IconsHelper::ICONS.group_by(&:last).each do |name, uses| %>
+        <% meanings = uses.map(&:first) %>
+        <tr>
+          <td><%= icon meanings.first, class: "size-6" %></td>
+          <td><code><%= name %></code></td>
+          <td>
+            <% if meanings.one? %>
+              <strong><code><%= meanings.first %></code></strong> - <%= StyleguidesHelper::ICON_USES.fetch(meanings.first) %>
+            <% else %>
+              <ul class="list-disc pl-4">
+                <% meanings.each do |meaning| %>
+                  <li><strong><code><%= meaning %></code></strong> - <%= StyleguidesHelper::ICON_USES.fetch(meaning) %></li>
+                <% end %>
+              </ul>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

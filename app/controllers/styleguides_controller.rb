@@ -10,8 +10,13 @@ class StyleguidesController < ApplicationController
   def show
     @group = Group.find_by(name: GROUP_NAME)
     @next_up, @unconfirmed, @ongoing, @concluded, @canceled = pick_events
+    @owner, @paused = pick_members
+    # WHY: the owner is active here, so a paused membership is in another group, which is what gives the switcher both a row that is not current and a paused one.
+    @memberships = @owner ? @owner.user.current_memberships.preloaded.to_a : []
 
-    if [ @next_up, @unconfirmed, @ongoing, @concluded, @canceled ].all?
+    @missing = missing_records
+
+    if @missing.empty?
       flash.now[:notice] = "Event was successfully updated."
       flash.now[:alert]  = "You are not allowed to do that."
     else
@@ -20,6 +25,25 @@ class StyleguidesController < ApplicationController
   end
 
   private
+    # What the page cannot draw, each by the name the missing page gives it. Without the group itself there is nothing else to name.
+    def missing_records
+      if @group
+        {
+          "a confirmed event still ahead"      => @next_up,
+          "an unconfirmed event"               => @unconfirmed,
+          "an event under way"                 => @ongoing,
+          "a concluded event"                  => @concluded,
+          "a canceled event"                   => @canceled,
+          "an active owner"                    => @owner,
+          "a paused member"                    => @paused,
+          "a home address"                     => @group.address,
+          "the owner paused in a second group" => @memberships.find(&:paused?)
+        }.reject { |_name, record| record }.keys
+      else
+        [ "a group named #{GROUP_NAME}" ]
+      end
+    end
+
     # One event per state the page draws, each picked by status rather than by name, so a spec's smaller planted group draws as well as the seeded one. The hero is the confirmed event still ahead, and the ongoing one stands for confirmed among the rows.
     #
     # WHY: nil for a state the group no longer holds, which renders the missing page. The seed writes its times relative to the day it ran, so its ongoing event ends a few days later and its confirmed one stops being ahead within months, and an old seed is then as unable to draw those as no seed at all.
@@ -33,6 +57,15 @@ class StyleguidesController < ApplicationController
         events.find(&:concluded?),
         events.find(&:canceled?)
       ]
+    end
+
+    # An active owner, whose membership draws the owner tags and whose profile the account sections draw, and a paused member for the status tags. Each picked by status as the events are.
+    #
+    # WHY: in the order they joined, because the seed makes two active owners and only the first is paused in the second group the switcher needs; an unordered read leaves which one is drawn to the database.
+    def pick_members
+      members = @group ? @group.members.preloaded.order(:id).to_a : []
+
+      [ members.find { it.active? && it.owner? }, members.find(&:paused?) ]
     end
 
     # Every control a permitted member sees, whoever opens the page. The visitor is rarely a member of the styleguide group, so the real policies would refuse most of them and the RSVP pills, among others, would vanish. Who is permitted is the policies' business and their specs', never this page's.

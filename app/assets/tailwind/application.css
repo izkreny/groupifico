@@ -3,8 +3,9 @@
 @source not "./daisyui{,*}.mjs";
 
 /* The organic theme, #257: light by default and dark for `prefers-color-scheme: dark`. Every value,
-   and the contrast each one was measured at, is in that issue; `docs/design/organic-theme.html` is
-   the page the palette was settled on. */
+   and the contrast each one was measured at, is in that issue. `/styleguide` draws every token with
+   its contrast, read from these two blocks by `StyleguidesHelper#theme_colours`, which expects each
+   colour as a six-digit hex. */
 @plugin "./daisyui.mjs" {
   themes: false;
 }

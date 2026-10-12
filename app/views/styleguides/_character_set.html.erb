@@ -1,0 +1,23 @@
+<%# locals: () %>
+<%# WHY: the Croatian letters on a line of their own, because the members' names carry them and a font missing one falls back to another typeface mid-word. %>
+<% lines = [
+     "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+     "abcdefghijklmnopqrstuvwxyz",
+     "ČĆĐŠŽ čćđšž",
+     "0123456789",
+     %q(! @ # $ % ^ & * ( ) - _ = + [ ] { } ; : ' " , . < > / ? \ | ` ~ € · — ’)
+   ] %>
+<% rungs = [
+     [ "Body at the default size, regular", "" ],
+     [ "Body at the default size, semibold", "font-semibold" ],
+     [ "Body at the default size, bold", "font-bold" ],
+     [ "Record title, text-record", "font-heading text-record" ]
+   ] %>
+<div class="flex flex-col gap-4">
+  <% rungs.each do |rung, classes| %>
+    <div class="flex flex-col gap-1">
+      <h3 class="text-meta"><%= rung %></h3>
+      <p class="<%= classes %> break-all"><%= safe_join lines, tag.br %></p>
+    </div>
+  <% end %>
+</div>

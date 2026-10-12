@@ -1,15 +1,31 @@
-<%# locals: (title:) %>
+<%# locals: (title:, stacked: false, docs: nil, source: nil) %>
 <%#
   Rendered as a `render layout:`, so a section is written once and yielded to once per theme, which
   is what keeps its light and dark twins from drifting apart. The block receives the theme name for
   the ids a twin mints itself, since each id has to be unique on the page.
+
+  `stacked` puts the twins one above the other at every width, for a section too wide to share a row.
+  `docs` is the component's page in the daisyUI documentation, for a section that draws one component.
+  `source` is the name and site of the set a section draws a few of, linked for the rest of it.
 %>
 <section class="flex flex-col gap-2">
-  <h2 class="text-lg font-semibold"><%= title %></h2>
+  <div class="flex flex-wrap items-baseline justify-between gap-2">
+    <h2 class="text-lg font-semibold"><%= title %></h2>
 
-  <div class="grid gap-4 lg:grid-cols-2">
+    <% if docs %>
+      <%= link_to "#{title} in the daisyUI docs", docs, class: "link text-meta" %>
+    <% end %>
+
+    <% if source %>
+      <% name, site_url = source %>
+      <%= link_to "The rest of #{name}", site_url, class: "link text-meta" %>
+    <% end %>
+  </div>
+
+  <div class="grid gap-4 <%= "lg:grid-cols-2" unless stacked %>">
     <% %w[ organic organic-dark ].each do |theme| %>
-      <div data-theme="<%= theme %>" class="bg-base-100 text-base-content rounded-box border border-base-300 p-4">
+      <%# WHY: `min-w-0`, because a grid item will not shrink below its widest content, so the token table would widen the page on a phone instead of scrolling in its own wrapper. %>
+      <div data-theme="<%= theme %>" class="min-w-0 bg-base-100 text-base-content rounded-box border border-base-300 p-4">
         <%= yield theme %>
       </div>
     <% end %>

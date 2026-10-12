@@ -1,8 +1,10 @@
+<%# locals: (user_profile:, namespace: nil) %>
+<%# `namespace` is the styleguide's, which draws this form once per theme; every screen leaves it out and keeps its ids. %>
 <%#
   Name and mobile are the profile, the email is the account, and one Save writes both. No hint on
   the email: the frame promises a confirmation mail when it changes, and nothing sends one yet.
 %>
-<%= form_with(model: user_profile, class: "contents") do |form| %>
+<%= form_with(model: user_profile, namespace:, class: "contents") do |form| %>
   <%= form.with_error_summary do %>
     <fieldset class="fieldset">
       <%= form.field :first_name %>

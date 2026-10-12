@@ -2,5 +2,13 @@
 
 <div class="flex flex-col gap-2">
   <h1 class="text-hero">Styleguide</h1>
-  <p>This database holds no styleguide group with an event in every state the page draws: either it was never seeded, or the seed is old enough that its ongoing event has ended. <code>bin/rails db:seed:replant</code> seeds it, and replaces every record in the database to do so.</p>
+  <p>This database cannot draw the styleguide, because it holds no:</p>
+
+  <ul class="list-disc pl-6">
+    <% @missing.each do |record| %>
+      <li><%= record %></li>
+    <% end %>
+  </ul>
+
+  <p>Either it was never seeded, or the seed is older than the page or old enough that its ongoing event has ended. <code>bin/rails db:seed:replant</code> seeds it, and replaces every record in the database to do so.</p>
 </div>
