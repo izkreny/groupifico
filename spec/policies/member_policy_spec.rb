@@ -97,6 +97,36 @@ RSpec.describe MemberPolicy, type: :policy do
     end
   end
 
+  # A read the three columns that add a person keep while paused, which is the whole reason it is a rule of its own rather than `edit?`.
+  describe_rule :oversee? do
+    let(:group)   { create(:group) }
+    let(:actor)   { create(:member, group:) }
+    let(:record)  { build(:member, group:) }
+    let(:context) { { user: actor.user } }
+
+    failed "for a member holding no role, who may not see who has left or not signed in yet"
+
+    succeed "for an owner" do
+      let(:actor) { create(:member, :owner, group:) }
+    end
+
+    succeed "for an administrator" do
+      let(:actor) { create(:member, :administrator, group:) }
+    end
+
+    succeed "for a members administrator" do
+      let(:actor) { create(:member, :members_administrator, group:) }
+    end
+
+    failed "for an events administrator" do
+      let(:actor) { create(:member, :events_administrator, group:) }
+    end
+
+    succeed "for a paused members administrator, because overseeing the list is a read" do
+      let(:actor) { create(:member, :paused, :members_administrator, group:) }
+    end
+  end
+
   # Two rows of the table, one rule: granting or revoking a role, and making another member an
   # owner. The owner role is granted the way every other one is, so no mechanism could tell the two
   # decisions apart, and the table gives both to the owner alone.

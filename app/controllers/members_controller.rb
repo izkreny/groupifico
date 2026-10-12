@@ -17,6 +17,7 @@ class MembersController < ApplicationController
     authorize! @group, to: :show?
 
     @inactive_shown = params[:inactive].present?
+    authorize! Member.new(group: @group), to: :oversee? if @inactive_shown
 
     # WHY: sorted in Ruby rather than ordered in SQL, because `full_name` falls back to the address
     # when the profile has no name, and ordering on the profile's columns would misplace that member.

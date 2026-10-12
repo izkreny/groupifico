@@ -86,14 +86,15 @@ RSpec.describe "Members", type: :request do
         expect(row.css(".badge").map(&:text)).to include "paused"
       end
 
-      it "lists inactive members too when asked to" do
-        reader   = create(:member, :active)
-        inactive = create(:member, :inactive, group: reader.group)
-        sign_in_as(reader.user)
+      # Seeing who has left is `MemberPolicy#oversee?`, so the URL refuses a plain member rather than leaving the hidden toggle as the only guard.
+      it "refuses the inactive members to a member who may not oversee the list" do
+        member = create(:member, :active)
+        create(:member, :inactive, group: member.group)
+        sign_in_as(member.user)
 
-        get group_members_path(reader.group, inactive: 1)
+        get group_members_path(member.group, inactive: 1)
 
-        expect(response.body).to include ActionView::RecordIdentifier.dom_id(inactive, :row)
+        expect(response).to redirect_to root_path
       end
 
       it "tags each member with the roles they hold, by their short names" do
@@ -146,8 +147,8 @@ RSpec.describe "Members", type: :request do
         expect(row.text).to include "not signed in yet"
       end
 
-      # The mark is asked of `edit?`, which a paused member is refused, so it goes with the pencil.
-      it "marks nobody while the member is paused" do
+      # The mark is asked of `MemberPolicy#oversee?`, a read, so a paused member keeps it.
+      it "still marks a member who has never signed in while the member is paused" do
         actor = create(:member, :paused, :members_administrator)
         added = create(:member, group: actor.group, user: create(:user, first_signed_in_at: nil))
         sign_in_as(actor.user)
@@ -155,7 +156,27 @@ RSpec.describe "Members", type: :request do
         get group_members_path(actor.group)
 
         row = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(added, :row)}")
-        expect(row.text).not_to include "not signed in yet"
+        expect(row.text).to include "not signed in yet"
+      end
+
+      it "lists inactive members when asked to" do
+        actor    = create(:member, :active, :members_administrator)
+        inactive = create(:member, :inactive, group: actor.group)
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group, inactive: 1)
+
+        expect(response.body).to include ActionView::RecordIdentifier.dom_id(inactive, :row)
+      end
+
+      it "still lists inactive members while the member is paused" do
+        actor    = create(:member, :paused, :members_administrator)
+        inactive = create(:member, :inactive, group: actor.group)
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group, inactive: 1)
+
+        expect(response.body).to include ActionView::RecordIdentifier.dom_id(inactive, :row)
       end
 
       it "leaves unmarked a member who has signed in" do
@@ -212,7 +233,7 @@ RSpec.describe "Members", type: :request do
         expect(response.body).not_to include new_group_member_path(actor.group)
       end
 
-      it "offers no edit link and no inactive toggle while the member is paused" do
+      it "keeps the inactive toggle and offers no edit link while the member is paused" do
         actor = create(:member, :paused, :members_administrator)
         other = create(:member, group: actor.group)
         sign_in_as(actor.user)
@@ -220,7 +241,7 @@ RSpec.describe "Members", type: :request do
         get group_members_path(actor.group)
 
         expect(response.body).not_to include edit_group_member_path(actor.group, other)
-        expect(response.body).not_to include "Show inactive"
+        expect(response.body).to include "Show inactive"
       end
     end
 
