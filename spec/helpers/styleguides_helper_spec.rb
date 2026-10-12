@@ -42,8 +42,12 @@ RSpec.describe StyleguidesHelper, type: :helper do
       expect(helper.contrast_ratio_tag(2.99)).to eq %(<span class="badge badge-xs badge-error">2.99:1</span>)
     end
 
-    it "prints any ratio plainly when it is not to be flagged" do
-      expect(helper.contrast_ratio_tag(1.2, flagged: false)).to eq "<span>1.20:1</span>"
+    it "prints a surface's ratio plainly, however low" do
+      expect(helper.contrast_ratio_tag(1.2, token: "base-200")).to eq "<span>1.20:1</span>"
+    end
+
+    it "tags the base content's ratio, since the body text is read against the surfaces" do
+      expect(helper.contrast_ratio_tag(3.8, token: "base-content")).to eq %(<span class="badge badge-xs badge-warning">3.80:1</span>)
     end
   end
 

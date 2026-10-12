@@ -14,17 +14,17 @@
     </thead>
     <tbody>
       <% colours.each do |name, hex| %>
-        <% pair, flagged = contrast_pair(name), !surface?(name) %>
+        <% pair = contrast_pair(name) %>
         <tr>
           <td><code><%= name %></code></td>
           <%# WHY: inline, because the token is data read from the stylesheet, and a utility per token would be a second list of them for Tailwind to find. %>
          <td><span class="inline-block size-8 rounded-full border border-base-300 align-middle" style="background-color: var(--color-<%= name %>)"></span></td>
           <td><code><%= hex %></code></td>
-          <td><pre><strong><%= contrast_ratio_tag contrast_ratio(hex, colours.fetch(pair)), flagged: %></strong>   vs   <%= pair %></pre></td>
+          <td><pre><strong><%= contrast_ratio_tag contrast_ratio(hex, colours.fetch(pair)), token: name %></strong>   vs   <%= pair %></pre></td>
           <%# WHY: blank for a content colour, which is read on its own colour rather than on the page, and for the page itself. %>
           <td>
             <% unless name == "base-100" || name.end_with?("-content") %>
-              <pre><strong><%= contrast_ratio_tag contrast_ratio(hex, colours.fetch("base-100")), flagged: %></strong></pre>
+              <pre><strong><%= contrast_ratio_tag contrast_ratio(hex, colours.fetch("base-100")), token: name %></strong></pre>
             <% end %>
           </td>
         </tr>
