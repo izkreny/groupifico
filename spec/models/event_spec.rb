@@ -291,16 +291,16 @@ RSpec.describe Event, type: :model do
   end
 
   # Written out rather than read from `Registration::ANSWERS`, which the method answers with: an example comparing against the constant agrees with whatever it holds.
-  describe "#answers" do
+  describe "#available_registration_answers" do
     it "offers yes, maybe and no until the event ends" do
       freeze_time do
-        expect(build(:event, starts_at: 1.hour.ago, ends_at: 1.hour.from_now).answers).to eq %w[ yes maybe no ]
+        expect(build(:event, starts_at: 1.hour.ago, ends_at: 1.hour.from_now).available_registration_answers).to eq %w[ yes maybe no ]
       end
     end
 
     it "offers yes and no once the event has ended" do
       freeze_time do
-        expect(build(:event, starts_at: 2.hours.ago, ends_at: 1.hour.ago).answers).to eq %w[ yes no ]
+        expect(build(:event, starts_at: 2.hours.ago, ends_at: 1.hour.ago).available_registration_answers).to eq %w[ yes no ]
       end
     end
   end

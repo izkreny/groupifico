@@ -15,7 +15,7 @@
   which it asks, and tinted on an `invited` one, which is already asked and stays as it is. A paused
   or inactive member's row keeps its badge, because they are never asked.
 
-  The pills are `Event#answers`, so once the event has ended a maybe given before it has no pill to light, and its row keeps the badge as an unanswered one does.
+  The pills are `Event#available_registration_answers`, so once the event has ended a maybe given before it has no pill to light, and its row keeps the badge as an unanswered one does.
 
   The pills also wait on `Event#open_to_answers?`, as on `events/_row`: `Registration` refuses every
   answer on an event that is over, so a pill there is a control certain to fail. The take-off does
@@ -25,7 +25,7 @@
 <% may_invite = allowed_to?(:create?, unattached) %>
 <% may_answer = event.open_to_answers? && allowed_to?(:update?, unattached) %>
 <% may_remove = allowed_to?(:destroy?, unattached) %>
-<% answers = event.answers %>
+<% answers = event.available_registration_answers %>
 <% uninvited = may_invite && event.anyone_left_to_invite? %>
 <% roster = event.roster %>
 
