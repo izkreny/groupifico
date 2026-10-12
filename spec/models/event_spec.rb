@@ -403,8 +403,9 @@ RSpec.describe Event, type: :model do
   end
 
   describe "#roster" do
+    # Upcoming, because an event that has ended takes no `maybe` and the factory's date is random.
     it "lists the answers first, then the invited, then the reserved, reserved ones included" do
-      event = create(:event)
+      event = create(:event, starts_at: 1.day.from_now)
       reserved = registration_named("Adam", on: event, status: :reserved)
       invited = registration_named("Bea", on: event, status: :invited)
       declined = registration_named("Carl", on: event, status: :no)

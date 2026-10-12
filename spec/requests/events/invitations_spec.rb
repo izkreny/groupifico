@@ -85,9 +85,10 @@ RSpec.describe "Events::Invitations", type: :request do
     end
 
     context "when signed in as an events administrator" do
+      # Upcoming, because an event that has ended takes no `maybe` and the factory's date is random.
       it "asks a held place and a member with none alike, and leaves an answer as it was" do
         actor = create(:member, :active, :events_administrator)
-        event = create(:event, group: actor.group, creator: actor, status: :confirmed)
+        event = create(:event, group: actor.group, creator: actor, status: :confirmed, starts_at: 1.day.from_now)
         held = create(:registration, event:, member: actor, status: :reserved)
         answered = create(:registration, event:, member: create(:member, :active, group: event.group), status: :maybe)
         missing = create(:member, :active, group: event.group)

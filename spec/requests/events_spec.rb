@@ -605,15 +605,18 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include %(aria-label="Duplicate"), %(aria-label="Edit")
       end
 
+      # The day before `detailed_event`, since an event that has ended takes no `maybe`.
       it "draws no answer row for their own registration" do
-        member = create(:member, :paused)
-        event = detailed_event(member, reader_status: :maybe)
-        sign_in_as(member.user)
+        travel_to Time.zone.parse("2026-09-01 12:00") do
+          member = create(:member, :paused)
+          event = detailed_event(member, reader_status: :maybe)
+          sign_in_as(member.user)
 
-        get group_event_path(event.group, event)
+          get group_event_path(event.group, event)
 
-        expect(page_text(response.body)).to include "Who’s coming"
-        expect(page_text(response.body)).not_to include "Your answer:"
+          expect(page_text(response.body)).to include "Who’s coming"
+          expect(page_text(response.body)).not_to include "Your answer:"
+        end
       end
     end
 
@@ -789,14 +792,17 @@ RSpec.describe "Events", type: :request do
 
       # The frames' order, which the markup has to carry because the disclosure cannot: its summary
       # is the counts, and the roster it unfolds is drawn after the answer row rather than inside it.
+      # The day before `detailed_event`, since an event that has ended takes no `maybe`.
       it "draws the answer row between the counts and the roster" do
-        member = create(:member, :active)
-        event = detailed_event(member, reader_status: :maybe)
-        sign_in_as(member.user)
+        travel_to Time.zone.parse("2026-09-01 12:00") do
+          member = create(:member, :active)
+          event = detailed_event(member, reader_status: :maybe)
+          sign_in_as(member.user)
 
-        get group_event_path(event.group, event)
+          get group_event_path(event.group, event)
 
-        expect(page_text(response.body)).to match(/Who’s coming.*Your answer:.*Who’s invited/)
+          expect(page_text(response.body)).to match(/Who’s coming.*Your answer:.*Who’s invited/)
+        end
       end
 
       it "draws the four count tags and the reader's own question" do
@@ -880,14 +886,17 @@ RSpec.describe "Events", type: :request do
         expect(response.body).to include new_group_event_registration_path(event.group, event)
       end
 
+      # The day before `detailed_event`, since an event that has ended takes no `maybe`.
       it "draws the answer row for their own registration" do
-        actor = create(:member, :active, :events_administrator)
-        event = detailed_event(actor, reader_status: :maybe)
-        sign_in_as(actor.user)
+        travel_to Time.zone.parse("2026-09-01 12:00") do
+          actor = create(:member, :active, :events_administrator)
+          event = detailed_event(actor, reader_status: :maybe)
+          sign_in_as(actor.user)
 
-        get group_event_path(event.group, event)
+          get group_event_path(event.group, event)
 
-        expect(page_text(response.body)).to include "Your answer:"
+          expect(page_text(response.body)).to include "Your answer:"
+        end
       end
     end
 
