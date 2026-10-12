@@ -12,6 +12,9 @@ class MemberPolicy < ApplicationPolicy
   def update?  = membership.can_manage?(:members)
   def destroy? = membership.can_manage?(:members)
 
+  # Seeing who has left the group and who has not signed in yet, for the three columns that add a person. A read, so it stays out of `WRITE_RULES` and a paused members administrator keeps it while losing every write.
+  def oversee? = membership.can_manage?(:members)
+
   # Granting or revoking a role, and making another member an owner, are the owner's alone: two
   # rows of the table, one rule, because no mechanism could tell the two apart - the owner role is
   # granted the same way every other one is.

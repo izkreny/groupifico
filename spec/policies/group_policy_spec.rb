@@ -91,11 +91,9 @@ RSpec.describe GroupPolicy, type: :policy do
     end
   end
 
-  # `edit?` answers `membership.owner?` under its own name rather than aliasing or composing
-  # `update?`, so that opening the form stays a read while submitting it stays a write; the policy
-  # carries the account of why both alternatives rename the running rule. Both halves are asserted
-  # here: the verdict follows the owner rule, and a paused owner - refused `update?` by the status
-  # pre-check - is still admitted to the form.
+  # `edit?` is a write rule like `update?`, so a paused owner is refused the form as well as the
+  # submission. Both halves are asserted here: the verdict follows the owner rule, and the status
+  # pre-check refuses a paused owner first.
   describe_rule :edit? do
     let(:group)   { create(:group) }
     let(:member)  { create(:member, group:) }
@@ -112,7 +110,7 @@ RSpec.describe GroupPolicy, type: :policy do
       let(:member) { create(:member, :administrator, group:) }
     end
 
-    succeed "for a paused owner, who keeps every read" do
+    failed "for a paused owner, who may not use the form" do
       let(:member) { create(:member, :paused, :owner, group:) }
     end
   end
