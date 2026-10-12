@@ -94,6 +94,17 @@ RSpec.describe "The styleguide", type: :request do
         expect(used.uniq.select { |name| stems.any? { name == it || name.start_with?("#{it}-") } } - drawn).to be_empty
       end
 
+      # The deleted `docs/design/organic-theme.html` drew these variants of components the app uses, and no view uses them yet; the page keeps them so the theme is still judged against them. Its `tabs-box` is left out, since no view uses tabs at all.
+      it "draws the variants of the app's components that no view uses yet" do
+        plant_styleguide_group
+        sign_in_as(create(:user))
+
+        get "/styleguide"
+
+        variants = %w[ btn-secondary btn-accent btn-neutral btn-outline btn-soft btn-disabled input-error badge-primary badge-secondary badge-accent badge-neutral badge-outline badge-info badge-success badge-warning badge-error card-border alert-info alert-warning alert-soft ]
+        expect(variants - Nokogiri::HTML(response.body).css("[class]").flat_map { it["class"].split }).to be_empty
+      end
+
       it "names the seed command when the styleguide group is missing" do
         sign_in_as(create(:user))
 
