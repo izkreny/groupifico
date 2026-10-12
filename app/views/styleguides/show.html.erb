@@ -171,8 +171,8 @@
 
   <%= render layout: "styleguides/section", locals: { title: "Member rows, owner and paused" } do %>
     <ul class="list">
-      <%= render "members/member", member: @owner, manages: true %>
-      <%= render "members/member", member: @paused, manages: true %>
+      <%= render "members/member", member: @owner, manages: true, oversees: true %>
+      <%= render "members/member", member: @paused, manages: true, oversees: true %>
     </ul>
   <% end %>
 
