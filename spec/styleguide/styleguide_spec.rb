@@ -66,6 +66,22 @@ RSpec.describe "The styleguide", type: :system do
     expect(page.evaluate_script("document.documentElement.scrollWidth - window.innerWidth")).to be <= 0
   end
 
+  # The views set body text on all three surfaces, where the token table tags the base content against the page alone and leaves the surfaces' own rows untagged. Probes rather than the page's own markup, so what is measured is the palette and not whichever section happens to sit on a surface.
+  it "reads the body text at AA on every surface, in both twins" do
+    plant_styleguide_group
+    sign_in_as create(:user)
+
+    visit styleguide_path
+
+    ratios = %w[ organic organic-dark ].product(%w[ base-100 base-200 base-300 ]).to_h do |theme, surface|
+      page.execute_script(<<~JS, theme, surface)
+        document.querySelector(`[data-theme=${arguments[0]}]`).insertAdjacentHTML("beforeend", `<div class="bg-${arguments[1]}"><span id="probe-${arguments[0]}-${arguments[1]}">Aa</span></div>`)
+      JS
+      [ "#{theme} #{surface}", text_contrast("#probe-#{theme}-#{surface}") ]
+    end
+    expect(ratios.select { |_surface, ratio| ratio < ContrastHelper::WCAG_AA }).to be_empty
+  end
+
   it "sets the type ladder's titles in Caprasimo and its text in Figtree" do
     plant_styleguide_group
     sign_in_as create(:user)
