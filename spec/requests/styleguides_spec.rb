@@ -40,10 +40,10 @@ RSpec.describe "The styleguide", type: :request do
         expect(html.css(".badge [aria-label='no reply']")).not_to be_empty
       end
 
-      # A signed-in user who belongs to no group still gets every control a permitted member would.
-      it "draws the roster's controls on every row" do
-        plant_styleguide_group(invited: "Ivan Kovačević", said_yes: "Marija Babić")
-        sign_in_as(create(:user))
+      # The owner may answer for every member and take anyone off the list, so every row draws both controls.
+      it "draws the roster's controls on every row for the owner" do
+        plant_styleguide_group(manager: "Ana Horvat", invited: "Ivan Kovačević", said_yes: "Marija Babić")
+        sign_in_as(planted_member("Ana Horvat").user)
 
         get "/styleguide"
 
@@ -93,8 +93,8 @@ RSpec.describe "The styleguide", type: :request do
 
       # What holds the page to every daisyUI component the app uses, in each variant, as the template example holds it to every partial. The classes are read from `class` attributes only, since the same words run through the comments, and a variant prefix such as `sm:` is dropped. The form builder is read for every quoted literal too, because it picks `textarea` and `select` from a map rather than writing them in a `class`. The stems are daisyUI 5's components, by hand, and a class counts only where the vendored daisyUI bundle defines it, which leaves out every Tailwind utility sharing a stem's prefix, such as `list-disc` or `mask-none`.
       it "draws every daisyUI class the app's views use" do
-        plant_styleguide_group
-        sign_in_as(create(:user))
+        plant_styleguide_group(manager: "Ana Horvat")
+        sign_in_as(planted_member("Ana Horvat").user)
 
         get "/styleguide"
 
