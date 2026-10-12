@@ -82,7 +82,7 @@ RSpec.describe "The styleguide", type: :request do
         expect(Nokogiri::HTML(response.body).css("a[aria-label^='Edit Ana'], a[aria-label^='Edit Luka']")).to be_empty
       end
 
-      # Nobody planted has signed in, so a member who oversees the list sees the mark on every row.
+      # The paused member has never signed in, so a member who oversees the list sees the mark on that row; the owner's own row has none, since signing in stamps their first sign-in.
       it "marks the member rows not signed in yet for the owner" do
         plant_styleguide_group(manager: "Ana Horvat")
         sign_in_as(planted_member("Ana Horvat").user)
