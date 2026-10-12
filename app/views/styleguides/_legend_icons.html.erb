@@ -17,11 +17,11 @@
           <td><code><%= name %></code></td>
           <td>
             <% if meanings.one? %>
-              <code><%= meanings.first %></code> <%= StyleguidesHelper::ICON_USES.fetch(meanings.first) %>
+              <strong><code><%= meanings.first %></code></strong> - <%= StyleguidesHelper::ICON_USES.fetch(meanings.first) %>
             <% else %>
               <ul class="list-disc pl-4">
                 <% meanings.each do |meaning| %>
-                  <li><code><%= meaning %></code> <%= StyleguidesHelper::ICON_USES.fetch(meaning) %></li>
+                  <li><strong><code><%= meaning %></code></strong> - <%= StyleguidesHelper::ICON_USES.fetch(meaning) %></li>
                 <% end %>
               </ul>
             <% end %>
