@@ -87,7 +87,7 @@ RSpec.describe "The styleguide", type: :request do
         get "/styleguide"
 
         stems = %w[ alert avatar badge breadcrumbs btn calendar card carousel chat checkbox collapse countdown diff divider dock drawer dropdown fab fieldset file-input filter footer hero indicator input join kbd label link list loading mask menu mockup modal navbar pagination progress radial-progress radio range rating select skeleton stack stat status steps swap tab tabs table textarea timeline toast toggle tooltip validator ]
-        sources = Rails.root.glob("{app/views/**/*.erb,app/helpers/*.rb,app/form_builders/*.rb}").reject { it.to_s.include?("/styleguides/") }
+        sources = Rails.root.glob("{app/views/**/*.erb,app/helpers/*.rb,app/form_builders/*.rb}").reject { it.to_s.include?("styleguide") }
         used = sources.flat_map { it.read.scan(/class(?:=|:\s*)("[^"]*"|\[[^\]]*\]|\{[^}]*\}|\([^)]*\))/).flatten.flat_map { it.scan(%r{[\w:/-]+}) } }.map { it[/[^:]*\z/] }
         used += Rails.root.join("app/form_builders/app_form_builder.rb").read.scan(/"([^"#]*)"/).flatten.flat_map(&:split)
         drawn = Nokogiri::HTML(response.body).css("[class]").flat_map { it["class"].split }.map { it[/[^:]*\z/] }
