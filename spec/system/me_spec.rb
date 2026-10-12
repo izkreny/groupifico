@@ -40,7 +40,8 @@ RSpec.describe "The Me screen", type: :system do
   end
 
   it "keeps every row and line inside a phone's width" do
-    sign_in_as create(:user)
+    # WHY: a member with no name is headed by the email's local part, one word with nowhere to break, so a fixed long one fails on every run where a Faker draw only failed on some.
+    sign_in_as create(:user, email: "maximilian.featherstonehaugh-wolstenholme@example.com")
     resize_to ViewportHelper::MOBILE
 
     visit user_profile_path
