@@ -105,6 +105,19 @@ RSpec.describe "The styleguide", type: :request do
         expect(variants - Nokogiri::HTML(response.body).css("[class]").flat_map { it["class"].split }).to be_empty
       end
 
+      it "links each daisyUI component section to its page in the daisyUI docs" do
+        plant_styleguide_group
+        sign_in_as(create(:user))
+
+        get "/styleguide"
+
+        expect(Nokogiri::HTML(response.body).css("section a[href^='https://daisyui.com/']").map { it["href"] }).to contain_exactly(
+          "https://daisyui.com/components/alert/", "https://daisyui.com/components/badge/", "https://daisyui.com/components/button/",
+          "https://daisyui.com/components/card/", "https://daisyui.com/components/collapse/", "https://daisyui.com/components/input/",
+          "https://daisyui.com/components/select/"
+        )
+      end
+
       it "names the seed command when the styleguide group is missing" do
         sign_in_as(create(:user))
 

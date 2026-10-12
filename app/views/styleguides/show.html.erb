@@ -41,6 +41,34 @@
     <%= render "styleguides/type_ladder" %>
   <% end %>
 
+  <%= render layout: "styleguides/section", locals: { title: "Alert", docs: "https://daisyui.com/components/alert/" } do %>
+    <%= render "styleguides/components/alert" %>
+  <% end %>
+
+  <%= render layout: "styleguides/section", locals: { title: "Badge", docs: "https://daisyui.com/components/badge/" } do %>
+    <%= render "styleguides/components/badge" %>
+  <% end %>
+
+  <%= render layout: "styleguides/section", locals: { title: "Button", docs: "https://daisyui.com/components/button/" } do %>
+    <%= render "styleguides/components/button" %>
+  <% end %>
+
+  <%= render layout: "styleguides/section", locals: { title: "Card", docs: "https://daisyui.com/components/card/" } do %>
+    <%= render "styleguides/components/card" %>
+  <% end %>
+
+  <%= render layout: "styleguides/section", locals: { title: "Collapse", docs: "https://daisyui.com/components/collapse/" } do %>
+    <%= render "styleguides/components/collapse", event: @next_up %>
+  <% end %>
+
+  <%= render layout: "styleguides/section", locals: { title: "Input", docs: "https://daisyui.com/components/input/" } do |theme| %>
+    <%= render "styleguides/components/input", theme: %>
+  <% end %>
+
+  <%= render layout: "styleguides/section", locals: { title: "Select", docs: "https://daisyui.com/components/select/" } do |theme| %>
+    <%= render "styleguides/components/select", theme: %>
+  <% end %>
+
   <%= render layout: "styleguides/section", locals: { title: "Page header" } do %>
     <%= render "shared/page_header", title: "Event" %>
   <% end %>
@@ -158,90 +186,6 @@
 
   <%= render layout: "styleguides/section", locals: { title: "Profile form" } do |theme| %>
     <%= render "user_profiles/form", user_profile: @owner.profile, namespace: "#{theme}_profile" %>
-  <% end %>
-
-  <%= render layout: "styleguides/section", locals: { title: "Components no partial draws, as their screens use them" } do |theme| %>
-    <div class="flex flex-col gap-4">
-      <div role="status" class="alert">
-        <%= icon :duplicate, class: "size-6 shrink-0" %>
-        <span>Copied from an earlier event. Dates moved on 7 days, status back to unconfirmed, nobody registered yet.</span>
-      </div>
-
-      <%= select_tag :scope,
-            options_for_select([ [ "Upcoming events", "upcoming" ], [ "Past events", "past" ] ], "upcoming"),
-            id: "scope_#{theme}",
-            class: "select select-ghost bg-base-200 rounded-full",
-            aria: { label: "Which events to show" } %>
-
-      <div class="card card-sm bg-base-200">
-        <div class="card-body">
-          <details class="collapse collapse-arrow">
-            <summary class="collapse-title flex flex-col gap-2 px-0">
-              <span class="font-semibold">Who&rsquo;s coming</span>
-              <%= render "events/counts", event: @next_up %>
-            </summary>
-          </details>
-        </div>
-      </div>
-
-      <%= link_to new_group_path, class: "btn btn-primary btn-block" do %>
-        <%= icon :new, class: "size-4" %>New group
-      <% end %>
-    </div>
-  <% end %>
-
-  <%= render layout: "styleguides/section", locals: { title: "Variants the app does not use yet" } do |theme| %>
-    <div class="flex flex-col gap-4">
-      <div class="flex flex-wrap items-center gap-2">
-        <button type="button" class="btn btn-sm btn-secondary">Secondary</button>
-        <button type="button" class="btn btn-sm btn-accent">Accent</button>
-        <button type="button" class="btn btn-sm btn-neutral">Neutral</button>
-        <button type="button" class="btn btn-sm btn-outline btn-primary">Outline</button>
-        <button type="button" class="btn btn-sm btn-soft btn-primary">Soft</button>
-        <button type="button" class="btn btn-sm btn-disabled" disabled>Disabled</button>
-      </div>
-
-      <div class="flex flex-wrap items-end gap-2">
-        <fieldset class="fieldset">
-          <label class="label" for="variant_role_<%= theme %>">Role</label>
-          <select id="variant_role_<%= theme %>" class="select select-sm">
-            <option>Member</option>
-            <option>Organiser</option>
-          </select>
-        </fieldset>
-
-        <fieldset class="fieldset">
-          <label class="label" for="variant_email_<%= theme %>">Email</label>
-          <input id="variant_email_<%= theme %>" type="email" autocomplete="off" placeholder="Invalid" class="input input-sm input-error">
-        </fieldset>
-      </div>
-
-      <div class="flex flex-wrap items-center gap-2">
-        <span class="badge badge-sm badge-primary">Primary</span>
-        <span class="badge badge-sm badge-secondary">Secondary</span>
-        <span class="badge badge-sm badge-accent">Accent</span>
-        <span class="badge badge-sm badge-neutral">Neutral</span>
-        <span class="badge badge-sm badge-soft badge-primary">Soft primary</span>
-        <span class="badge badge-sm badge-outline badge-secondary">Outline secondary</span>
-        <span class="badge badge-sm badge-info">Info</span>
-        <span class="badge badge-sm badge-success">Success</span>
-        <span class="badge badge-sm badge-warning">Warning</span>
-        <span class="badge badge-sm badge-error">Error</span>
-      </div>
-
-      <div class="card card-sm card-border bg-base-100">
-        <div class="card-body">
-          <p class="card-title">Bordered card</p>
-          <p>A card on base-100 with the border daisyUI derives from base-300.</p>
-        </div>
-      </div>
-
-      <div role="alert" class="alert alert-info"><span>Info: your invitation was sent.</span></div>
-      <div role="alert" class="alert alert-warning"><span>Warning: the event is nearly full.</span></div>
-      <div role="alert" class="alert alert-soft alert-info"><span>Soft info</span></div>
-      <div role="alert" class="alert alert-soft alert-success"><span>Soft success</span></div>
-      <div role="alert" class="alert alert-soft alert-error"><span>Soft error</span></div>
-    </div>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Legend icons" } do %>
