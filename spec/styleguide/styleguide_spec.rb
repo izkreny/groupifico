@@ -43,6 +43,18 @@ RSpec.describe "The styleguide", type: :system do
     expect(rows.reject { |hex, painted| painted == "rgb(#{hex.delete_prefix("#").scan(/../).map { it.to_i(16) }.join(", ")})" }).to be_empty
   end
 
+  # The token tables are wide, so their twins sit one above the other at every width rather than side by side.
+  it "stacks the light colour tokens above the dark ones on a wide screen" do
+    plant_styleguide_group
+    sign_in_as create(:user)
+    page.driver.resize(1440, 900)
+
+    visit styleguide_path
+
+    light, dark = %w[ organic organic-dark ].map { |theme| find("section", text: "Colour tokens").find("[data-theme=#{theme}]").evaluate_script("this.getBoundingClientRect().toJSON()") }
+    expect(dark["top"]).to be >= light["bottom"]
+  end
+
   it "sets the type ladder's titles in Caprasimo and its text in Figtree" do
     plant_styleguide_group
     sign_in_as create(:user)

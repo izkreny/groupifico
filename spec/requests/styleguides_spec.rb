@@ -63,8 +63,8 @@ RSpec.describe "The styleguide", type: :request do
         html = Nokogiri::HTML(response.body)
         light, dark = %w[ organic organic-dark ].map { |theme| html.css("[data-theme='#{theme}'] tbody tr").map { it.text.squish } }
         expect([ light.size, dark.size ]).to eq [ 20, 20 ]
-        expect(light).to include "primary #8c491a 6.22:1 on primary-content"
-        expect(dark).to include "primary #e09675 6.00:1 on primary-content"
+        expect(light).to include "primary #8c491a 6.22:1 vs primary-content 5.72:1"
+        expect(dark).to include "primary #e09675 6.00:1 vs primary-content 5.90:1"
       end
 
       # The switcher's commonest row is a group that is not the current one, which a switcher listing only the current group never draws.

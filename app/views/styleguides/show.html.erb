@@ -33,7 +33,7 @@
     <p class="text-meta">Every colour, type size, component and partial, drawn from sample records under the light and the dark theme.</p>
   </div>
 
-  <%= render layout: "styleguides/section", locals: { title: "Colour tokens" } do |theme| %>
+  <%= render layout: "styleguides/section", locals: { title: "Colour tokens", stacked: true } do |theme| %>
     <% colours = theme_colours(theme) %>
     <div class="max-w-full overflow-x-auto">
       <table class="table table-sm">
@@ -43,18 +43,25 @@
             <th>Token</th>
             <th>Swatch</th>
             <th>Hex</th>
-            <th>Contrast</th>
+            <th>Pair</th>
+            <th>On base-100</th>
           </tr>
         </thead>
         <tbody>
           <% colours.each do |name, hex| %>
-            <% pair = contrast_pair(name) %>
+            <% pair, flagged = contrast_pair(name), !name.start_with?("base-") %>
             <tr>
               <td><code><%= name %></code></td>
               <%# WHY: inline, because the token is data read from the stylesheet, and a utility per token would be a second list of them for Tailwind to find. %>
               <td><span class="inline-block size-8 rounded-full border border-base-300 align-middle" style="background-color: var(--color-<%= name %>)"></span></td>
               <td><code><%= hex %></code></td>
-              <td><%= number_with_precision contrast_ratio(hex, colours.fetch(pair)), precision: 2 %>:1 on <code><%= pair %></code></td>
+              <td><%= contrast_ratio_tag contrast_ratio(hex, colours.fetch(pair)), flagged: %> vs <code><%= pair %></code></td>
+              <%# WHY: blank for a content colour, which is read on its own colour rather than on the page, and for the page itself. %>
+              <td>
+                <% unless name == "base-100" || name.end_with?("-content") %>
+                  <%= contrast_ratio_tag contrast_ratio(hex, colours.fetch("base-100")), flagged: %>
+                <% end %>
+              </td>
             </tr>
           <% end %>
         </tbody>

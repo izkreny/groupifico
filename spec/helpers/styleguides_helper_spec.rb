@@ -28,6 +28,25 @@ RSpec.describe StyleguidesHelper, type: :helper do
     end
   end
 
+  # The thresholds are WCAG AA's: 4.5:1 for text, and 3:1 for large text and interface chrome.
+  describe "#contrast_ratio_tag" do
+    it "prints a ratio that clears AA for text plainly" do
+      expect(helper.contrast_ratio_tag(4.5)).to eq "<span>4.50:1</span>"
+    end
+
+    it "tags a ratio that clears only large text as a warning" do
+      expect(helper.contrast_ratio_tag(3.0)).to eq %(<span class="badge badge-xs badge-warning">3.00:1</span>)
+    end
+
+    it "tags a ratio below 3:1 as an error" do
+      expect(helper.contrast_ratio_tag(2.99)).to eq %(<span class="badge badge-xs badge-error">2.99:1</span>)
+    end
+
+    it "prints any ratio plainly when it is not to be flagged" do
+      expect(helper.contrast_ratio_tag(1.2, flagged: false)).to eq "<span>1.20:1</span>"
+    end
+  end
+
   describe "#contrast_pair" do
     it "reads a colour against its content colour and back" do
       expect(helper.contrast_pair("primary")).to eq "primary-content"

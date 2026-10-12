@@ -14,6 +14,19 @@ module StyleguidesHelper
     (lighter + 0.05) / (darker + 0.05)
   end
 
+  # A contrast ratio as the theme was settled on it, tagged where it misses WCAG AA for text: a warning from 3:1, which still clears large text and interface chrome, and an error below. Unflagged for a base, which is a surface rather than a colour read against one.
+  def contrast_ratio_tag(ratio, flagged: true)
+    text = "#{number_with_precision ratio, precision: 2}:1"
+
+    if !flagged || ratio >= 4.5
+      tag.span(text)
+    elsif ratio >= 3
+      tag.span(text, class: "badge badge-xs badge-warning")
+    else
+      tag.span(text, class: "badge badge-xs badge-error")
+    end
+  end
+
   # The token a colour is read against: each colour against its content colour and back, each base against the base content, and the base content against the page.
   def contrast_pair(name)
     case name
