@@ -64,6 +64,24 @@ RSpec.describe "The styleguide", type: :request do
         expect(html.css("button[aria-label='Take Marija Babić off the list']")).to be_empty
       end
 
+      it "draws the member rows' Edit pencils for the owner" do
+        plant_styleguide_group(manager: "Ana Horvat")
+        sign_in_as(planted_member("Ana Horvat").user)
+
+        get "/styleguide"
+
+        expect(Nokogiri::HTML(response.body).css("a[aria-label='Edit Luka Marić']")).not_to be_empty
+      end
+
+      it "draws no Edit pencil on the member rows for a member who may not manage members" do
+        plant_styleguide_group(invited: "Ivan Kovačević")
+        sign_in_as(planted_member("Ivan Kovačević").user)
+
+        get "/styleguide"
+
+        expect(Nokogiri::HTML(response.body).css("a[aria-label^='Edit Ana'], a[aria-label^='Edit Luka']")).to be_empty
+      end
+
       it "lists every member of the group in the switcher, by name with their roles and status" do
         plant_styleguide_group(manager: "Ana Horvat", invited: "Ivan Kovačević", said_yes: "Marija Babić")
         sign_in_as(create(:user))

@@ -25,6 +25,9 @@
   invalid.errors.add(:creator, :required)
 
   newcomer = Member.new(group: @group)
+  # The member rows ask what `members#index` asks, of a member not yet in the list.
+  manages  = allowed_to?(:edit?, newcomer)
+  oversees = allowed_to?(:oversee?, newcomer)
 %>
 
 <div class="flex flex-col gap-8">
@@ -187,8 +190,8 @@
 
   <%= render layout: "styleguides/section", locals: { title: "Member rows, owner and paused" } do %>
     <ul class="list">
-      <%= render "members/member", member: @owner, manages: true, oversees: true %>
-      <%= render "members/member", member: @paused, manages: true, oversees: true %>
+      <%= render "members/member", member: @owner, manages:, oversees: %>
+      <%= render "members/member", member: @paused, manages:, oversees: %>
     </ul>
   <% end %>
 
