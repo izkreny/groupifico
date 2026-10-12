@@ -154,7 +154,7 @@
             group: @group,
             group_name: @group.name,
             initials: @owner.initials,
-            editable: true,
+            editable: allowed_to?(:edit?, @group),
             switcher_id: "group_switcher_#{theme}",
             tabs: true,
             section: :events %>

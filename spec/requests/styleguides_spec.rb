@@ -82,6 +82,24 @@ RSpec.describe "The styleguide", type: :request do
         expect(Nokogiri::HTML(response.body).css("a[aria-label^='Edit Ana'], a[aria-label^='Edit Luka']")).to be_empty
       end
 
+      it "draws the header's Edit group link for the owner" do
+        plant_styleguide_group(manager: "Ana Horvat")
+        sign_in_as(planted_member("Ana Horvat").user)
+
+        get "/styleguide"
+
+        expect(Nokogiri::HTML(response.body).css("a[aria-label='Edit group']")).not_to be_empty
+      end
+
+      it "draws no Edit group link for a member who is not an owner" do
+        plant_styleguide_group(invited: "Ivan Kovačević")
+        sign_in_as(planted_member("Ivan Kovačević").user)
+
+        get "/styleguide"
+
+        expect(Nokogiri::HTML(response.body).css("a[aria-label='Edit group']")).to be_empty
+      end
+
       it "lists every member of the group in the switcher, by name with their roles and status" do
         plant_styleguide_group(manager: "Ana Horvat", invited: "Ivan Kovačević", said_yes: "Marija Babić")
         sign_in_as(create(:user))
