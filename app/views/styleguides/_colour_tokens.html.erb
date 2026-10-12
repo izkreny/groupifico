@@ -1,0 +1,34 @@
+<%# locals: (theme:) %>
+<% colours = theme_colours(theme) %>
+<div class="max-w-full overflow-x-auto">
+  <table class="table table-sm">
+    <%# WHY: daisyUI greys a table's header at 60% of the base content, 4.1:1 on the light ground; 70% is the theme's grey that holds AA in both. %>
+    <thead class="text-base-content/70">
+      <tr>
+        <th>Token</th>
+        <th>Swatch</th>
+        <th>Hex</th>
+        <th>Pair</th>
+        <th>On base-100</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% colours.each do |name, hex| %>
+        <% pair, flagged = contrast_pair(name), !name.start_with?("base-") %>
+        <tr>
+          <td><code><%= name %></code></td>
+          <%# WHY: inline, because the token is data read from the stylesheet, and a utility per token would be a second list of them for Tailwind to find. %>
+          <td><span class="inline-block size-8 rounded-full border border-base-300 align-middle" style="background-color: var(--color-<%= name %>)"></span></td>
+          <td><code><%= hex %></code></td>
+          <td><%= contrast_ratio_tag contrast_ratio(hex, colours.fetch(pair)), flagged: %> vs <code><%= pair %></code></td>
+          <%# WHY: blank for a content colour, which is read on its own colour rather than on the page, and for the page itself. %>
+          <td>
+            <% unless name == "base-100" || name.end_with?("-content") %>
+              <%= contrast_ratio_tag contrast_ratio(hex, colours.fetch("base-100")), flagged: %>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

@@ -1,0 +1,9 @@
+<%# locals: () %>
+<ul class="grid grid-cols-3 gap-4 sm:grid-cols-4">
+  <% IconsHelper::ICONS.each_key do |meaning| %>
+    <li class="flex flex-col items-center gap-1 text-xs">
+      <%= icon meaning, class: "size-6" %>
+      <span><%= meaning %></span>
+    </li>
+  <% end %>
+</ul>
