@@ -3,13 +3,7 @@
   The compact row: the status as its icon alone, the name, and one meta line. No count tags, which
   the legend's matrix reserves for a card: a row competes with every other row beneath it.
 
-  The question is the exception, and it is asked wherever the reader has been invited, has not
-  answered, and the event can still take an answer - a row is where they are looking when they
-  decide. The past list asks too, in the past tense: an event that has ended and that nobody
-  concluded is still worth a roster, and `EventsHelper#answer_prompt` carries that half.
-  `open_to_answers?` rules out the events somebody ended rather than the ones the clock did.
-  `events/_rsvp` carries no such guard of its own, because the hero is its only other caller and is
-  always confirmed and unfinished.
+  The question is the exception, and it is asked wherever `Registration#asked?` puts it - a row is where they are looking when they decide. The past list asks too, in the past tense: an event that has ended and that nobody concluded is still worth a roster, so there the question goes to anyone who has not said yes or no, and `EventsHelper#answer_prompt` carries the tense. `open_to_answers?` rules out the events somebody ended rather than the ones the clock did; it is asked here as well as in `events/_rsvp` so a closed event's row draws no empty wrapper.
 
   An answer already given stays an icon beside the name rather than a second set of pills.
   `list-col-wrap` puts the question on its own line under the row rather than in a column beside it.
@@ -31,7 +25,7 @@
     </div>
   </div>
 
-  <% if registration&.invited? && event.open_to_answers? %>
+  <% if registration&.asked? && event.open_to_answers? %>
     <div class="list-col-wrap">
       <%= render "events/rsvp", event: event, registration: registration %>
     </div>
