@@ -15,9 +15,10 @@ RSpec.describe "The styleguide", type: :request do
 
       # Every section is drawn twice, so an id a partial mints for itself is on the page twice unless
       # the twin names it; a label pointing at a repeated id labels the first twin's control only.
+      # Signed in as the owner, whose policies draw every labelled control the page holds.
       it "points every label at exactly one control" do
-        plant_styleguide_group
-        sign_in_as(create(:user))
+        plant_styleguide_group(manager: "Ana Horvat")
+        sign_in_as(planted_member("Ana Horvat").user)
 
         get "/styleguide"
 
