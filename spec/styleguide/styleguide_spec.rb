@@ -115,10 +115,10 @@ RSpec.describe "The styleguide", type: :system do
     expect(page).to have_text "Signed in as Ivan Kovačević"
   end
 
-  # One audit covers both themes, since both twins of every section are on the page.
+  # One audit covers both themes, since both twins of every section are on the page. Signed in as the owner, whose policies draw every control the page holds.
   it "has no accessibility violations" do
-    plant_styleguide_group
-    sign_in_as create(:user)
+    plant_styleguide_group(manager: "Ana Horvat")
+    sign_in_as planted_member("Ana Horvat").user
     prefer_colour_scheme :light
 
     visit styleguide_path
