@@ -142,14 +142,15 @@ RSpec.describe "The styleguide", type: :request do
         expect(Nokogiri::HTML(response.body).css("a[aria-label='Edit group']")).to be_empty
       end
 
-      it "lists every member of the group in the switcher, by name with their roles and status" do
+      # Which members, in the order they joined; how each is labelled is the helper spec's.
+      it "lists every member of the group in the switcher, in the order they joined" do
         plant_styleguide_group(manager: "Ana Horvat", invited: "Ivan Kovačević", said_yes: "Marija Babić")
         sign_in_as(create(:user))
 
         get "/styleguide"
 
         options = Nokogiri::HTML(response.body).css("#member_switcher select option[value!='']").map(&:text)
-        expect(options).to eq [ "Ana Horvat - owner, active", "Ivan Kovačević - active", "Marija Babić - active", "Luka Marić - paused" ]
+        expect(options.map { it.split(" - ").first }).to eq [ "Ana Horvat", "Ivan Kovačević", "Marija Babić", "Luka Marić" ]
       end
 
       it "names the signed-in user above the switcher, though they are not a member" do
