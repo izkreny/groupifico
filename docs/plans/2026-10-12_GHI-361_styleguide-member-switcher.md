@@ -63,3 +63,7 @@ No gate scrolls the seeded group's page, so how the fixed header sits over 44 ro
 ## Open questions
 
 - How does the switch pass `verify_authorized`? 1. `Styleguides::SessionPolicy`, granting only a member of the styleguide group, which this plan builds since it needs no new skip. 2. A permanent `skip_verify_authorized only: %i[ create ]` on `Styleguides::SessionsController`, the environment and the sign-in being the whole gate, which is a new skip and so the owner's call per `.agents/rails-style.md`.
+
+## Settled
+
+- How does the switch pass `verify_authorized`? Option 2, settled by the owner on 2026-10-14: a permanent `skip_verify_authorized only: %i[ create ]` on `Styleguides::SessionsController`, replacing `Styleguides::SessionPolicy`. The development-only route, the action's own 404 outside development and test, and sign-in are the whole gate, so the switch may sign in as any member, and a staging environment draws neither route since `Rails.env.local?` answers false there.
