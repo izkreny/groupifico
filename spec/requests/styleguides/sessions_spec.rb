@@ -38,13 +38,14 @@ RSpec.describe "Styleguides::Sessions", type: :request do
         expect { post "/styleguide/session", params: { member_id: member.id } }.to change { developer.sessions.count }.from(1).to(0)
       end
 
-      it "refuses a member of any other group, and signs nobody in as them" do
+      # The development-only route and the 404 outside development and test are the switch's whole gate, so it signs in as a member of any group.
+      it "signs in as a member of a group other than the styleguide's" do
         plant_styleguide_group
         member = create(:member)
         sign_in_as(create(:user))
 
-        expect { post "/styleguide/session", params: { member_id: member.id } }.not_to change { member.user.sessions.count }
-        expect(response).to redirect_to root_path
+        expect { post "/styleguide/session", params: { member_id: member.id } }.to change { member.user.sessions.count }.by(1)
+        expect(response).to redirect_to styleguide_path
       end
 
       # WHY: `Rails.env` stubbed, because the route is drawn only where the environment is local, so this is the one way to reach the action as production would if a route ever drew it there. The path is read through its helper before the stub, which draws the routes if nothing has yet: they load lazily, and a first draw under the stub would be production's for every later example in the process.

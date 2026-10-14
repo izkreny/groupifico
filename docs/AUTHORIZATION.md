@@ -119,4 +119,4 @@ Each thing below sits outside the group axis entirely, and none takes a row abov
 
 **An address has no permissions of its own**, per the note above: it inherits from whichever group or event points at it, and from the group alone where a group calls it home.
 
-**The styleguide's member switcher asks about the member switched to, never about the acting user.** `Styleguides::SessionPolicy` skips both pre-checks, since the developer switching is rarely a member of the styleguide group, and `create?` grants a member of the group `StyleguidesController::GROUP_NAME` names and nobody else, so the switch cannot sign in as any other account. Its route exists only in development and test, and `Styleguides::SessionsController` answers `404` anywhere else before any policy runs.
+**The styleguide's member switcher asks no policy.** `Styleguides::SessionsController#create` runs under `skip_verify_authorized` and signs in as any member's user, because its route exists only in development and test and the action answers `404` anywhere else, so the environment and sign-in are its whole gate and a rule would have nothing to decide.
