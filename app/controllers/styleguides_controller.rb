@@ -4,12 +4,13 @@ class StyleguidesController < ApplicationController
   # WHY: found by its name alone, so the seed takes whatever id the database hands it. Nothing makes a group's name unique, so it is one nobody would give their own group, which keeps a group created through the app from being drawn as the styleguide.
   GROUP_NAME = "Samplifichoir"
 
-  # Permanent. The page draws seeded sample data for whoever opens it, a developer's page rather than a member's, so there is no decision for a policy to make. Named actions rather than a bare skip, so an action added later cannot inherit an exemption nobody chose for it - same reason `SessionsController` names its own.
+  # Permanent. Opening the page is no decision: any signed-in developer may, and each control on it asks the signed-in user's own policies, which is what the member switcher is for. Named actions rather than a bare skip, so an action added later cannot inherit an exemption nobody chose for it - same reason `SessionsController` names its own.
   skip_verify_authorized only: %i[ show ]
 
   def show
     @group = Group.find_by(name: GROUP_NAME)
     @next_up, @unconfirmed, @ongoing, @concluded, @canceled = pick_events
+    @members = @group ? @group.members.preloaded.order(:id).to_a : []
     @owner, @paused = pick_members
     # WHY: the owner is active here, so a paused membership is in another group, which is what gives the switcher both a row that is not current and a paused one.
     @memberships = @owner ? @owner.user.current_memberships.preloaded.to_a : []
@@ -61,13 +62,8 @@ class StyleguidesController < ApplicationController
 
     # An active owner, whose membership draws the owner tags and whose profile the account sections draw, and a paused member for the status tags. Each picked by status as the events are.
     #
-    # WHY: in the order they joined, because the seed makes two active owners and only the first is paused in the second group the switcher needs; an unordered read leaves which one is drawn to the database.
+    # WHY: from `@members`, in the order they joined, because the seed makes two active owners and only the first is paused in the second group the group switcher needs; an unordered read leaves which one is drawn to the database.
     def pick_members
-      members = @group ? @group.members.preloaded.order(:id).to_a : []
-
-      [ members.find { it.active? && it.owner? }, members.find(&:paused?) ]
+      [ @members.find { it.active? && it.owner? }, @members.find(&:paused?) ]
     end
-
-    # Every control a permitted member sees, whoever opens the page. The visitor is rarely a member of the styleguide group, so the real policies would refuse most of them and the RSVP pills, among others, would vanish. Who is permitted is the policies' business and their specs', never this page's.
-    def allowed_to?(*) = true
 end

@@ -8,8 +8,8 @@ require "rails_helper"
 # daisyUI theme sets, read as `ColourSchemeHelper#rendered_colour_scheme` reads the root's.
 RSpec.describe "The styleguide", type: :system do
   it "paints the hero card and the lit RSVP pill in the light twin" do
-    plant_styleguide_group
-    sign_in_as create(:user)
+    plant_styleguide_group(manager: "Ana Horvat")
+    sign_in_as planted_member("Ana Horvat").user
 
     visit styleguide_path
 
@@ -19,8 +19,8 @@ RSpec.describe "The styleguide", type: :system do
   end
 
   it "paints the same two in the dark twin" do
-    plant_styleguide_group
-    sign_in_as create(:user)
+    plant_styleguide_group(manager: "Ana Horvat")
+    sign_in_as planted_member("Ana Horvat").user
 
     visit styleguide_path
 
@@ -91,6 +91,28 @@ RSpec.describe "The styleguide", type: :system do
     ladder = find("section", text: "Type ladder")
     expect(ladder.all(".font-heading").map { it.evaluate_script("getComputedStyle(this).fontFamily") }).to match [ a_string_starting_with("Caprasimo") ] * 8
     expect(ladder.all("p:not(.font-heading)").map { it.evaluate_script("getComputedStyle(this).fontFamily") }).to match [ a_string_starting_with("Figtree") ] * 6
+  end
+
+  it "keeps the member switcher in view while the page scrolls" do
+    plant_styleguide_group
+    sign_in_as create(:user)
+
+    visit styleguide_path
+    page.execute_script("window.scrollTo(0, document.body.scrollHeight)")
+
+    expect(find_by_id("member_switcher").evaluate_script("this.getBoundingClientRect().top")).to eq 0
+    expect(page.evaluate_script("window.scrollY")).to be > 0
+  end
+
+  it "signs in as the member picked in the switcher" do
+    plant_styleguide_group(invited: "Ivan Kovačević")
+    sign_in_as create(:user)
+
+    visit styleguide_path
+    select "Ivan Kovačević - active", from: "Sign in as"
+    click_button "Switch"
+
+    expect(page).to have_text "Signed in as Ivan Kovačević"
   end
 
   # One audit covers both themes, since both twins of every section are on the page.

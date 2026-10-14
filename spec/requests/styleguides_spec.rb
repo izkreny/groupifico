@@ -1,7 +1,6 @@
 require 'rails_helper'
 
-# Production is the one environment the page is kept out of, and no spec runs there; the guard in
-# `config/routes.rb` is `Rails.env.local?`, which answers true for this suite.
+# Production is the one environment the page is kept out of. The guard in `config/routes.rb` is `Rails.env.local?`, which answers true for this suite, so "its routes in production" draws them as production would.
 RSpec.describe "The styleguide", type: :request do
   describe "GET /styleguide" do
     context "when signed in" do
@@ -41,16 +40,123 @@ RSpec.describe "The styleguide", type: :request do
         expect(html.css(".badge [aria-label='no reply']")).not_to be_empty
       end
 
-      # A signed-in user who belongs to no group still gets every control a permitted member would.
-      it "draws the roster's controls on every row" do
-        plant_styleguide_group(invited: "Ivan Kovačević", said_yes: "Marija Babić")
-        sign_in_as(create(:user))
+      # The owner may answer for every member and take anyone off the list, so every row draws both controls.
+      it "draws the roster's controls on every row for the owner" do
+        plant_styleguide_group(manager: "Ana Horvat", invited: "Ivan Kovačević", said_yes: "Marija Babić")
+        sign_in_as(planted_member("Ana Horvat").user)
 
         get "/styleguide"
 
         html = Nokogiri::HTML(response.body)
         expect(html.css("button[aria-label='Yes for Ivan Kovačević']")).not_to be_empty
         expect(html.css("button[aria-label='Take Marija Babić off the list']")).not_to be_empty
+      end
+
+      # The page asks the signed-in user's own policies, so a user outside the group is offered nothing they could not do.
+      it "draws none of the roster's controls for a user outside the group" do
+        plant_styleguide_group(invited: "Ivan Kovačević", said_yes: "Marija Babić")
+        sign_in_as(create(:user))
+
+        get "/styleguide"
+
+        html = Nokogiri::HTML(response.body)
+        expect(html.css("button[aria-label='Yes for Ivan Kovačević']")).to be_empty
+        expect(html.css("button[aria-label='Take Marija Babić off the list']")).to be_empty
+      end
+
+      it "draws the member rows' Edit pencils for the owner" do
+        plant_styleguide_group(manager: "Ana Horvat")
+        sign_in_as(planted_member("Ana Horvat").user)
+
+        get "/styleguide"
+
+        expect(Nokogiri::HTML(response.body).css("a[aria-label='Edit Luka Marić']")).not_to be_empty
+      end
+
+      it "draws no Edit pencil on the member rows for a member who may not manage members" do
+        plant_styleguide_group(invited: "Ivan Kovačević")
+        sign_in_as(planted_member("Ivan Kovačević").user)
+
+        get "/styleguide"
+
+        expect(Nokogiri::HTML(response.body).css("a[aria-label^='Edit Ana'], a[aria-label^='Edit Luka']")).to be_empty
+      end
+
+      # The paused member has never signed in, so a member who oversees the list sees the mark on that row; the owner's own row has none, since signing in stamps their first sign-in.
+      it "marks the member rows not signed in yet for the owner" do
+        plant_styleguide_group(manager: "Ana Horvat")
+        sign_in_as(planted_member("Ana Horvat").user)
+
+        get "/styleguide"
+
+        section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Member rows, owner and paused" }
+        expect(section.text).to include "not signed in yet"
+      end
+
+      it "draws no not-signed-in mark on the member rows for a member who does not oversee the list" do
+        plant_styleguide_group(invited: "Ivan Kovačević")
+        sign_in_as(planted_member("Ivan Kovačević").user)
+
+        get "/styleguide"
+
+        section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Member rows, owner and paused" }
+        expect(section.text).not_to include "not signed in yet"
+      end
+
+      it "draws the header's Edit group link for the owner" do
+        plant_styleguide_group(manager: "Ana Horvat")
+        sign_in_as(planted_member("Ana Horvat").user)
+
+        get "/styleguide"
+
+        expect(Nokogiri::HTML(response.body).css("a[aria-label='Edit group']")).not_to be_empty
+      end
+
+      it "draws no Edit group link for a member who is not an owner" do
+        plant_styleguide_group(invited: "Ivan Kovačević")
+        sign_in_as(planted_member("Ivan Kovačević").user)
+
+        get "/styleguide"
+
+        expect(Nokogiri::HTML(response.body).css("a[aria-label='Edit group']")).to be_empty
+      end
+
+      it "lists every member of the group in the switcher, by name with their roles and status" do
+        plant_styleguide_group(manager: "Ana Horvat", invited: "Ivan Kovačević", said_yes: "Marija Babić")
+        sign_in_as(create(:user))
+
+        get "/styleguide"
+
+        options = Nokogiri::HTML(response.body).css("#member_switcher select option[value!='']").map(&:text)
+        expect(options).to eq [ "Ana Horvat - owner, active", "Ivan Kovačević - active", "Marija Babić - active", "Luka Marić - paused" ]
+      end
+
+      it "names the signed-in user above the switcher, though they are not a member" do
+        plant_styleguide_group
+        sign_in_as(create(:user, :with_full_profile, first_name: "Vesna", last_name: "Pisac"))
+
+        get "/styleguide"
+
+        expect(Nokogiri::HTML(response.body).at_css("#member_switcher").text.squish).to include "Signed in as Vesna Pisac"
+      end
+
+      # The prompt is what a user outside the group starts on, and its blank value is a request the switch refuses as malformed, so the browser is told never to send it.
+      it "requires a member to be picked before the switch submits" do
+        plant_styleguide_group
+        sign_in_as(create(:user))
+
+        get "/styleguide"
+
+        expect(Nokogiri::HTML(response.body).at_css("#member_switcher select")["required"]).not_to be_nil
+      end
+
+      it "selects the signed-in member in the switcher" do
+        plant_styleguide_group(invited: "Ivan Kovačević")
+        sign_in_as(planted_member("Ivan Kovačević").user)
+
+        get "/styleguide"
+
+        expect(Nokogiri::HTML(response.body).css("#member_switcher select option[selected]").map(&:text)).to eq [ "Ivan Kovačević - active" ]
       end
 
       # Each twin draws its own theme's tokens, so a twin printing the other's palette fails here. The ratios were derived outside `StyleguidesHelper`, so a cell reading the wrong pair fails too.
@@ -94,8 +200,8 @@ RSpec.describe "The styleguide", type: :request do
 
       # What holds the page to every daisyUI component the app uses, in each variant, as the template example holds it to every partial. The classes are read from `class` attributes only, since the same words run through the comments, and a variant prefix such as `sm:` is dropped. The form builder is read for every quoted literal too, because it picks `textarea` and `select` from a map rather than writing them in a `class`. The stems are daisyUI 5's components, by hand, and a class counts only where the vendored daisyUI bundle defines it, which leaves out every Tailwind utility sharing a stem's prefix, such as `list-disc` or `mask-none`.
       it "draws every daisyUI class the app's views use" do
-        plant_styleguide_group
-        sign_in_as(create(:user))
+        plant_styleguide_group(manager: "Ana Horvat")
+        sign_in_as(planted_member("Ana Horvat").user)
 
         get "/styleguide"
 
@@ -244,6 +350,29 @@ RSpec.describe "The styleguide", type: :request do
 
         expect(response).to redirect_to new_session_path
       end
+    end
+  end
+
+  # Not a request either, and here for the reason the template's example gives. `config/routes.rb` is drawn into a route set of its own while `Rails.env` answers production, so the application's own routes are never redrawn and both stubs end with the example.
+  describe "its routes in production" do
+    it "draws no route to the page" do
+      routes = ActionDispatch::Routing::RouteSet.new
+      allow(Rails).to receive(:env).and_return(ActiveSupport::EnvironmentInquirer.new("production"))
+      allow(Rails.application).to receive(:routes).and_return(routes)
+
+      load Rails.root.join("config/routes.rb")
+
+      expect { routes.recognize_path("/styleguide") }.to raise_error ActionController::RoutingError
+    end
+
+    it "draws no route to the member switch" do
+      routes = ActionDispatch::Routing::RouteSet.new
+      allow(Rails).to receive(:env).and_return(ActiveSupport::EnvironmentInquirer.new("production"))
+      allow(Rails.application).to receive(:routes).and_return(routes)
+
+      load Rails.root.join("config/routes.rb")
+
+      expect { routes.recognize_path("/styleguide/session", method: :post) }.to raise_error ActionController::RoutingError
     end
   end
 
