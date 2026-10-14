@@ -144,7 +144,9 @@
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Confirm sheet" } do |theme| %>
-    <%= render "events/delete", group: @group, event: @next_up, id: "confirm_delete_#{theme}" %>
+    <% if allowed_to?(:destroy?, @next_up) %>
+      <%= render "events/delete", group: @group, event: @next_up, id: "confirm_delete_#{theme}" %>
+    <% end %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Header, with the group switcher and the tabs" } do |theme| %>

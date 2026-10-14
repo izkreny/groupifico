@@ -103,6 +103,26 @@ RSpec.describe "The styleguide", type: :request do
         expect(section.text).not_to include "not signed in yet"
       end
 
+      it "draws the confirm sheet's Delete event for the owner" do
+        plant_styleguide_group(manager: "Ana Horvat")
+        sign_in_as(planted_member("Ana Horvat").user)
+
+        get "/styleguide"
+
+        section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Confirm sheet" }
+        expect(section.css("button").map { it.text.squish }).to include "Delete event"
+      end
+
+      it "draws no confirm sheet for a member who may not delete events" do
+        plant_styleguide_group(invited: "Ivan Kovačević")
+        sign_in_as(planted_member("Ivan Kovačević").user)
+
+        get "/styleguide"
+
+        section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Confirm sheet" }
+        expect(section.css("button").map { it.text.squish }).not_to include "Delete event"
+      end
+
       it "draws the header's Edit group link for the owner" do
         plant_styleguide_group(manager: "Ana Horvat")
         sign_in_as(planted_member("Ana Horvat").user)
