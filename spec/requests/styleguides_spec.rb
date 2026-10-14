@@ -149,8 +149,8 @@ RSpec.describe "The styleguide", type: :request do
 
         get "/styleguide"
 
-        options = Nokogiri::HTML(response.body).css("#member_switcher select option[value!='']").map(&:text)
-        expect(options.map { it.split(" - ").first }).to eq [ "Ana Horvat", "Ivan Kovačević", "Marija Babić", "Luka Marić" ]
+        listed = Nokogiri::HTML(response.body).css("#member_switcher select option[value!='']").map { it["value"].to_i }
+        expect(listed).to eq [ "Ana Horvat", "Ivan Kovačević", "Marija Babić", "Luka Marić" ].map { planted_member(it).id }
       end
 
       it "names the signed-in user above the switcher, though they are not a member" do
@@ -178,7 +178,7 @@ RSpec.describe "The styleguide", type: :request do
 
         get "/styleguide"
 
-        expect(Nokogiri::HTML(response.body).css("#member_switcher select option[selected]").map(&:text)).to eq [ "Ivan Kovačević - active" ]
+        expect(Nokogiri::HTML(response.body).css("#member_switcher select option[selected]").map { it["value"].to_i }).to eq [ planted_member("Ivan Kovačević").id ]
       end
 
       # Each twin draws its own theme's tokens, so a twin printing the other's palette fails here. The ratios were derived outside `StyleguidesHelper`, so a cell reading the wrong pair fails too.
