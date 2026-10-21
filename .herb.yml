@@ -10,7 +10,7 @@
 # `node_modules/.bin/herb-lint --upgrade`, which raises this number and writes
 # an explicit `enabled: false` for each newly arrived rule, then decide each of
 # those on its own rather than leaving the whole batch off.
-version: 0.11.0
+version: 0.11.1
 
 # These templates are ActionView's, not plain ERB rendered by a script, so the
 # `actionview-*` rules are reading the right dialect. Declarative only: the
