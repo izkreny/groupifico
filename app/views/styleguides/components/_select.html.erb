@@ -1,13 +1,9 @@
-<%# locals: (theme:) %>
+<%# locals: (theme:, group:) %>
 <div class="flex flex-col gap-4">
   <div class="flex flex-col gap-2">
     <h3 class="text-meta">As the app uses it</h3>
 
-    <%= select_tag :scope,
-          options_for_select([ [ "Upcoming events", "upcoming" ], [ "Past events", "past" ] ], "upcoming"),
-          id: "select_scope_#{theme}",
-          class: "select select-ghost bg-base-200 rounded-full",
-          aria: { label: "Which events to show" } %>
+    <%= render "events/scope_select", group:, past: false, id: "select_scope_#{theme}" %>
   </div>
 
   <div class="flex flex-col gap-2">

@@ -1,0 +1,6 @@
+<%# locals: (original:) %>
+<div role="status" class="alert">
+  <%= icon :duplicate, class: "size-6 shrink-0" %>
+
+  <span>Copied from <%= original.starts_at.strftime(EventsHelper::DATE_FORMAT) %>. Dates moved on 7 days, status back to unconfirmed, nobody registered yet.</span>
+</div>

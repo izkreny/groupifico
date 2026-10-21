@@ -1,0 +1,7 @@
+<%# locals: (event:, roster_id:) %>
+<details class="collapse collapse-arrow peer">
+  <summary class="collapse-title flex flex-col gap-2 px-0" aria-controls="<%= roster_id %>">
+    <span class="font-semibold">Who&rsquo;s coming</span>
+    <%= render "events/counts", event: %>
+  </summary>
+</details>
