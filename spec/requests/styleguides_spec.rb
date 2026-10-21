@@ -153,13 +153,13 @@ RSpec.describe "The styleguide", type: :request do
         expect(listed).to eq [ "Ana Horvat", "Ivan Kovačević", "Marija Babić", "Luka Marić" ].map { planted_member(it).id }
       end
 
-      it "names the signed-in user above the switcher, though they are not a member" do
+      it "names the signed-in user in the switcher, though they are not a member" do
         plant_styleguide_group
         sign_in_as(create(:user, :with_full_profile, first_name: "Vesna", last_name: "Pisac"))
 
         get "/styleguide"
 
-        expect(Nokogiri::HTML(response.body).at_css("#member_switcher").text.squish).to include "Signed in as Vesna Pisac"
+        expect(Nokogiri::HTML(response.body).at_css("#member_switcher select option[value='']").text).to eq "Vesna Pisac (not a member)"
       end
 
       # The prompt is what a user outside the group starts on, and its blank value is a request the switch refuses as malformed, so the browser is told never to send it.

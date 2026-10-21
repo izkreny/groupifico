@@ -104,15 +104,28 @@ RSpec.describe "The styleguide", type: :system do
     expect(page.evaluate_script("window.scrollY")).to be > 0
   end
 
+  # The owner's Edit group link is drawn by the server alone, so it appearing is what proves the pick submitted.
   it "signs in as the member picked in the switcher" do
-    plant_styleguide_group(invited: "Ivan Kovačević")
+    plant_styleguide_group(manager: "Ana Horvat")
     sign_in_as create(:user)
 
     visit styleguide_path
-    select "Ivan Kovačević - active", from: "Sign in as"
-    click_button "Switch"
+    select "Ana Horvat - owner, active", from: "Signed in as"
 
-    expect(page).to have_text "Signed in as Ivan Kovačević"
+    expect(page).to have_css "a[aria-label='Edit group']"
+    expect(page).to have_select "Signed in as", selected: "Ana Horvat - owner, active"
+  end
+
+  it "keeps the scroll position through a switch" do
+    plant_styleguide_group(manager: "Ana Horvat")
+    sign_in_as create(:user)
+
+    visit styleguide_path
+    page.execute_script("window.scrollTo(0, 2000)")
+    select "Ana Horvat - owner, active", from: "Signed in as"
+
+    expect(page).to have_css "a[aria-label='Edit group']"
+    expect(page.evaluate_script("window.scrollY")).to eq 2000
   end
 
   # One audit covers both themes, since both twins of every section are on the page. Signed in as the owner, whose policies draw every control the page holds.
