@@ -26,6 +26,12 @@ module StyleguideHelper
     group
   end
 
+  # A member of the planted group, by the name `plant_styleguide_group` gave them, so an example signs in as the member it means rather than reaching for a row by position.
+  def planted_member(full_name)
+    first_name, last_name = full_name.split
+    Member.joins(:profile, :group).find_by!(groups: { name: StyleguidesController::GROUP_NAME }, user_profiles: { first_name:, last_name: })
+  end
+
   private
     def planted_user(full_name)
       first_name, last_name = full_name.split

@@ -8,8 +8,8 @@ require "rails_helper"
 # daisyUI theme sets, read as `ColourSchemeHelper#rendered_colour_scheme` reads the root's.
 RSpec.describe "The styleguide", type: :system do
   it "paints the hero card and the lit RSVP pill in the light twin" do
-    plant_styleguide_group
-    sign_in_as create(:user)
+    plant_styleguide_group(manager: "Ana Horvat")
+    sign_in_as planted_member("Ana Horvat").user
 
     visit styleguide_path
 
@@ -19,8 +19,8 @@ RSpec.describe "The styleguide", type: :system do
   end
 
   it "paints the same two in the dark twin" do
-    plant_styleguide_group
-    sign_in_as create(:user)
+    plant_styleguide_group(manager: "Ana Horvat")
+    sign_in_as planted_member("Ana Horvat").user
 
     visit styleguide_path
 
@@ -93,10 +93,47 @@ RSpec.describe "The styleguide", type: :system do
     expect(ladder.all("p:not(.font-heading)").map { it.evaluate_script("getComputedStyle(this).fontFamily") }).to match [ a_string_starting_with("Figtree") ] * 6
   end
 
-  # One audit covers both themes, since both twins of every section are on the page.
-  it "has no accessibility violations" do
+  it "keeps the member switcher in view while the page scrolls" do
     plant_styleguide_group
     sign_in_as create(:user)
+
+    visit styleguide_path
+    page.execute_script("window.scrollTo(0, document.body.scrollHeight)")
+
+    expect(find_by_id("member_switcher").evaluate_script("this.getBoundingClientRect().top")).to eq 0
+    expect(page.evaluate_script("window.scrollY")).to be > 0
+  end
+
+  # The owner's Edit group link is drawn by the server alone, so it appearing is what proves the pick submitted.
+  it "signs in as the member picked in the switcher" do
+    plant_styleguide_group(manager: "Ana Horvat")
+    sign_in_as create(:user)
+
+    visit styleguide_path
+    select "Ana Horvat - owner, active", from: "Signed in as"
+
+    expect(page).to have_css "a[aria-label='Edit group']"
+    expect(page).to have_select "Signed in as", selected: "Ana Horvat - owner, active"
+  end
+
+  # The owner gets the gated sections drawn above the member rows that a user outside the group does not, so a kept pixel offset alone would land several sections higher.
+  it "keeps the same section in view through a switch that draws sections above it" do
+    plant_styleguide_group(manager: "Ana Horvat")
+    sign_in_as create(:user)
+    member_rows_top = "[...document.querySelectorAll('section')].find(section => section.querySelector('h2').textContent == 'Member rows, owner and paused').getBoundingClientRect().top"
+
+    visit styleguide_path
+    page.execute_script("window.scrollBy(0, #{member_rows_top} - 100)")
+    select "Ana Horvat - owner, active", from: "Signed in as"
+
+    expect(page).to have_css "a[aria-label='Edit group']"
+    expect(page.evaluate_script(member_rows_top)).to be_within(1).of(100)
+  end
+
+  # One audit covers both themes, since both twins of every section are on the page. Signed in as the owner, whose policies draw every control the page holds.
+  it "has no accessibility violations" do
+    plant_styleguide_group(manager: "Ana Horvat")
+    sign_in_as planted_member("Ana Horvat").user
     prefer_colour_scheme :light
 
     visit styleguide_path

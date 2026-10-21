@@ -1,4 +1,6 @@
 <% content_for :title, "Styleguide" %>
+<%# WHY: a switch redirects back here, which Turbo takes as a refresh, so the page morphs in place rather than reloading at the top; `section-anchor` below then keeps the section that was in view where it was. %>
+<% turbo_refreshes_with method: :morph, scroll: :preserve %>
 
 <%#
   Each registration comes from its event's loaded `registrations`, because nobody acts on this page, so no pick goes through a member.
@@ -25,9 +27,21 @@
   invalid.errors.add(:creator, :required)
 
   newcomer = Member.new(group: @group)
+  # The member rows ask what `members#index` asks, of a member not yet in the list.
+  manages  = allowed_to?(:edit?, newcomer)
+  oversees = allowed_to?(:oversee?, newcomer)
 %>
 
-<div class="flex flex-col gap-8">
+<div class="flex flex-col gap-8" data-controller="section-anchor" data-action="turbo:submit-start@document->section-anchor#remember turbo:morph@document->section-anchor#restore">
+  <%# WHY: sticky inside the page's one column rather than fixed, so it keeps the column's width and takes the root theme rather than either twin's. %>
+  <header id="member_switcher" class="sticky top-0 z-10 bg-base-100 border-b border-base-300 py-2 text-sm">
+    <%= form_with url: styleguide_session_path, class: "flex flex-wrap items-center gap-2", data: { controller: "form" } do |form| %>
+      <%= form.label :member_id, "Signed in as", class: "label" %>
+      <%# WHY: the prompt shows only while the signed-in user is no member here, so it names them rather than asking for a pick. %>
+      <%= form.select :member_id, member_switch_choices(@members), { selected: @members.find { it.user_id == Current.user.id }&.id, prompt: "#{Current.user.profile.full_name} (not a member)" }, class: "select select-sm w-auto", required: true, data: { action: "change->form#submit" } %>
+    <% end %>
+  </header>
+
   <div>
     <h1 class="text-hero">Styleguide</h1>
     <p class="text-meta">Every colour, type size, component and partial, drawn from sample records under the light and the dark theme.</p>
@@ -123,13 +137,18 @@
     <% end %>
   <% end %>
 
-  <%= render layout: "styleguides/section", locals: { title: "Event form" } do |theme| %>
-    <%# Namespaced apart from the fields section's form too, which is an `Event` form under the same theme. %>
-    <%= render "events/form", group: @group, event: unsaved, submit: "Create event", cancel: "#", namespace: "#{theme}_form" %>
+  <%# WHY: each screen's own section is drawn only for a user that screen would let in, asked as its controller asks, so a switch to a member shows the page as they could reach it. %>
+  <% if allowed_to?(:new?, unsaved) %>
+    <%= render layout: "styleguides/section", locals: { title: "Event form" } do |theme| %>
+      <%# Namespaced apart from the fields section's form too, which is an `Event` form under the same theme. %>
+      <%= render "events/form", group: @group, event: unsaved, submit: "Create event", cancel: "#", namespace: "#{theme}_form" %>
+    <% end %>
   <% end %>
 
-  <%= render layout: "styleguides/section", locals: { title: "Confirm sheet" } do |theme| %>
-    <%= render "events/delete", group: @group, event: @next_up, id: "confirm_delete_#{theme}" %>
+  <% if allowed_to?(:destroy?, @next_up) %>
+    <%= render layout: "styleguides/section", locals: { title: "Confirm sheet" } do |theme| %>
+      <%= render "events/delete", group: @group, event: @next_up, id: "confirm_delete_#{theme}" %>
+    <% end %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Header, with the group switcher and the tabs" } do |theme| %>
@@ -139,7 +158,7 @@
             group: @group,
             group_name: @group.name,
             initials: @owner.initials,
-            editable: true,
+            editable: allowed_to?(:edit?, @group),
             switcher_id: "group_switcher_#{theme}",
             tabs: true,
             section: :events %>
@@ -161,35 +180,42 @@
     </div>
   <% end %>
 
-  <%= render layout: "styleguides/section", locals: { title: "Group form" } do |theme| %>
-    <%= render "groups/form", group: @group, namespace: "#{theme}_group" %>
+  <% if allowed_to?(:edit?, @group) %>
+    <%= render layout: "styleguides/section", locals: { title: "Group form" } do |theme| %>
+      <%= render "groups/form", group: @group, namespace: "#{theme}_group" %>
+    <% end %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Address" } do %>
     <%= render "addresses/address", address: @group.address %>
   <% end %>
 
-  <%= render layout: "styleguides/section", locals: { title: "Address form" } do |theme| %>
-    <%= render "addresses/form", address: @group.address, namespace: "#{theme}_address" %>
+  <% if allowed_to?(:edit?, @group.address) %>
+    <%= render layout: "styleguides/section", locals: { title: "Address form" } do |theme| %>
+      <%= render "addresses/form", address: @group.address, namespace: "#{theme}_address" %>
+    <% end %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Member rows, owner and paused" } do %>
     <ul class="list">
-      <%= render "members/member", member: @owner, manages: true, oversees: true %>
-      <%= render "members/member", member: @paused, manages: true, oversees: true %>
+      <%= render "members/member", member: @owner, manages:, oversees: %>
+      <%= render "members/member", member: @paused, manages:, oversees: %>
     </ul>
   <% end %>
 
-  <%= render layout: "styleguides/section", locals: { title: "Member form" } do |theme| %>
-    <%= render "members/form", group: @group, member: newcomer, submit: "Send invite", cancel: "#", namespace: "#{theme}_member" %>
+  <% if allowed_to?(:new?, newcomer) %>
+    <%= render layout: "styleguides/section", locals: { title: "Member form" } do |theme| %>
+      <%= render "members/form", group: @group, member: newcomer, submit: "Send invite", cancel: "#", namespace: "#{theme}_member" %>
+    <% end %>
   <% end %>
 
+  <%# WHY: the signed-in user's own profile, the one the Me screen lets anybody reach, rather than a sample's nobody else could open. %>
   <%= render layout: "styleguides/section", locals: { title: "Profile" } do %>
-    <%= render "user_profiles/user_profile", user_profile: @owner.profile %>
+    <%= render "user_profiles/user_profile", user_profile: Current.user.profile %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Profile form" } do |theme| %>
-    <%= render "user_profiles/form", user_profile: @owner.profile, namespace: "#{theme}_profile" %>
+    <%= render "user_profiles/form", user_profile: Current.user.profile, namespace: "#{theme}_profile" %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Legend icons", source: [ "Heroicons", "https://heroicons.com" ] } do %>

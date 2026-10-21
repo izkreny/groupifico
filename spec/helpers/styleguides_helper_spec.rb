@@ -73,4 +73,13 @@ RSpec.describe StyleguidesHelper, type: :helper do
       expect(helper.contrast_pair("base-content")).to eq "base-100"
     end
   end
+
+  describe "#member_switch_choices" do
+    it "labels each member by name, then their role tags in Role::NAMES order, then their status" do
+      user = create(:user, :with_full_profile, first_name: "Ana", last_name: "Horvat")
+      member = create(:member, :paused, user:, roles: [ build(:role, name: "events_administrator"), build(:role, name: "owner") ])
+
+      expect(helper.member_switch_choices([ member ])).to eq [ [ "Ana Horvat - owner, events admin, paused", member.id ] ]
+    end
+  end
 end

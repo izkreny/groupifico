@@ -113,8 +113,10 @@ That is a domain invariant rather than an authorization rule - it refuses the la
 
 ## Records that have no group at all
 
-Two things in this application sit outside the group axis entirely, and neither takes a row above, because a role can never be the answer.
+Each thing below sits outside the group axis entirely, and none takes a row above, because a role can never be the answer.
 
 **A user account and its profile belong to the acting user and to nobody else.** `UserProfilePolicy` skips both pre-checks and answers `record.user_id == user.id`, with `edit?` and `update?` aliased to `show?`, so the same identity test decides reading and writing. No group, no role, and no member of any group can reach another person's account or profile through the group they share. `UsersController` and `UserProfilesController` both resolve their record from `Current.user` rather than from the URL, so the identity is never taken from a parameter in the first place. Deleting the account asks no policy at all: `UsersController#destroy` runs under `skip_verify_authorized` and destroys `Current.user`, a record the caller's own session names, so a rule there would have one possible input and one possible answer, and `UserProfilePolicy` decides the profile and nothing about the account. What can refuse the deletion is `User`'s guard under *No capability can leave a group without an active owner*.
 
 **An address has no permissions of its own**, per the note above: it inherits from whichever group or event points at it, and from the group alone where a group calls it home.
+
+**The styleguide's member switcher asks no policy.** `Styleguides::SessionsController#create` runs under `skip_verify_authorized` and signs in as any member's user, because its route exists only in development and test and the action answers `404` anywhere else, so the environment and sign-in are its whole gate and a rule would have nothing to decide.
