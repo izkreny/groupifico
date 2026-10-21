@@ -84,7 +84,7 @@
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Select", docs: "https://daisyui.com/components/select/" } do |theme| %>
-    <%= render "styleguides/components/select", theme: %>
+    <%= render "styleguides/components/select", theme:, group: @group %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Page header" } do %>
