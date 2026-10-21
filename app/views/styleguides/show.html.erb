@@ -104,7 +104,7 @@
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Compact rows, one per event status" } do %>
-    <%= render "styleguides/event_rows", rows: %>
+    <%= render "styleguides/app_partials/event_rows", rows: %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Counts" } do %>
@@ -112,7 +112,7 @@
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "RSVP, question and answer" } do %>
-    <%= render "styleguides/rsvps", event: @next_up, question:, answer: %>
+    <%= render "styleguides/app_partials/rsvps", event: @next_up, question:, answer: %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Roster" } do %>
@@ -120,7 +120,7 @@
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Fields, with a hint and with an error" } do |theme| %>
-    <%= render "styleguides/fields", event: invalid, theme: %>
+    <%= render "styleguides/app_partials/fields", event: invalid, theme: %>
   <% end %>
 
   <%# WHY: each screen's own section is drawn only for a user that screen would let in, asked as its controller asks, so a switch to a member shows the page as they could reach it. %>
@@ -155,7 +155,7 @@
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Group cards, owner and paused" } do %>
-    <%= render "styleguides/group_cards", group: @group, owner: @owner, paused: @paused %>
+    <%= render "styleguides/app_partials/group_cards", group: @group, owner: @owner, paused: @paused %>
   <% end %>
 
   <% if allowed_to?(:edit?, @group) %>
@@ -175,7 +175,7 @@
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Member rows, owner and paused" } do %>
-    <%= render "styleguides/member_rows", owner: @owner, paused: @paused, manages:, oversees: %>
+    <%= render "styleguides/app_partials/member_rows", owner: @owner, paused: @paused, manages:, oversees: %>
   <% end %>
 
   <% if allowed_to?(:new?, newcomer) %>
