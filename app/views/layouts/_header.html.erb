@@ -47,7 +47,7 @@
       <%# A `div` rather than a `span`, because `.avatar > div` and `.avatar-placeholder > div`
           are how daisyUI names the box: the first gives it `aspect-ratio: 1/1` and the second
           centres what is inside it, and neither selector matches anything else. %>
-      <%= link_to user_profile_path, class: "avatar avatar-placeholder", aria: { label: "Me" } do %>
+      <%= link_to user_profile_path, class: "avatar avatar-placeholder", aria: { label: "#{initials}, me" } do %>
         <div class="bg-base-300 text-base-content w-8 rounded-full">
           <span class="text-card-fact"><%= initials %></span>
         </div>
