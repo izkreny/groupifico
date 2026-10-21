@@ -40,6 +40,12 @@ The toolchain moves before any gem does, so the bumps are resolved and locked by
 
 Then check the `Gemfile.lock` diff by eye against the trunk's copy: nothing should have moved beyond the gems named and, where the lockfile's declaration moved, the `BUNDLED WITH` line and the `bundler (<version>)` checksum line.
 
+## What an update round may fix
+
+**Adapting the code to a bump goes in the round's pull request at any size**: a renamed API, a deprecation, a new cop or lint rule, a changed test-driver default - anything that leaves what a user sees unchanged.
+
+**A behaviour change the bump reveals goes in the round only when it is small**: at most 3 files and 5 changed lines, specs included, and named in the issue so the round's scope says so. Anything larger is a separate issue, and the package that revealed it stays at its old version, named in the round's issue as deliberately left, until that issue lands.
+
 ## The changelog impact check
 
 A package that ships markup or CSS, such as daisyUI or `rails_icons`, can change how the app renders without a line of the app's own code moving, and its source sits outside the diff in a gem or in `node_modules`. So **the round's plan carries the evidence for every such package that moves**, and the review judges that list against the diff:
