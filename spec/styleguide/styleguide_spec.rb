@@ -51,7 +51,9 @@ RSpec.describe "The styleguide", type: :system do
 
     visit styleguide_path
 
-    light, dark = %w[ organic organic-dark ].map { |theme| find("section", text: "Colour tokens").find("[data-theme=#{theme}]").evaluate_script("this.getBoundingClientRect().toJSON()") }
+    light, dark = %w[ organic organic-dark ].map do |theme|
+      within("section", text: "Colour tokens") { find("[data-theme=#{theme}]").evaluate_script("this.getBoundingClientRect().toJSON()") }
+    end
     expect(dark["top"]).to be >= light["bottom"]
   end
 
