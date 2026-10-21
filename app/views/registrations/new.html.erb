@@ -53,7 +53,7 @@
       </ul>
 
       <div class="mt-4">
-        <%= button_tag type: "submit", class: "btn btn-primary btn-block", data: { invite_target: "submit" } do %>
+        <%= render "shared/block_button", data: { invite_target: "submit" } do %>
           <%= icon :invited %>
           <span data-invite-target="label">Invite</span>
         <% end %>

@@ -1,0 +1,10 @@
+<%# locals: (url: nil, data: {}) %>
+<% if url %>
+  <%= link_to url, class: "btn btn-primary btn-block", data: do %>
+    <%= yield %>
+  <% end %>
+<% else %>
+  <%= button_tag type: "submit", class: "btn btn-primary btn-block", data: do %>
+    <%= yield %>
+  <% end %>
+<% end %>
