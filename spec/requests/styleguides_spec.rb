@@ -422,7 +422,8 @@ RSpec.describe "The styleguide", type: :request do
   # exists to show.
   describe "its template" do
     it "renders every partial under app/views but the head and its own section" do
-      template = Rails.root.join("app/views/styleguides/show.html.erb").read
+      # The component partials are read with it, since each renders the app partial it draws.
+      template = Rails.root.glob("app/views/styleguides/{show.html.erb,components/_*.html.erb}").map(&:read).join
       partials = Rails.root.glob("app/views/**/_*.html.erb").map do |path|
         "#{path.dirname.relative_path_from(Rails.root.join("app/views"))}/#{path.basename.to_s.delete_prefix("_").delete_suffix(".html.erb")}"
       end
