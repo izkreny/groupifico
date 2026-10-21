@@ -114,14 +114,33 @@ RSpec.describe "The styleguide", type: :request do
         expect(section.css("button").map { it.text.squish }).to include "Delete event"
       end
 
-      it "draws no confirm sheet for a member who may not delete events" do
+      # The sections drawing a screen only some members reach, each asked as that screen's controller asks.
+      it "draws every gated screen's section for the owner" do
+        plant_styleguide_group(manager: "Ana Horvat")
+        sign_in_as(planted_member("Ana Horvat").user)
+
+        get "/styleguide"
+
+        expect(Nokogiri::HTML(response.body).css("section h2").map(&:text)).to include("Event form", "Confirm sheet", "Group form", "Address form", "Member form")
+      end
+
+      it "draws none of the gated screens' sections for a member who may reach none of them" do
         plant_styleguide_group(invited: "Ivan Kovačević")
         sign_in_as(planted_member("Ivan Kovačević").user)
 
         get "/styleguide"
 
-        section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Confirm sheet" }
-        expect(section.css("button").map { it.text.squish }).not_to include "Delete event"
+        expect(Nokogiri::HTML(response.body).css("section h2").map(&:text) & [ "Event form", "Confirm sheet", "Group form", "Address form", "Member form" ]).to be_empty
+      end
+
+      it "draws the signed-in member's own profile" do
+        plant_styleguide_group(manager: "Ana Horvat", invited: "Ivan Kovačević")
+        sign_in_as(planted_member("Ivan Kovačević").user)
+
+        get "/styleguide"
+
+        section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Profile" }
+        expect(section.css("h1").map { it.text.squish }.uniq).to eq [ "Ivan Kovačević" ]
       end
 
       it "draws the header's Edit group link for the owner" do
@@ -352,8 +371,8 @@ RSpec.describe "The styleguide", type: :request do
 
         get "/styleguide"
 
-        section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Profile" }
-        expect(section.css("[data-theme=organic] h1").map { it.text.squish }).to eq [ "Ana Horvat" ]
+        section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Member rows, owner and paused" }
+        expect(section.at_css("[data-theme=organic] li a").text.squish).to eq "Ana Horvat"
       end
 
       it "names the seed command when no group carries the styleguide group's name" do
