@@ -1,0 +1,5 @@
+<%# locals: (owner:, paused:, manages:, oversees:) %>
+<ul class="list">
+  <%= render "members/member", member: owner, manages:, oversees: %>
+  <%= render "members/member", member: paused, manages:, oversees: %>
+</ul>
