@@ -2,12 +2,8 @@
 
 <%= render "shared/page_header", title: "Duplicate event" %>
 
-<div class="w-full">
-  <div role="status" class="alert mb-4">
-    <%= icon :duplicate, class: "size-6 shrink-0" %>
-
-    <span>Copied from <%= @original.starts_at.strftime(EventsHelper::DATE_FORMAT) %>. Dates moved on 7 days, status back to unconfirmed, nobody registered yet.</span>
-  </div>
+<div class="w-full flex flex-col gap-4">
+  <%= render "events/duplicate_notice", original: @original %>
 
   <%= render "events/form", group: @group, event: @event, submit: "Create copy", cancel: group_event_path(@group, @original), original: @original %>
 </div>

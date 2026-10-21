@@ -1,12 +1,9 @@
-<%# locals: () %>
+<%# locals: (original:) %>
 <div class="flex flex-col gap-4">
   <div class="flex flex-col gap-2">
     <h3 class="text-meta">As the app uses it</h3>
 
-    <div role="status" class="alert">
-      <%= icon :duplicate, class: "size-6 shrink-0" %>
-      <span>Copied from an earlier event. Dates moved on 7 days, status back to unconfirmed, nobody registered yet.</span>
-    </div>
+    <%= render "events/duplicate_notice", original: %>
     <div role="alert" class="alert alert-success"><span>Event was successfully updated.</span></div>
     <div role="alert" class="alert alert-error"><span>You are not allowed to do that.</span></div>
   </div>
