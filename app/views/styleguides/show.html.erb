@@ -127,14 +127,7 @@
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Fields, with a hint and with an error" } do |theme| %>
-    <%= form_with model: invalid, url: styleguide_path, method: :get, namespace: theme do |form| %>
-      <%= form.with_error_summary do %>
-        <fieldset class="fieldset">
-          <%= form.field :name, hint: "What the group calls it, as it appears on every list." %>
-          <%= form.field :starts_at, as: :datetime_field %>
-        </fieldset>
-      <% end %>
-    <% end %>
+    <%= render "styleguides/fields", event: invalid, theme: %>
   <% end %>
 
   <%# WHY: each screen's own section is drawn only for a user that screen would let in, asked as its controller asks, so a switch to a member shows the page as they could reach it. %>

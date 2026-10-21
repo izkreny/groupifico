@@ -1,0 +1,9 @@
+<%# locals: (event:, theme:) %>
+<%= form_with model: event, url: styleguide_path, method: :get, namespace: theme do |form| %>
+  <%= form.with_error_summary do %>
+    <fieldset class="fieldset">
+      <%= form.field :name, hint: "What the group calls it, as it appears on every list." %>
+      <%= form.field :starts_at, as: :datetime_field %>
+    </fieldset>
+  <% end %>
+<% end %>
