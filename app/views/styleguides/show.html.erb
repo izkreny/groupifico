@@ -152,25 +152,20 @@
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Header, with the group switcher and the tabs" } do |theme| %>
-    <%= tag.div data: { controller: "group-switcher" } do %>
-      <%= render "layouts/header",
-            brand_name: Current.brand.name,
-            group: @group,
-            group_name: @group.name,
-            initials: @owner.initials,
-            editable: allowed_to?(:edit?, @group),
-            switcher_id: "group_switcher_#{theme}",
-            tabs: true,
-            section: :events %>
-      <%= render "layouts/group_switcher", id: "group_switcher_#{theme}", memberships: @memberships, current_group: @group %>
-    <% end %>
+    <%= render "layouts/header_with_switcher",
+          memberships: @memberships,
+          brand_name: Current.brand.name,
+          group: @group,
+          group_name: @group.name,
+          initials: @owner.initials,
+          editable: allowed_to?(:edit?, @group),
+          switcher_id: "group_switcher_#{theme}",
+          tabs: true,
+          section: :events %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Tabs in the dock" } do %>
-    <%# WHY: `static`, because the dock is fixed to the viewport's foot on a screen and would leave its twin here. %>
-    <nav class="dock static" aria-label="Group sections">
-      <%= render "layouts/group_tabs", group: @group, section: :events, in_dock: true %>
-    </nav>
+    <%= render "layouts/dock", group: @group, section: :events, static: true %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Group cards, owner and paused" } do %>

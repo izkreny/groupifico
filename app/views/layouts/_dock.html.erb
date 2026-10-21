@@ -1,0 +1,5 @@
+<%# locals: (group:, section:, static: false) %>
+<%# WHY: `static` for the styleguide, because the dock is fixed to the viewport's foot on a screen and would leave its twin there. %>
+<%= tag.nav class: ["dock", static ? "static" : "sm:hidden"], aria: { label: "Group sections" } do %>
+  <%= render "layouts/group_tabs", group:, section:, in_dock: true %>
+<% end %>
