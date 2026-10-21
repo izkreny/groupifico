@@ -1,0 +1,6 @@
+<%# locals: (rows:) %>
+<ul class="list">
+  <% rows.each do |event, registration| %>
+    <%= render "events/row", event: event, registration: registration %>
+  <% end %>
+</ul>

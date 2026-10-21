@@ -104,11 +104,7 @@
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Compact rows, one per event status" } do %>
-    <ul class="list">
-      <% rows.each do |event, registration| %>
-        <%= render "events/row", event: event, registration: registration %>
-      <% end %>
-    </ul>
+    <%= render "styleguides/event_rows", rows: %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Counts" } do %>
@@ -116,10 +112,7 @@
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "RSVP, question and answer" } do %>
-    <div class="flex flex-col gap-4">
-      <%= render "events/rsvp", event: @next_up, registration: question %>
-      <%= render "events/rsvp", event: @next_up, registration: answer %>
-    </div>
+    <%= render "styleguides/rsvps", event: @next_up, question:, answer: %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Roster" } do %>
@@ -162,10 +155,7 @@
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Group cards, owner and paused" } do %>
-    <div class="flex flex-col gap-2">
-      <%= render "groups/group", group: @group, membership: @owner %>
-      <%= render "groups/group", group: @group, membership: @paused %>
-    </div>
+    <%= render "styleguides/group_cards", group: @group, owner: @owner, paused: @paused %>
   <% end %>
 
   <% if allowed_to?(:edit?, @group) %>
@@ -185,10 +175,7 @@
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Member rows, owner and paused" } do %>
-    <ul class="list">
-      <%= render "members/member", member: @owner, manages:, oversees: %>
-      <%= render "members/member", member: @paused, manages:, oversees: %>
-    </ul>
+    <%= render "styleguides/member_rows", owner: @owner, paused: @paused, manages:, oversees: %>
   <% end %>
 
   <% if allowed_to?(:new?, newcomer) %>

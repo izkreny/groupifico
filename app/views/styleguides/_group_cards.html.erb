@@ -1,0 +1,5 @@
+<%# locals: (group:, owner:, paused:) %>
+<div class="flex flex-col gap-2">
+  <%= render "groups/group", group:, membership: owner %>
+  <%= render "groups/group", group:, membership: paused %>
+</div>
