@@ -116,16 +116,18 @@ RSpec.describe "The styleguide", type: :system do
     expect(page).to have_select "Signed in as", selected: "Ana Horvat - owner, active"
   end
 
-  it "keeps the scroll position through a switch" do
+  # The owner gets the gated sections drawn above the member rows that a user outside the group does not, so a kept pixel offset alone would land several sections higher.
+  it "keeps the same section in view through a switch that draws sections above it" do
     plant_styleguide_group(manager: "Ana Horvat")
     sign_in_as create(:user)
+    member_rows_top = "[...document.querySelectorAll('section')].find(section => section.querySelector('h2').textContent == 'Member rows, owner and paused').getBoundingClientRect().top"
 
     visit styleguide_path
-    page.execute_script("window.scrollTo(0, 2000)")
+    page.execute_script("window.scrollBy(0, #{member_rows_top} - 100)")
     select "Ana Horvat - owner, active", from: "Signed in as"
 
     expect(page).to have_css "a[aria-label='Edit group']"
-    expect(page.evaluate_script("window.scrollY")).to eq 2000
+    expect(page.evaluate_script(member_rows_top)).to be_within(1).of(100)
   end
 
   # One audit covers both themes, since both twins of every section are on the page. Signed in as the owner, whose policies draw every control the page holds.
