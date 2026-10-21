@@ -16,12 +16,7 @@
   %>
   <div class="card card-sm bg-base-200">
     <div class="card-body gap-3">
-      <details class="collapse collapse-arrow peer">
-        <summary class="collapse-title flex flex-col gap-2 px-0" aria-controls="<%= dom_id @event, :roster %>">
-          <span class="font-semibold">Who&rsquo;s coming</span>
-          <%= render "events/counts", event: @event %>
-        </summary>
-      </details>
+      <%= render "events/roster_toggle", event: @event, roster_id: dom_id(@event, :roster) %>
 
       <%= render "events/rsvp", event: @event, registration: @event.registration_for(Current.member) %>
 
