@@ -48,15 +48,15 @@
   </div>
 
   <%= render layout: "styleguides/section", locals: { title: "Colour tokens", stacked: true } do |theme| %>
-    <%= render "styleguides/colour_tokens", theme: %>
+    <%= render "styleguides/foundations/colour_tokens", theme: %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Type ladder" } do %>
-    <%= render "styleguides/type_ladder" %>
+    <%= render "styleguides/foundations/type_ladder" %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Character set" } do %>
-    <%= render "styleguides/character_set" %>
+    <%= render "styleguides/foundations/character_set" %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Alert", docs: "https://daisyui.com/components/alert/" } do %>
@@ -194,6 +194,6 @@
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Legend icons", source: [ "Heroicons", "https://heroicons.com" ] } do %>
-    <%= render "styleguides/legend_icons" %>
+    <%= render "styleguides/foundations/legend_icons" %>
   <% end %>
 </div>
