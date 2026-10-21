@@ -32,14 +32,12 @@
 
 <div class="flex flex-col gap-8">
   <%# WHY: sticky inside the page's one column rather than fixed, so it keeps the column's width and takes the root theme rather than either twin's. %>
-  <header id="member_switcher" class="sticky top-0 z-10 bg-base-100 border-b border-base-300 py-3">
-    <p class="text-meta">Signed in as <%= Current.user.profile.full_name %></p>
-    <%= form_with url: styleguide_session_path, class: "flex flex-wrap items-end gap-2" do |form| %>
-      <div class="fieldset py-0">
-        <%= form.label :member_id, "Sign in as", class: "label" %>
-        <%= form.select :member_id, member_switch_choices(@members), { selected: @members.find { it.user_id == Current.user.id }&.id, prompt: "Pick a member" }, class: "select", required: true %>
-      </div>
-      <%= form.submit "Switch", class: "btn btn-primary" %>
+  <header id="member_switcher" class="sticky top-0 z-10 bg-base-100 border-b border-base-300 py-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+    <p>Signed in as <%= Current.user.profile.full_name %></p>
+    <%= form_with url: styleguide_session_path, class: "flex flex-wrap items-center gap-2" do |form| %>
+      <%= form.label :member_id, "Sign in as", class: "label" %>
+      <%= form.select :member_id, member_switch_choices(@members), { selected: @members.find { it.user_id == Current.user.id }&.id, prompt: "Pick a member" }, class: "select select-sm w-auto", required: true %>
+      <%= form.submit "Switch", class: "btn btn-primary btn-sm" %>
     <% end %>
   </header>
 
