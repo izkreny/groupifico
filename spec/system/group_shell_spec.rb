@@ -298,7 +298,7 @@ RSpec.describe "The group shell", type: :system do
   # `@font-face` declares, so it passes with the fonts gone. `load` resolves to the faces it
   # fetched: none without the rules, a rejection on a URL Propshaft did not digest, and the latin
   # face of each family here. Watched failing with the `@font-face` rules removed.
-  it "loads Caprasimo and Figtree from the asset pipeline" do
+  it "loads Alegreya and Commissioner from the asset pipeline" do
     member = create(:member, group: create(:group))
     sign_in_as member.user
 
@@ -306,8 +306,17 @@ RSpec.describe "The group shell", type: :system do
 
     expect(page.evaluate_async_script(<<~JAVASCRIPT)).to eq [ 1, 1 ]
       const done = arguments[arguments.length - 1];
-      Promise.all([ document.fonts.load("16px Caprasimo"), document.fonts.load("16px Figtree") ])
+      Promise.all([ document.fonts.load("600 16px Alegreya"), document.fonts.load("16px Commissioner") ])
         .then((faces) => done(faces.map((face) => face.length)), (error) => done(String(error)));
     JAVASCRIPT
+  end
+
+  it "draws Croatian and Serbian Cyrillic letters in both faces without falling back" do
+    member = create(:member, group: create(:group))
+    sign_in_as member.user
+
+    visit group_path(member.group)
+
+    expect(font_fallbacks([ "600 25px Alegreya", "16px Commissioner" ], "ČĆĐŠŽčćđšžЂЈЉЊЋЏђјљњћџ")).to eq []
   end
 end

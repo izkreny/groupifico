@@ -84,15 +84,15 @@ RSpec.describe "The styleguide", type: :system do
     expect(ratios.select { |_surface, ratio| ratio < ContrastHelper::WCAG_AA }).to be_empty
   end
 
-  it "sets the type ladder's titles in Caprasimo and its text in Figtree" do
+  it "sets the type ladder's titles in Alegreya and its text in Commissioner" do
     plant_styleguide_group
     sign_in_as create(:user)
 
     visit styleguide_path
 
     ladder = find("section", text: "Type ladder")
-    expect(ladder.all(".font-heading").map { it.evaluate_script("getComputedStyle(this).fontFamily") }).to match [ a_string_starting_with("Caprasimo") ] * 8
-    expect(ladder.all("p:not(.font-heading)").map { it.evaluate_script("getComputedStyle(this).fontFamily") }).to match [ a_string_starting_with("Figtree") ] * 6
+    expect(ladder.all(".font-heading").map { it.evaluate_script("getComputedStyle(this).fontFamily") }).to match [ a_string_starting_with("Alegreya") ] * 8
+    expect(ladder.all("p:not(.font-heading)").map { it.evaluate_script("getComputedStyle(this).fontFamily") }).to match [ a_string_starting_with("Commissioner") ] * 6
   end
 
   it "keeps the member switcher in view while the page scrolls" do

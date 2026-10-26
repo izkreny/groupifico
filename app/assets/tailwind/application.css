@@ -80,40 +80,76 @@
 
 /* Vendored from Google Fonts under the licence in `app/assets/fonts/OFL.txt`. Propshaft treats
    `app/assets/fonts/` as a load path of its own, so a leading slash names a file in it, and the
-   built stylesheet carries the digested path. Figtree is one variable file per subset, 400 to 700. */
+   built stylesheet carries the digested path. Commissioner is one variable file per subset, 400 to 700; Alegreya is its 600 instance alone, the one weight a title uses. */
 @font-face {
-  font-family: "Caprasimo";
+  font-family: "Alegreya";
   font-style: normal;
-  font-weight: 400;
+  font-weight: 600;
   font-display: swap;
-  src: url("/caprasimo-latin-ext.woff2") format("woff2");
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  src: url("/alegreya-cyrillic.woff2") format("woff2");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
 }
 
 @font-face {
-  font-family: "Caprasimo";
+  font-family: "Alegreya";
   font-style: normal;
-  font-weight: 400;
+  font-weight: 600;
   font-display: swap;
-  src: url("/caprasimo-latin.woff2") format("woff2");
+  src: url("/alegreya-greek.woff2") format("woff2");
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+
+@font-face {
+  font-family: "Alegreya";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/alegreya-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "Alegreya";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/alegreya-latin.woff2") format("woff2");
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
 @font-face {
-  font-family: "Figtree";
+  font-family: "Commissioner";
   font-style: normal;
   font-weight: 400 700;
   font-display: swap;
-  src: url("/figtree-latin-ext.woff2") format("woff2");
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  src: url("/commissioner-cyrillic.woff2") format("woff2");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
 }
 
 @font-face {
-  font-family: "Figtree";
+  font-family: "Commissioner";
   font-style: normal;
   font-weight: 400 700;
   font-display: swap;
-  src: url("/figtree-latin.woff2") format("woff2");
+  src: url("/commissioner-greek.woff2") format("woff2");
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+
+@font-face {
+  font-family: "Commissioner";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/commissioner-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "Commissioner";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/commissioner-latin.woff2") format("woff2");
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
@@ -125,11 +161,11 @@
    DevTools Protocol - at a 24px root, `text-xs` went 12px to 18px while an 11px rung stayed 11px.
    The comments are the criterion's px, and each rem is that number over 16.
 
-   `--font-sans` is what Tailwind's preflight puts on the root, so Figtree reaches everything that
-   names no family. */
+   `--font-sans` is what Tailwind's preflight puts on the root, so Commissioner reaches everything
+   that names no family. */
 @theme {
-  --font-sans: "Figtree", system-ui, sans-serif;
-  --font-heading: "Caprasimo", system-ui, sans-serif;
+  --font-sans: "Commissioner", system-ui, sans-serif;
+  --font-heading: "Alegreya", Georgia, serif;
 
   --text-record: 1.5625rem;     /* 25px */
   --text-hero: 1.375rem;        /* 22px */
@@ -139,13 +175,17 @@
   --text-meta: 0.75rem;         /* 12px */
 }
 
-/* WHY: on the elements rather than through `font-heading`, since almost every title in the app is
-   one of these; the few that are not carry the utility. Caprasimo ships only 400, and `card-title`
-   asks for 600, which Chrome would fake by thickening every stroke until the letters touch. */
+/* WHY: on the elements rather than through `font-heading`, since almost every title in the app is one of these; the few that are not carry the utility, which sets only the family, so the second rule names it beside them. Alegreya is vendored at 600 alone, and `font-synthesis: none` keeps a title asking another weight from being faked by thickening every stroke. */
 @layer base {
   h1, h2, h3 {
     font-family: var(--font-heading);
     font-synthesis: none;
+  }
+
+  h1, h2, h3, .font-heading {
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    line-height: 1.2;
   }
 }
 
