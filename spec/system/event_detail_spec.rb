@@ -228,6 +228,28 @@ RSpec.describe "The event detail", type: :system do
     expect(page).to have_text "2 members invited."
   end
 
+  # WW's 4c draws the chevron straight after the heading rather than at the row's far end.
+  it "points the heading's chevron down while folded and up once open" do
+    owner, event, = rostered_event
+    sign_in_as owner.user
+
+    visit group_event_path(event.group, event)
+    folded = heading_chevron
+    open_roster
+
+    expect([ folded, heading_chevron ]).to match [ [ be_between(0, 16), glyph_path("chevron-down") ], [ be_between(0, 16), glyph_path("chevron-up") ] ]
+  end
+
+  it "sets Who’s coming as a 16px heading, as WW's 4c does" do
+    owner, event, = rostered_event
+    sign_in_as owner.user
+
+    visit group_event_path(event.group, event)
+
+    heading = find("summary > span", text: "Who’s coming").evaluate_script("[getComputedStyle(this).fontFamily, getComputedStyle(this).fontSize]")
+    expect(heading).to match [ a_string_starting_with("Alegreya"), "16px" ]
+  end
+
   it "lands on the edit form from the pencil" do
     owner, event, = rostered_event
     sign_in_as owner.user
@@ -240,6 +262,17 @@ RSpec.describe "The event detail", type: :system do
 
   def open_roster
     find("summary", text: "Who’s coming").click
+  end
+
+  # The visible chevron in the heading: its gap from the heading's words, and the glyph it draws.
+  def heading_chevron
+    find("summary > span svg", visible: :visible).evaluate_script(<<~JS)
+      (svg => { const words = document.createRange(); words.selectNodeContents(svg.parentElement.firstChild); return [ svg.getBoundingClientRect().left - words.getBoundingClientRect().right, svg.querySelector("path").getAttribute("d") ] })(this)
+    JS
+  end
+
+  def glyph_path(name)
+    Rails.root.join("app/assets/svg/icons/heroicons/outline/#{name}.svg").read[/ d="([^"]+)"/, 1]
   end
 
   def invite_the_rest(event)
