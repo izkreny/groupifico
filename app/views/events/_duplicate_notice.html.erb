@@ -1,6 +1,5 @@
 <%# locals: (original:) %>
-<div role="status" class="alert">
-  <%= icon :duplicate, class: "size-6 shrink-0" %>
-
+<%# WHY: `status` rather than the frame's `alert`, because it describes the form being filled in rather than reporting a failure, so a screen reader announces it without interrupting. %>
+<%= render layout: "shared/alert", locals: { kind: :info, role: "status" } do %>
   <span>Copied from <%= original.starts_at.strftime(EventsHelper::DATE_FORMAT) %>. Dates moved on 7 days, status back to unconfirmed, nobody registered yet.</span>
-</div>
+<% end %>

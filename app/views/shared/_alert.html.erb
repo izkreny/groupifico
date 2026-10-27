@@ -1,8 +1,8 @@
-<%# locals: (kind:, id: nil, dismissible: false, classes: nil) %>
+<%# locals: (kind:, id: nil, role: "alert", dismissible: false, classes: nil) %>
 <%# Every alert's one frame: the kind's icon, the message the block yields, and a slot for the dismiss button.
 
     WHY: the grid's three tracks are fixed, the last as wide as the button, so an alert with nothing to dismiss keeps the empty slot and its words line up with a dismissible one's. %>
-<%= tag.div id:, role: "alert", class: [ "alert alert-soft alert-#{kind} grid-cols-[1.5rem_1fr_2rem]", classes ], data: ({ controller: "dismiss" } if dismissible) do %>
+<%= tag.div id:, role:, class: [ "alert alert-soft alert-#{kind} grid-cols-[1.5rem_1fr_2rem]", classes ], data: ({ controller: "dismiss" } if dismissible) do %>
   <%= icon kind, class: "size-6" %>
 
   <div class="flex flex-col"><%= yield %></div>

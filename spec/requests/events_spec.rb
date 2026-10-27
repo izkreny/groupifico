@@ -1122,6 +1122,17 @@ RSpec.describe "Events", type: :request do
         expect(Nokogiri::HTML(response.body).at_css("input[name=original_id]")["value"]).to eq event.id.to_s
       end
 
+      # The app's alert kinds and nothing custom: the copy's note is an info alert, announced politely since it describes the form rather than reporting a failure.
+      it "states what the copy changed in an info alert" do
+        actor = create(:member, :active, :events_administrator)
+        event = create(:event, group: actor.group)
+        sign_in_as(actor.user)
+
+        get duplicate_group_event_path(event.group, event)
+
+        expect(Nokogiri::HTML(response.body).at_css("[role=status].alert-info")&.text).to include "Copied from"
+      end
+
       # `Event#duplicate` is `dup`, so the copy carries the original's `creator_id`. Nothing submits
       # it, which is what makes the duplicate belong to whoever saves it rather than to whoever made
       # the original.
