@@ -100,6 +100,19 @@ RSpec.describe "The styleguide", type: :system do
     expect(ratios.select { |_status, ratio| ratio < ContrastHelper::WCAG_AA }).to be_empty
   end
 
+  # The theme's 0.85rem over a 40px field and a box, and each smaller size in proportion to its height, so a small button or badge keeps the regular one's shape rather than rounding into a pill.
+  it "rounds a field, a box and their smaller sizes in proportion to their height" do
+    plant_styleguide_group
+    sign_in_as create(:user)
+
+    visit styleguide_path
+
+    radii = %w[ .btn:not(.btn-sm) .btn-sm .alert .badge-sm ].map do |selector|
+      find("[data-theme=organic] #{selector}", match: :first).evaluate_script("parseFloat(getComputedStyle(this).borderTopLeftRadius)")
+    end
+    expect(radii).to match [ 13.6, 10.88, 13.6, 6.67 ].map { a_value_within(0.01).of(it) }
+  end
+
   it "sets the type ladder's titles in Alegreya and its text in Commissioner" do
     plant_styleguide_group
     sign_in_as create(:user)

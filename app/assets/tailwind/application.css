@@ -36,9 +36,9 @@
   --color-warning-content: #fff4d6;
   --color-error: #972622;
   --color-error-content: #ffedeb;
-  --radius-selector: 9999px;
-  --radius-field: 9999px;
-  --radius-box: 1.75rem;
+  --radius-selector: 0.5rem;
+  --radius-field: 0.85rem;
+  --radius-box: 0.85rem;
   --size-selector: 0.25rem;
   --size-field: 0.25rem;
   --border: 1px;
@@ -70,9 +70,9 @@
   --color-warning-content: #201e1d;
   --color-error: #fe7f77;
   --color-error-content: #201e1d;
-  --radius-selector: 9999px;
-  --radius-field: 9999px;
-  --radius-box: 1.75rem;
+  --radius-selector: 0.5rem;
+  --radius-field: 0.85rem;
+  --radius-box: 0.85rem;
   --size-selector: 0.25rem;
   --size-field: 0.25rem;
   --border: 1px;
@@ -190,6 +190,11 @@
     line-height: 1.2;
   }
 }
+
+/* WHY: daisyUI gives every size of a component the one radius its token holds, so a smaller size rounds toward a pill; each size the app uses takes its token in proportion to its height instead, the theme's 0.85rem over a 40px field and 0.5rem over a 24px badge. Set on the token rather than on `border-radius`, because a button in a `join` reads its corners through it. Unlayered, so it beats the theme's own value. */
+.btn-sm, .input-sm, .select-sm { --radius-field: calc(0.85rem * 32 / 40); }
+.badge-sm { --radius-selector: calc(0.5rem * 20 / 24); }
+.badge-xs { --radius-selector: calc(0.5rem * 16 / 24); }
 
 /* WHY: unlayered, so each rule beats daisyUI's layered component CSS whatever its specificity.
    daisyUI's input border, base-content at 20%, is 1.5:1 on this ground where a field's boundary
