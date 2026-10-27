@@ -898,7 +898,7 @@ RSpec.describe "Events", type: :request do
         end
       end
 
-      it "draws the four count tags and the reader's own question" do
+      it "draws the five count tags and the reader's own question" do
         travel_to Time.zone.parse("2026-09-01 12:00") do
           member = create(:member, :active)
           event = detailed_event(member, reader_status: :invited)
@@ -906,7 +906,7 @@ RSpec.describe "Events", type: :request do
 
           get group_event_path(event.group, event)
 
-          expect(response.body).to include %(aria-label="yes"), %(aria-label="maybe"), %(aria-label="no"), %(aria-label="no reply")
+          expect(response.body).to include %(aria-label="yes"), %(aria-label="maybe"), %(aria-label="no"), %(aria-label="no reply"), %(aria-label="reserved")
           expect(page_text(response.body)).to include "Are you coming?"
         end
       end

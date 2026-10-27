@@ -372,27 +372,27 @@ RSpec.describe Event, type: :model do
   end
 
   describe "#answer_counts" do
-    it "counts every status but reserved, with a zero for the ones nobody holds" do
+    it "counts every status, with a zero for the ones nobody holds" do
       event = create(:event)
       create(:registration, event:, member: create(:member, group: event.group), status: :yes)
       create(:registration, event:, member: create(:member, group: event.group), status: :yes)
       create(:registration, event:, member: create(:member, group: event.group), status: :invited)
       create(:registration, event:, member: create(:member, group: event.group), status: :reserved)
 
-      expect(event.answer_counts).to eq("invited" => 1, "yes" => 2, "maybe" => 0, "no" => 0)
+      expect(event.answer_counts).to eq("invited" => 1, "yes" => 2, "maybe" => 0, "no" => 0, "reserved" => 1)
     end
 
     # The card draws the tags in this order and reads no set of its own, so the order is part of
     # what this method answers.
-    it "puts the three answers first and the unanswered tally last" do
-      expect(create(:event).answer_counts.keys).to eq %w[ yes maybe no invited ]
+    it "puts the three answers first, then the unanswered, then the places nobody was asked about" do
+      expect(create(:event).answer_counts.keys).to eq %w[ yes maybe no invited reserved ]
     end
 
-    it "is every count zero for an event whose registrations are all reserved" do
+    it "counts only reserved places for an event whose registrations are all reserved" do
       event = create(:event)
       create(:registration, event:, member: create(:member, group: event.group), status: :reserved)
 
-      expect(event.answer_counts.values.sum).to be_zero
+      expect(event.answer_counts.reject { |_status, count| count.zero? }).to eq("reserved" => 1)
     end
   end
 
