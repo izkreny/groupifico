@@ -3,7 +3,8 @@
 @source not "./daisyui{,*}.mjs";
 
 /* The organic theme, #257: light by default and dark for `prefers-color-scheme: dark`. Every value,
-   and the contrast each one was measured at, is in that issue. `/styleguide` draws every token with
+   and the contrast each one was measured at, is in that issue, except the light theme's four status
+   colours and the warning content, which #364 set for soft alerts. `/styleguide` draws every token with
    its contrast, read from these two blocks by `StyleguidesHelper#theme_colours`, which expects each
    colour as a six-digit hex. */
 @plugin "./daisyui.mjs" {
@@ -26,13 +27,13 @@
   --color-accent-content: #f9f4ed;
   --color-neutral: #474238;
   --color-neutral-content: #f9f4ed;
-  --color-info: #266595;
+  --color-info: #185a89;
   --color-info-content: #e7f4ff;
-  --color-success: #286f2f;
+  --color-success: #1d6626;
   --color-success-content: #e6f8e6;
-  --color-warning: #e2ba00;
-  --color-warning-content: #201e1d;
-  --color-error: #b32e2a;
+  --color-warning: #675301;
+  --color-warning-content: #fff4d6;
+  --color-error: #972622;
   --color-error-content: #ffedeb;
   --radius-selector: 9999px;
   --radius-field: 9999px;

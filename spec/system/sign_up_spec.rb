@@ -45,6 +45,15 @@ RSpec.describe "Creating a group", type: :system do
       expect(page).to have_css "#notice"
       expect(page).to paint "#notice"
     end
+
+    # The soft notice sets its words in the success colour itself, #1d6626, as `group_refusal_spec.rb` holds the alert to the error colour.
+    it "sets the notice soft, its words in the success colour" do
+      fill_in "Your email", with: "starter@example.com"
+      fill_in "Group name", with: "Riverside Choir"
+      click_button "Send my confirmation link"
+
+      expect(find_by_id("notice").evaluate_script("getComputedStyle(this).color")).to eq "rgb(29, 102, 38)"
+    end
   end
 
   describe "the page the confirmation link opens" do

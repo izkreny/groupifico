@@ -223,8 +223,8 @@ RSpec.describe "The styleguide", type: :request do
         get "/styleguide"
 
         section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Colour tokens" }
-        tagged = section.css("[data-theme='organic'] tbody tr").to_h { [ it.at_css("code").text, it.css(".badge").any? ] }
-        expect(tagged.values_at("base-200", "base-300", "warning")).to eq [ false, false, true ]
+        tagged = section.css("[data-theme='organic-dark'] tbody tr").to_h { [ it.at_css("code").text, it.css(".badge").any? ] }
+        expect(tagged.values_at("base-200", "base-300", "neutral")).to eq [ false, false, true ]
       end
 
       # The switcher's commonest row is a group that is not the current one, which a switcher listing only the current group never draws.

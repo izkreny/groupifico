@@ -4,17 +4,14 @@
     <h3 class="text-meta">As the app uses it</h3>
 
     <%= render "events/duplicate_notice", original: %>
-    <div role="alert" class="alert alert-success"><span>Event was successfully updated.</span></div>
-    <div role="alert" class="alert alert-error"><span>You are not allowed to do that.</span></div>
+    <div role="alert" class="alert alert-soft alert-success"><span>Event was successfully updated.</span></div>
+    <div role="alert" class="alert alert-soft alert-error"><span>You are not allowed to do that.</span></div>
   </div>
 
   <div class="flex flex-col gap-2">
     <h3 class="text-meta">Not used yet</h3>
 
-    <div role="alert" class="alert alert-info"><span>Info: your invitation was sent.</span></div>
-    <div role="alert" class="alert alert-warning"><span>Warning: the event is nearly full.</span></div>
-    <div role="alert" class="alert alert-soft alert-info"><span>Soft info</span></div>
-    <div role="alert" class="alert alert-soft alert-success"><span>Soft success</span></div>
-    <div role="alert" class="alert alert-soft alert-error"><span>Soft error</span></div>
+    <div role="alert" class="alert alert-soft alert-info"><span>Info: your invitation was sent.</span></div>
+    <div role="alert" class="alert alert-soft alert-warning"><span>Warning: the event is nearly full.</span></div>
   </div>
 </div>
