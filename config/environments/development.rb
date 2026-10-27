@@ -73,6 +73,9 @@ Rails.application.configure do
   # Annotate rendered view with file names.
   config.action_view.annotate_rendered_view_with_filenames = true
 
+  # Turns on the element picker on every page, which keeps the owner's picks here, one JSON line each, for the agent to read. See `PicksController`.
+  config.x.picks_file = Rails.root.join("tmp/picks.jsonl")
+
   # Uncomment if you wish to allow Action Cable access from any origin.
   # config.action_cable.disable_request_forgery_protection = true
 

@@ -39,6 +39,9 @@ module Groupifico
     # answer for the day one zone stops being true.
     config.time_zone = "Europe/Zagreb"
 
+    # WHY: an unset `config.x` key answers an empty, truthy options hash rather than nil, so the element picker's switch is declared off here and `config/environments/development.rb` alone turns it on.
+    config.x.picks_file = nil
+
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files

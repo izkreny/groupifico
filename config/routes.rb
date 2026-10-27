@@ -71,6 +71,9 @@ Rails.application.routes.draw do
     end
   end
 
+  # The element picker's store, answering only where `config.x.picks_file` is set; see `PicksController`. Test as well, so its specs reach it.
+  resources :picks, only: %i[ index create ] if Rails.env.local?
+
   # Defines the root path route ("/")
   root "groups#index"
 end
