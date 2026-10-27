@@ -84,18 +84,18 @@ RSpec.describe "The styleguide", type: :system do
     expect(ratios.select { |_surface, ratio| ratio < ContrastHelper::WCAG_AA }).to be_empty
   end
 
-  # A soft alert's words and an icon set straight on the page both read the status colour against the ground, so each has to hold AA there. Probes with the colour inline, since nothing compiles a `text-warning` for a class to reach. Light twin only: the dark theme is a later criterion of #364.
-  it "reads every status colour at AA straight on the light page" do
+  # A soft alert's words and an icon set straight on the page both read the status colour against the ground, so each has to hold AA there. Probes with the colour inline, since nothing compiles a `text-warning` for a class to reach.
+  it "reads every status colour at AA straight on the page, in both twins" do
     plant_styleguide_group
     sign_in_as create(:user)
 
     visit styleguide_path
 
-    ratios = %w[ info success warning error ].to_h do |status|
-      page.execute_script(<<~JS, status)
-        document.querySelector("[data-theme=organic]").insertAdjacentHTML("beforeend", `<div class="bg-base-100"><span id="probe-${arguments[0]}" style="color: var(--color-${arguments[0]})">Aa</span></div>`)
+    ratios = %w[ organic organic-dark ].product(%w[ info success warning error ]).to_h do |theme, status|
+      page.execute_script(<<~JS, theme, status)
+        document.querySelector(`[data-theme=${arguments[0]}]`).insertAdjacentHTML("beforeend", `<div class="bg-base-100"><span id="probe-${arguments[0]}-${arguments[1]}" style="color: var(--color-${arguments[1]})">Aa</span></div>`)
       JS
-      [ status, text_contrast("#probe-#{status}") ]
+      [ "#{theme} #{status}", text_contrast("#probe-#{theme}-#{status}") ]
     end
     expect(ratios.select { |_status, ratio| ratio < ContrastHelper::WCAG_AA }).to be_empty
   end

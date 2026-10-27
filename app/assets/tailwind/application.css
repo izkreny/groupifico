@@ -4,7 +4,8 @@
 
 /* The organic theme, #257: light by default and dark for `prefers-color-scheme: dark`. Every value,
    and the contrast each one was measured at, is in that issue, except the light theme's four status
-   colours and the warning content, which #364 set for soft alerts. `/styleguide` draws every token with
+   colours and warning content and the dark theme's warning and error, which #364 set for soft alerts
+   at one lightness per theme. `/styleguide` draws every token with
    its contrast, read from these two blocks by `StyleguidesHelper#theme_colours`, which expects each
    colour as a six-digit hex. */
 @plugin "./daisyui.mjs" {
@@ -65,9 +66,9 @@
   --color-info-content: #201e1d;
   --color-success: #7dbd7f;
   --color-success-content: #201e1d;
-  --color-warning: #e2ba00;
+  --color-warning: #c3a953;
   --color-warning-content: #201e1d;
-  --color-error: #ff6f69;
+  --color-error: #fe7f77;
   --color-error-content: #201e1d;
   --radius-selector: 9999px;
   --radius-field: 9999px;
