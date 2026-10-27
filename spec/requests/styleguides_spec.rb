@@ -38,7 +38,7 @@ RSpec.describe "The styleguide", type: :request do
         expect(html.css("[id^='roster_registration_']").map { it.text.squish }).to include "Ivan Kovačević"
         expect(page_text(response.body)).to include "Marija Babić said yes"
         expect(page_text(response.body)).to include "Managed by Ana H."
-        expect(html.css(".badge [aria-label='no reply']")).not_to be_empty
+        expect(html.css("summary [aria-label='no reply']")).not_to be_empty
       end
 
       # The owner may answer for every member and take anyone off the list, so every row draws both controls.

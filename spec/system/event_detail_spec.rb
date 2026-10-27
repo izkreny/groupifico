@@ -250,6 +250,17 @@ RSpec.describe "The event detail", type: :system do
     expect(heading).to match [ a_string_starting_with("Alegreya"), "16px" ]
   end
 
+  # The theme's status colours, a tag's icon and number with no badge around them: yes in success, maybe in warning, no in error, no reply in info, and reserved in the page's ink.
+  it "colours each tally tag in its status colour" do
+    owner, event, = rostered_event
+    sign_in_as owner.user
+
+    visit group_event_path(event.group, event)
+
+    inks = [ "yes", "maybe", "no", "no reply", "reserved" ].map { find("summary [aria-label='#{it}']").evaluate_script("getComputedStyle(this.parentElement).color") }
+    expect(inks).to eq [ "rgb(29, 102, 38)", "rgb(103, 83, 1)", "rgb(151, 38, 34)", "rgb(24, 90, 137)", "rgb(32, 30, 29)" ]
+  end
+
   it "lands on the edit form from the pencil" do
     owner, event, = rostered_event
     sign_in_as owner.user

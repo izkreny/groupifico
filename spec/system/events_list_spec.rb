@@ -9,12 +9,12 @@ require "rails_helper"
 # distinguishable from its neighbours, and where pressing one lands.
 #
 # The paint targets are chosen for surfaces the matcher can judge: the hero carries a `base-200`
-# surface over the page's own `base-100`, and the tags and the pills carry theirs over the hero's.
+# surface over the page's own `base-100`, and the pills carry theirs over the hero's.
 # `.card` rather than `.card.bg-base-200`, so the assertion reads the rendered colour rather than
 # the class that asks for it - with the class in the selector, an untinted hero fails as "does not
 # exist" instead of as the ratio of 1 it actually paints.
 RSpec.describe "The events list", type: :system do
-  it "paints the hero card, its count tags and the lit pill, with no accessibility violations" do
+  it "paints the hero card and the lit pill, with no accessibility violations" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
     create(:registration, event: next_event_for(member), member:, status: :yes)
     sign_in_as member.user
@@ -24,7 +24,6 @@ RSpec.describe "The events list", type: :system do
     visit group_events_path(member.group)
 
     expect(page).to paint ".card"
-    expect(page).to paint ".badge"
     expect(page).to paint ".join .btn-primary"
     expect(page).to be_accessible
   end

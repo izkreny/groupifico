@@ -8,12 +8,17 @@
   words instead: four zeros beside the reserved count read as answers that failed to load rather
   than as nobody asked yet. An event with no registrations at all still draws nothing, since "0 on
   the list" is not a fact worth a line.
+
+  Each tag is its icon and number alone, without a badge, in the theme's status colour: yes in
+  success, maybe in warning, no in error and no reply in info; reserved, a place nobody has been
+  asked about yet, in the page's ink.
 %>
+<% colours = { "yes" => "text-success", "maybe" => "text-warning", "no" => "text-error", "invited" => "text-info" } %>
 <% counts = event.answer_counts %>
 <% if counts.except("reserved").values.any?(&:positive?) %>
-  <div class="flex flex-wrap gap-2">
+  <div class="flex flex-wrap gap-x-3 gap-y-1 text-meta">
     <% counts.each do |status, count| %>
-      <span class="badge badge-sm gap-1">
+      <span class="inline-flex items-center gap-1 <%= colours[status] %>">
         <%= icon status, label: (status == "invited" ? "no reply" : status), class: "size-3.5" %>
         <%= count %>
       </span>
