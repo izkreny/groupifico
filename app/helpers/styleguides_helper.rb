@@ -20,7 +20,7 @@ module StyleguidesHelper
     duplicate: "Copying an event: Duplicate on the event screen, and the notice on the duplicate screen.",
     delete: "Removing a registration: Take off the list on a roster row.",
     save: "Not drawn yet: the legend's save action.",
-    dismiss: "Not drawn yet: the legend's dismiss action.",
+    dismiss: "Dismissing a flash notice or alert: the x at its end.",
     back: "Going back: the Back link in the header of a pushed screen.",
     go_to: "Going further: See all events on Home, and the name, mobile and email row on the account screen.",
     disclose: "Opening the group switcher in the header.",
@@ -32,7 +32,10 @@ module StyleguidesHelper
     email: "Emailing a member: their row on the members list and the Email row on their screen.",
     add_member: "Adding someone to an event: Add someone under the roster.",
     invite_link: "Not drawn yet: the legend's link for joining the group.",
-    alert: "A warning: the error summary atop a form, and the block on the account-deletion sheet.",
+    success: "A success alert: the flash notice after an action.",
+    info: "Not drawn yet: the legend's info alert.",
+    warning: "Not drawn yet: the legend's warning alert.",
+    error: "An error alert: the flash alert, the error summary atop a form, and the block on the account-deletion sheet.",
     signed_out: "Not drawn yet: the legend's signed-out state.",
     resend: "Not drawn yet: the legend's resend action."
   }.freeze

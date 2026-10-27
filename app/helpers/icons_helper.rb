@@ -44,8 +44,11 @@ module IconsHelper
     add_member: "user-plus",
     invite_link: "link",
 
-    # States the reader is told about.
-    alert: "exclamation-triangle",
+    # States the reader is told about. The four alert kinds are named as daisyUI names them, so `shared/_alert` draws the kind it colours.
+    success: "check-circle",
+    info: "information-circle",
+    warning: "exclamation-triangle",
+    error: "no-symbol",
     signed_out: "lock-closed",
     resend: "arrow-path"
   }.freeze

@@ -37,4 +37,11 @@ RSpec.describe "Refusing a paused member", type: :system do
 
     expect(find_by_id("alert").evaluate_script("getComputedStyle(this).color")).to eq "rgb(151, 38, 34)"
   end
+
+  it "takes the alert away when its x is pressed" do
+    visit edit_group_path(member.group)
+    click_button "Dismiss"
+
+    expect(page).to have_no_css "#alert"
+  end
 end

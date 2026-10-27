@@ -113,6 +113,18 @@ RSpec.describe "The styleguide", type: :system do
     expect(radii).to match [ 13.6, 10.88, 13.6, 6.67 ].map { a_value_within(0.01).of(it) }
   end
 
+  # The dismiss slot stays on an alert with nothing to dismiss, so its icon, words and slot sit in the same columns as a dismissible alert's.
+  it "lays out an alert in the same columns whether or not it can be dismissed" do
+    plant_styleguide_group
+    sign_in_as create(:user)
+
+    visit styleguide_path
+
+    alerts = within(first("[data-theme=organic]", text: "Please fix the highlighted fields.")) { all(".alert-error") }
+    columns = alerts.map { it.evaluate_script("getComputedStyle(this).gridTemplateColumns") }
+    expect([ alerts.map { it.has_button?("Dismiss", wait: 0) }, columns.uniq.size ]).to eq [ [ true, false ], 1 ]
+  end
+
   it "sets the type ladder's titles in Alegreya and its text in Commissioner" do
     plant_styleguide_group
     sign_in_as create(:user)

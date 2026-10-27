@@ -28,11 +28,9 @@
       <p id="<%= id %>_body" class="py-4"><%= body %></p>
 
       <% if block %>
-        <div role="alert" id="<%= id %>_block" class="alert alert-soft alert-error">
-          <%= icon :alert, class: "size-6 shrink-0" %>
-
+        <%= render layout: "shared/alert", locals: { kind: :error, id: "#{id}_block" } do %>
           <span><%= block %></span>
-        </div>
+        <% end %>
       <% end %>
 
       <% if word %>
