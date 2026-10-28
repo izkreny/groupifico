@@ -62,7 +62,7 @@ class RegistrationsController < ApplicationController
     authorize! @registration, to: :manage_answers? unless Registration.answer?(attributes[:status])
 
     if @registration.update(attributes)
-      redirect_to_event @event, notice: "Registration was successfully updated."
+      redirect_to_event @event
     else
       # An answer is a button rather than a field, so there is no form to re-render and no typed
       # value to keep: the only way here is a posted status the enum refuses, which says what is
@@ -76,7 +76,7 @@ class RegistrationsController < ApplicationController
 
     @registration.destroy!
 
-    redirect_to_event @event, notice: "Registration was successfully destroyed."
+    redirect_to_event @event
   end
 
   private

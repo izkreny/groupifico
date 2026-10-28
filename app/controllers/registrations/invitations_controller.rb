@@ -12,7 +12,8 @@ class Registrations::InvitationsController < ApplicationController
     member = @registration.member
 
     if member.active?
-      redirect_to_event @registration.event, notice: @registration.invite ? "#{member.full_name} invited." : "#{member.full_name} was already asked."
+      @registration.invite
+      redirect_to_event @registration.event
     else
       redirect_to_event @registration.event, alert: "#{member.full_name} is #{member.status}, so they are not asked."
     end

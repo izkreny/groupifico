@@ -138,6 +138,22 @@ RSpec.describe "The event detail", type: :system do
     expect(weights.uniq).to eq [ "600" ]
   end
 
+  # An answer re-sorts the roster, and the browser's scroll anchoring would follow the moved row; the view stays where it was when the button was pressed. Five yeses ahead of fifteen maybes, the answered one mid-screen, is the shape it was seen jumping on.
+  it "keeps the view where it was when an answer re-sorts the roster" do
+    owner, event, = rostered_event
+    ("A".."T").each_with_index { |letter, i| create(:registration, event:, status: i < 5 ? :yes : :maybe, member: create(:member, :active, group: owner.group, user: create(:user, :with_full_profile, first_name: "#{letter}lex", last_name: "#{letter}ox"))) }
+    sign_in_as owner.user
+    page.driver.resize(1280, 700)
+
+    visit group_event_path(event.group, event)
+    open_roster
+    page.execute_script("document.querySelector(`[aria-label='Yes for Mlex Mox']`).scrollIntoView({ block: 'center' }); document.addEventListener('turbo:submit-start', () => window.held = scrollY, { once: true })")
+    click_button "Yes for Mlex Mox"
+
+    expect(page).to have_css "button[aria-label='Yes for Mlex Mox'][aria-current='true']"
+    expect(page.evaluate_script("[ window.held > 0, scrollY - window.held ]")).to eq [ true, 0 ]
+  end
+
   # A morph keeps the page's own elements, so a property set on one survives it where a redraw would not; the fold is the reader's, opened by hand rather than by the URL.
   it "answers from the roster in place, the page morphed and the roster still open" do
     owner, event, ben = rostered_event
@@ -316,7 +332,7 @@ RSpec.describe "The event detail", type: :system do
     click_button "Maybe for Ben Cole"
 
     expect(page).to have_current_path group_event_path(event.group, event)
-    expect(page).to have_text "Registration was successfully updated."
+    expect(page).to have_css "button[aria-label='Maybe for Ben Cole'][aria-current='true']"
   end
 
   # That the place was asked is `spec/requests/registrations/invitations_spec.rb`'s; the landing is
@@ -330,7 +346,7 @@ RSpec.describe "The event detail", type: :system do
     click_button "Invite Ben Cole"
 
     expect(page).to have_current_path group_event_path(event.group, event)
-    expect(page).to have_text "Ben Cole invited."
+    expect(page).to have_css "button[aria-label='Ben Cole is invited, no reply yet']"
   end
 
   it "invites the rest and lands back on the event" do

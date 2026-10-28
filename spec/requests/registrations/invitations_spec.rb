@@ -100,7 +100,6 @@ RSpec.describe "Registrations::Invitations", type: :request do
         post group_event_registration_invitation_path(event.group, event, answered)
 
         expect(answered.reload).to be_no
-        expect(flash[:notice]).to end_with "was already asked."
       end
     end
   end
