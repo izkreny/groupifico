@@ -928,9 +928,9 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include %(aria-label="Duplicate"), %(aria-label="Edit"), "Delete event"
       end
 
-      # The reader's own answer leads the card, above the counts and the roster they unfold.
+      # The reader's own answer stands on the page above the attendance card, which holds the counts and the roster they unfold.
       # The day before `detailed_event`, since an event that has ended takes no `maybe`.
-      it "draws the answer row above the counts and the roster" do
+      it "draws the answer row above the attendance card, outside it" do
         travel_to Time.zone.parse("2026-09-01 12:00") do
           member = create(:member, :active)
           event = detailed_event(member, reader_status: :maybe)
@@ -939,6 +939,7 @@ RSpec.describe "Events", type: :request do
           get group_event_path(event.group, event)
 
           expect(page_text(response.body)).to match(/Your answer:.*Who’s coming.*Who’s invited/)
+          expect(Nokogiri::HTML(response.body).css(".card").map(&:text).join).not_to include "Your answer:"
         end
       end
 
