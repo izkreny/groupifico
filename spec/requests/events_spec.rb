@@ -763,8 +763,22 @@ RSpec.describe "Events", type: :request do
         get group_event_path(event.group, event)
 
         fragment = Nokogiri::HTML(response.body)
-        expect(fragment.at_css("button[aria-label='Invite Ben Cole']")["class"]).not_to include "text-primary"
-        expect(fragment.at_css("button[aria-label='Carla Duke is invited, no reply yet']")["class"]).to include "text-primary"
+        expect(fragment.at_css("button[aria-label='Invite Ben Cole']")["class"]).to include "text-icon-muted"
+        expect(fragment.at_css("button[aria-label='Carla Duke is invited, no reply yet']")["class"]).to include "text-info"
+      end
+
+      # The tally's colours: the chosen answer in its status colour, every control not yet used in the muted icon ink.
+      it "colours the roster's pills as the Who’s coming? tally does" do
+        travel_to Time.zone.parse("2026-09-01 12:00") do
+          owner = create(:member, :active, :owner)
+          event = detailed_event(owner)
+          sign_in_as(owner.user)
+
+          get group_event_path(event.group, event)
+
+          classes = Nokogiri::HTML(response.body).then { |html| [ "Yes for Alice Bird", "Maybe for Alice Bird", "Take Alice Bird off the list" ].map { html.at_css("button[aria-label='#{it}']")["class"] } }
+          expect(classes).to match [ include("text-success"), include("text-icon-muted"), include("text-icon-muted") ]
+        end
       end
 
       it "draws the badge rather than the paper plane on a paused member's held row" do

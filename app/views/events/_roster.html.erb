@@ -37,6 +37,8 @@
     </p>
   </div>
 
+  <%# The Who's coming? tally's colours: the chosen answer in its status colour and an invitation in info, every control not yet used in the muted icon ink. %>
+  <% chosen = { "yes" => "text-success", "maybe" => "text-warning", "no" => "text-error" } %>
   <% if roster.any? %>
     <ul class="list">
       <% roster.each do |registration| %>
@@ -47,7 +49,7 @@
           <% if may_invite && !registration.answered? && registration.member.active? %>
             <% asked = registration.invited? %>
             <%= button_to group_event_registration_invitation_path(event.group, event, registration),
-                  class: "btn btn-ghost btn-sm btn-square#{" text-primary" if asked}",
+                  class: "btn btn-ghost btn-sm btn-square #{asked ? "text-info" : "text-icon-muted"}",
                   title: registration_status_label(registration),
                   aria: { label: asked ? "#{name} is invited, no reply yet" : "Invite #{name}" } do %>
               <%= icon :invited, class: "size-4" %>
@@ -59,13 +61,13 @@
           <% end %>
 
           <% if may_answer %>
-            <div class="join">
+            <div class="flex">
               <% answers.each do |answer| %>
                 <% current = registration.status == answer %>
                 <%= button_to group_event_registration_path(event.group, event, registration),
                       method: :patch,
                       params: { registration: { status: answer } },
-                      class: "join-item btn btn-sm btn-square#{" btn-primary" if current}",
+                      class: "btn btn-ghost btn-sm btn-square #{current ? chosen[answer] : "text-icon-muted"}",
                       aria: { label: "#{answer.capitalize} for #{name}", current: (current ? "true" : nil) } do %>
                   <%= icon answer, class: "size-4" %>
                 <% end %>
@@ -76,7 +78,7 @@
           <% if may_remove %>
             <%= button_to group_event_registration_path(event.group, event, registration),
                   method: :delete,
-                  class: "btn btn-ghost btn-sm btn-square",
+                  class: "btn btn-ghost btn-sm btn-square text-icon-muted",
                   aria: { label: "Take #{name} off the list" } do %>
               <%= icon :delete, class: "size-4" %>
             <% end %>

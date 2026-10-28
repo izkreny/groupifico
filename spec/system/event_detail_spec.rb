@@ -21,7 +21,7 @@ require "rails_helper"
 # `.card` rather than `.card.bg-base-200`, so the assertion reads the rendered colour rather than
 # the class that asks for it, as `spec/system/events_list_spec.rb` explains.
 RSpec.describe "The event detail", type: :system do
-  it "paints the card and a row's lit pill, and tints the invited row's paper plane, in light" do
+  it "paints the card and tints the invited row's paper plane, in light" do
     owner, event, = rostered_event
     sign_in_as owner.user
     prefer_colour_scheme :light
@@ -31,7 +31,6 @@ RSpec.describe "The event detail", type: :system do
 
     expect(rendered_colour_scheme).to eq "light"
     expect(page).to paint ".card"
-    expect(page).to paint "##{roster_row(owner)} .join .btn-primary"
     expect(colour_of("Carla Duke is invited, no reply yet")).not_to eq colour_of("Invite Ben Cole")
   end
 
@@ -63,7 +62,7 @@ RSpec.describe "The event detail", type: :system do
     expect(text_contrast(invite_the_rest(event))).to be >= ContrastHelper::WCAG_AA
   end
 
-  it "paints the same two and tints the same plane in dark" do
+  it "paints the card and tints the same plane in dark" do
     owner, event, = rostered_event
     sign_in_as owner.user
     prefer_colour_scheme :dark
@@ -73,7 +72,6 @@ RSpec.describe "The event detail", type: :system do
 
     expect(rendered_colour_scheme).to eq "dark"
     expect(page).to paint ".card"
-    expect(page).to paint "##{roster_row(owner)} .join .btn-primary"
     expect(colour_of("Carla Duke is invited, no reply yet")).not_to eq colour_of("Invite Ben Cole")
   end
 
@@ -87,7 +85,7 @@ RSpec.describe "The event detail", type: :system do
     open_roster
 
     expect(rendered_colour_scheme).to eq "light"
-    expect(text_contrast("##{roster_row(owner)} .join .btn-primary svg")).to be >= ContrastHelper::WCAG_NON_TEXT
+    expect(text_contrast("##{roster_row(owner)} .btn[aria-current='true'] svg")).to be >= ContrastHelper::WCAG_NON_TEXT
   end
 
   it "shows the same glyph in dark" do
@@ -99,7 +97,7 @@ RSpec.describe "The event detail", type: :system do
     open_roster
 
     expect(rendered_colour_scheme).to eq "dark"
-    expect(text_contrast("##{roster_row(owner)} .join .btn-primary svg")).to be >= ContrastHelper::WCAG_NON_TEXT
+    expect(text_contrast("##{roster_row(owner)} .btn[aria-current='true'] svg")).to be >= ContrastHelper::WCAG_NON_TEXT
   end
 
   it "has no accessibility violations with an owner's roster open, in light" do
