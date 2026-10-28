@@ -138,6 +138,21 @@ RSpec.describe "The event detail", type: :system do
     expect(weights.uniq).to eq [ "600" ]
   end
 
+  # A morph keeps the page's own elements, so a property set on one survives it where a redraw would not; the fold is the reader's, opened by hand rather than by the URL.
+  it "answers from the roster in place, the page morphed and the roster still open" do
+    owner, event, ben = rostered_event
+    sign_in_as owner.user
+
+    visit group_event_path(event.group, event)
+    open_roster
+    page.execute_script("document.querySelector('main').marked = true")
+    click_button "Yes for Ben Cole"
+
+    expect(page).to have_css "button[aria-label='Yes for Ben Cole'][aria-current='true']"
+    expect([ page.evaluate_script("document.querySelector('main').marked"), find("summary", text: "Who’s coming").evaluate_script("this.parentElement.open") ]).to eq [ true, true ]
+    expect(ben.registrations.sole.reload).to be_yes
+  end
+
   # daisyUI pads a list row by 1rem, which leaves a long roster 64px a row; 8px above and below its 32px buttons makes it 48px.
   it "draws an owner's roster rows 48px tall" do
     owner, event, ben = rostered_event

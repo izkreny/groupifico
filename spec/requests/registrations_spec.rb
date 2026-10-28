@@ -247,6 +247,20 @@ RSpec.describe "Registrations", type: :request do
         expect(registration.reload.status).to eq "yes"
       end
 
+      # Back to the event screen's exact URL when pressed there, so Turbo takes it as a refresh and morphs; from anywhere else, and from another site, the event itself.
+      it "returns to the event screen it was pressed on, query and all, and to the event from elsewhere" do
+        event = create(:event)
+        registration = create(:registration, event:, member: create(:member, group: event.group))
+        sign_in_as(create(:member, :active, :events_administrator, group: event.group).user)
+        screen = group_event_url(event.group, event, responses: "show")
+
+        landings = [ screen, group_events_url(event.group), "https://elsewhere.example#{group_event_path(event.group, event)}" ].map do |referer|
+          patch group_event_registration_path(event.group, event, registration), params: { registration: { status: "yes" } }, headers: { "Referer" => referer }
+          response.location
+        end
+        expect(landings).to eq [ screen, group_event_url(event.group, event), group_event_url(event.group, event) ]
+      end
+
       # An answer is a button rather than a field, so a refused write has no form to return to:
       # the message lands on the screen the buttons live on.
       it "returns to the event with the message when the status is invalid" do

@@ -1,5 +1,5 @@
 class RegistrationsController < ApplicationController
-  include GroupScoped
+  include GroupScoped, ReturnsToEvent
 
   # One message for every way a ticked member can stop being invitable while the reader was
   # choosing - registered by somebody else, paused, or gone from the group - and for both sides of
@@ -62,16 +62,12 @@ class RegistrationsController < ApplicationController
     authorize! @registration, to: :manage_answers? unless Registration.answer?(attributes[:status])
 
     if @registration.update(attributes)
-      redirect_to group_event_path(@group, @event),
-        notice: "Registration was successfully updated.",
-        status: :see_other
+      redirect_to_event @event, notice: "Registration was successfully updated."
     else
       # An answer is a button rather than a field, so there is no form to re-render and no typed
       # value to keep: the only way here is a posted status the enum refuses, which says what is
       # wrong on the screen the buttons live on.
-      redirect_to group_event_path(@group, @event),
-        alert: @registration.errors.full_messages.to_sentence,
-        status: :see_other
+      redirect_to_event @event, alert: @registration.errors.full_messages.to_sentence
     end
   end
 
@@ -80,9 +76,7 @@ class RegistrationsController < ApplicationController
 
     @registration.destroy!
 
-    redirect_to group_event_path(@group, @event),
-      notice: "Registration was successfully destroyed.",
-      status: :see_other
+    redirect_to_event @event, notice: "Registration was successfully destroyed."
   end
 
   private

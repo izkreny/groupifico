@@ -1,4 +1,6 @@
 <% content_for :title, @event.name %>
+<%# WHY: a button pressed here redirects back to this same URL, which Turbo takes as a refresh, so the page morphs in place rather than redrawing from the top. %>
+<% turbo_refreshes_with method: :morph, scroll: :preserve %>
 
 <%= render "shared/page_header", title: "Event" %>
 
