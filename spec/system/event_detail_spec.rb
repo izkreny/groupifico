@@ -88,6 +88,20 @@ RSpec.describe "The event detail", type: :system do
     expect(text_contrast("##{roster_row(owner)} .btn[aria-current='true'] svg")).to be >= ContrastHelper::WCAG_NON_TEXT
   end
 
+  # daisyUI fills a button carrying aria-current, so the lit pill would stand out by a fill its unlit neighbours lack.
+  it "lights a row's pill by its colour alone, with no fill behind it" do
+    owner, event, = rostered_event
+    sign_in_as owner.user
+
+    visit group_event_path(event.group, event)
+    open_roster
+
+    fills = find_by_id(roster_row(owner)).evaluate_script(<<~JS)
+      [...this.querySelectorAll("button[aria-label*=' for ']")].map(pill => getComputedStyle(pill).backgroundColor)
+    JS
+    expect([ fills.size, fills.uniq ]).to eq [ 3, [ "rgba(0, 0, 0, 0)" ] ]
+  end
+
   it "shows the same glyph in dark" do
     owner, event, = rostered_event
     sign_in_as owner.user

@@ -35,6 +35,7 @@
     </p>
   </div>
 
+  <%# WHY: daisyUI fills a button carrying aria-current as active, so the lit pill clears that fill at rest to stay chosen by its colour alone, and keeps the hover every button has. %>
   <%# The Who's coming? tally's colours: the chosen answer in its status colour and an invitation in info, every control not yet used in the muted icon ink, and a row's status icon drawn where no control stands, as the tally draws it. %>
   <% chosen = { "yes" => "text-success", "maybe" => "text-warning", "no" => "text-error" } %>
   <% if roster.any? %>
@@ -69,7 +70,7 @@
                 <%= button_to group_event_registration_path(event.group, event, registration),
                       method: :patch,
                       params: { registration: { status: answer } },
-                      class: "btn btn-ghost btn-sm btn-square #{current ? chosen[answer] : "text-icon-muted"}",
+                      class: "btn btn-ghost btn-sm btn-square #{current ? "#{chosen[answer]} not-hover:bg-transparent not-hover:border-transparent" : "text-icon-muted"}",
                       aria: { label: "#{answer.capitalize} for #{name}", current: (current ? "true" : nil) } do %>
                   <%= icon answer, class: "size-4" %>
                 <% end %>
