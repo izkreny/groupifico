@@ -221,6 +221,22 @@ RSpec.describe "The events list", type: :system do
     expect(middles.first).to be_within(0.5).of(middles.last)
   end
 
+  # The answer is the row's last cell, so it sits at the row's end in the colour the tally gives it, where it has to clear 3:1 on the page.
+  it "draws the member's answer at the row's end, in its status colour" do
+    member = create(:member, :owner)
+    next_event_for(member)
+    event = create(:event, group: member.group, creator: member, status: :confirmed, starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours)
+    create(:registration, event:, member:, status: :yes)
+    sign_in_as member.user
+
+    visit group_events_path(member.group)
+
+    answer = "##{ActionView::RecordIdentifier.dom_id(event)} > svg[aria-label='your answer: yes']"
+    placed = find(answer).evaluate_script("[ this.getBoundingClientRect().left > this.parentElement.querySelector(':scope > div').getBoundingClientRect().right, this.getAttribute('class').includes('text-success') ]")
+    expect(placed).to eq [ true, true ]
+    expect(text_contrast(answer)).to be >= ContrastHelper::WCAG_NON_TEXT
+  end
+
   # Whether the page scrolls sideways, which is the one overflow a reader on a phone notices first.
   def overflowing?
     page.evaluate_script("document.documentElement.scrollWidth > document.documentElement.clientWidth")
