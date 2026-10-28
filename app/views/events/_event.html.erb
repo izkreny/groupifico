@@ -28,22 +28,22 @@
   </div>
 
   <p class="flex items-center gap-1">
-    <%= status_icon event, class: "size-4" %><%= event_status_line event %>
+    <%= status_icon event, class: "size-4 text-base-content/60" %><%= event_status_line event %>
   </p>
 
   <p class="flex items-center gap-1">
-    <%= icon :when, class: "size-4" %><%= event_schedule_range event %>
+    <%= icon :when, class: "size-4 text-base-content/60" %><%= event_schedule_range event %>
   </p>
 
   <% if event.address %>
     <p class="flex items-center gap-1">
-      <%= icon :where, class: "size-4" %><%= link_to event.address.name, address_map_url(event.address), class: "link link-hover" %>
+      <%= icon :where, class: "size-4 text-base-content/60" %><%= link_to event.address.name, address_map_url(event.address), class: "link link-hover" %>
     </p>
   <% end %>
 
   <% if (credits = event_credits(event)) %>
     <p class="flex items-center gap-1">
-      <%= icon :members, class: "size-4 flex-none" %>
+      <%= icon :members, class: "size-4 flex-none text-base-content/60" %>
       <span><%= credits %></span>
     </p>
   <% end %>

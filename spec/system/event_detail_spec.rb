@@ -249,6 +249,17 @@ RSpec.describe "The event detail", type: :system do
     expect(inks).to eq [ "rgb(29, 102, 38)", "rgb(103, 83, 1)", "rgb(151, 38, 34)", "rgb(24, 90, 137)", "rgb(32, 30, 29)" ]
   end
 
+  # The page's ink at 60%: quieter than the words beside it, still clear of the 3:1 an icon needs.
+  it "draws a fact's icon quieter than its words, yet at 3:1" do
+    owner, event, = rostered_event
+    sign_in_as owner.user
+
+    visit group_event_path(event.group, event)
+
+    fact = "##{ActionView::RecordIdentifier.dom_id(event)} > p:nth-of-type(2)"
+    expect([ text_contrast("#{fact} svg"), text_contrast(fact) ]).to match [ be_between(3, 6), be > 10 ]
+  end
+
   it "spaces the heading from the first tag as the tags are spaced from each other" do
     owner, event, = rostered_event
     sign_in_as owner.user
