@@ -10,8 +10,8 @@
 <% inks = { "yes" => "text-success", "maybe" => "text-warning", "no" => "text-error" } %>
 <% if registration && event.open_to_answers? && (registration.asked? || registration.answered?) && allowed_to?(:update?, registration) %>
   <div class="space-y-1">
-    <%# WHY: the buttons sit beside the question while the line has room for both, and wrap below it as one group, 8px down, when it does not. %>
-    <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+    <%# WHY: the buttons sit 16px beside the question while the line has room for both, and wrap below it as one group, 8px down, when it does not. %>
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
       <p class="text-sm"><%= registration.asked? ? answer_prompt(event) : "Your answer:" %></p>
       <div class="flex flex-wrap gap-2">
         <% event.available_registration_answers.each do |answer| %>

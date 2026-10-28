@@ -89,17 +89,17 @@ RSpec.describe "The event detail", type: :system do
   end
 
   # 320px is narrower than any phone the app is laid out for, so the question and its buttons cannot share a line there.
-  it "puts the answer buttons beside Your answer on a wide screen, and 8px below it when they do not fit" do
+  it "puts the answer buttons 16px beside Your answer on a wide screen, and 8px below it when they do not fit" do
     owner, event, = rostered_event
     sign_in_as owner.user
-    offset = "(([ words, yes ]) => [ Math.round(yes.top - words.top), Math.round(yes.top - words.bottom) ])([ document.evaluate(\"//p[normalize-space()='Your answer:']\", document).iterateNext(), [ ...document.querySelectorAll('form.button_to button') ].find(button => button.textContent.trim() == 'Yes') ].map(element => element.getBoundingClientRect()))"
+    offset = "(([ words, yes ]) => [ Math.round(yes.top - words.top), Math.round(yes.top - words.bottom), Math.round(yes.left - words.right) ])([ document.evaluate(\"//p[normalize-space()='Your answer:']\", document).iterateNext(), [ ...document.querySelectorAll('form.button_to button') ].find(button => button.textContent.trim() == 'Yes') ].map(element => element.getBoundingClientRect()))"
 
     page.driver.resize(1280, 900)
     visit group_event_path(event.group, event)
     wide = page.evaluate_script(offset)
     page.driver.resize(320, 800)
 
-    expect([ wide.first.abs <= 8, page.evaluate_script(offset).last ]).to eq [ true, 8 ]
+    expect([ wide.first.abs <= 8, wide.last, page.evaluate_script(offset)[1] ]).to eq [ true, 16, 8 ]
   end
 
   # The chosen answer is solid in its status colour, so its icon takes the button's content colour; the others carry the status colour on the icon, where it has to clear 3:1 on the page.
