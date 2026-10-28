@@ -114,6 +114,19 @@ RSpec.describe "The event detail", type: :system do
     expect(%w[ Maybe No ].map { text_contrast("form.button_to button:not([aria-current]) svg.text-#{it == "Maybe" ? "warning" : "error"}") }).to all be >= ContrastHelper::WCAG_NON_TEXT
   end
 
+  # The answer buttons repeat the tally's glyphs a line apart, so a size of their own would read as a different icon. The folded roster's buttons measure 0, so they are left out.
+  it "draws the answer buttons' icons at the Who’s coming? tally's size" do
+    owner, event, = rostered_event
+    sign_in_as owner.user
+
+    visit group_event_path(event.group, event)
+
+    widths = page.evaluate_script(<<~JS)
+      [ "form.button_to button:not([aria-label]) svg", "summary [aria-label] svg, summary svg[aria-label]" ].map(selector => [ ...new Set([ ...document.querySelectorAll(selector) ].map(icon => icon.getBoundingClientRect().width).filter(Boolean)) ])
+    JS
+    expect(widths).to eq [ [ 16 ], [ 16 ] ]
+  end
+
   # daisyUI fills a button carrying aria-current, so the lit pill would stand out by a fill its unlit neighbours lack.
   it "lights a row's pill by its colour alone, with no fill behind it" do
     owner, event, = rostered_event
