@@ -4,7 +4,7 @@ module IconsHelper
   ICONS = {
     # Event.statuses
     unconfirmed: "question-mark-circle",
-    confirmed: "check-circle",
+    confirmed: "check-badge",
     concluded: "archive-box",
     canceled: "no-symbol",
 

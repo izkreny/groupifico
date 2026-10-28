@@ -310,7 +310,7 @@ RSpec.describe "The styleguide", type: :request do
 
         section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Legend icons" }
         used = section.css("[data-theme=organic] tbody tr").to_h { [ it.css("td")[1].text.squish, it.css("td")[2] ] }
-        expect(used.values_at("check-circle", "calendar", "plus").map { |cell| cell.css("li code").map(&:text) }).to eq [ %w[ confirmed yes success ], %w[ when events ], [] ]
+        expect(used.values_at("check-circle", "calendar", "plus").map { |cell| cell.css("li code").map(&:text) }).to eq [ %w[ yes success ], %w[ when events ], [] ]
         expect(IconsHelper::ICONS.reject { |meaning, name| used.fetch(name).text.squish.include?("#{meaning} - #{StyleguidesHelper::ICON_USES.fetch(meaning)}") }).to be_empty
       end
 
