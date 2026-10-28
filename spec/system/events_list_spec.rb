@@ -207,6 +207,20 @@ RSpec.describe "The events list", type: :system do
     expect(page).to be_accessible
   end
 
+  # A list row is a grid whose cells start at its top, so the status icon would sit level with the name rather than with the name and its meta line together.
+  it "centres a row's status icon on its name and meta line" do
+    member = create(:member, :owner)
+    event = past_event_for(member)
+    sign_in_as member.user
+
+    visit group_events_path(member.group, scope: "past")
+
+    middles = find_by_id(ActionView::RecordIdentifier.dom_id(event)).evaluate_script(<<~JS)
+      [ this.querySelector(":scope > svg"), this.querySelector(":scope > div") ].map(cell => cell.getBoundingClientRect()).map(rect => rect.top + rect.height / 2)
+    JS
+    expect(middles.first).to be_within(0.5).of(middles.last)
+  end
+
   # Whether the page scrolls sideways, which is the one overflow a reader on a phone notices first.
   def overflowing?
     page.evaluate_script("document.documentElement.scrollWidth > document.documentElement.clientWidth")
