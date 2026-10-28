@@ -9,7 +9,7 @@
   `list-col-wrap` puts the question on its own line under the row rather than in a column beside it.
 %>
 <li id="<%= dom_id event %>" class="list-row">
-  <%= status_icon event, label: event.status, class: "size-5 self-center" %>
+  <%= status_icon event, label: event.status, class: "size-6 self-center text-icon-muted" %>
 
   <div>
     <%= link_to event.name, group_event_path(event.group, event), class: "link link-hover" %>
@@ -25,7 +25,7 @@
   <% asking = registration&.asked? && event.open_to_answers? %>
   <% if registration && !asking %>
     <% ink = { "yes" => "text-success", "maybe" => "text-warning", "no" => "text-error", "invited" => "text-info" }[registration.status] %>
-    <%= status_icon registration, label: registration.answered? ? "your answer: #{registration.status}" : registration_status_label(registration), class: "size-5 self-center #{ink}" %>
+    <%= status_icon registration, label: registration.answered? ? "your answer: #{registration.status}" : registration_status_label(registration), class: "size-6 self-center #{ink}" %>
   <% end %>
 
   <% if asking %>
