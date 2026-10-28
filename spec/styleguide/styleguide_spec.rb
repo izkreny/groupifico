@@ -189,6 +189,26 @@ RSpec.describe "The styleguide", type: :system do
     expect(page.evaluate_script(member_rows_top)).to be_within(1).of(100)
   end
 
+  context "with a section folded" do
+    # The folds are kept in the browser's storage, which outlives the session Capybara resets, so they are cleared for the examples after.
+    after { page.execute_script("localStorage.clear()") }
+
+    it "keeps it folded through a reload and a member switch" do
+      plant_styleguide_group(manager: "Ana Horvat")
+      sign_in_as create(:user)
+      ladder = "section[data-title='Type ladder'] [data-theme=organic]"
+
+      visit styleguide_path
+      find("section[data-title='Type ladder'] summary").click
+      visit styleguide_path
+      after_reload = page.has_no_css?(ladder, visible: :visible, wait: 1)
+      select "Ana Horvat - owner, active", from: "Signed in as"
+
+      expect(page).to have_css "a[aria-label='Edit group']"
+      expect([ after_reload, page.has_no_css?(ladder, visible: :visible, wait: 1) ]).to eq [ true, true ]
+    end
+  end
+
   # One audit covers both themes, since both twins of every section are on the page. Signed in as the owner, whose policies draw every control the page holds.
   it "has no accessibility violations" do
     plant_styleguide_group(manager: "Ana Horvat")
