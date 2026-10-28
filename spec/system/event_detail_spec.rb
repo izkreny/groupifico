@@ -260,6 +260,18 @@ RSpec.describe "The event detail", type: :system do
     expect([ text_contrast("#{fact} svg"), text_contrast(fact) ]).to match [ be_between(3, 6), be > 10 ]
   end
 
+  it "sets a fact's icon 6px from its words" do
+    owner, event, = rostered_event
+    sign_in_as owner.user
+
+    visit group_event_path(event.group, event)
+
+    gap = find("##{ActionView::RecordIdentifier.dom_id(event)} > p:nth-of-type(2) svg").evaluate_script(<<~JS)
+      (svg => { const words = document.createRange(); words.selectNodeContents(svg.nextSibling); return words.getBoundingClientRect().left - svg.getBoundingClientRect().right })(this)
+    JS
+    expect(gap).to be_within(0.5).of(6)
+  end
+
   it "spaces the heading from the first tag as the tags are spaced from each other" do
     owner, event, = rostered_event
     sign_in_as owner.user

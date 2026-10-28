@@ -32,7 +32,7 @@
   <% if inline %>
     <%= tags %>
   <% else %>
-    <p class="flex flex-wrap items-center gap-x-1 gap-y-1">
+    <p class="flex flex-wrap items-center gap-x-1.5 gap-y-1">
       <%= icon :members, class: "size-4 flex-none text-base-content/60" %>
       <% if roster_link %>
         <%= link_to "Responses:", group_event_path(event.group, event, responses: "show"), class: "link link-hover mr-2" %>

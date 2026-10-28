@@ -13,16 +13,16 @@
       <%= link_to event.name, group_event_path(event.group, event), class: "link link-hover" %>
     </h2>
 
-    <p class="flex items-center gap-1">
+    <p class="flex items-center gap-1.5">
       <%= status_icon event, class: "size-4 text-base-content/60" %><%= event_status_line event %>
     </p>
 
-    <p class="flex items-center gap-1">
+    <p class="flex items-center gap-1.5">
       <%= icon :when, class: "size-4 text-base-content/60" %><%= event_schedule_range event %>
     </p>
 
     <% if event.address %>
-      <p class="flex items-center gap-1">
+      <p class="flex items-center gap-1.5">
         <%= icon :where, class: "size-4 text-base-content/60" %><%= link_to event.address.name, address_map_url(event.address), class: "link link-hover" %>
       </p>
     <% end %>
