@@ -49,7 +49,7 @@ RSpec.describe "The events list", type: :system do
     sign_in_as member.user
 
     visit group_events_path(member.group)
-    find("a", text: "Responses:").click
+    find("a", text: "Who’s coming?").click
 
     expect(page).to have_css "##{ActionView::RecordIdentifier.dom_id(registration, :roster)}", visible: :visible
   end

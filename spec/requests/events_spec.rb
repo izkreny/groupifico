@@ -171,7 +171,7 @@ RSpec.describe "Events", type: :request do
           get group_events_path(owner.group)
 
           link = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(next_up, :next_up)} a[href='#{group_event_path(owner.group, next_up, responses: "show")}']")
-          expect(link&.text&.squish).to eq "Responses:"
+          expect(link&.text&.squish).to eq "Who’s coming?"
         end
       end
 
@@ -934,7 +934,7 @@ RSpec.describe "Events", type: :request do
           get group_event_path(event.group, event)
 
           row = Nokogiri::HTML(response.body).at_css("details.collapse summary").element_children
-          expect([ row[0].text.squish, row[1].at_css("[aria-label='yes']") ]).to match [ "Who’s coming:", be_present ]
+          expect([ row[0].text.squish, row[1].at_css("[aria-label='yes']") ]).to match [ "Who’s coming?", be_present ]
         end
       end
 

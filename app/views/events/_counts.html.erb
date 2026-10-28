@@ -13,7 +13,7 @@
   success, maybe in warning, no in error and no reply in info; reserved, a place nobody has been
   asked about yet, in the page's ink.
 
-  A fact line like the ones above it, led by the people icon. `roster_link` makes "Responses:" a link
+  A fact line like the ones above it, led by the people icon. `roster_link` makes "Who's coming?" a link
   to the event screen with its roster unfolded, for the next-up card. `inline` draws the tags alone,
   for the event screen's Who's coming row, whose heading already says what they count.
 %>
@@ -35,9 +35,9 @@
     <p class="flex flex-wrap items-center gap-x-1.5 gap-y-1">
       <%= icon :members, class: "size-4 flex-none text-base-content/60" %>
       <% if roster_link %>
-        <%= link_to "Responses:", group_event_path(event.group, event, responses: "show"), class: "link link-hover mr-2" %>
+        <%= link_to "Who’s coming?", group_event_path(event.group, event, responses: "show"), class: "link link-hover mr-2" %>
       <% else %>
-        <span class="mr-2">Responses:</span>
+        <span class="mr-2">Who&rsquo;s coming?</span>
       <% end %>
 
       <%= tags %>
