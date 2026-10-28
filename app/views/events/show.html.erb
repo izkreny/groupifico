@@ -6,20 +6,17 @@
   <%= render "events/event", event: @event %>
 
   <%#
-    The attendance card, in the frames' order: the heading, the reader's own answer row, and the
-    roster unfolding below both. The heading is the disclosure's summary, but the roster cannot be
-    its body, because everything after a `<summary>` folds with it and the answer row between them
-    has to show while the roster is folded - nor can the answer row go inside the summary, since a
-    `button_to` form cannot live in one. So the `<details>` holds its summary alone and the roster is
-    a later sibling that `peer-open:` shows, with `aria-controls` telling assistive technology which
-    element the summary's expanded state is about.
+    The attendance card: the reader's own answer row first, then the heading, and the roster
+    unfolding below it. The `<details>` holds its summary alone and the roster is a later sibling
+    that `peer-open:` shows, with `aria-controls` telling assistive technology which element the
+    summary's expanded state is about.
   %>
   <div class="card card-sm bg-base-200">
     <div class="card-body gap-3">
+      <%= render "events/rsvp", event: @event, registration: @event.registration_for(Current.member) %>
+
       <%# The next-up card's tally links here with `responses=show`, so the reader lands on Who's coming already unfolded. %>
       <%= render "events/roster_toggle", event: @event, roster_id: dom_id(@event, :roster), open: params[:responses] == "show" %>
-
-      <%= render "events/rsvp", event: @event, registration: @event.registration_for(Current.member) %>
 
       <div id="<%= dom_id @event, :roster %>" class="hidden peer-open:block">
         <%= render "events/roster", event: @event %>

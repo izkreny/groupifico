@@ -928,10 +928,9 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include %(aria-label="Duplicate"), %(aria-label="Edit"), "Delete event"
       end
 
-      # The frames' order, which the markup has to carry because the disclosure cannot: its summary
-      # is the counts, and the roster it unfolds is drawn after the answer row rather than inside it.
+      # The reader's own answer leads the card, above the counts and the roster they unfold.
       # The day before `detailed_event`, since an event that has ended takes no `maybe`.
-      it "draws the answer row between the counts and the roster" do
+      it "draws the answer row above the counts and the roster" do
         travel_to Time.zone.parse("2026-09-01 12:00") do
           member = create(:member, :active)
           event = detailed_event(member, reader_status: :maybe)
@@ -939,7 +938,7 @@ RSpec.describe "Events", type: :request do
 
           get group_event_path(event.group, event)
 
-          expect(page_text(response.body)).to match(/Who’s coming.*Your answer:.*Who’s invited/)
+          expect(page_text(response.body)).to match(/Your answer:.*Who’s coming.*Who’s invited/)
         end
       end
 
