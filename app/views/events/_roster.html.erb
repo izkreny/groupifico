@@ -44,25 +44,26 @@
         <li id="<%= dom_id registration, :roster %>" class="list-row items-center px-0">
           <span class="list-col-grow"><%= name %></span>
 
-          <% invitable = may_invite && !registration.answered? && registration.member.active? %>
-          <% asked = registration.invited? %>
-          <% if (!may_answer || answers.exclude?(registration.status)) && !(invitable && asked) %>
-            <span class="inline-flex size-8 items-center justify-center <%= { "invited" => "text-info" }.merge(chosen)[registration.status] %>" title="<%= registration_status_label(registration) %>">
-              <%= status_icon registration, label: registration_status_label(registration), class: "size-4" %>
-            </span>
-          <% end %>
-
-          <% if invitable %>
-            <%= button_to group_event_registration_invitation_path(event.group, event, registration),
-                  class: "btn btn-ghost btn-sm btn-square #{asked ? "text-info" : "text-icon-muted"}",
-                  title: registration_status_label(registration),
-                  aria: { label: asked ? "#{name} is invited, no reply yet" : "Invite #{name}" } do %>
-              <%= icon :invited, class: "size-4" %>
+          <%# WHY: one strip at one gap, so every icon on the row sits the same distance from its neighbours whichever controls the reader gets. %>
+          <div class="flex items-center gap-1">
+            <% invitable = may_invite && !registration.answered? && registration.member.active? %>
+            <% asked = registration.invited? %>
+            <% if (!may_answer || answers.exclude?(registration.status)) && !(invitable && asked) %>
+              <span class="inline-flex size-8 items-center justify-center <%= { "invited" => "text-info" }.merge(chosen)[registration.status] %>" title="<%= registration_status_label(registration) %>">
+                <%= status_icon registration, label: registration_status_label(registration), class: "size-4" %>
+              </span>
             <% end %>
-          <% end %>
 
-          <% if may_answer %>
-            <div class="flex">
+            <% if invitable %>
+              <%= button_to group_event_registration_invitation_path(event.group, event, registration),
+                    class: "btn btn-ghost btn-sm btn-square #{asked ? "text-info" : "text-icon-muted"}",
+                    title: registration_status_label(registration),
+                    aria: { label: asked ? "#{name} is invited, no reply yet" : "Invite #{name}" } do %>
+                <%= icon :invited, class: "size-4" %>
+              <% end %>
+            <% end %>
+
+            <% if may_answer %>
               <% answers.each do |answer| %>
                 <% current = registration.status == answer %>
                 <%= button_to group_event_registration_path(event.group, event, registration),
@@ -73,17 +74,17 @@
                   <%= icon answer, class: "size-4" %>
                 <% end %>
               <% end %>
-            </div>
-          <% end %>
-
-          <% if may_remove %>
-            <%= button_to group_event_registration_path(event.group, event, registration),
-                  method: :delete,
-                  class: "btn btn-ghost btn-sm btn-square text-icon-muted",
-                  aria: { label: "Take #{name} off the list" } do %>
-              <%= icon :delete, class: "size-4" %>
             <% end %>
-          <% end %>
+
+            <% if may_remove %>
+              <%= button_to group_event_registration_path(event.group, event, registration),
+                    method: :delete,
+                    class: "btn btn-ghost btn-sm btn-square text-icon-muted",
+                    aria: { label: "Take #{name} off the list" } do %>
+                <%= icon :delete, class: "size-4" %>
+              <% end %>
+            <% end %>
+          </div>
         </li>
       <% end %>
     </ul>

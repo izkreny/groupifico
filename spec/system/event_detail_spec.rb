@@ -171,6 +171,21 @@ RSpec.describe "The event detail", type: :system do
     expect(gap_to_row_end("##{roster_row(ben)} [aria-label='Take Ben Cole off the list']", ".card-body")).to be >= 0
   end
 
+  # Ben's row is the fullest an owner gets, his status, the paper plane, the pills and the take-off, so it is the one where the icons would fall into groups, and a phone is where they would wrap.
+  it "spaces every icon on a roster row the same distance apart on a phone" do
+    owner, event, ben = rostered_event
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_event_path(event.group, event)
+    open_roster
+
+    gaps = find_by_id(roster_row(ben)).evaluate_script(<<~JS)
+      [...this.querySelectorAll("svg")].map(icon => icon.getBoundingClientRect()).map((rect, i, rects) => i && Math.round(rect.left - rects[i - 1].right)).slice(1)
+    JS
+    expect([ gaps.size, gaps.uniq ]).to eq [ 5, [ 20 ] ]
+  end
+
   # A word wider than the phone cannot wrap unless the heading lets it break, and then it pushes the Duplicate and Edit buttons beside it off the screen. Found by the styleguide drawing this Faker title.
   it "fits a long one-word name and its buttons on a phone" do
     owner = create(:member, :active, :owner)
