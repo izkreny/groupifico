@@ -4,9 +4,10 @@
 
   Nothing is drawn on an event that no longer takes answers, because `Registration` refuses every pill there. No registration draws nothing either, and so does one the policy will not let this reader write.
 
-  Each answer is its own small button, a ghost until chosen; the chosen one is solid in its status colour, which reads on the cards' `base-200` as well as on the page.
+  Each answer is its own small button, a ghost until chosen; the chosen one is solid in its status colour, which reads on the cards' `base-200` as well as on the page, and the others carry that colour on their icon alone.
 %>
 <% chosen = { "yes" => "btn-success", "maybe" => "btn-warning", "no" => "btn-error" } %>
+<% inks = { "yes" => "text-success", "maybe" => "text-warning", "no" => "text-error" } %>
 <% if registration && event.open_to_answers? && (registration.asked? || registration.answered?) && allowed_to?(:update?, registration) %>
   <div class="space-y-1">
     <%# WHY: the buttons sit beside the question while the line has room for both, and wrap below it as one group, 8px down, when it does not. %>
@@ -20,7 +21,7 @@
                 params: { registration: { status: answer } },
                 class: "btn btn-sm #{current ? chosen[answer] : "btn-ghost"}",
                 aria: (current ? { current: "true" } : {}) do %>
-            <%= icon answer, class: "size-3.5" %>
+            <%= icon answer, class: "size-3.5 #{inks[answer] unless current}" %>
             <%= answer.capitalize %>
           <% end %>
         <% end %>

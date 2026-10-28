@@ -102,6 +102,18 @@ RSpec.describe "The event detail", type: :system do
     expect([ wide.first.abs <= 8, page.evaluate_script(offset).last ]).to eq [ true, 8 ]
   end
 
+  # The chosen answer is solid in its status colour, so its icon takes the button's content colour; the others carry the status colour on the icon, where it has to clear 3:1 on the page.
+  it "colours the icons of the answers not chosen, and reads them on the page" do
+    owner, event, = rostered_event
+    sign_in_as owner.user
+
+    visit group_event_path(event.group, event)
+
+    icons = %w[ Yes Maybe No ].to_h { |answer| [ answer, find("form.button_to button", exact_text: answer).evaluate_script("this.querySelector('svg').getAttribute('class')") ] }
+    expect(icons.transform_values { it[/text-(success|warning|error)/] }).to eq "Yes" => nil, "Maybe" => "text-warning", "No" => "text-error"
+    expect(%w[ Maybe No ].map { text_contrast("form.button_to button:not([aria-current]) svg.text-#{it == "Maybe" ? "warning" : "error"}") }).to all be >= ContrastHelper::WCAG_NON_TEXT
+  end
+
   # daisyUI fills a button carrying aria-current, so the lit pill would stand out by a fill its unlit neighbours lack.
   it "lights a row's pill by its colour alone, with no fill behind it" do
     owner, event, = rostered_event
