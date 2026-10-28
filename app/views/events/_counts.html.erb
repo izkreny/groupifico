@@ -1,4 +1,4 @@
-<%# locals: (event:) %>
+<%# locals: (event:, roster_link: false) %>
 <%#
   Every tag the tally carries, in the order it carries them, so the counted statuses stay the
   model's business alone. `invited` is the one whose label is not its own name: the legend calls
@@ -12,18 +12,28 @@
   Each tag is its icon and number alone, without a badge, in the theme's status colour: yes in
   success, maybe in warning, no in error and no reply in info; reserved, a place nobody has been
   asked about yet, in the page's ink.
+
+  `roster_link` makes the whole row a link to the event screen with its roster unfolded, for the
+  next-up card; the event screen itself leaves it plain, its roster toggle being right below.
 %>
 <% colours = { "yes" => "text-success", "maybe" => "text-warning", "no" => "text-error", "invited" => "text-info" } %>
 <% counts = event.answer_counts %>
 <% if counts.except("reserved").values.any?(&:positive?) %>
-  <div class="flex flex-wrap gap-x-3 gap-y-1 text-meta">
+  <% tally = capture do %>
+    <span>Responses:</span>
     <% counts.each do |status, count| %>
       <span class="inline-flex items-center gap-1 <%= colours[status] %>">
         <%= icon status, label: (status == "invited" ? "no reply" : status), class: "size-3.5" %>
         <%= count %>
       </span>
     <% end %>
-  </div>
+  <% end %>
+
+  <% if roster_link %>
+    <%= link_to tally, group_event_path(event.group, event, responses: "show"), class: "flex flex-wrap items-center gap-x-3 gap-y-1 text-meta link-hover" %>
+  <% else %>
+    <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-meta"><%= tally %></div>
+  <% end %>
 <% else %>
   <% waiting = event.registrations.size %>
   <% if waiting.positive? %>

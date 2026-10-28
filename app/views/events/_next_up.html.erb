@@ -27,7 +27,7 @@
       </p>
     <% end %>
 
-    <%= render "events/counts", event: event %>
+    <%= render "events/counts", event:, roster_link: true %>
 
     <%# Frame 4n: an event whose every registration is a place held and nobody asked. It needs one
         registration at least, since "every" holds of an empty list that has nobody to ask. %>

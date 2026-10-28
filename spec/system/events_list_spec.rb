@@ -43,6 +43,17 @@ RSpec.describe "The events list", type: :system do
     expect(page).to be_accessible
   end
 
+  it "lands on the event with Who’s coming unfolded from the hero's responses" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    registration = create(:registration, event: next_event_for(member), member:, status: :yes)
+    sign_in_as member.user
+
+    visit group_events_path(member.group)
+    find("a", text: "Responses:").click
+
+    expect(page).to have_css "##{ActionView::RecordIdentifier.dom_id(registration, :roster)}", visible: :visible
+  end
+
   it "shows the lit pill by its label in light" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
     create(:registration, event: next_event_for(member), member:, status: :yes)

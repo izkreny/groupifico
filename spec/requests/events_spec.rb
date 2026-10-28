@@ -161,6 +161,20 @@ RSpec.describe "Events", type: :request do
       # The hero card, one row beneath it and the reader's own answer row: the three pieces the
       # event card partials draw, asserted here rather than in a view spec because what a reader
       # sees on this screen is the response's own text.
+      it "links the hero card's responses to the event with its roster open" do
+        freeze_time do
+          owner = create(:member, :owner)
+          next_up = confirmed_event(owner, days: 2)
+          create(:registration, event: next_up, member: owner, status: :yes)
+          sign_in_as(owner.user)
+
+          get group_events_path(owner.group)
+
+          link = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(next_up, :next_up)} a[href='#{group_event_path(owner.group, next_up, responses: "show")}']")
+          expect(link&.text&.squish).to start_with "Responses:"
+        end
+      end
+
       it "draws the hero card, a row beneath it and the question for an invited owner" do
         freeze_time do
           owner = create(:member, :owner)
@@ -895,6 +909,18 @@ RSpec.describe "Events", type: :request do
           get group_event_path(event.group, event)
 
           expect(page_text(response.body)).to match(/Who’s coming.*Your answer:.*Who’s invited/)
+        end
+      end
+
+      it "opens the roster when the hero card's responses link here" do
+        travel_to Time.zone.parse("2026-09-01 12:00") do
+          member = create(:member, :active)
+          event = detailed_event(member, reader_status: :invited)
+          sign_in_as(member.user)
+
+          get group_event_path(event.group, event, responses: "show")
+
+          expect(Nokogiri::HTML(response.body).at_css("details.collapse")["open"]).not_to be_nil
         end
       end
 

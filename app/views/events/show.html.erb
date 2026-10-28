@@ -16,7 +16,8 @@
   %>
   <div class="card card-sm bg-base-200">
     <div class="card-body gap-3">
-      <%= render "events/roster_toggle", roster_id: dom_id(@event, :roster) %>
+      <%# The next-up card's tally links here with `responses=show`, so the reader lands on Who's coming already unfolded. %>
+      <%= render "events/roster_toggle", roster_id: dom_id(@event, :roster), open: params[:responses] == "show" %>
 
       <%= render "events/rsvp", event: @event, registration: @event.registration_for(Current.member) %>
 

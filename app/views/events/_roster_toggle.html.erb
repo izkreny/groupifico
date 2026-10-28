@@ -1,6 +1,6 @@
-<%# locals: (roster_id:) %>
-<details class="collapse collapse-arrow peer">
+<%# locals: (roster_id:, open: false) %>
+<%= tag.details class: "collapse collapse-arrow peer", open: do %>
   <summary class="collapse-title flex flex-col gap-2 px-0" aria-controls="<%= roster_id %>">
     <span class="font-heading text-row-title">Who&rsquo;s coming</span>
   </summary>
-</details>
+<% end %>
