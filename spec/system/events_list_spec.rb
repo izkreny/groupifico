@@ -68,6 +68,19 @@ RSpec.describe "The events list", type: :system do
     expect(gaps).to all(be_within(0.5).of(12))
   end
 
+  # daisyUI grows every paragraph in a card body, so the question would stretch and push the buttons to the card's far edge.
+  it "sets the hero's answer buttons 16px after the question, as on the event screen" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    create(:registration, event: next_event_for(member), member:, status: :yes)
+    sign_in_as member.user
+    page.driver.resize(1280, 900)
+
+    visit group_events_path(member.group)
+
+    gap = find("[id^=next_up] p", text: "Your answer:").evaluate_script("(words => { words.selectNodeContents(this); return this.nextElementSibling.getBoundingClientRect().left - words.getBoundingClientRect().right })(document.createRange())")
+    expect(gap).to be_within(0.5).of(16)
+  end
+
   it "shows the lit pill by its label in light" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
     create(:registration, event: next_event_for(member), member:, status: :yes)
