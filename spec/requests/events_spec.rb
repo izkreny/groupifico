@@ -727,8 +727,8 @@ RSpec.describe "Events", type: :request do
         end
       end
 
-      # After the end the pills are Yes and No, so a maybe given before the event has no pill to light, and the badge says where that row stands instead.
-      it "offers yes and no on an ended event's roster, and a badge on a row that said maybe" do
+      # After the end the pills are Yes and No, so a maybe given before the event has no pill to light, and the status icon says where that row stands instead.
+      it "offers yes and no on an ended event's roster, and a status icon on a row that said maybe" do
         owner = create(:member, :active, :owner)
         event = travel_to(Time.zone.parse("2026-09-01 12:00")) { detailed_event(owner, reader_status: :maybe) }
         sign_in_as(owner.user)
@@ -741,7 +741,7 @@ RSpec.describe "Events", type: :request do
 
       # `Registration` refuses every answer on an event that is over, so a pill there is a control
       # certain to fail. Taking somebody off stays, since correcting a closed roster is still theirs.
-      it "leaves the pills off the roster of a concluded event, and keeps the badges and the take-off" do
+      it "leaves the pills off the roster of a concluded event, and keeps the status icons and the take-off" do
         owner = create(:member, :active, :owner)
         event = detailed_event(owner)
         event.update!(status: :concluded)
@@ -751,7 +751,7 @@ RSpec.describe "Events", type: :request do
 
         expect(response.body).to include "Place reserved, not asked yet", "Take Ben Cole off the list"
         expect(response.body).not_to include "Yes for Ben Cole"
-        # With no pill lit to say where an answered row stands, the badge says it instead.
+        # With no pill lit to say where an answered row stands, the status icon says it instead.
         expect(response.body).to include %(title="Yes")
       end
 
@@ -781,7 +781,7 @@ RSpec.describe "Events", type: :request do
         end
       end
 
-      it "draws the badge rather than the paper plane on a paused member's held row" do
+      it "draws the status icon rather than the paper plane on a paused member's held row" do
         owner = create(:member, :active, :owner)
         event = detailed_event(owner)
         dan = create(:member, :active, group: owner.group, user: create(:user, :with_full_profile, first_name: "Dan", last_name: "Ellis"))
@@ -850,7 +850,7 @@ RSpec.describe "Events", type: :request do
       # The owner's rows with every control gone: the order is `Event#roster`'s, asserted here only
       # as far as that this screen draws it, and a reserved row carries the bookmark because a
       # member's view has no paper plane to read the state from.
-      it "draws the same rows in roster order as badges, with nothing to press" do
+      it "draws the same rows in roster order as status icons, with nothing to press" do
         member = create(:member, :active)
         event = detailed_event(member)
         sign_in_as(member.user)

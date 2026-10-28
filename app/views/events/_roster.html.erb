@@ -9,13 +9,13 @@
   would hand a plain member controls on their own row. `Registration.new(event:)` rather than
   `event.registrations.new`, which would join the loaded association `events/_counts` sizes.
 
-  A row whose pills already say where it stands draws no badge beside them. An unanswered row keeps
-  its badge, because no pill is current there to tell `reserved` from `invited` - except for a
+  A row whose pills already say where it stands draws no status icon beside them. An unanswered row keeps
+  its status icon, because no pill is current there to tell `reserved` from `invited` - except for a
   reader who may invite, where frame 4l puts the paper plane in its place: plain on a `reserved` row,
   which it asks, and tinted on an `invited` one, which is already asked and stays as it is. A paused
-  or inactive member's row keeps its badge, because they are never asked.
+  or inactive member's row keeps its status icon, because they are never asked.
 
-  The pills are `Event#available_registration_answers`, so once the event has ended a maybe given before it has no pill to light, and its row keeps the badge as an unanswered one does.
+  The pills are `Event#available_registration_answers`, so once the event has ended a maybe given before it has no pill to light, and its row keeps the status icon as an unanswered one does.
 
   The pills also wait on `Event#open_to_answers?`, as on `events/_row`: `Registration` refuses every
   answer on an event that is over, so a pill there is a control certain to fail. The take-off does
@@ -37,7 +37,7 @@
     </p>
   </div>
 
-  <%# The Who's coming? tally's colours: the chosen answer in its status colour and an invitation in info, every control not yet used in the muted icon ink. %>
+  <%# The Who's coming? tally's colours: the chosen answer in its status colour and an invitation in info, every control not yet used in the muted icon ink, and a row's status icon drawn where no control stands, as the tally draws it. %>
   <% chosen = { "yes" => "text-success", "maybe" => "text-warning", "no" => "text-error" } %>
   <% if roster.any? %>
     <ul class="list">
@@ -55,7 +55,7 @@
               <%= icon :invited, class: "size-4" %>
             <% end %>
           <% elsif !may_answer || answers.exclude?(registration.status) %>
-            <span class="badge badge-sm" title="<%= registration_status_label(registration) %>">
+            <span class="inline-flex size-8 items-center justify-center <%= { "invited" => "text-info" }.merge(chosen)[registration.status] %>" title="<%= registration_status_label(registration) %>">
               <%= status_icon registration, label: registration_status_label(registration), class: "size-4" %>
             </span>
           <% end %>

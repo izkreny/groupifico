@@ -126,9 +126,8 @@ RSpec.describe "The event detail", type: :system do
     expect(page).to be_accessible
   end
 
-  # A plain member's rows are badges alone, so this is the variant where the badge is the whole of
-  # what a row says.
-  it "paints a plain member's badges, with no accessibility violations" do
+  # A plain member's rows are status icons alone, so this is the variant where the icon is the whole of what a row says, and an invited row's is drawn in the tally's info.
+  it "paints a plain member's status icons, with no accessibility violations" do
     owner, event, ben = rostered_event
     member = create(:member, :active, group: owner.group)
     create(:registration, event:, member:, status: :invited)
@@ -138,7 +137,7 @@ RSpec.describe "The event detail", type: :system do
     visit group_event_path(event.group, event)
     open_roster
 
-    expect(page).to paint "##{roster_row(ben)} .badge"
+    expect(text_contrast("##{roster_row(member)} span[title]")).to be >= ContrastHelper::WCAG_NON_TEXT
     expect(page).to be_accessible
   end
 
