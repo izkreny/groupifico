@@ -755,7 +755,7 @@ RSpec.describe "Events", type: :request do
         expect(response.body).to include %(title="Yes")
       end
 
-      it "puts a plain paper plane on a reserved row and the tinted one on an invited row" do
+      it "puts the reserved icon and a plain paper plane on a reserved row, and the tinted plane alone on an invited row" do
         owner = create(:member, :active, :owner)
         event = detailed_event(owner)
         sign_in_as(owner.user)
@@ -763,8 +763,11 @@ RSpec.describe "Events", type: :request do
         get group_event_path(event.group, event)
 
         fragment = Nokogiri::HTML(response.body)
-        expect(fragment.at_css("button[aria-label='Invite Ben Cole']")["class"]).to include "text-icon-muted"
-        expect(fragment.at_css("button[aria-label='Carla Duke is invited, no reply yet']")["class"]).to include "text-info"
+        ben, carla = [ "Ben Cole", "Carla Duke" ].map { fragment.at_xpath("//li[span[text()='#{it}']]") }
+        expect(ben.css("span[title]").map { it["title"] }).to eq [ "Place reserved, not asked yet" ]
+        expect(ben.at_css("button[aria-label='Invite Ben Cole']")["class"]).to include "text-icon-muted"
+        expect(carla.css("span[title]")).to be_empty
+        expect(carla.at_css("button[aria-label='Carla Duke is invited, no reply yet']")["class"]).to include "text-info"
       end
 
       # The tally's colours: the chosen answer in its status colour, every control not yet used in the muted icon ink.

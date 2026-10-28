@@ -10,10 +10,8 @@
   `event.registrations.new`, which would join the loaded association `events/_counts` sizes.
 
   A row whose pills already say where it stands draws no status icon beside them. An unanswered row keeps
-  its status icon, because no pill is current there to tell `reserved` from `invited` - except for a
-  reader who may invite, where frame 4l puts the paper plane in its place: plain on a `reserved` row,
-  which it asks, and tinted on an `invited` one, which is already asked and stays as it is. A paused
-  or inactive member's row keeps its status icon, because they are never asked.
+  its status icon, because no pill is current there to tell `reserved` from `invited`. A reader who may invite gets the paper plane beside it: plain on a `reserved` row, which it asks, and tinted on an `invited` one, which is already asked and stays as it is, where the plane alone says it, so the row draws no second one. A paused
+  or inactive member's row keeps its status icon alone, because they are never asked.
 
   The pills are `Event#available_registration_answers`, so once the event has ended a maybe given before it has no pill to light, and its row keeps the status icon as an unanswered one does.
 
@@ -46,18 +44,21 @@
         <li id="<%= dom_id registration, :roster %>" class="list-row items-center px-0">
           <span class="list-col-grow"><%= name %></span>
 
-          <% if may_invite && !registration.answered? && registration.member.active? %>
-            <% asked = registration.invited? %>
+          <% invitable = may_invite && !registration.answered? && registration.member.active? %>
+          <% asked = registration.invited? %>
+          <% if (!may_answer || answers.exclude?(registration.status)) && !(invitable && asked) %>
+            <span class="inline-flex size-8 items-center justify-center <%= { "invited" => "text-info" }.merge(chosen)[registration.status] %>" title="<%= registration_status_label(registration) %>">
+              <%= status_icon registration, label: registration_status_label(registration), class: "size-4" %>
+            </span>
+          <% end %>
+
+          <% if invitable %>
             <%= button_to group_event_registration_invitation_path(event.group, event, registration),
                   class: "btn btn-ghost btn-sm btn-square #{asked ? "text-info" : "text-icon-muted"}",
                   title: registration_status_label(registration),
                   aria: { label: asked ? "#{name} is invited, no reply yet" : "Invite #{name}" } do %>
               <%= icon :invited, class: "size-4" %>
             <% end %>
-          <% elsif !may_answer || answers.exclude?(registration.status) %>
-            <span class="inline-flex size-8 items-center justify-center <%= { "invited" => "text-info" }.merge(chosen)[registration.status] %>" title="<%= registration_status_label(registration) %>">
-              <%= status_icon registration, label: registration_status_label(registration), class: "size-4" %>
-            </span>
           <% end %>
 
           <% if may_answer %>
