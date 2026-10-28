@@ -54,6 +54,20 @@ RSpec.describe "The events list", type: :system do
     expect(page).to have_css "##{ActionView::RecordIdentifier.dom_id(registration, :roster)}", visible: :visible
   end
 
+  # The 12px the event screen keeps between Who’s coming? and its tags, and between the tags.
+  it "spaces the hero's Who’s coming? link and its tags 12px apart" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    create(:registration, event: next_event_for(member), member:, status: :yes)
+    sign_in_as member.user
+
+    visit group_events_path(member.group)
+
+    gaps = find("a", text: "Who’s coming?").evaluate_script(<<~JS)
+      (label => { const items = [ label, ...[ "yes", "maybe" ].map(l => label.parentElement.querySelector(`[aria-label='${l}']`).parentElement) ]; return items.slice(1).map((el, i) => el.getBoundingClientRect().left - items[i].getBoundingClientRect().right) })(this)
+    JS
+    expect(gaps).to all(be_within(0.5).of(12))
+  end
+
   it "shows the lit pill by its label in light" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
     create(:registration, event: next_event_for(member), member:, status: :yes)

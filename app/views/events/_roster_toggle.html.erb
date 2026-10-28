@@ -1,7 +1,7 @@
 <%# locals: (event:, roster_id:, open: false) %>
 <%= tag.details class: "collapse collapse-arrow peer", open: do %>
-  <summary class="collapse-title flex flex-wrap items-center gap-x-1 gap-y-1 px-0" aria-controls="<%= roster_id %>">
-    <span class="font-heading text-row-title mr-2">Who&rsquo;s coming?</span>
+  <summary class="collapse-title flex flex-wrap items-center gap-x-1.5 gap-y-1 px-0" aria-controls="<%= roster_id %>">
+    <span class="font-heading text-row-title mr-1.5">Who&rsquo;s coming?</span>
     <%= render "events/counts", event:, inline: true %>
   </summary>
 <% end %>
