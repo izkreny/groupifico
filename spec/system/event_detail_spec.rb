@@ -186,6 +186,22 @@ RSpec.describe "The event detail", type: :system do
     expect([ gaps.size, gaps.uniq ]).to eq [ 5, [ 20 ] ]
   end
 
+  # The tags are one block, so a phone moves them below the title together rather than leaving some beside it.
+  it "puts every tag below Who’s coming? on a phone, and beside it on a wide screen" do
+    owner, event, = rostered_event
+    sign_in_as owner.user
+    tags_below = <<~JS
+      (summary => [...summary.querySelectorAll("svg")].every(icon => icon.getBoundingClientRect().top >= summary.querySelector(".font-heading").getBoundingClientRect().bottom))(document.querySelector("summary"))
+    JS
+
+    resize_to ViewportHelper::MOBILE
+    visit group_event_path(event.group, event)
+    on_phone = page.evaluate_script(tags_below)
+    page.driver.resize(1280, 900)
+
+    expect([ on_phone, page.evaluate_script(tags_below) ]).to eq [ true, false ]
+  end
+
   # A word wider than the phone cannot wrap unless the heading lets it break, and then it pushes the Duplicate and Edit buttons beside it off the screen. Found by the styleguide drawing this Faker title.
   it "fits a long one-word name and its buttons on a phone" do
     owner = create(:member, :active, :owner)

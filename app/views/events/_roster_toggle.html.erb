@@ -1,7 +1,8 @@
 <%# locals: (event:, roster_id:, open: false) %>
 <%= tag.details class: "collapse collapse-arrow peer", open: do %>
-  <summary class="collapse-title flex flex-wrap items-center gap-x-1.5 gap-y-1 px-0" aria-controls="<%= roster_id %>">
+  <%# WHY: the tags move as one block, so a phone puts them all on the line below the title rather than splitting them across both; only the start padding goes, so daisyUI's end padding keeps them clear of the arrow. %>
+  <summary class="collapse-title flex flex-col items-start gap-y-2 ps-0 sm:flex-row sm:items-center sm:gap-x-1.5" aria-controls="<%= roster_id %>">
     <span class="font-heading text-row-title mr-1.5">Who&rsquo;s coming?</span>
-    <%= render "events/counts", event:, inline: true %>
+    <span class="flex flex-wrap items-center gap-x-1.5 gap-y-1"><%= render "events/counts", event:, inline: true %></span>
   </summary>
 <% end %>
