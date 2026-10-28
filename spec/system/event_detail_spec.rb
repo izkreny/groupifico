@@ -88,6 +88,20 @@ RSpec.describe "The event detail", type: :system do
     expect(text_contrast("##{roster_row(owner)} .btn[aria-current='true'] svg")).to be >= ContrastHelper::WCAG_NON_TEXT
   end
 
+  # 320px is narrower than any phone the app is laid out for, so the question and its buttons cannot share a line there.
+  it "puts the answer buttons beside Your answer on a wide screen, and 8px below it when they do not fit" do
+    owner, event, = rostered_event
+    sign_in_as owner.user
+    offset = "(([ words, yes ]) => [ Math.round(yes.top - words.top), Math.round(yes.top - words.bottom) ])([ document.evaluate(\"//p[normalize-space()='Your answer:']\", document).iterateNext(), [ ...document.querySelectorAll('form.button_to button') ].find(button => button.textContent.trim() == 'Yes') ].map(element => element.getBoundingClientRect()))"
+
+    page.driver.resize(1280, 900)
+    visit group_event_path(event.group, event)
+    wide = page.evaluate_script(offset)
+    page.driver.resize(320, 800)
+
+    expect([ wide.first.abs <= 8, page.evaluate_script(offset).last ]).to eq [ true, 8 ]
+  end
+
   # daisyUI fills a button carrying aria-current, so the lit pill would stand out by a fill its unlit neighbours lack.
   it "lights a row's pill by its colour alone, with no fill behind it" do
     owner, event, = rostered_event
