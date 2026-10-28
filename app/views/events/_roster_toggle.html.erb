@@ -1,11 +1,6 @@
-<%# locals: (event:, roster_id:) %>
-<%# WHY: the legend's chevrons straight after the heading rather than daisyUI's `collapse-arrow`, which pins its arrow to the row's far end where WW's 4c has none. %>
-<details class="collapse peer group">
+<%# locals: (roster_id:) %>
+<details class="collapse collapse-arrow peer">
   <summary class="collapse-title flex flex-col gap-2 px-0" aria-controls="<%= roster_id %>">
-    <span class="flex items-center gap-2 font-heading text-row-title">Who&rsquo;s coming
-      <%= icon :disclose, class: "size-4 text-primary group-open:hidden" %>
-      <%= icon :close_panel, class: "size-4 text-primary hidden group-open:block" %>
-    </span>
-    <%= render "events/counts", event: %>
+    <span class="font-heading text-row-title">Who&rsquo;s coming</span>
   </summary>
 </details>

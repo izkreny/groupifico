@@ -146,7 +146,7 @@ RSpec.describe "The event detail", type: :system do
 
   # The `<details>` is the whole mechanism: the rows are in the markup either way, and only the
   # browser decides whether they show.
-  it "keeps the roster folded until the counts are pressed" do
+  it "keeps the roster folded until Who’s coming is pressed" do
     owner, event, ben = rostered_event
     sign_in_as owner.user
 
@@ -228,19 +228,7 @@ RSpec.describe "The event detail", type: :system do
     expect(page).to have_text "2 members invited."
   end
 
-  # WW's 4c draws the chevron straight after the heading rather than at the row's far end.
-  it "points the heading's chevron down while folded and up once open" do
-    owner, event, = rostered_event
-    sign_in_as owner.user
-
-    visit group_event_path(event.group, event)
-    folded = heading_chevron
-    open_roster
-
-    expect([ folded, heading_chevron ]).to match [ [ be_between(0, 16), glyph_path("chevron-down") ], [ be_between(0, 16), glyph_path("chevron-up") ] ]
-  end
-
-  it "sets Who’s coming as a 16px heading, as WW's 4c does" do
+  it "sets Who’s coming as a 16px heading" do
     owner, event, = rostered_event
     sign_in_as owner.user
 
@@ -257,7 +245,7 @@ RSpec.describe "The event detail", type: :system do
 
     visit group_event_path(event.group, event)
 
-    inks = [ "yes", "maybe", "no", "no reply", "reserved" ].map { find("summary [aria-label='#{it}']").evaluate_script("getComputedStyle(this.parentElement).color") }
+    inks = [ "yes", "maybe", "no", "no reply", "reserved" ].map { find("##{ActionView::RecordIdentifier.dom_id(event)} [aria-label='#{it}']").evaluate_script("getComputedStyle(this.parentElement).color") }
     expect(inks).to eq [ "rgb(29, 102, 38)", "rgb(103, 83, 1)", "rgb(151, 38, 34)", "rgb(24, 90, 137)", "rgb(32, 30, 29)" ]
   end
 
@@ -273,17 +261,6 @@ RSpec.describe "The event detail", type: :system do
 
   def open_roster
     find("summary", text: "Who’s coming").click
-  end
-
-  # The visible chevron in the heading: its gap from the heading's words, and the glyph it draws.
-  def heading_chevron
-    find("summary > span svg", visible: :visible).evaluate_script(<<~JS)
-      (svg => { const words = document.createRange(); words.selectNodeContents(svg.parentElement.firstChild); return [ svg.getBoundingClientRect().left - words.getBoundingClientRect().right, svg.querySelector("path").getAttribute("d") ] })(this)
-    JS
-  end
-
-  def glyph_path(name)
-    Rails.root.join("app/assets/svg/icons/heroicons/outline/#{name}.svg").read[/ d="([^"]+)"/, 1]
   end
 
   def invite_the_rest(event)

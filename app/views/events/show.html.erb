@@ -6,8 +6,8 @@
   <%= render "events/event", event: @event %>
 
   <%#
-    The attendance card, in the frames' order: the counts, the reader's own answer row, and the
-    roster unfolding below both. The counts are the disclosure's summary, but the roster cannot be
+    The attendance card, in the frames' order: the heading, the reader's own answer row, and the
+    roster unfolding below both. The heading is the disclosure's summary, but the roster cannot be
     its body, because everything after a `<summary>` folds with it and the answer row between them
     has to show while the roster is folded - nor can the answer row go inside the summary, since a
     `button_to` form cannot live in one. So the `<details>` holds its summary alone and the roster is
@@ -16,7 +16,7 @@
   %>
   <div class="card card-sm bg-base-200">
     <div class="card-body gap-3">
-      <%= render "events/roster_toggle", event: @event, roster_id: dom_id(@event, :roster) %>
+      <%= render "events/roster_toggle", roster_id: dom_id(@event, :roster) %>
 
       <%= render "events/rsvp", event: @event, registration: @event.registration_for(Current.member) %>
 
