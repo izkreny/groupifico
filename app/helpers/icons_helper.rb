@@ -8,7 +8,7 @@ module IconsHelper
     concluded: "shield-check",
     canceled: "no-symbol",
 
-    # Registration.statuses. `reserved` is drawn only on a plain member's read-only roster; every other screen reads the absence of an answer as the state.
+    # Registration.statuses
     reserved: "bookmark",
     invited: "paper-airplane",
     yes: "check-circle",
