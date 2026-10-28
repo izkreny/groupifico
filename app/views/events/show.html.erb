@@ -5,22 +5,17 @@
 <div class="flex flex-col gap-4 w-full">
   <%= render "events/event", event: @event %>
 
-  <%#
-    The attendance card: the reader's own answer row first, then the heading, and the roster
-    unfolding below it. The `<details>` holds its summary alone and the roster is a later sibling
-    that `peer-open:` shows, with `aria-controls` telling assistive technology which element the
-    summary's expanded state is about.
-  %>
+  <%# The attendance card: the reader's own answer row first, then Who's coming? folding the roster beneath it. %>
   <div class="card card-sm bg-base-200">
     <div class="card-body gap-3">
       <%= render "events/rsvp", event: @event, registration: @event.registration_for(Current.member) %>
 
       <%# The next-up card's tally links here with `responses=show`, so the reader lands on Who's coming already unfolded. %>
-      <%= render "events/roster_toggle", event: @event, roster_id: dom_id(@event, :roster), open: params[:responses] == "show" %>
-
-      <div id="<%= dom_id @event, :roster %>" class="hidden peer-open:block">
-        <%= render "events/roster", event: @event %>
-      </div>
+      <%= render layout: "events/roster_toggle", locals: { event: @event, open: params[:responses] == "show" } do %>
+        <div id="<%= dom_id @event, :roster %>">
+          <%= render "events/roster", event: @event %>
+        </div>
+      <% end %>
     </div>
   </div>
 
