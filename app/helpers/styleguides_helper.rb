@@ -45,6 +45,20 @@ module StyleguidesHelper
     THEMES_STYLESHEET.read[/name: "#{Regexp.escape(theme)}";(.*?)\}/m, 1].scan(/--color-([a-z0-9-]+): (#\h{6});/).to_h
   end
 
+  # The app's own colour tokens, name to value, from the stylesheet's `@theme inline` block: mixes of daisyUI's colours rather than colours of their own, so they follow every theme.
+  def app_colours
+    THEMES_STYLESHEET.read[/@theme inline \{(.*?)\}/m, 1].scan(/--color-([a-z0-9-]+): ([^;]+);/).to_h
+  end
+
+  # The colour an app token's mix lands on over the named theme's page, so its row can print a hex and measure contrast as daisyUI's rows do. Mixed per channel in sRGB, where the browser mixes in oklab, which is close enough to read a ratio off.
+  def app_colour_hex(theme, value)
+    token, share = value.match(/var\(--color-([a-z0-9-]+)\) (\d+)%/).captures
+    colours = theme_colours(theme)
+    ink, page = [ colours.fetch(token), colours.fetch("base-100") ].map { it.delete_prefix("#").scan(/../).map(&:hex) }
+
+    "#" + ink.zip(page).map { |over, under| format("%02x", (over * share.to_f / 100 + under * (1 - share.to_f / 100)).round) }.join
+  end
+
   # The WCAG 2 contrast ratio of two hex colours, from 1 to 21, whichever is lighter.
   def contrast_ratio(one, other)
     lighter, darker = [ one, other ].map { relative_luminance(it) }.sort.reverse

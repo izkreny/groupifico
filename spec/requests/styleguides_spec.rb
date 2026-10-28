@@ -28,6 +28,17 @@ RSpec.describe "The styleguide", type: :request do
       end
 
       # What reads through SQL: the roster's rows, the credits and the count tags.
+      # A table of their own under daisyUI's, so the app's tokens are never read as daisyUI's.
+      it "lists the app's own colour tokens apart from daisyUI's" do
+        plant_styleguide_group
+        sign_in_as(create(:user))
+
+        get "/styleguide"
+
+        rows = Nokogiri::HTML(response.body).css("#app_tokens_organic tr")
+        expect(rows.map { [ it.at_css("code").text, it.css("td").size ] }).to eq [ [ "icon-muted", 5 ], [ "muted", 5 ] ]
+      end
+
       it "draws the styleguide group's records" do
         plant_styleguide_group(manager: "Ana Horvat", invited: "Ivan Kovačević", said_yes: "Marija Babić")
         sign_in_as(create(:user))
@@ -208,7 +219,7 @@ RSpec.describe "The styleguide", type: :request do
 
         html = Nokogiri::HTML(response.body)
         section = html.css("section").find { it.at_css("h2")&.text == "Colour tokens" }
-        light, dark = %w[ organic organic-dark ].map { |theme| section.css("[data-theme='#{theme}'] tbody tr").map { it.text.squish } }
+        light, dark = %w[ organic organic-dark ].map { |theme| section.css("#daisyui_tokens_#{theme} tr").map { it.text.squish } }
         expect([ light.size, dark.size ]).to eq [ 20, 20 ]
         expect(light).to include "primary #8c491a 6.22:1 vs primary-content 5.72:1"
         expect(dark).to include "primary #e09675 6.00:1 vs primary-content 5.90:1"
@@ -222,7 +233,7 @@ RSpec.describe "The styleguide", type: :request do
         get "/styleguide"
 
         section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Colour tokens" }
-        tagged = section.css("[data-theme='organic-dark'] tbody tr").to_h { [ it.at_css("code").text, it.css(".badge").any? ] }
+        tagged = section.css("#daisyui_tokens_organic-dark tr").to_h { [ it.at_css("code").text, it.css(".badge").any? ] }
         expect(tagged.values_at("base-200", "base-300", "neutral")).to eq [ false, false, true ]
       end
 

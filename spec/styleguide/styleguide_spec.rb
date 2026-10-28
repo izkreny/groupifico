@@ -37,7 +37,7 @@ RSpec.describe "The styleguide", type: :system do
     visit styleguide_path
 
     rows = find("section", text: "Colour tokens").evaluate_script(<<~JS)
-      [...this.querySelectorAll("[data-theme] tbody tr")].map(row => [row.querySelector("td:nth-child(3)").textContent, getComputedStyle(row.querySelector("td:nth-child(2) span")).backgroundColor])
+      [...this.querySelectorAll("[id^=daisyui_tokens] tr")].map(row => [row.querySelector("td:nth-child(3)").textContent, getComputedStyle(row.querySelector("td:nth-child(2) span")).backgroundColor])
     JS
     expect(rows.size).to eq 40
     expect(rows.reject { |hex, painted| painted == "rgb(#{hex.delete_prefix("#").scan(/../).map { it.to_i(16) }.join(", ")})" }).to be_empty
