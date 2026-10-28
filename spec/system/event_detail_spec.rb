@@ -127,6 +127,17 @@ RSpec.describe "The event detail", type: :system do
     expect(widths).to eq [ [ 16 ], [ 16 ] ]
   end
 
+  # The question reads as one line with its buttons, so it takes their weight while keeping its own size.
+  it "sets Your answer in the answer buttons' weight" do
+    owner, event, = rostered_event
+    sign_in_as owner.user
+
+    visit group_event_path(event.group, event)
+
+    weights = [ find("p", exact_text: "Your answer:"), find("form.button_to button", exact_text: "Yes") ].map { it.evaluate_script("getComputedStyle(this).fontWeight") }
+    expect(weights.uniq).to eq [ "600" ]
+  end
+
   # daisyUI fills a button carrying aria-current, so the lit pill would stand out by a fill its unlit neighbours lack.
   it "lights a row's pill by its colour alone, with no fill behind it" do
     owner, event, = rostered_event
