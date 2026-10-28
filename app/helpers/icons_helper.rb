@@ -13,7 +13,7 @@ module IconsHelper
     invited: "paper-airplane",
     yes: "check-circle",
     maybe: "clock",
-    no: "x-circle",
+    no: "minus-circle",
 
     # Facts an event card states.
     when: "calendar",
