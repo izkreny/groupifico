@@ -42,7 +42,7 @@
     <ul class="list">
       <% roster.each do |registration| %>
         <% name = registration.member.full_name %>
-        <li id="<%= dom_id registration, :roster %>" class="list-row items-center px-0">
+        <li id="<%= dom_id registration, :roster %>" class="list-row items-center px-0 py-2">
           <span class="list-col-grow"><%= name %></span>
 
           <%# WHY: one strip at one gap, so every icon on the row sits the same distance from its neighbours whichever controls the reader gets. %>

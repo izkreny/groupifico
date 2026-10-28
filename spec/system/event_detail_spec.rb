@@ -138,6 +138,17 @@ RSpec.describe "The event detail", type: :system do
     expect(weights.uniq).to eq [ "600" ]
   end
 
+  # daisyUI pads a list row by 1rem, which leaves a long roster 64px a row; 8px above and below its 32px buttons makes it 48px.
+  it "draws an owner's roster rows 48px tall" do
+    owner, event, ben = rostered_event
+    sign_in_as owner.user
+
+    visit group_event_path(event.group, event)
+    open_roster
+
+    expect(find_by_id(roster_row(ben)).evaluate_script("this.getBoundingClientRect().height")).to eq 48
+  end
+
   # daisyUI fills a button carrying aria-current, so the lit pill would stand out by a fill its unlit neighbours lack.
   it "lights a row's pill by its colour alone, with no fill behind it" do
     owner, event, = rostered_event
