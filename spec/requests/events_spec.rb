@@ -924,8 +924,8 @@ RSpec.describe "Events", type: :request do
         end
       end
 
-      # Where the next-up card has it: last among the event's own facts, right beneath who manages and created it, rather than in the roster's heading.
-      it "draws the tally beneath the credits line" do
+      # The tags alone, on the same row as the heading that says what they count.
+      it "draws the tally's tags right after the Who’s coming heading" do
         travel_to Time.zone.parse("2026-09-01 12:00") do
           member = create(:member, :active)
           event = detailed_event(member, reader_status: :invited)
@@ -933,8 +933,8 @@ RSpec.describe "Events", type: :request do
 
           get group_event_path(event.group, event)
 
-          facts = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(event)}").element_children
-          expect([ facts[-2].text.squish, facts[-1].at_css("[aria-label='yes']") ]).to match [ a_string_starting_with("Managed by"), be_present ]
+          row = Nokogiri::HTML(response.body).at_css("details.collapse summary").element_children
+          expect([ row[0].text.squish, row[1].at_css("[aria-label='yes']") ]).to match [ "Who’s coming:", be_present ]
         end
       end
 

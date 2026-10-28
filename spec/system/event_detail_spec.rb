@@ -245,8 +245,20 @@ RSpec.describe "The event detail", type: :system do
 
     visit group_event_path(event.group, event)
 
-    inks = [ "yes", "maybe", "no", "no reply", "reserved" ].map { find("##{ActionView::RecordIdentifier.dom_id(event)} [aria-label='#{it}']").evaluate_script("getComputedStyle(this.parentElement).color") }
+    inks = [ "yes", "maybe", "no", "no reply", "reserved" ].map { find("summary [aria-label='#{it}']").evaluate_script("getComputedStyle(this.parentElement).color") }
     expect(inks).to eq [ "rgb(29, 102, 38)", "rgb(103, 83, 1)", "rgb(151, 38, 34)", "rgb(24, 90, 137)", "rgb(32, 30, 29)" ]
+  end
+
+  it "spaces the heading from the first tag as the tags are spaced from each other" do
+    owner, event, = rostered_event
+    sign_in_as owner.user
+
+    visit group_event_path(event.group, event)
+
+    gaps = page.evaluate_script(<<~JS)
+      (([ heading, yes, maybe ]) => [ yes.getBoundingClientRect().left - heading.getBoundingClientRect().right, maybe.getBoundingClientRect().left - yes.getBoundingClientRect().right ])([ document.querySelector("summary > span.font-heading"), ...[ "yes", "maybe" ].map(label => document.querySelector(`summary [aria-label='${label}']`).parentElement) ])
+    JS
+    expect(gaps.first).to be_within(0.5).of(gaps.last)
   end
 
   it "lands on the edit form from the pencil" do
