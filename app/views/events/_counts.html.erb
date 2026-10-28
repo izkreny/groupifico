@@ -33,7 +33,7 @@
     <%= tags %>
   <% else %>
     <p class="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-      <%= icon :members, class: "size-4 flex-none text-base-content/60" %>
+      <%= icon :members, class: "size-4 flex-none text-icon-muted" %>
       <% if roster_link %>
         <%= link_to "Who’s coming?", group_event_path(event.group, event, responses: "show"), class: "link link-hover mr-1.5" %>
       <% else %>

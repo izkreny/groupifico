@@ -177,6 +177,12 @@
   --text-meta: 0.75rem;         /* 12px */
 }
 
+/* WHY: the page's ink dimmed, named once so every use matches. `icon-muted`, 60%, is 4.1:1 on the light page: enough for an icon at 3:1 and not for text at 4.5:1, which is why its name says icon. `muted`, 70%, is the quieter text that still passes AA, placeholders included. `inline` so each utility mixes the ink where it is used, since the styleguide sets a theme per section inside a page with its own, and a variable resolved at the root would carry the root's ink into every twin. */
+@theme inline {
+  --color-icon-muted: color-mix(in oklab, var(--color-base-content) 60%, transparent);
+  --color-muted: color-mix(in oklab, var(--color-base-content) 70%, transparent);
+}
+
 /* WHY: on the elements rather than through `font-heading`, since almost every title in the app is one of these; the few that are not carry the utility, which sets only the family, so the second rule names it beside them. Alegreya is vendored at 600 alone, and `font-synthesis: none` keeps a title asking another weight from being faked by thickening every stroke. */
 @layer base {
   h1, h2, h3 {
@@ -204,13 +210,14 @@
   --input-color: color-mix(in oklab, var(--color-base-content) 50%, #0000);
 }
 
+/* WHY: spelled out rather than read from `--color-muted`, whose variable resolves at the root and would carry the light ink into the styleguide's dark twin; the 70% is that token's. The label mixes `currentcolor`, so it follows the text around it. */
 ::placeholder {
-  color: color-mix(in oklab, var(--color-base-content) 65%, #0000);
+  color: color-mix(in oklab, var(--color-base-content) 70%, #0000);
   opacity: 1;
 }
 
 .label {
-  color: color-mix(in oklab, currentcolor 65%, #0000);
+  color: color-mix(in oklab, currentcolor 70%, #0000);
 }
 
 /* WHY: keyboard focus thickens the border in primary instead of daisyUI's offset outline ring.

@@ -8,7 +8,7 @@
   The "not signed in yet" mark is the roster's alone, never the member screen's, and only for a member who oversees the list: they are the ones who added this person and would chase them, and seeing that is a read a paused one keeps.
 %>
 <% name = member.full_name %>
-<li id="<%= dom_id member, :row %>" class="list-row items-center<%= " text-base-content/70" unless member.active? %>">
+<li id="<%= dom_id member, :row %>" class="list-row items-center<%= " text-muted" unless member.active? %>">
   <div class="avatar avatar-placeholder">
     <div class="bg-base-300 text-base-content w-10 rounded-full">
       <span><%= member.initials %></span>

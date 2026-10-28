@@ -33,12 +33,12 @@
           <% hint_id = form.field_id(:roles, box.value, :hint) %>
           <div class="group flex items-center justify-between gap-2"
                data-role-implications-target="role" data-implies="<%= choice.implied.to_json %>">
-            <%= box.label class: "inline-flex items-center gap-1.5 group-data-implied:text-base-content/70" do %>
+            <%= box.label class: "inline-flex items-center gap-1.5 group-data-implied:text-muted" do %>
               <%= box.check_box class: "checkbox", aria: { describedby: hint_id } %>
               <%= box.text %>
             <% end %>
 
-            <span id="<%= hint_id %>" class="text-xs group-data-implied:text-base-content/70"><%= choice.hint %></span>
+            <span id="<%= hint_id %>" class="text-xs group-data-implied:text-muted"><%= choice.hint %></span>
           </div>
         <% end %>
       </fieldset>

@@ -125,6 +125,22 @@ RSpec.describe "The styleguide", type: :system do
     expect([ alerts.map { it.has_button?("Dismiss", wait: 0) }, columns.uniq.size ]).to eq [ [ true, false ], 1 ]
   end
 
+  # Both mix the twin's own ink, so a token resolved once at the page's light root would read faint in the dark twin.
+  it "dims icons to icon-muted and text to muted from each twin's own ink" do
+    plant_styleguide_group
+    sign_in_as create(:user)
+
+    visit styleguide_path
+
+    ratios = %w[ organic organic-dark ].product(%w[ icon-muted muted ]).to_h do |theme, token|
+      page.execute_script(<<~JS, theme, token)
+        document.querySelector(`[data-theme=${arguments[0]}]`).insertAdjacentHTML("beforeend", `<div class="bg-base-100"><span id="probe-${arguments[0]}-${arguments[1]}" class="text-${arguments[1]}">Aa</span></div>`)
+      JS
+      [ "#{theme} #{token}", text_contrast("#probe-#{theme}-#{token}") ]
+    end
+    expect(ratios).to match("organic icon-muted" => be_between(3, 6), "organic muted" => be >= ContrastHelper::WCAG_AA, "organic-dark icon-muted" => be_between(3, 8), "organic-dark muted" => be >= ContrastHelper::WCAG_AA)
+  end
+
   it "sets the type ladder's titles in Alegreya and its text in Commissioner" do
     plant_styleguide_group
     sign_in_as create(:user)
