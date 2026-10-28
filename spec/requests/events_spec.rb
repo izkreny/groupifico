@@ -263,7 +263,7 @@ RSpec.describe "Events", type: :request do
         expect(response.body).to include %(action="#{group_event_registration_path(member.group, next_up, registration)}")
         expect(response.body).to include %(name="_method" value="patch")
         expect(response.body).to include %(name="registration[status]" value="yes"), %(name="registration[status]" value="maybe"), %(name="registration[status]" value="no")
-        expect(response.body).to match %r{btn-primary[^>]*>\s*Maybe\s*</button>}
+        expect(response.body).to match %r{btn-warning[^>]*>\s*<svg.*?</svg>\s*Maybe\s*</button>}m
       end
 
       it "leaves the pills out for a paused member, who may not write an answer" do

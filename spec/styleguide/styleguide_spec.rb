@@ -15,7 +15,7 @@ RSpec.describe "The styleguide", type: :system do
 
     expect(page.evaluate_script("getComputedStyle(document.querySelector('[data-theme=organic]')).colorScheme")).to eq "light"
     expect(page).to paint "[data-theme=organic] .card"
-    expect(page).to paint "[data-theme=organic] .join .btn-primary"
+    expect(page).to paint "[data-theme=organic] .btn-success[aria-current='true']"
   end
 
   it "paints the same two in the dark twin" do
@@ -26,7 +26,7 @@ RSpec.describe "The styleguide", type: :system do
 
     expect(page.evaluate_script("getComputedStyle(document.querySelector('[data-theme=organic-dark]')).colorScheme")).to eq "dark"
     expect(page).to paint "[data-theme=organic-dark] .card"
-    expect(page).to paint "[data-theme=organic-dark] .join .btn-primary"
+    expect(page).to paint "[data-theme=organic-dark] .btn-success[aria-current='true']"
   end
 
   # The hex a row prints is read from the stylesheet, so this is what holds the printed value to the colour the theme paints.

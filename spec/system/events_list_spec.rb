@@ -24,7 +24,7 @@ RSpec.describe "The events list", type: :system do
     visit group_events_path(member.group)
 
     expect(page).to paint ".card"
-    expect(page).to paint ".join .btn-primary"
+    expect(page).to paint "[id^=next_up] .btn[aria-current='true']"
     expect(page).to be_accessible
   end
 
@@ -39,7 +39,7 @@ RSpec.describe "The events list", type: :system do
 
     expect(rendered_colour_scheme).to eq "dark"
     expect(page).to paint ".card"
-    expect(page).to paint ".join .btn-primary"
+    expect(page).to paint "[id^=next_up] .btn[aria-current='true']"
     expect(page).to be_accessible
   end
 
@@ -78,7 +78,7 @@ RSpec.describe "The events list", type: :system do
     visit group_events_path(member.group)
 
     expect(rendered_colour_scheme).to eq "light"
-    expect(label_contrast(".join .btn-primary")).to be >= ContrastHelper::WCAG_AA
+    expect(label_contrast("[id^=next_up] .btn[aria-current='true']")).to be >= ContrastHelper::WCAG_AA
   end
 
   it "shows the same label in dark" do
@@ -91,7 +91,7 @@ RSpec.describe "The events list", type: :system do
     visit group_events_path(member.group)
 
     expect(rendered_colour_scheme).to eq "dark"
-    expect(label_contrast(".join .btn-primary")).to be >= ContrastHelper::WCAG_AA
+    expect(label_contrast("[id^=next_up] .btn[aria-current='true']")).to be >= ContrastHelper::WCAG_AA
   end
 
   # The card is drawn for a phone and the pills are a `join` of three, so whether the row of them

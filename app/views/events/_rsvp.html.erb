@@ -3,19 +3,23 @@
   The reader's own row, in the two states that are a question or an answer. A `reserved` registration draws nothing until the event ends: it is a place held before anybody was asked, and the legend reads that absence as the state rather than as a question waiting. Once the event has ended `Registration#asked?` asks it whether they went, together with an invitation nobody answered and a maybe, and the pills are `Event#available_registration_answers`, which leaves the maybe out.
 
   Nothing is drawn on an event that no longer takes answers, because `Registration` refuses every pill there. No registration draws nothing either, and so does one the policy will not let this reader write.
+
+  Each answer is its own small button, a ghost until chosen; the chosen one is solid in its status colour, which reads on the cards' `base-200` as well as on the page.
 %>
+<% chosen = { "yes" => "btn-success", "maybe" => "btn-warning", "no" => "btn-error" } %>
 <% if registration && event.open_to_answers? && (registration.asked? || registration.answered?) && allowed_to?(:update?, registration) %>
   <div class="space-y-1">
     <p class="text-sm"><%= registration.asked? ? answer_prompt(event) : "Your answer:" %></p>
 
-    <div class="join">
+    <div class="flex flex-wrap gap-2">
       <% event.available_registration_answers.each do |answer| %>
         <% current = registration.status == answer %>
         <%= button_to group_event_registration_path(event.group, event, registration),
               method: :patch,
               params: { registration: { status: answer } },
-              class: "join-item btn btn-sm#{" btn-primary" if current}",
+              class: "btn btn-sm #{current ? chosen[answer] : "btn-ghost"}",
               aria: (current ? { current: "true" } : {}) do %>
+          <%= icon answer, class: "size-3.5" %>
           <%= answer.capitalize %>
         <% end %>
       <% end %>
