@@ -37,10 +37,6 @@
       <% end %>
     <% end %>
 
-    <% if (said_yes = said_yes_line(event)) %>
-      <p class="text-sm"><%= said_yes %></p>
-    <% end %>
-
     <%= render "events/rsvp", event: event, registration: registration %>
   </div>
 </div>

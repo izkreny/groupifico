@@ -101,25 +101,6 @@ RSpec.describe EventsHelper, type: :helper do
     end
   end
 
-  describe "#said_yes_line" do
-    it "names everyone who said yes" do
-      event = create(:event)
-      alice = create(:member, group: event.group, user: create(:user, :with_full_profile, first_name: "Alice", last_name: "Brown"))
-      ben   = create(:member, group: event.group, user: create(:user, :with_full_profile, first_name: "Ben", last_name: "Cole"))
-      create(:registration, event:, member: alice, status: :yes)
-      create(:registration, event:, member: ben, status: :yes)
-      create(:registration, event:, member: create(:member, group: event.group), status: :no)
-
-      expect(helper.said_yes_line(event.reload)).to eq "Alice Brown and Ben Cole said yes"
-    end
-
-    it "is nil when nobody has said yes" do
-      event = create(:event)
-      create(:registration, event:, member: create(:member, group: event.group), status: :invited)
-
-      expect(helper.said_yes_line(event.reload)).to be_nil
-    end
-  end
 
   describe "#event_statuses" do
     it "gives each enum status its label and its own legend icon, in enum order" do

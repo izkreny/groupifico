@@ -176,7 +176,7 @@ RSpec.describe "Events", type: :request do
         end
       end
 
-      it "draws the answer, the counts and the names for a plain member who has answered" do
+      it "draws the answer and the counts for a plain member who has answered" do
         freeze_time do
           member = create(:member, :active, user: create(:user, :with_full_profile, first_name: "Carla", last_name: "Dean"))
           next_up = confirmed_event(member, days: 2)
@@ -185,7 +185,7 @@ RSpec.describe "Events", type: :request do
 
           get group_events_path(member.group)
 
-          expect(response.body).to include "Your answer:", "no reply", "Carla Dean said yes"
+          expect(response.body).to include "Your answer:", "no reply"
           expect(response.body).not_to include "Are you coming?"
         end
       end

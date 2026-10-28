@@ -58,16 +58,6 @@ module EventsHelper
     [ event.status.capitalize, (event.category unless event.other?) ].compact.join(" ")
   end
 
-  # Who has said yes, for the hero card's one line of names. Queried with the names preloaded
-  # rather than read off the loaded registrations: the hero is fetched by `Group#featured_event`, which
-  # no screen's preload reaches, and `Member` gets its name through `user` - so selecting in memory
-  # walked two queries per answer.
-  def said_yes_line(event)
-    names = event.registrations.yes.preloaded.map { it.member.full_name }
-
-    "#{names.to_sentence} said yes" if names.any?
-  end
-
   # TODO: Translate statuses and categories, something like:
   #       `Event.status.map { |status| 18n.t(status, scope: "statuses") }`
   #
