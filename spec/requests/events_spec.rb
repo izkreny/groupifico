@@ -242,6 +242,20 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include "your answer: invited"
       end
 
+      # A reserved place asks nothing, so the row says where the reader stands by the icon alone.
+      it "shows a reserved place as an icon on a compact row, with nothing to answer" do
+        member = create(:member, :active)
+        confirmed_event(member, days: 2)
+        reserved_row = confirmed_event(member, days: 5)
+        create(:registration, event: reserved_row, member:, status: :reserved)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group)
+
+        row = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(reserved_row)}")
+        expect([ row.css("svg[aria-label='Place reserved, not asked yet']").size, row.css("form").size ]).to eq [ 1, 0 ]
+      end
+
       # The pills themselves rather than the copy above them: three forms, one target, one value
       # each, and the reader's own answer lit. Without this the header carried both the positive
       # and the negative assertion, so a card with no pills under it read as correct.

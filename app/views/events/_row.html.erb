@@ -5,7 +5,7 @@
 
   The question is the exception, and it is asked wherever `Registration#asked?` puts it - a row is where they are looking when they decide. The past list asks too, in the past tense: an event that has ended and that nobody concluded is still worth a roster, so there the question goes to anyone who has not said yes or no, and `EventsHelper#answer_prompt` carries the tense. `open_to_answers?` rules out the events somebody ended rather than the ones the clock did; it is asked here as well as in `events/_rsvp` so a closed event's row draws no empty wrapper.
 
-  An answer already given stays an icon at the row's end, in its status colour, rather than a second set of pills.
+  Where the row asks nothing, the member's registration stays an icon at the row's end, whatever its status, in the Who's coming? tally's colours: an answer in its status colour, an invitation in info, a reserved place in the page's ink.
   `list-col-wrap` puts the question on its own line under the row rather than in a column beside it.
 %>
 <li id="<%= dom_id event %>" class="list-row">
@@ -22,12 +22,13 @@
     </div>
   </div>
 
-  <% if registration&.answered? %>
-    <% ink = { "yes" => "text-success", "maybe" => "text-warning", "no" => "text-error" }[registration.status] %>
-    <%= status_icon registration, label: "your answer: #{registration.status}", class: "size-5 self-center #{ink}" %>
+  <% asking = registration&.asked? && event.open_to_answers? %>
+  <% if registration && !asking %>
+    <% ink = { "yes" => "text-success", "maybe" => "text-warning", "no" => "text-error", "invited" => "text-info" }[registration.status] %>
+    <%= status_icon registration, label: registration.answered? ? "your answer: #{registration.status}" : registration_status_label(registration), class: "size-5 self-center #{ink}" %>
   <% end %>
 
-  <% if registration&.asked? && event.open_to_answers? %>
+  <% if asking %>
     <div class="list-col-wrap">
       <%= render "events/rsvp", event: event, registration: registration %>
     </div>
