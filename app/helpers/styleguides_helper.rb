@@ -27,7 +27,7 @@ module StyleguidesHelper
     close_panel: "Closing the group switcher in the header.",
     home: "The Home tab, in the header and in the bottom dock.",
     events: "The Events tab, in the header and in the bottom dock.",
-    members: "The Members tab, in the header and in the bottom dock, and the credits line on the event screen.",
+    members: "The Members tab, in the header and in the bottom dock, the credits line on the event screen, and the Responses line on the next-up card and the event screen.",
     call: "Calling a member: their row on the members list and the Mobile row on their screen.",
     email: "Emailing a member: their row on the members list and the Email row on their screen.",
     add_member: "Adding someone to an event: Add someone under the roster.",

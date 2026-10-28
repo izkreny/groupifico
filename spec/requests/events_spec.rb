@@ -171,7 +171,7 @@ RSpec.describe "Events", type: :request do
           get group_events_path(owner.group)
 
           link = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(next_up, :next_up)} a[href='#{group_event_path(owner.group, next_up, responses: "show")}']")
-          expect(link&.text&.squish).to start_with "Responses:"
+          expect(link&.text&.squish).to eq "Responses:"
         end
       end
 
