@@ -2,7 +2,7 @@
 
 <%# `display: contents` on the form, so its fieldset and its submit are flex items of the stack
     below and take its gap - the same reason every other form in this application carries it. %>
-<div class="flex flex-col gap-5">
+<div class="grow flex flex-col gap-5">
   <h1 class="text-record">Sign in</h1>
 
   <%= form_with url: session_url, class: "contents" do |form| %>
@@ -16,9 +16,9 @@
             placeholder: "you@example.com", value: params[:email], class: "input w-full" %>
     </fieldset>
 
-    <div class="inline">
-      <%= form.submit "Email me a sign-in link", class: "btn btn-primary" %>
-    </div>
+    <%= form.button class: "btn btn-primary btn-block" do %>
+      <%= icon :email, class: "size-4" %> Email me a sign-in link
+    <% end %>
   <% end %>
 
   <%# `text-meta`, never daisyUI's `label`. That component is `display: flex` with
@@ -26,5 +26,5 @@
       measured at 390px, this line overflowed the viewport by 79px carrying it. Only the browser
       knows - the element's own box stays inside the column while its text runs past the edge, so
       `getBoundingClientRect` reports nothing wrong. %>
-  <p class="text-meta">No passwords. The link in the mail signs you in on this device.</p>
+  <p class="text-meta text-center mt-auto">No passwords. The link in the mail signs you in on this device.</p>
 </div>

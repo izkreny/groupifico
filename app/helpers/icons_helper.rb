@@ -27,6 +27,9 @@ module IconsHelper
     save: "check",
     dismiss: "x-mark",
 
+    # The emailed-link pages' one button, which spends the link. The same glyph as `save` because frames 10a and 10b draw the check on it.
+    confirm: "check",
+
     # Navigation. Chevrons only - the legend has no arrow glyph.
     back: "chevron-left",
     go_to: "chevron-right",

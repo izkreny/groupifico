@@ -14,7 +14,12 @@ RSpec.describe "Creating a group", type: :system do
     end
 
     it "paints the submit button" do
-      expect(page).to paint "input[type=submit]"
+      expect(page).to paint "button[type=submit]"
+    end
+
+    # Frame 9b's full-width button; `spec/system/sign_in_page_spec.rb` carries why the heading is the measure.
+    it "stretches the submit button across the column" do
+      expect(width_of("button[type=submit]")).to eq width_of("h1")
     end
 
     # The one entry screen whose copy still goes through `AppFormBuilder#note_tag`, which renders
@@ -69,6 +74,17 @@ RSpec.describe "Creating a group", type: :system do
 
     it "has no accessibility violations" do
       expect(page).to be_accessible
+    end
+
+    # Frame 10b sets the address and the group name in the secondary colour, #526539, each on a line of its own.
+    it "sets the address and the group name in the secondary colour" do
+      colours = [ "starter@example.com", "Riverside Choir" ].map { |value| find("h1 span", text: value).evaluate_script("getComputedStyle(this).color") }
+
+      expect(colours).to eq [ "rgb(82, 101, 57)" ] * 2
+    end
+
+    it "stretches the button across the column" do
+      expect(width_of(".btn-primary")).to eq width_of("h1")
     end
 
     # `spec/system/sign_in_page_spec.rb` carries why this is a separate assertion from the two
