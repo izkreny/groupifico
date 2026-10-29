@@ -6,7 +6,7 @@ module ApplicationHelper
   }.freeze
 
   # `create` and `update` sit beside the GET actions because both re-render their form on a failed
-  # save, and a reader looking at a form must see no tabs.
+  # save, and a reader looking at a form on a phone must see no dock.
   FORM_ACTIONS = %w[ new create edit update duplicate ].freeze
 
   def shell_section
@@ -15,8 +15,15 @@ module ApplicationHelper
 
   # A `nil` group is ordinary: it covers the screens outside a group and `groups#index`, which
   # maps to `:home` above and has no group of its own.
-  def shell_tabs?(group)
-    group.present? && shell_section.present? && FORM_ACTIONS.exclude?(action_name)
+  #
+  # The header's tabs, drawn from the breakpoint up, stay on every screen inside a group, forms included, since they sit out of a form's way.
+  def shell_header_tabs?(group)
+    group.present? && shell_section.present?
+  end
+
+  # The dock, the phone's tabs, pinned to the bottom of the screen, where on a form it would crowd the form's own buttons and the keyboard, so forms go without it.
+  def shell_dock?(group)
+    shell_header_tabs?(group) && FORM_ACTIONS.exclude?(action_name)
   end
 
   # `:home` roots on `show` rather than `index`: a group's home screen is the group itself.

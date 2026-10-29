@@ -608,6 +608,18 @@ RSpec.describe "Events", type: :request do
       expect([ header.at_css("h1")&.text, header.at_css("a[aria-label='Back']")&.[]("href"), header.text.include?("Riverside Choir") ]).to eq [ "Event", group_events_path(event.group), false ]
     end
 
+    # The header's tabs stay on a form, out of its way from the breakpoint up, while the dock a phone pins to the bottom leaves it, so it never crowds the form's buttons or the keyboard.
+    it "keeps the header's tabs on the edit form and leaves the dock off it" do
+      owner = create(:member, :active, :owner)
+      event = create(:event, group: owner.group, creator: owner)
+      sign_in_as(owner.user)
+
+      get edit_group_event_path(event.group, event)
+
+      html = Nokogiri::HTML(response.body)
+      expect([ html.css("header a[aria-label='Events']").size, html.css(".dock").size ]).to eq [ 1, 0 ]
+    end
+
     # A screen pushed from the event goes back to it rather than to the events list: editing it, copying it and adding someone to it.
     it "takes the back chevron from the event's own screens back to the event" do
       owner = create(:member, :active, :owner)
