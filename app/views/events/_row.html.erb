@@ -7,6 +7,7 @@
 
   Where the row asks nothing, the member's registration stays an icon at the row's end, whatever its status, in the Who's coming? tally's colours: an answer in its status colour, an invitation in info, a reserved place in the page's ink.
   `list-col-wrap` puts the question on its own line under the row rather than in a column beside it.
+  `col-start-2` pins it under the name: the grid places it in the column of the cell before it, so behind the pencil it would land in the pencil's column and widen it until the name had no room.
 %>
 <li id="<%= dom_id event %>" class="list-row">
   <%= status_icon event, label: event.status, class: "size-6 self-center text-icon-muted" %>
@@ -36,7 +37,7 @@
   <% end %>
 
   <% if asking %>
-    <div class="list-col-wrap">
+    <div class="list-col-wrap col-start-2">
       <%= render "events/rsvp", event: event, registration: registration %>
     </div>
   <% end %>

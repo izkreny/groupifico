@@ -220,6 +220,22 @@ RSpec.describe "The events list", type: :system do
   end
 
   # A list row is a grid whose cells start at its top, so the status icon would sit level with the name rather than with the name and its meta line together.
+  # A row that asks and carries the pencil, at phone width: the question has to start under the name, never in the pencil's column, which squeezed the name to a letter a line.
+  it "puts a row's question under its name when the row also carries the pencil" do
+    member = create(:member, :owner)
+    next_event_for(member)
+    registration = create(:registration, member:, status: :invited, event: create(:event, group: member.group, creator: member, status: :confirmed, starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours))
+    sign_in_as member.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_events_path(member.group)
+
+    lefts = find_by_id(ActionView::RecordIdentifier.dom_id(registration.event)).evaluate_script(<<~JS)
+      [ this.querySelector(":scope > div:not(.list-col-wrap)"), this.querySelector(":scope > .list-col-wrap") ].map(cell => Math.round(cell.getBoundingClientRect().left))
+    JS
+    expect(lefts.first).to eq lefts.last
+  end
+
   it "centres a row's status icon on its name and meta line" do
     member = create(:member, :owner)
     event = past_event_for(member)
