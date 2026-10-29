@@ -17,7 +17,7 @@
     <div class="text-xs">
       <%= event_schedule_start(event) %>
       <% if event.address %>
-        · <%= link_to event.address.name, address_map_url(event.address), class: "link link-hover" %>
+        · <%= link_to event.address.name, address_map_url(event.address), class: "link link-hover", target: "_blank" %>
       <% end %>
     </div>
   </div>

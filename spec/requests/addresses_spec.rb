@@ -34,6 +34,21 @@ RSpec.describe "Addresses", type: :request do
         expect(page_text(response.body)).to include "Place Community Hall", "Obala 14 10000 Zagreb HR", "Riverside Choir · home address"
       end
 
+      # A map is somewhere else, so every link to one opens in a new tab and leaves the reader's page where it was: the address, the event screen, and the events list's hero and rows.
+      it "opens every map link in a new tab" do
+        member = create(:member, :active)
+        address = create(:address, name: "Community Hall", street_name: "Obala", building_number: "14")
+        member.group.update!(address:)
+        events = [ 2, 9 ].map { create(:event, group: member.group, creator: member, address:, status: :confirmed, starts_at: it.days.from_now, ends_at: it.days.from_now + 2.hours) }
+        sign_in_as(member.user)
+
+        targets = [ address_path(address), group_event_path(member.group, events.first), group_events_path(member.group) ].flat_map do |path|
+          get path
+          Nokogiri::HTML(response.body).css("a[href^='https://www.google.com/maps/']").map { it["target"] }
+        end
+        expect([ targets.size >= 4, targets.uniq ]).to eq [ true, [ "_blank" ] ]
+      end
+
       it "links the street to the reader's map application" do
         address = create(:address, street_name: "Obala", building_number: "14")
         member  = create(:member, group: create(:group, address:))

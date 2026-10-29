@@ -23,7 +23,7 @@
 
     <% if event.address %>
       <p class="flex items-center gap-1.5">
-        <%= icon :where, class: "size-4 text-icon-muted" %><%= link_to event.address.name, address_map_url(event.address), class: "link link-hover" %>
+        <%= icon :where, class: "size-4 text-icon-muted" %><%= link_to event.address.name, address_map_url(event.address), class: "link link-hover", target: "_blank" %>
       </p>
     <% end %>
 
