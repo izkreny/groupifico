@@ -1193,6 +1193,18 @@ RSpec.describe "Events", type: :request do
         expect(Nokogiri::HTML(response.body).at_css("input[name=original_id]")["value"]).to eq event.id.to_s
       end
 
+      # `dup` copies the `address_id` but not the loaded address, so the form reading it on the copy was a lazy load the strict loading refuses.
+      it "copies an event that has an address, with the address" do
+        actor = create(:member, :active, :events_administrator)
+        event = create(:event, group: actor.group, address: create(:address, name: "KBBL Broadcasting"))
+        sign_in_as(actor.user)
+
+        get duplicate_group_event_path(event.group, event)
+
+        expect(response).to have_http_status :ok
+        expect(response.body).to include "KBBL Broadcasting"
+      end
+
       # The app's alert kinds and nothing custom: the copy's note is an info alert, announced politely since it describes the form rather than reporting a failure.
       it "states what the copy changed in an info alert" do
         actor = create(:member, :active, :events_administrator)

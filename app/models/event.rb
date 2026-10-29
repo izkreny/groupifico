@@ -208,8 +208,9 @@ class Event < ApplicationRecord
   # active is not handed the copy, which starts with nobody in charge instead. Settled on #312.
   def duplicate
     self.dup.tap do |event|
-      # WHY: `dup` copies `group_id` but not the loaded group, which the form reads.
+      # WHY: `dup` copies `group_id` and `address_id` but not the loaded group and address, which the form reads.
       event.group = group
+      event.address = address
       event.status = Event.new.status
       event.manager = nil unless manager&.active?
     end
