@@ -91,8 +91,17 @@
     <%= render "styleguides/components/select", theme: %>
   <% end %>
 
-  <%= render layout: "styleguides/section", locals: { title: "Page header" } do %>
+  <%= render layout: "styleguides/section", locals: { title: "Header on a pushed screen" } do %>
     <%= render "shared/page_header", title: "Event" %>
+    <%= render "layouts/header",
+          brand_name: Current.brand.name,
+          group: @group,
+          group_name: @group.name,
+          title: content_for(:page_title),
+          initials: @owner.initials,
+          back_path: group_events_path(@group),
+          tabs: true,
+          section: :events %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Flash, notice and alert" } do %>

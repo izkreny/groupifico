@@ -23,7 +23,7 @@ RSpec.describe "Addresses", type: :request do
         expect(response).to have_http_status :ok
       end
 
-      # Frame 9k: the pushed title, then the name, the lines of the address and whose home it is.
+      # Frame 9k: the pushed title in the header, then the name, the lines of the address and whose home it is.
       it "shows the place under its pushed title" do
         address = create(:address, name: "Community Hall", street_name: "Obala", building_number: "14", postal_code: "10000", city: "Zagreb", country_code: "HR")
         member  = create(:member, group: create(:group, name: "Riverside Choir", address:))
@@ -31,7 +31,8 @@ RSpec.describe "Addresses", type: :request do
 
         get address_path(address)
 
-        expect(page_text(response.body)).to include "Place Community Hall", "Obala 14 10000 Zagreb HR", "Riverside Choir · home address"
+        expect(headings(response.body).first).to eq "Place"
+        expect(page_text(response.body)).to include "Community Hall", "Obala 14 10000 Zagreb HR", "Riverside Choir · home address"
       end
 
       # A map is somewhere else, so every link to one opens in a new tab and leaves the reader's page where it was: the address, the event screen, and the events list's hero and rows.

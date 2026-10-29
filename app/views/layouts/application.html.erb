@@ -29,6 +29,7 @@
             brand_name: Current.brand.name,
             group: group,
             group_name: group_name,
+            title: content_for(:page_title),
             initials: (Current.user.profile.initials if authenticated?),
             editable: (group.present? && allowed_to?(:edit?, group)),
             switcher_id: switcher_id,

@@ -595,6 +595,19 @@ RSpec.describe "Events", type: :request do
   end
 
   describe "GET /groups/:group_id/events/:id" do
+    # Frame 4c: a pushed screen's title stands in the header beside the back chevron, in the group name's place, and with the name go the switcher and the pencil that belong to it.
+    it "titles the header Event, beside the back chevron, in the group name's place" do
+      owner = create(:member, :active, :owner, group: create(:group, name: "Riverside Choir"))
+      create(:member, user: owner.user, group: create(:group))
+      event = create(:event, group: owner.group, creator: owner)
+      sign_in_as(owner.user)
+
+      get group_event_path(event.group, event)
+
+      header = Nokogiri::HTML(response.body).at_css("header")
+      expect([ header.at_css("h1")&.text, header.at_css("a[aria-label='Back']")&.[]("href"), header.text.include?("Riverside Choir") ]).to eq [ "Event", group_events_path(event.group), false ]
+    end
+
     context "when not signed in" do
       it "redirects to the sign-in page" do
         event = create(:event)
