@@ -1,10 +1,8 @@
 <% content_for :title, @event.name %>
-<%# WHY: a button pressed here redirects back to this same URL, which Turbo takes as a refresh, so the page morphs in place rather than redrawing from the top. %>
-<% turbo_refreshes_with method: :morph, scroll: :preserve %>
 
 <%= render "shared/page_header", title: "Event" %>
 
-<div class="flex flex-col gap-4 w-full" data-controller="hold-scroll" data-action="turbo:submit-start@document->hold-scroll#hold turbo:morph@document->hold-scroll#restore">
+<div class="flex flex-col gap-4 w-full">
   <%= render "events/event", event: @event %>
 
   <%# The reader's own answer row stands on the page above the attendance card, which holds Who's coming? folding the roster beneath it. %>

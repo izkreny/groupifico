@@ -1,5 +1,5 @@
 class RegistrationsController < ApplicationController
-  include GroupScoped, ReturnsToEvent
+  include GroupScoped
 
   # One message for every way a ticked member can stop being invitable while the reader was
   # choosing - registered by somebody else, paused, or gone from the group - and for both sides of
@@ -55,6 +55,7 @@ class RegistrationsController < ApplicationController
     render :new, status: :unprocessable_content
   end
 
+  # WHY: back to where the button was pressed, a row, a hero card or the event screen, so Turbo takes it as a refresh and the page morphs in place; the event is the fallback for a request that names no page of ours.
   def update
     authorize! @registration
 
@@ -62,12 +63,12 @@ class RegistrationsController < ApplicationController
     authorize! @registration, to: :manage_answers? unless Registration.answer?(attributes[:status])
 
     if @registration.update(attributes)
-      redirect_to_event @event
+      redirect_back_or_to group_event_path(@group, @event), status: :see_other
     else
       # An answer is a button rather than a field, so there is no form to re-render and no typed
       # value to keep: the only way here is a posted status the enum refuses, which says what is
       # wrong on the screen the buttons live on.
-      redirect_to_event @event, alert: @registration.errors.full_messages.to_sentence
+      redirect_back_or_to group_event_path(@group, @event), alert: @registration.errors.full_messages.to_sentence, status: :see_other
     end
   end
 
@@ -76,7 +77,7 @@ class RegistrationsController < ApplicationController
 
     @registration.destroy!
 
-    redirect_to_event @event
+    redirect_back_or_to group_event_path(@group, @event), status: :see_other
   end
 
   private

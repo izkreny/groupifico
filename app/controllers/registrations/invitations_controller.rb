@@ -2,7 +2,7 @@
 # because asking somebody is filling the event, which the event's manager may do and `update?`
 # refuses them.
 class Registrations::InvitationsController < ApplicationController
-  include GroupScoped, ReturnsToEvent
+  include GroupScoped
 
   before_action :set_registration
 
@@ -13,9 +13,9 @@ class Registrations::InvitationsController < ApplicationController
 
     if member.active?
       @registration.invite
-      redirect_to_event @registration.event
+      redirect_back_or_to group_event_path(@group, @registration.event), status: :see_other
     else
-      redirect_to_event @registration.event, alert: "#{member.full_name} is #{member.status}, so they are not asked."
+      redirect_back_or_to group_event_path(@group, @registration.event), status: :see_other, alert: "#{member.full_name} is #{member.status}, so they are not asked."
     end
   end
 

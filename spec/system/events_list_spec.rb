@@ -123,11 +123,8 @@ RSpec.describe "The events list", type: :system do
     end
   end
 
-  # Where a pressed pill lands is `RegistrationsController#update`'s answer, not this screen's, and
-  # it is the first of the open questions on #246: the reader leaves the list for the event the
-  # registration is on, whose roster shows the answer. Asserted as it behaves rather than as the
-  # card would want it.
-  it "writes the answer and lands where the update sends the reader" do
+  # An answer keeps the reader where they pressed it: the hero morphs in place, its question turned into the answer.
+  it "writes the hero's answer and stays on the list" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
     event = next_event_for(member)
     registration = create(:registration, event:, member:, status: :invited)
@@ -137,8 +134,25 @@ RSpec.describe "The events list", type: :system do
     visit group_events_path(member.group)
     click_button "Yes"
 
-    expect(page).to have_current_path group_event_path(member.group, event)
+    expect(page).to have_css "[id^=next_up] p", text: "Your answer:"
+    expect(page).to have_current_path group_events_path(member.group)
     expect(registration.reload).to be_yes
+  end
+
+  # A row asks its question in place, so answering it turns the question into the answer's icon at the row's end without leaving the list.
+  it "answers a row in place, its question replaced by the answer's icon" do
+    member = create(:member, :owner)
+    next_event_for(member)
+    event = create(:event, group: member.group, creator: member, status: :confirmed, starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours)
+    create(:registration, event:, member:, status: :invited)
+    sign_in_as member.user
+
+    visit group_events_path(member.group)
+    within("##{ActionView::RecordIdentifier.dom_id(event)}") { click_button "Maybe" }
+
+    expect(page).to have_css "##{ActionView::RecordIdentifier.dom_id(event)} > svg[aria-label='your answer: maybe']"
+    expect(page).to have_current_path group_events_path(member.group)
+    expect(page).to have_no_css "##{ActionView::RecordIdentifier.dom_id(event)} form"
   end
 
   # Frame 4n. Which reader is offered it is `spec/requests/events_spec.rb`'s; that its label shows and
