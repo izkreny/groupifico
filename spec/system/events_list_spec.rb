@@ -291,6 +291,21 @@ RSpec.describe "The events list", type: :system do
     expect(find("##{ActionView::RecordIdentifier.dom_id(event)} a[aria-label^='Edit '] svg").evaluate_script("this.getBoundingClientRect().width")).to eq 20
   end
 
+  # The roster's glyph gap, measured glyph to glyph rather than box to box, since the pencil's glyph sits inside a 32px button and the answer's stands bare.
+  it "sets a row's pencil 20px from its answer" do
+    member = create(:member, :owner)
+    next_event_for(member)
+    event = create(:event, group: member.group, creator: member, status: :confirmed, starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours)
+    create(:registration, event:, member:, status: :yes)
+    sign_in_as member.user
+
+    visit group_events_path(member.group)
+
+    expect(find_by_id(ActionView::RecordIdentifier.dom_id(event)).evaluate_script(<<~JS)).to eq 20
+      Math.round(this.querySelector("a[aria-label^='Edit '] svg").getBoundingClientRect().left - this.querySelector(":scope > svg[aria-label^='your answer']").getBoundingClientRect().right)
+    JS
+  end
+
   # Whether the page scrolls sideways, which is the one overflow a reader on a phone notices first.
   def overflowing?
     page.evaluate_script("document.documentElement.scrollWidth > document.documentElement.clientWidth")
