@@ -148,8 +148,8 @@ RSpec.describe "The group shell", type: :system do
     expect([ closed, page.evaluate_script(shown) ]).to eq [ [ true, false ], [ false, true ] ]
   end
 
-  # The rows are ghost links whose hover and active fills would touch edge to edge, so they keep 4px between them.
-  it "keeps 4px between the switcher's rows" do
+  # The rows are ghost links whose hover and active fills would touch edge to edge, so they keep 8px between them, the app's gap between separate controls.
+  it "keeps 8px between the switcher's rows" do
     member = create(:member, group: create(:group))
     create(:member, user: member.user, group: create(:group))
     sign_in_as member.user
@@ -157,7 +157,7 @@ RSpec.describe "The group shell", type: :system do
     visit group_path(member.group)
     find("header summary").click
 
-    expect(page.evaluate_script("(rows => Math.round(rows[1].getBoundingClientRect().top - rows[0].getBoundingClientRect().bottom))([ ...document.querySelectorAll('#group-switcher li a') ])")).to eq 4
+    expect(page.evaluate_script("(rows => Math.round(rows[1].getBoundingClientRect().top - rows[0].getBoundingClientRect().bottom))([ ...document.querySelectorAll('#group-switcher li a') ])")).to eq 8
   end
 
   # A `<details>` closes from its own summary alone, so the dropdown controller is what closes the menu on a click elsewhere.

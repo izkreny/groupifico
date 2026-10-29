@@ -4,7 +4,7 @@
 
   Rows carry no `dom_id`: `spec/requests/groups_spec.rb` asserts the absence of `group_<id>` in the markup elsewhere.
 %>
-<ul class="dropdown-content menu gap-1 bg-base-100 rounded-box border border-base-300 z-10 mt-2 w-64 p-2 shadow-sm">
+<ul class="dropdown-content menu gap-2 bg-base-100 rounded-box border border-base-300 z-10 mt-2 w-64 p-2 shadow-sm">
   <% memberships.each do |membership| %>
     <li>
       <%= link_to group_path(membership.group),
