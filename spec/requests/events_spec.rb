@@ -99,6 +99,20 @@ RSpec.describe "Events", type: :request do
     end
 
     context "when signed in as an events administrator" do
+      # Frame 4h's pencil, on the hero card and on the row beneath it alike.
+      it "offers an Edit button on the hero card and on each row" do
+        actor = create(:member, :active, :events_administrator)
+        next_up = confirmed_event(actor, name: "Tuesday rehearsal", days: 2)
+        later = confirmed_event(actor, name: "Sunday service", days: 5)
+        sign_in_as(actor.user)
+
+        get group_events_path(actor.group)
+
+        html = Nokogiri::HTML(response.body)
+        expect(html.at_css("##{ActionView::RecordIdentifier.dom_id(next_up, :next_up)} a[href='#{edit_group_event_path(actor.group, next_up)}'][aria-label='Edit Tuesday rehearsal']")).to be_present
+        expect(html.at_css("##{ActionView::RecordIdentifier.dom_id(later)} a[href='#{edit_group_event_path(actor.group, later)}'][aria-label='Edit Sunday service']")).to be_present
+      end
+
       it "offers the New button" do
         actor = create(:member, :active, :events_administrator)
         sign_in_as(actor.user)
@@ -131,6 +145,18 @@ RSpec.describe "Events", type: :request do
 
     # Managing one event is a grant on that event alone, never on making new ones.
     context "when signed in as the manager of an event" do
+      # A per-event grant, so the pencil shows on their event and on no other.
+      it "offers an Edit button on the event they manage alone" do
+        actor = create(:member, :active)
+        create(:event, group: actor.group, manager: actor, name: "Ours", starts_at: 2.days.from_now)
+        create(:event, group: actor.group, name: "Theirs", starts_at: 5.days.from_now)
+        sign_in_as(actor.user)
+
+        get group_events_path(actor.group)
+
+        expect(Nokogiri::HTML(response.body).css("a[aria-label^='Edit ']").map { it["aria-label"] }).to eq [ "Edit Ours" ]
+      end
+
       it "offers no New button" do
         actor = create(:member, :active)
         create(:event, group: actor.group, manager: actor)
@@ -175,6 +201,19 @@ RSpec.describe "Events", type: :request do
 
           expect(response.body).to include "Next up · in 2 days", "Tuesday rehearsal", "Confirmed rehearsal", "Are you coming?"
           expect(response.body).to include ActionView::RecordIdentifier.dom_id(later)
+        end
+      end
+
+      it "offers a plain member no Edit button" do
+        freeze_time do
+          member = create(:member, :active)
+          confirmed_event(member, days: 2)
+          confirmed_event(member, days: 5)
+          sign_in_as(member.user)
+
+          get group_events_path(member.group)
+
+          expect(Nokogiri::HTML(response.body).css("a[aria-label^='Edit ']")).to be_empty
         end
       end
 

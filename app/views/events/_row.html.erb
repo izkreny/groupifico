@@ -28,6 +28,13 @@
     <%= status_icon registration, label: registration.answered? ? "your answer: #{registration.status}" : registration_status_label(registration), class: "size-6 self-center #{ink}" %>
   <% end %>
 
+  <%# Frame 4h's pencil, last in the row, for a reader `edit?` allows. %>
+  <% if allowed_to?(:edit?, event) %>
+    <%= link_to edit_group_event_path(event.group, event), class: "btn btn-ghost btn-circle btn-sm text-primary self-center", aria: { label: "Edit #{event.name}" } do %>
+      <%= icon :edit, class: "size-4" %>
+    <% end %>
+  <% end %>
+
   <% if asking %>
     <div class="list-col-wrap">
       <%= render "events/rsvp", event: event, registration: registration %>

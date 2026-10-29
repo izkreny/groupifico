@@ -9,9 +9,18 @@
   <div class="card-body gap-2">
     <p class="text-xs"><%= event_kicker event %></p>
 
-    <h2 class="card-title">
-      <%= link_to event.name, group_event_path(event.group, event), class: "link link-hover" %>
-    </h2>
+    <%# Frame 4h's pencil at the end of the name's row, asked of `edit?` as on the event screen, so a reader who may not edit gets none. %>
+    <div class="flex items-center justify-between gap-2">
+      <h2 class="card-title min-w-0 break-words">
+        <%= link_to event.name, group_event_path(event.group, event), class: "link link-hover" %>
+      </h2>
+
+      <% if allowed_to?(:edit?, event) %>
+        <%= link_to edit_group_event_path(event.group, event), class: "btn btn-ghost btn-circle btn-sm text-primary flex-none", aria: { label: "Edit #{event.name}" } do %>
+          <%= icon :edit, class: "size-4" %>
+        <% end %>
+      <% end %>
+    </div>
 
     <p class="flex items-center gap-1.5">
       <%= status_icon event, class: "size-4 text-icon-muted" %><%= event_status_line event %>
