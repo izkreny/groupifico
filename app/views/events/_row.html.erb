@@ -29,10 +29,10 @@
     <%= status_icon registration, label: registration.answered? ? "your answer: #{registration.status}" : registration_status_label(registration), class: "size-6 self-center #{ink}" %>
   <% end %>
 
-  <%# Frame 4h's pencil, last in the row, for a reader `edit?` allows. %>
+  <%# Frame 4h's pencil, last in the row, for a reader `edit?` allows. WHY: 20px, a step under the row's 24px icons, so it reads beside the answer without competing with the name, where the 16px every other pencil takes looked faint. %>
   <% if allowed_to?(:edit?, event) %>
     <%= link_to edit_group_event_path(event.group, event), class: "btn btn-ghost btn-circle btn-sm text-primary self-center", aria: { label: "Edit #{event.name}" } do %>
-      <%= icon :edit, class: "size-4" %>
+      <%= icon :edit, class: "size-5" %>
     <% end %>
   <% end %>
 
