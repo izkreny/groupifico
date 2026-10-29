@@ -1,7 +1,10 @@
-<%# locals: (title:) %>
+<%# locals: (title:, back: nil) %>
 <%#
   A pushed screen's title, drawn by `layouts/_header` in the group name's place beside the back chevron, as frame 4c draws it. `flush` so a title set twice, as the styleguide's twins do, replaces rather than doubles.
 
   The title is the section noun - "Event", "Member", "New group" - never the record's name, which is the body's first heading.
+
+  `back` is the screen this one was pushed from, such as the event an edit belongs to; a screen that names none goes back to its section's root.
 %>
 <% content_for :page_title, title, flush: true %>
+<% content_for :back_path, back, flush: true if back %>

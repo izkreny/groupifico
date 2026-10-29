@@ -1,6 +1,6 @@
 <% content_for :title, "Edit event" %>
 
-<%= render "shared/page_header", title: "Edit event" %>
+<%= render "shared/page_header", title: "Edit event", back: group_event_path(@group, @event) %>
 
 <div class="w-full">
   <%= render "events/form", group: @group, event: @event, submit: "Save changes", cancel: group_event_path(@group, @event) %>

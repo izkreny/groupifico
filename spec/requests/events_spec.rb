@@ -608,6 +608,19 @@ RSpec.describe "Events", type: :request do
       expect([ header.at_css("h1")&.text, header.at_css("a[aria-label='Back']")&.[]("href"), header.text.include?("Riverside Choir") ]).to eq [ "Event", group_events_path(event.group), false ]
     end
 
+    # A screen pushed from the event goes back to it rather than to the events list: editing it, copying it and adding someone to it.
+    it "takes the back chevron from the event's own screens back to the event" do
+      owner = create(:member, :active, :owner)
+      event = create(:event, group: owner.group, creator: owner)
+      sign_in_as(owner.user)
+
+      backs = [ edit_group_event_path(event.group, event), duplicate_group_event_path(event.group, event), new_group_event_registration_path(event.group, event) ].map do |path|
+        get path
+        Nokogiri::HTML(response.body).at_css("header a[aria-label='Back']")&.[]("href")
+      end
+      expect(backs).to eq [ group_event_path(event.group, event) ] * 3
+    end
+
     context "when not signed in" do
       it "redirects to the sign-in page" do
         event = create(:event)
