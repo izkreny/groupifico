@@ -274,11 +274,11 @@ RSpec.describe "The event detail", type: :system do
     visit group_event_path(event.group, event)
     open_roster
 
-    expect(gap_to_row_end("##{roster_row(ben)} [aria-label='Take Ben Cole off the list']", ".card-body")).to be >= 0
+    expect(gap_to_row_end("##{roster_row(ben)} [aria-label='No for Ben Cole']", ".card-body")).to be >= 0
   end
 
-  # Ben's row is the fullest an owner gets, his status, the paper plane, the pills and the take-off, so it is the one where the icons would fall into groups, and a phone is where they would wrap.
-  it "spaces every icon on a roster row the same distance apart on a phone" do
+  # Ben's row is the fullest an owner gets, the take-off, his status, the paper plane and the pills, so it is the one where the status icons would fall into groups, and a phone is where they would wrap. The take-off leads, twice as far from the first status icon as the status icons sit from each other.
+  it "spaces a roster row's status icons evenly on a phone, the take-off set twice as far before them" do
     owner, event, ben = rostered_event
     sign_in_as owner.user
     resize_to ViewportHelper::MOBILE
@@ -289,7 +289,7 @@ RSpec.describe "The event detail", type: :system do
     gaps = find_by_id(roster_row(ben)).evaluate_script(<<~JS)
       [...this.querySelectorAll("svg")].map(icon => icon.getBoundingClientRect()).map((rect, i, rects) => i && Math.round(rect.left - rects[i - 1].right)).slice(1)
     JS
-    expect([ gaps.size, gaps.uniq ]).to eq [ 5, [ 20 ] ]
+    expect(gaps).to eq [ 40, 20, 20, 20, 20 ]
   end
 
   # The tags are one block, so a phone moves them below the title together rather than leaving some beside it.

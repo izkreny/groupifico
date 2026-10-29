@@ -45,8 +45,18 @@
         <li id="<%= dom_id registration, :roster %>" class="list-row items-center px-0 py-2">
           <span class="list-col-grow"><%= name %></span>
 
-          <%# WHY: one strip at one gap, so every icon on the row sits the same distance from its neighbours whichever controls the reader gets. %>
+          <%# WHY: one strip at one gap, so every status icon on the row sits the same distance from its neighbours whichever controls the reader gets; the take-off leads it, 40px from the first status icon, so it reads as its own control rather than one more status. %>
           <div class="flex items-center gap-1">
+            <% if may_remove %>
+              <%= button_to group_event_registration_path(event.group, event, registration),
+                    method: :delete,
+                    form_class: "mr-5",
+                    class: "btn btn-ghost btn-sm btn-square text-icon-muted",
+                    aria: { label: "Take #{name} off the list" } do %>
+                <%= icon :delete, class: "size-4" %>
+              <% end %>
+            <% end %>
+
             <% invitable = may_invite && !registration.answered? && registration.member.active? %>
             <% asked = registration.invited? %>
             <% if (!may_answer || answers.exclude?(registration.status)) && !(invitable && asked) %>
@@ -74,15 +84,6 @@
                       aria: { label: "#{answer.capitalize} for #{name}", current: (current ? "true" : nil) } do %>
                   <%= icon answer, class: "size-4" %>
                 <% end %>
-              <% end %>
-            <% end %>
-
-            <% if may_remove %>
-              <%= button_to group_event_registration_path(event.group, event, registration),
-                    method: :delete,
-                    class: "btn btn-ghost btn-sm btn-square text-icon-muted",
-                    aria: { label: "Take #{name} off the list" } do %>
-                <%= icon :delete, class: "size-4" %>
               <% end %>
             <% end %>
           </div>
