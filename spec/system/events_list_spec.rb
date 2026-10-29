@@ -189,9 +189,9 @@ RSpec.describe "The events list", type: :system do
     expect(page).to be_accessible
   end
 
-  # The select is this screen's title as well as its filter, so whether it paints as a surface of
+  # The list menu is this screen's title as well as its filter, so whether it paints as a surface of
   # its own is what tells a pill from one whose classes compiled to nothing.
-  it "paints the select" do
+  it "paints the list menu" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
     next_event_for(member)
     sign_in_as member.user
@@ -199,14 +199,12 @@ RSpec.describe "The events list", type: :system do
 
     visit group_events_path(member.group)
 
-    expect(page).to paint "select"
+    expect(page).to paint "#scope summary"
     expect(page).to be_accessible
   end
 
-  # The control carries no submit button, so changing it is the whole of the navigation: a `change`
-  # that reaches no listener leaves the reader on the upcoming list with the past option showing,
-  # and nothing but a browser can tell those two apart.
-  it "lands on the past list when the select is changed" do
+  # The menu's rows are links, so landing on the past list is a click on one, which only a browser follows through the opened `<details>`.
+  it "lands on the past list from the list menu" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
     next_event_for(member)
     past_event_for(member)
@@ -214,11 +212,11 @@ RSpec.describe "The events list", type: :system do
     resize_to ViewportHelper::MOBILE
 
     visit group_events_path(member.group)
-    select "Past events", from: "Which events to show; choosing one loads that list"
+    find("#scope summary").click
+    within("#scope") { click_link "Past events" }
 
     expect(page).to have_current_path group_events_path(member.group, scope: "past")
-    expect(page).to have_text "Spring concert"
-    expect(page).to be_accessible
+    expect(page).to have_text("Spring concert").and be_accessible
   end
 
   # A list row is a grid whose cells start at its top, so the status icon would sit level with the name rather than with the name and its meta line together.

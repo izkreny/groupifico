@@ -30,29 +30,17 @@ RSpec.describe "Events", type: :request do
         expect(response).to have_http_status :ok
       end
 
-      # The select is the screen's title as well as its filter, so what proves the title is there
-      # is the control's own two options rather than a heading above them.
-      it "titles the screen with the select that chooses between the two lists" do
+      # The list menu is the screen's title as well as its filter, so what proves the title is there
+      # is the menu naming the open list and linking both, rather than a heading above them.
+      it "titles the screen with the menu that links the two lists, the open one marked" do
         member = create(:member, :active)
         sign_in_as(member.user)
 
         get group_events_path(member.group)
 
-        expect(response.body).to include %(name="scope"), ">Upcoming events</option>", ">Past events</option>"
-        expect(response.body).to include %(<option selected="selected" value="upcoming">)
-      end
-
-      # The accessible name carries a warning that choosing navigates, which is what the plan's
-      # `## Settled` accepts SC 3.2.2 on. Asserted here because axe-core has no rule for that
-      # criterion, so `be_accessible` passes over a name shortened back to the bare purpose. What
-      # this pins is the wording; that the control still changes context on input, nothing can.
-      it "warns in the select's accessible name that choosing navigates" do
-        member = create(:member, :active)
-        sign_in_as(member.user)
-
-        get group_events_path(member.group)
-
-        expect(response.body).to include %(aria-label="Which events to show; choosing one loads that list")
+        menu = Nokogiri::HTML(response.body).at_css("details#scope")
+        expect(menu.at_css("summary").text.squish).to eq "Upcoming events"
+        expect(menu.css("a").map { [ it.text, it[:href], it["aria-current"] ] }).to eq [ [ "Upcoming events", group_events_path(member.group), "true" ], [ "Past events", group_events_path(member.group, scope: "past"), nil ] ]
       end
 
       # Who may create an event is `EventPolicy#create?`, and a refused reader gets no control
@@ -456,15 +444,16 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include "Did you go?"
       end
 
-      # The select states which list is open, so a reader who lands on the past one by a typed URL
+      # The list menu states which list is open, so a reader who lands on the past one by a typed URL
       # sees the control agreeing with what is under it.
-      it "shows the past option as the select's own value" do
+      it "names the past list in the list menu and marks its link" do
         member = create(:member, :active)
         sign_in_as(member.user)
 
         get group_events_path(member.group, scope: "past")
 
-        expect(response.body).to include %(<option selected="selected" value="past">)
+        menu = Nokogiri::HTML(response.body).at_css("details#scope")
+        expect([ menu.at_css("summary").text.squish, menu.at_css("a[aria-current]").text ]).to eq [ "Past events", "Past events" ]
       end
 
       # Anything that is not "past" is the upcoming list, which is what keeps a mistyped URL a

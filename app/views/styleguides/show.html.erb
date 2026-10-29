@@ -83,8 +83,12 @@
     <%= render "styleguides/components/input", theme: %>
   <% end %>
 
+  <%= render layout: "styleguides/section", locals: { title: "Dropdown", docs: "https://daisyui.com/components/dropdown/" } do |theme| %>
+    <%= render "events/scope_menu", group: @group, past: false, id: "scope_#{theme}" %>
+  <% end %>
+
   <%= render layout: "styleguides/section", locals: { title: "Select", docs: "https://daisyui.com/components/select/" } do |theme| %>
-    <%= render "styleguides/components/select", theme:, group: @group %>
+    <%= render "styleguides/components/select", theme: %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Page header" } do %>

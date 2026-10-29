@@ -284,8 +284,8 @@ RSpec.describe "The styleguide", type: :request do
 
         expect(Nokogiri::HTML(response.body).css("section a[href^='https://daisyui.com/']").map { it["href"] }).to contain_exactly(
           "https://daisyui.com/components/alert/", "https://daisyui.com/components/badge/", "https://daisyui.com/components/button/",
-          "https://daisyui.com/components/card/", "https://daisyui.com/components/collapse/", "https://daisyui.com/components/input/",
-          "https://daisyui.com/components/select/"
+          "https://daisyui.com/components/card/", "https://daisyui.com/components/collapse/", "https://daisyui.com/components/dropdown/",
+          "https://daisyui.com/components/input/", "https://daisyui.com/components/select/"
         )
       end
 

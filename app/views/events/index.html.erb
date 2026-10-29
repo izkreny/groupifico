@@ -3,11 +3,11 @@
 <%#
   The group's events. The shell's header already carries the group's name, so this screen's own
   title is which of the two lists is open - and because that is also the choice on offer, the title
-  is the select rather than a heading above one.
+  is the list menu rather than a heading above one.
 %>
 <div class="flex flex-col gap-3">
   <div class="flex items-center justify-between gap-2.5">
-    <%= render "events/scope_select", group: @group, past: @past %>
+    <%= render "events/scope_menu", group: @group, past: @past %>
 
     <%# Asked of a new event rather than of the group, because that is the record `EventPolicy`
         writes the rule against. A refused reader gets no button rather than a disabled one. %>
