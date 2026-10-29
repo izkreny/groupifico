@@ -138,7 +138,7 @@
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Header, with the group switcher and the tabs" } do |theme| %>
-    <%= render "layouts/header_with_switcher",
+    <%= render "layouts/header",
           memberships: @memberships,
           brand_name: Current.brand.name,
           group: @group,

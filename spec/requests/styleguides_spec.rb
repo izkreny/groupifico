@@ -440,8 +440,8 @@ RSpec.describe "The styleguide", type: :request do
       # The summary is reached only through the builder, which draws it after the fields it reads,
       # and the confirm sheet through the event's delete partial, which is where its strings live.
       # The address fields and the role tags are each drawn by the one partial that renders them.
-      # The header, the switcher and the tabs are drawn through the layout's own wrappers, and an alert's frame and the roster toggle each wrap what they are rendered around.
-      rendered_by = { "shared/errors" => "form.with_error_summary", "shared/confirm_sheet" => %(render "events/delete"), "addresses/form_fields" => %(render "events/form"), "members/roles" => %(render "members/member"), "layouts/header" => %(render "layouts/header_with_switcher"), "layouts/group_switcher" => %(render "layouts/header_with_switcher"), "layouts/group_tabs" => %(render "layouts/dock"), "shared/alert" => %(render layout: "shared/alert"), "events/roster_toggle" => %(render layout: "events/roster_toggle") }
+      # The switcher is drawn through the header, the tabs through the layout's own wrappers, and an alert's frame and the roster toggle each wrap what they are rendered around.
+      rendered_by = { "shared/errors" => "form.with_error_summary", "shared/confirm_sheet" => %(render "events/delete"), "addresses/form_fields" => %(render "events/form"), "members/roles" => %(render "members/member"), "layouts/group_switcher" => %(render "layouts/header"), "layouts/group_tabs" => %(render "layouts/dock"), "shared/alert" => %(render layout: "shared/alert"), "events/roster_toggle" => %(render layout: "events/roster_toggle") }
 
       expect(partials).not_to be_empty
       expect((partials - %w[ layouts/head styleguides/section ]).reject { template.include?(rendered_by.fetch(it, %(render "#{it}"))) }).to be_empty

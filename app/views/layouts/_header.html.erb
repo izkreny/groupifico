@@ -1,4 +1,4 @@
-<%# locals: (brand_name:, group: nil, group_name: nil, initials: nil, editable: false, switcher_id: nil, back_path: nil, tabs: false, section: nil) %>
+<%# locals: (brand_name:, group: nil, group_name: nil, initials: nil, editable: false, switcher_id: nil, memberships: nil, back_path: nil, tabs: false, section: nil) %>
 <%# The leading 20px slot is present whether it holds the group mark or a back chevron: that is
     what makes every title start at the same x, and `shared/_page_header` reproduces it empty. %>
 <header class="navbar bg-base-100 border-b border-base-content/5 min-h-0 gap-2.5 px-4 py-3">
@@ -12,16 +12,21 @@
     <% end %>
   </span>
 
-  <span class="font-heading text-shell sm:text-hero truncate min-w-0"><%= group ? group_name : brand_name %></span>
-
+  <%# With a second group the name and its chevron are the switcher, looking as a plain name and a ghost chevron button do, and opening a menu of the reader's groups, each a link, so nothing moves until one is pressed. The two chevrons swap on `[open]` alone. %>
   <% if switcher_id %>
-    <button type="button" class="btn btn-ghost btn-circle btn-sm text-primary flex-none"
-            aria-label="Switch group" aria-haspopup="dialog" aria-expanded="false"
-            aria-controls="<%= switcher_id %>"
-            data-action="group-switcher#open" data-group-switcher-target="opener">
-      <%= icon :disclose, class: "size-4", data: { group_switcher_target: "closed" } %>
-      <%= icon :close_panel, class: "size-4", hidden: true, data: { group_switcher_target: "opened" } %>
-    </button>
+    <details id="<%= switcher_id %>" class="dropdown group min-w-0" data-controller="dropdown" data-action="click@document->dropdown#close keydown@document->dropdown#close">
+      <summary class="flex items-center gap-2.5 min-w-0 cursor-pointer list-none rounded-field focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+        <span class="font-heading text-shell sm:text-hero truncate min-w-0"><%= group_name %></span>
+        <span class="btn btn-ghost btn-circle btn-sm text-primary flex-none">
+          <%= icon :disclose, class: "size-4 group-open:hidden" %>
+          <%= icon :close_panel, class: "size-4 hidden group-open:block" %>
+        </span>
+      </summary>
+
+      <%= render "layouts/group_switcher", memberships:, current_group: group %>
+    </details>
+  <% else %>
+    <span class="font-heading text-shell sm:text-hero truncate min-w-0"><%= group ? group_name : brand_name %></span>
   <% end %>
 
   <% if editable %>
@@ -30,7 +35,7 @@
     <% end %>
   <% end %>
 
-  <%# The slack sits here rather than on the name, so the switcher chevron and the pencil stay
+  <%# The slack sits here rather than on the name, so the switcher and the pencil stay
       against the name they belong to and only the avatar and the tabs are pushed right. %>
   <span class="grow"></span>
 

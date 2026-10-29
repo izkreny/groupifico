@@ -329,23 +329,23 @@ RSpec.describe "Groups", type: :request do
         expect(response.body).not_to include 'aria-label="Edit group"'
       end
 
-      it "offers the switcher chevron to a reader with a second group" do
+      it "offers the switcher to a reader with a second group" do
         member = create(:member)
         create(:member, user: member.user, group: create(:group))
         sign_in_as(member.user)
 
         get group_path(member.group)
 
-        expect(response.body).to include 'aria-label="Switch group"'
+        expect(Nokogiri::HTML(response.body).css("header details.dropdown")).to be_present
       end
 
-      it "offers no switcher chevron to a reader with one group" do
+      it "offers no switcher to a reader with one group" do
         member = create(:member)
         sign_in_as(member.user)
 
         get group_path(member.group)
 
-        expect(response.body).not_to include 'aria-label="Switch group"'
+        expect(Nokogiri::HTML(response.body).css("header details.dropdown")).to be_empty
       end
 
       # `menu-active` colours the reader's current group and says nothing to a screen reader, so
@@ -368,16 +368,16 @@ RSpec.describe "Groups", type: :request do
       end
 
       # A group they have left is not a group they can switch to, so it must not raise the count
-      # that decides whether the chevron appears either. Same leak `user.current_groups` closes for
+      # that decides whether the switcher appears either. Same leak `user.current_groups` closes for
       # the index, asked of the shell instead.
-      it "offers no switcher chevron for a group the reader has left" do
+      it "offers no switcher for a group the reader has left" do
         member = create(:member)
         create(:member, :inactive, user: member.user, group: create(:group))
         sign_in_as(member.user)
 
         get group_path(member.group)
 
-        expect(response.body).not_to include 'aria-label="Switch group"'
+        expect(Nokogiri::HTML(response.body).css("header details.dropdown")).to be_empty
       end
     end
   end

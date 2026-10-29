@@ -1,12 +1,12 @@
 require "rails_helper"
 
 # Only what a browser adds. Which controls a given reader sees - the pencil for an owner, the
-# chevron for a reader with two groups, nothing at all for a signed-out visitor - is
+# switcher for a reader with two groups, nothing at all for a signed-out visitor - is
 # `spec/requests/groups_spec.rb`'s assertion, and per the duplication rule in `.agents/testing.md`
 # it does not come back here.
 #
 # What no request spec can reach is whether the chrome paints, whether the two tab placements swap
-# at the breakpoint, whether tapping a tab lands anywhere, whether the switcher opens as a modal,
+# at the breakpoint, whether tapping a tab lands anywhere, whether the switcher opens and closes,
 # and whether an icon-only control has a name. Those are what this file is for.
 #
 # The paint targets are the group mark and the avatar rather than the header or the dock. Both of
@@ -111,39 +111,10 @@ RSpec.describe "The group shell", type: :system do
     resize_to ViewportHelper::MOBILE
 
     visit group_path(member.group)
-    click_button "Switch group"
-
-    # Wait for the sheet to finish sliding in before clicking into it. `[open]` is set the instant
-    # `showModal()` runs and the dialog's opacity is already 1, but `.modal-top > .modal-box`
-    # carries `translate: 0 -100%` and animates to `translate: 0` over about 300ms - so the row is
-    # "visible" to Capybara while it is still off-screen, and a click at those coordinates hits
-    # nothing or the row above.
-    #
-    # Measured over the DevTools Protocol rather than guessed: sampling every frame from
-    # `showModal()`, the computed `translate` ran `0px -100%` -> `0px -82%` -> `0px -25%` -> `0px`,
-    # and `elementFromPoint` at the second row's centre answered `none` for the first ~100ms.
-    # Without this the example failed twice in twelve runs, always as "expected /groups/1 to equal
-    # /groups/2" - the click landing on the current group, whose row navigates nowhere.
-    expect(page).to have_css "#group-switcher .modal-box", style: { "translate" => "0px" }
+    find("header summary").click
     within("#group-switcher") { click_link "Harbour Band" }
 
     expect(page).to have_current_path group_path(other.group)
-  end
-
-  # The switcher is a `<dialog>` so that Escape, the backdrop and holding focus are the element's
-  # own behaviour rather than script. That only holds if it is opened as a modal, and `showModal`
-  # against `show` is invisible to every other assertion here.
-  it "opens the switcher as a modal, so the element handles focus and Escape itself" do
-    member = create(:member, group: create(:group))
-    create(:member, user: member.user, group: create(:group))
-    sign_in_as member.user
-    resize_to ViewportHelper::MOBILE
-
-    visit group_path(member.group)
-    click_button "Switch group"
-
-    expect(page).to have_css "#group-switcher[open]"
-    expect(page.evaluate_script("document.querySelector('#group-switcher').matches(':modal')")).to be true
   end
 
   # Whether the name fits is geometry, which nothing below the browser can measure: the markup is
@@ -162,57 +133,51 @@ RSpec.describe "The group shell", type: :system do
     expect(truncated?(".navbar span.truncate")).to be false
   end
 
-  # The flip is the whole of what the Stimulus controller does beyond `showModal`, and nothing
-  # below the browser can see it: both chevrons are in the markup at every state, and which one
-  # shows is a `hidden` attribute the controller writes.
-  #
-  # The assertions read that attribute rather than Capybara visibility, because `showModal` makes
-  # everything outside the dialog inert and the header's own chevron then reads as not visible
-  # however the attribute stands. `visible: :all` is what lets the selector see it at all.
-  #
-  # Watched failing against `hidden = false`, which is what the controller used to do: `<svg>` is
-  # not an `HTMLElement`, so `hidden` is not one of its IDL attributes and the assignment sets a
-  # plain JS property while `hidden="true"` stays in the markup.
-  it "points the header's chevron up while the sheet is open" do
+  # The two chevrons swap on the details' own `[open]`, through `group-open:`, so the flip is CSS that only a browser resolves.
+  it "points the switcher's chevron up while the menu is open, and down again once closed" do
     member = create(:member, group: create(:group, name: "Riverside Choir"))
     create(:member, user: member.user, group: create(:group, name: "Harbour Band"))
     sign_in_as member.user
     resize_to ViewportHelper::MOBILE
+    shown = "[ ...document.querySelectorAll('header summary svg') ].map(icon => getComputedStyle(icon).display != 'none')"
 
     visit group_path(member.group)
-    click_button "Switch group"
+    closed = page.evaluate_script(shown)
+    find("header summary").click
 
-    expect(page).to have_css "[aria-label='Switch group'][aria-expanded='true']"
-    expect(page).to have_css "[data-group-switcher-target='opened']:not([hidden])", visible: :all
-    expect(page).to have_css "[data-group-switcher-target='closed'][hidden]", visible: :all
+    expect([ closed, page.evaluate_script(shown) ]).to eq [ [ true, false ], [ false, true ] ]
   end
 
-  # Dismissed with Escape rather than a control, because the listener is on the dialog's own
-  # `close` event: this is the path a reader takes when they never touch the button again.
-  #
-  # All three assertions earn their place against a different mutation: `aria-expanded` catches a
-  # listener that never fires, `opened[hidden]` catches one that leaves the sheet's own chevron up,
-  # and `closed:not([hidden])` catches one that hides both and leaves the button with no glyph at
-  # all.
-  it "points it back down when the sheet is dismissed" do
-    member = create(:member, group: create(:group, name: "Riverside Choir"))
-    create(:member, user: member.user, group: create(:group, name: "Harbour Band"))
+  # A `<details>` closes from its own summary alone, so the dropdown controller is what closes the menu on a click elsewhere.
+  it "closes the switcher's menu on a click elsewhere" do
+    member = create(:member, group: create(:group))
+    create(:member, user: member.user, group: create(:group))
     sign_in_as member.user
-    resize_to ViewportHelper::MOBILE
 
     visit group_path(member.group)
-    click_button "Switch group"
-    find("body").send_keys :escape
+    find("header summary").click
+    find("main").click
 
-    expect(page).to have_css "[aria-label='Switch group'][aria-expanded='false']"
-    expect(page).to have_css "[data-group-switcher-target='opened'][hidden]", visible: :all
-    expect(page).to have_css "[data-group-switcher-target='closed']:not([hidden])", visible: :all
+    expect(page.evaluate_script("document.getElementById('group-switcher').open")).to be false
+  end
+
+  # And on Escape, handing focus back to the summary so the keyboard is where it was.
+  it "closes the switcher's menu on Escape, focus back on its summary" do
+    member = create(:member, group: create(:group))
+    create(:member, user: member.user, group: create(:group))
+    sign_in_as member.user
+
+    visit group_path(member.group)
+    find("header summary").click
+    page.driver.browser.keyboard.type(:Escape)
+
+    expect(page.evaluate_script("[ document.getElementById('group-switcher').open, document.activeElement.tagName ]")).to eq [ false, "SUMMARY" ]
   end
 
   # The header's flex slack has been wrong twice: once reserving half the row, once stretching the
   # name's box past its text so the controls sat at the far end of it. Neither is visible to
   # `truncated?`, whose `scrollWidth > clientWidth` is false either way, so this measures the gap
-  # between the name and the chevron instead. `gap-2.5` on the row is 10px.
+  # between the name and the chevron instead. `gap-2.5` is 10px.
   #
   # Watched failing against the pre-fix markup - `grow` on the name and no spacer - which answered
   # 79px at this width.
@@ -224,7 +189,7 @@ RSpec.describe "The group shell", type: :system do
 
     visit group_path(member.group)
 
-    expect(gap_after_text("header span.truncate", "[aria-label='Switch group']")).to eq 10
+    expect(gap_after_text("header span.truncate", "header summary .btn")).to eq 10
     expect(gap_to_row_end("header a.avatar", "header")).to eq 0
   end
 
@@ -273,25 +238,38 @@ RSpec.describe "The group shell", type: :system do
 
   # The Tab goes to the page through Ferrum's keyboard rather than `send_keys`, which clicks its
   # element first: on `body` that starts the order from the dock, and on the switcher it opens the
-  # sheet. The style matcher retries, which is what waits out daisyUI's `border-color` transition:
+  # menu. The style matcher retries, which is what waits out daisyUI's `border-color` transition:
   # read at once, the border is still on its way from the ghost button's transparent one. Watched
   # failing with the focus rule removed, where daisyUI's own 2px outline ring paints over a 1px
   # border. The inset line in the ground colour is what shows on a primary fill, where a primary
   # border cannot; on this ghost button it is invisible but computed all the same, and was watched
   # failing before its rule existed.
   it "thickens a focused button's border in primary rather than drawing a ring" do
-    member = create(:member, group: create(:group))
+    member = create(:member, :owner, group: create(:group))
     create(:member, user: member.user, group: create(:group))
     sign_in_as member.user
     prefer_colour_scheme :light
     resize_to ViewportHelper::MOBILE
 
     visit group_path(member.group)
-    page.driver.browser.keyboard.type(:Tab)
+    page.driver.browser.keyboard.type(:Tab, :Tab)
 
-    expect(page).to have_css "[aria-label='Switch group']:focus-visible",
+    expect(page).to have_css "[aria-label='Edit group']:focus-visible",
       style: { "outline-style" => "none", "border-top-width" => "2px", "border-top-color" => "rgb(140, 73, 26)",
                "box-shadow" => "rgb(245, 234, 216) 0px 0px 0px 2px inset" }
+  end
+
+  # The switcher's summary is a name and a chevron rather than a button, so it shows focus as an outline in primary around both.
+  it "outlines the focused switcher in primary" do
+    member = create(:member, group: create(:group))
+    create(:member, user: member.user, group: create(:group))
+    sign_in_as member.user
+    prefer_colour_scheme :light
+
+    visit group_path(member.group)
+    page.driver.browser.keyboard.type(:Tab)
+
+    expect(page).to have_css "header summary:focus-visible", style: { "outline-style" => "solid", "outline-color" => "rgb(140, 73, 26)" }
   end
 
   # `document.fonts.load` rather than `document.fonts.check`, which answers true for a family no
