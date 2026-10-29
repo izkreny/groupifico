@@ -202,6 +202,9 @@
 .badge-sm { --radius-selector: calc(0.5rem * 20 / 24); }
 .badge-xs { --radius-selector: calc(0.5rem * 16 / 24); }
 
+/* WHY: the badge centres its line box, but Commissioner keeps descender room under every line, so a lowercase word with no descender, "owner", sits visibly high. Trimming the line to the x-height centres the letters themselves; the app's badges are lowercase words, and a browser without `text-box` keeps the line box. */
+.badge { text-box: trim-both ex alphabetic; }
+
 /* WHY: unlayered, so each rule beats daisyUI's layered component CSS whatever its specificity.
    daisyUI's input border, base-content at 20%, is 1.5:1 on this ground where a field's boundary
    needs 3:1; its placeholder at 50% is 3.1:1 and its label at 60% is 4.1:1, where text needs 4.5:1.

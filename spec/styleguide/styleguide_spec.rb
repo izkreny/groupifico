@@ -125,6 +125,19 @@ RSpec.describe "The styleguide", type: :system do
     expect([ alerts.map { it.has_button?("Dismiss", wait: 0) }, columns.uniq.size ]).to eq [ [ true, false ], 1 ]
   end
 
+  # The badge centres its line box, and Commissioner's descender room would leave a word with no descender sitting high, so the line is trimmed to the x-height. Measured on an "x" that inherits the trim: trimmed it is the x-height alone, about 6px, untrimmed the 18px line, centred either way.
+  it "centres a badge's lowercase letters on their x-height" do
+    plant_styleguide_group
+    sign_in_as create(:user)
+
+    visit styleguide_path
+
+    above, below, height = find("[data-theme=organic] .badge-sm", match: :first).evaluate_script(<<~JS)
+      (probe => { probe.textContent = "x"; probe.style.cssText = "display: inline-block; text-box: inherit"; this.replaceChildren(probe); const box = this.getBoundingClientRect(), x = probe.getBoundingClientRect(); return [ x.top - box.top, box.bottom - x.bottom, x.height ] })(document.createElement("span"))
+    JS
+    expect([ (above - below).abs <= 0.5, height < 10 ]).to eq [ true, true ]
+  end
+
   # Both mix the twin's own ink, so a token resolved once at the page's light root would read faint in the dark twin.
   it "dims icons to icon-muted and text to muted from each twin's own ink" do
     plant_styleguide_group
