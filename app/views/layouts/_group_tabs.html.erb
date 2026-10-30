@@ -16,6 +16,6 @@
   <%= link_to path,
         class: [ "text-primary" => current, "text-icon-muted" => !current, "dock-active" => (current && in_dock) ],
         aria: { label: aria_label, current: ("page" if current) } do %>
-    <%= icon name, class: "size-5" %>
+    <%= icon name, class: in_dock ? "size-6" : "size-5" %>
   <% end %>
 <% end %>
