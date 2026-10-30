@@ -292,6 +292,19 @@ RSpec.describe "The event detail", type: :system do
     expect(gaps).to eq [ 40, 20, 20, 20, 20 ]
   end
 
+  it "draws a roster row's icons at 20px" do
+    owner, event, ben = rostered_event
+    sign_in_as owner.user
+
+    visit group_event_path(event.group, event)
+    open_roster
+
+    widths = find_by_id(roster_row(ben)).evaluate_script(<<~JS)
+      [...this.querySelectorAll("svg")].map(icon => icon.getBoundingClientRect().width)
+    JS
+    expect(widths).to all eq 20
+  end
+
   # The tags are one block, so a phone moves them below the title together rather than leaving some beside it.
   it "puts every tag below Who’s coming? on a phone, and beside it on a wide screen" do
     owner, event, = rostered_event

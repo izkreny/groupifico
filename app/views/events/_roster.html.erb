@@ -46,14 +46,14 @@
           <span class="list-col-grow"><%= name %></span>
 
           <%# WHY: one strip at one gap, so every status icon on the row sits the same distance from its neighbours whichever controls the reader gets; the take-off leads it, 40px from the first status icon, so it reads as its own control rather than one more status. %>
-          <div class="flex items-center gap-1">
+          <div class="flex items-center gap-2">
             <% if may_remove %>
               <%= button_to group_event_registration_path(event.group, event, registration),
                     method: :delete,
                     form_class: "mr-5",
                     class: "btn btn-ghost btn-sm btn-square text-icon-muted",
                     aria: { label: "Take #{name} off the list" } do %>
-                <%= icon :delete, class: "size-4" %>
+                <%= icon :delete, class: "size-5" %>
               <% end %>
             <% end %>
 
@@ -61,7 +61,7 @@
             <% asked = registration.invited? %>
             <% if (!may_answer || answers.exclude?(registration.status)) && !(invitable && asked) %>
               <span class="inline-flex size-8 items-center justify-center <%= { "invited" => "text-info" }.merge(chosen)[registration.status] %>" title="<%= registration_status_label(registration) %>">
-                <%= status_icon registration, label: registration_status_label(registration), class: "size-4" %>
+                <%= status_icon registration, label: registration_status_label(registration), class: "size-5" %>
               </span>
             <% end %>
 
@@ -70,7 +70,7 @@
                     class: "btn btn-ghost btn-sm btn-square #{asked ? "text-info" : "text-icon-muted"}",
                     title: registration_status_label(registration),
                     aria: { label: asked ? "#{name} is invited, no reply yet" : "Invite #{name}" } do %>
-                <%= icon :invited, class: "size-4" %>
+                <%= icon :invited, class: "size-5" %>
               <% end %>
             <% end %>
 
@@ -82,7 +82,7 @@
                       params: { registration: { status: answer } },
                       class: "btn btn-ghost btn-sm btn-square #{current ? "#{chosen[answer]} not-hover:bg-transparent not-hover:border-transparent" : "text-icon-muted"}",
                       aria: { label: "#{answer.capitalize} for #{name}", current: (current ? "true" : nil) } do %>
-                  <%= icon answer, class: "size-4" %>
+                  <%= icon answer, class: "size-5" %>
                 <% end %>
               <% end %>
             <% end %>
