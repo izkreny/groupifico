@@ -231,6 +231,21 @@ RSpec.describe "The styleguide", type: :system do
       expect(page).to have_css "a[aria-label='Edit group']"
       expect([ after_reload, page.has_no_css?(ladder, visible: :visible, wait: 1) ]).to eq [ true, true ]
     end
+
+    # The two buttons in the switcher bar fold or unfold every section at once, and a reload keeps what they left, as it keeps a single fold.
+    it "folds every section with Collapse all and unfolds them with Expand all" do
+      plant_styleguide_group
+      sign_in_as create(:user)
+      open_count = "[...document.querySelectorAll('[data-controller~=fold] > details')].filter(details => details.open).length"
+
+      visit styleguide_path
+      click_button "Collapse all"
+      visit styleguide_path
+      collapsed = page.evaluate_script(open_count)
+      click_button "Expand all"
+
+      expect([ collapsed, page.evaluate_script(open_count) ]).to eq [ 0, page.all("[data-controller~=fold]", visible: :all).size ]
+    end
   end
 
   # One audit covers both themes, since both twins of every section are on the page. Signed in as the owner, whose policies draw every control the page holds.
