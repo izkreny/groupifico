@@ -102,6 +102,18 @@ RSpec.describe "The event detail", type: :system do
     expect([ wide.first.abs <= 8, wide.last, page.evaluate_script(offset)[1] ]).to eq [ true, 16, 8 ]
   end
 
+  it "draws each answer button's icon at 20px, 8px before its label" do
+    owner, event, = rostered_event
+    sign_in_as owner.user
+
+    visit group_event_path(event.group, event)
+
+    measures = %w[ Yes Maybe No ].map { |answer| find("form.button_to button", exact_text: answer).evaluate_script(<<~JS) }
+      ((icon, label) => [ icon.width, Math.round(label.left - icon.right) ])(this.querySelector("svg").getBoundingClientRect(), (range => { range.selectNodeContents([ ...this.childNodes ].findLast(node => node.textContent.trim())); return range.getBoundingClientRect() })(document.createRange()))
+    JS
+    expect(measures).to all eq [ 20, 8 ]
+  end
+
   # The chosen answer is solid in its status colour, so its icon takes the button's content colour; the others carry the status colour on the icon, where it has to clear 3:1 on the page.
   it "colours the icons of the answers not chosen, and reads them on the page" do
     owner, event, = rostered_event
@@ -112,19 +124,6 @@ RSpec.describe "The event detail", type: :system do
     icons = %w[ Yes Maybe No ].to_h { |answer| [ answer, find("form.button_to button", exact_text: answer).evaluate_script("this.querySelector('svg').getAttribute('class')") ] }
     expect(icons.transform_values { it[/text-(success|warning|error)/] }).to eq "Yes" => nil, "Maybe" => "text-warning", "No" => "text-error"
     expect(%w[ Maybe No ].map { text_contrast("form.button_to button:not([aria-current]) svg.text-#{it == "Maybe" ? "warning" : "error"}") }).to all be >= ContrastHelper::WCAG_NON_TEXT
-  end
-
-  # The answer buttons repeat the tally's glyphs a line apart, so a size of their own would read as a different icon. The folded roster's buttons measure 0, so they are left out.
-  it "draws the answer buttons' icons at the Who’s coming? tally's size" do
-    owner, event, = rostered_event
-    sign_in_as owner.user
-
-    visit group_event_path(event.group, event)
-
-    widths = page.evaluate_script(<<~JS)
-      [ "form.button_to button:not([aria-label]) svg", "summary [aria-label] svg, summary svg[aria-label]" ].map(selector => [ ...new Set([ ...document.querySelectorAll(selector) ].map(icon => icon.getBoundingClientRect().width).filter(Boolean)) ])
-    JS
-    expect(widths).to eq [ [ 16 ], [ 16 ] ]
   end
 
   # The question reads as one line with its buttons, so it takes their weight while keeping its own size.
