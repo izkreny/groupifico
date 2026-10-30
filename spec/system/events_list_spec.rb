@@ -265,8 +265,8 @@ RSpec.describe "The events list", type: :system do
     expect(text_contrast(answer)).to be >= ContrastHelper::WCAG_NON_TEXT
   end
 
-  # 24px is the size Heroicons draws its solid set for; the event's status is a quiet fact, so it takes the muted icon ink, which still has to clear 3:1.
-  it "draws a row's two icons at 24px, the event's status in the muted icon ink" do
+  # The event's status at 24px, the size Heroicons draws its solid set for, and the reader's answer at 20px, the size every other registration status takes outside the tally; the status is a quiet fact, so it takes the muted icon ink, which still has to clear 3:1.
+  it "draws a row's status at 24px and its answer at 20px, the event's status in the muted icon ink" do
     member = create(:member, :owner)
     next_event_for(member)
     event = create(:event, group: member.group, creator: member, status: :confirmed, starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours)
@@ -276,7 +276,7 @@ RSpec.describe "The events list", type: :system do
     visit group_events_path(member.group)
 
     status = "##{ActionView::RecordIdentifier.dom_id(event)} > svg:first-child"
-    expect(find_by_id(ActionView::RecordIdentifier.dom_id(event)).evaluate_script("[ ...this.querySelectorAll(':scope > svg') ].map(icon => icon.getBoundingClientRect().width)")).to eq [ 24, 24 ]
+    expect(find_by_id(ActionView::RecordIdentifier.dom_id(event)).evaluate_script("[ ...this.querySelectorAll(':scope > svg') ].map(icon => icon.getBoundingClientRect().width)")).to eq [ 24, 20 ]
     expect([ find(status)[:class].include?("text-icon-muted"), text_contrast(status) >= ContrastHelper::WCAG_NON_TEXT ]).to eq [ true, true ]
   end
 
