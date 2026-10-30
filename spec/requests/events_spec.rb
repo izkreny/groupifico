@@ -113,6 +113,18 @@ RSpec.describe "Events", type: :request do
         expect(html.at_css("##{ActionView::RecordIdentifier.dom_id(later)} a[href='#{edit_group_event_path(actor.group, later)}'][aria-label='Edit Sunday service']")).to be_present
       end
 
+      # Duplicate leads Edit on the hero, as on the event screen.
+      it "offers Duplicate before Edit on the hero card" do
+        actor = create(:member, :active, :events_administrator)
+        next_up = confirmed_event(actor, name: "Tuesday rehearsal", days: 2)
+        sign_in_as(actor.user)
+
+        get group_events_path(actor.group)
+
+        labels = Nokogiri::HTML(response.body).css("##{ActionView::RecordIdentifier.dom_id(next_up, :next_up)} a[aria-label]").map { it["aria-label"] }
+        expect(labels).to eq [ "Duplicate Tuesday rehearsal", "Edit Tuesday rehearsal" ]
+      end
+
       it "offers the New button" do
         actor = create(:member, :active, :events_administrator)
         sign_in_as(actor.user)
@@ -155,6 +167,17 @@ RSpec.describe "Events", type: :request do
         get group_events_path(actor.group)
 
         expect(Nokogiri::HTML(response.body).css("a[aria-label^='Edit ']").map { it["aria-label"] }).to eq [ "Edit Ours" ]
+      end
+
+      # `duplicate` authorizes `create?`, which managing an event does not grant.
+      it "offers Edit alone on the hero card of the event they manage" do
+        actor = create(:member, :active)
+        create(:event, group: actor.group, manager: actor, name: "Ours", status: :confirmed, starts_at: 2.days.from_now)
+        sign_in_as(actor.user)
+
+        get group_events_path(actor.group)
+
+        expect(Nokogiri::HTML(response.body).css("[id^=next_up] a[aria-label]").map { it["aria-label"] }).to eq [ "Edit Ours" ]
       end
 
       it "offers no New button" do

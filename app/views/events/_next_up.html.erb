@@ -9,17 +9,25 @@
   <div class="card-body gap-2">
     <p class="text-xs"><%= event_kicker event %></p>
 
-    <%# Frame 4h's pencil at the end of the name's row, asked of `edit?` as on the event screen, so a reader who may not edit gets none. %>
+    <%# Frame 4h's pencil at the end of the name's row, with Duplicate before it, each asked of the rule its action authorizes as on the event screen (`events/_event` carries why Duplicate asks `create?`), so a reader refused one gets no control. %>
     <div class="flex items-center justify-between gap-2">
       <h2 class="card-title min-w-0 break-words">
         <%= link_to event.name, group_event_path(event.group, event), class: "link link-hover" %>
       </h2>
 
-      <% if allowed_to?(:edit?, event) %>
-        <%= link_to edit_group_event_path(event.group, event), class: "btn btn-ghost btn-circle btn-sm text-primary flex-none", aria: { label: "Edit #{event.name}" } do %>
-          <%= icon :edit, class: "size-4" %>
+      <div class="flex flex-none gap-1">
+        <% if allowed_to?(:create?, event) %>
+          <%= link_to duplicate_group_event_path(event.group, event), class: "btn btn-ghost btn-circle btn-sm text-primary", aria: { label: "Duplicate #{event.name}" } do %>
+            <%= icon :duplicate, class: "size-4" %>
+          <% end %>
         <% end %>
-      <% end %>
+
+        <% if allowed_to?(:edit?, event) %>
+          <%= link_to edit_group_event_path(event.group, event), class: "btn btn-ghost btn-circle btn-sm text-primary", aria: { label: "Edit #{event.name}" } do %>
+            <%= icon :edit, class: "size-4" %>
+          <% end %>
+        <% end %>
+      </div>
     </div>
 
     <p class="flex items-center gap-1.5">
