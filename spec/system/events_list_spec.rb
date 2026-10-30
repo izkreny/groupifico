@@ -306,6 +306,18 @@ RSpec.describe "The events list", type: :system do
     JS
   end
 
+  it "draws the hero's Duplicate and Edit at 20px, 20px apart" do
+    member = create(:member, :owner)
+    event = next_event_for(member)
+    sign_in_as member.user
+
+    visit group_events_path(member.group)
+
+    expect(find_by_id(ActionView::RecordIdentifier.dom_id(event, :next_up)).evaluate_script(<<~JS)).to eq [ 20, 20, 20 ]
+      ((duplicate, edit) => [ duplicate.width, edit.width, Math.round(edit.left - duplicate.right) ])(...["Duplicate", "Edit"].map(verb => this.querySelector(`a[aria-label^='${verb} '] svg`).getBoundingClientRect()))
+    JS
+  end
+
   # Whether the page scrolls sideways, which is the one overflow a reader on a phone notices first.
   def overflowing?
     page.evaluate_script("document.documentElement.scrollWidth > document.documentElement.clientWidth")

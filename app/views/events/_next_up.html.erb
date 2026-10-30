@@ -15,16 +15,16 @@
         <%= link_to event.name, group_event_path(event.group, event), class: "link link-hover" %>
       </h2>
 
-      <div class="flex flex-none gap-1">
+      <div class="flex flex-none gap-2">
         <% if allowed_to?(:create?, event) %>
           <%= link_to duplicate_group_event_path(event.group, event), class: "btn btn-ghost btn-circle btn-sm text-primary", aria: { label: "Duplicate #{event.name}" } do %>
-            <%= icon :duplicate, class: "size-4" %>
+            <%= icon :duplicate, class: "size-5" %>
           <% end %>
         <% end %>
 
         <% if allowed_to?(:edit?, event) %>
           <%= link_to edit_group_event_path(event.group, event), class: "btn btn-ghost btn-circle btn-sm text-primary", aria: { label: "Edit #{event.name}" } do %>
-            <%= icon :edit, class: "size-4" %>
+            <%= icon :edit, class: "size-5" %>
           <% end %>
         <% end %>
       </div>
