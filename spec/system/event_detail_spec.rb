@@ -333,6 +333,18 @@ RSpec.describe "The event detail", type: :system do
     expect(horizontal_overflow).to eq 0
   end
 
+  it "draws Duplicate and Edit at 20px, 20px apart" do
+    owner = create(:member, :active, :owner)
+    event = create(:event, group: owner.group, creator: owner)
+    sign_in_as owner.user
+
+    visit group_event_path(event.group, event)
+
+    expect(page.evaluate_script(<<~JS)).to eq [ 20, 20, 20 ]
+      ((duplicate, edit) => [ duplicate.width, edit.width, Math.round(edit.left - duplicate.right) ])(...[ "Duplicate", "Edit" ].map(label => document.querySelector(`main a[aria-label='${label}'] svg`).getBoundingClientRect()))
+    JS
+  end
+
   # That the row was written is `spec/requests/registrations_spec.rb`'s; the landing is the part a
   # browser adds.
   it "answers for somebody from their row and lands back on the event" do
