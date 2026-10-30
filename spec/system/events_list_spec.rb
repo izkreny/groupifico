@@ -265,7 +265,7 @@ RSpec.describe "The events list", type: :system do
     expect(text_contrast(answer)).to be >= ContrastHelper::WCAG_NON_TEXT
   end
 
-  # 24px is Heroicons' own size, where the stroke draws at its designed weight; the event's status is a quiet fact, so it takes the muted icon ink, which still has to clear 3:1.
+  # 24px is the size Heroicons draws its solid set for; the event's status is a quiet fact, so it takes the muted icon ink, which still has to clear 3:1.
   it "draws a row's two icons at 24px, the event's status in the muted icon ink" do
     member = create(:member, :owner)
     next_event_for(member)

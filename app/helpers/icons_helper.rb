@@ -56,16 +56,17 @@ module IconsHelper
     resend: "arrow-path"
   }.freeze
 
-  # The one glyph the legend draws heavier than the 2 the initializer sets for everything else.
-  BACK_STROKE_WIDTH = "2.5"
+  # Heroicons' filled set for each size class the app draws: solid, mini and micro are drawn on their own 24, 20 and 16px grids, where its outline set exists at 24px alone.
+  VARIANTS = { "size-6" => "solid", "size-5" => "mini", "size-4" => "micro" }.freeze
 
   # Draws a legend meaning. Decorative by default, because an icon beside its own label is read twice otherwise; pass `label:` where the icon is the only thing a control says.
+  #
+  # The size class picks the drawing, so a call without one of `VARIANTS`' sizes raises rather than drawing a glyph at a size it was not made for.
   def icon(meaning, label: nil, **options)
-    meaning = meaning.to_sym
+    variant = VARIANTS.values_at(*options[:class].to_s.split).compact.first or
+      raise ArgumentError, "icon #{meaning.inspect} needs one of #{VARIANTS.keys.join(", ")} in its class"
 
-    options[:stroke_width] ||= BACK_STROKE_WIDTH if meaning == :back
-
-    super(ICONS.fetch(meaning), **accessible_attributes(label), **options)
+    super(ICONS.fetch(meaning.to_sym), variant:, **accessible_attributes(label), **options)
   end
 
   # Draws the icon for whatever the record's status is. An unknown status raises through `ICONS.fetch`, because a status nobody mapped is a gap in the legend rather than a row that quietly loses its glyph.
