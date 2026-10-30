@@ -67,6 +67,16 @@ RSpec.describe "The group shell", type: :system do
     expect(width_of(".dock a[aria-label='Events'] svg")).to eq 24
   end
 
+  it "draws the header's tab icons at 24px" do
+    member = create(:member, group: create(:group))
+    sign_in_as member.user
+    resize_to ViewportHelper::DESKTOP
+
+    visit group_path(member.group)
+
+    expect(width_of(".navbar a[aria-label='Events'] svg")).to eq 24
+  end
+
   it "moves the tabs into the header above the breakpoint" do
     member = create(:member, group: create(:group))
     sign_in_as member.user
