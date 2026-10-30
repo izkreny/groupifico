@@ -18,11 +18,11 @@
   <%# With a second group the name and its chevron are the switcher, looking as a plain name and a ghost chevron button do, and opening a menu of the reader's groups, each a link, so nothing moves until one is pressed. The two chevrons swap on `[open]` alone. %>
   <% elsif switcher_id %>
     <details id="<%= switcher_id %>" class="dropdown group min-w-0" data-controller="dropdown" data-action="click@document->dropdown#close keydown@document->dropdown#close">
-      <summary class="flex items-center gap-2.5 min-w-0 cursor-pointer list-none rounded-field focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+      <summary class="flex items-center gap-0.5 min-w-0 cursor-pointer list-none rounded-field focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
         <span class="font-heading text-shell sm:text-hero truncate min-w-0"><%= group_name %></span>
         <span class="btn btn-ghost btn-circle btn-sm text-primary flex-none">
-          <%= icon :disclose, class: "size-4 group-open:hidden" %>
-          <%= icon :close_panel, class: "size-4 hidden group-open:block" %>
+          <%= icon :disclose, class: "size-5 group-open:hidden" %>
+          <%= icon :close_panel, class: "size-5 hidden group-open:block" %>
         </span>
       </summary>
 
@@ -33,8 +33,9 @@
   <% end %>
 
   <% if editable && !title %>
-    <%= link_to edit_group_path(group), class: "btn btn-ghost btn-circle btn-sm text-primary flex-none", aria: { label: "Edit group" } do %>
-      <%= icon :edit, class: "size-4" %>
+    <%# WHY: the navbar's `gap-2.5` spaces the whole row, so the pencil pulls back from it: its glyph lands 16px from the chevron's, or 8px from the name where no switcher stands between them, as the chevron does. %>
+    <%= link_to edit_group_path(group), class: [ "btn btn-ghost btn-circle btn-sm text-primary flex-none", switcher_id ? "-ml-1.5" : "-ml-2" ], aria: { label: "Edit group" } do %>
+      <%= icon :edit, class: "size-5" %>
     <% end %>
   <% end %>
 

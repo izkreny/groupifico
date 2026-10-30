@@ -199,7 +199,7 @@ RSpec.describe "The group shell", type: :system do
   # The header's flex slack has been wrong twice: once reserving half the row, once stretching the
   # name's box past its text so the controls sat at the far end of it. Neither is visible to
   # `truncated?`, whose `scrollWidth > clientWidth` is false either way, so this measures the gap
-  # between the name and the chevron instead. `gap-2.5` is 10px.
+  # between the name and the chevron's glyph instead, 8px.
   #
   # Watched failing against the pre-fix markup - `grow` on the name and no spacer - which answered
   # 79px at this width.
@@ -211,8 +211,29 @@ RSpec.describe "The group shell", type: :system do
 
     visit group_path(member.group)
 
-    expect(gap_after_text("header span.truncate", "header summary .btn")).to eq 10
+    expect(gap_after_text("header span.truncate", "header summary svg")).to eq 8
     expect(gap_to_row_end("header a.avatar", "header")).to eq 0
+  end
+
+  it "draws the header's chevron and pencil at 20px, 16px apart" do
+    member = create(:member, :owner, group: create(:group))
+    create(:member, user: member.user, group: create(:group))
+    sign_in_as member.user
+
+    visit group_path(member.group)
+
+    expect(page.evaluate_script(<<~JS)).to eq [ 20, 20, 16 ]
+      ((chevron, pencil) => [ chevron.width, pencil.width, Math.round(pencil.left - chevron.right) ])(...["header summary svg", "header [aria-label='Edit group'] svg"].map(selector => document.querySelector(selector).getBoundingClientRect()))
+    JS
+  end
+
+  it "sets the header's pencil 8px from the name when there is no switcher" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    sign_in_as member.user
+
+    visit group_path(member.group)
+
+    expect(gap_after_text("header span.truncate", "header [aria-label='Edit group'] svg")).to eq 8
   end
 
   it "paints a pushed screen, whose back chevron leads up to the section" do
