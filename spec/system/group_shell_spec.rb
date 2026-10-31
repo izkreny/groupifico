@@ -88,6 +88,17 @@ RSpec.describe "The group shell", type: :system do
     expect(page).to have_css ".dock a[aria-label='Events']", visible: :hidden
   end
 
+  # A desktop scrollbar takes its width only from a page long enough to scroll, which moved the centred column between a short screen and a long one. The gutter is the fix, read off a short screen, where daisyUI's own rule leaves it `auto`. Its effect cannot be measured here: Ferrum launches Chromium with `--hide-scrollbars`, so no page in this suite has a scrollbar to take width.
+  it "keeps the scrollbar's gutter on a screen too short to scroll" do
+    member = create(:member, group: create(:group))
+    sign_in_as member.user
+    resize_to ViewportHelper::DESKTOP
+
+    visit group_members_path(member.group)
+
+    expect(page.evaluate_script("getComputedStyle(document.documentElement).scrollbarGutter")).to eq "stable"
+  end
+
   # A Turbo navigation, which is the one thing a request spec cannot assert: that the tab is a
   # control a person can use and that it arrives where it says.
   it "lands on the events list when the Events tab is used" do
