@@ -276,8 +276,8 @@ RSpec.describe "The event detail", type: :system do
     expect(gap_to_row_end("##{roster_row(ben)} [aria-label='No for Ben Cole']", ".card-body")).to be >= 0
   end
 
-  # Ben's row is the fullest an owner gets, the take-off, his status, the paper plane and the pills, so it is the one where the status icons would fall into groups, and a phone is where they would wrap. The take-off leads, twice as far from the first status icon as the status icons sit from each other.
-  it "spaces a roster row's status icons evenly on a phone, the take-off set twice as far before them" do
+  # Ben's row is the fullest an owner gets, the take-off, his status, the paper plane and the pills, so it is the one where the status icons would fall into groups, and a phone is where they would wrap. The take-off leads, 30px from the first status icon where the status icons sit 20px apart.
+  it "spaces a roster row's status icons evenly on a phone, the take-off set 30px before them" do
     owner, event, ben = rostered_event
     sign_in_as owner.user
     resize_to ViewportHelper::MOBILE
@@ -288,7 +288,7 @@ RSpec.describe "The event detail", type: :system do
     gaps = find_by_id(roster_row(ben)).evaluate_script(<<~JS)
       [...this.querySelectorAll("svg")].map(icon => icon.getBoundingClientRect()).map((rect, i, rects) => i && Math.round(rect.left - rects[i - 1].right)).slice(1)
     JS
-    expect(gaps).to eq [ 40, 20, 20, 20, 20 ]
+    expect(gaps).to eq [ 30, 20, 20, 20, 20 ]
   end
 
   it "draws a roster row's icons at 20px" do
