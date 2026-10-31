@@ -348,6 +348,20 @@ RSpec.describe "Groups", type: :request do
         expect(Nokogiri::HTML(response.body).css("header details.dropdown")).to be_empty
       end
 
+      it "heads the screen with the group's name, alone and as the switcher" do
+        alone = create(:member, group: create(:group, name: "Riverside Choir"))
+        switching = create(:member, group: create(:group, name: "Harbour Band"))
+        create(:member, user: switching.user, group: create(:group))
+
+        headings = [ alone, switching ].map do |member|
+          sign_in_as(member.user)
+          get group_path(member.group)
+          Nokogiri::HTML(response.body).css("header h1").map(&:text)
+        end
+
+        expect(headings).to eq [ [ "Riverside Choir" ], [ "Harbour Band" ] ]
+      end
+
       # `menu-active` colours the reader's current group and says nothing to a screen reader, so
       # the row carries `aria-current` too. Asserted because an accessibility semantic nothing
       # reads is one nothing keeps.

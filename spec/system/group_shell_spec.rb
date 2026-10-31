@@ -150,7 +150,7 @@ RSpec.describe "The group shell", type: :system do
     visit group_path(member.group)
 
     expect(page).to have_text "Riverside Community Choir"
-    expect(truncated?(".navbar span.truncate")).to be false
+    expect(truncated?(".navbar h1")).to be false
   end
 
   # The two chevrons swap on the details' own `[open]`, through `group-open:`, so the flip is CSS that only a browser resolves.
@@ -221,7 +221,7 @@ RSpec.describe "The group shell", type: :system do
 
     visit group_path(member.group)
 
-    expect(gap_after_text("header span.truncate", "header summary svg")).to eq 8
+    expect(gap_after_text("header h1", "header summary svg")).to eq 8
     expect(gap_to_row_end("header a.avatar", "header")).to eq 0
   end
 
@@ -243,7 +243,7 @@ RSpec.describe "The group shell", type: :system do
 
     visit group_path(member.group)
 
-    expect(gap_after_text("header span.truncate", "header [aria-label='Edit group'] svg")).to eq 8
+    expect(gap_after_text("header h1", "header [aria-label='Edit group'] svg")).to eq 8
   end
 
   it "paints a pushed screen, whose back chevron leads up to the section" do

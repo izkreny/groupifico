@@ -19,7 +19,7 @@
   <% elsif switcher_id %>
     <details id="<%= switcher_id %>" class="dropdown group min-w-0" data-controller="dropdown" data-action="click@document->dropdown#close keydown@document->dropdown#close">
       <summary class="flex items-center gap-0.5 min-w-0 cursor-pointer list-none rounded-field focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-        <span class="font-heading text-shell sm:text-hero truncate min-w-0"><%= group_name %></span>
+        <h1 class="font-heading text-shell sm:text-hero truncate min-w-0"><%= group_name %></h1>
         <span class="btn btn-ghost btn-circle btn-sm text-primary flex-none">
           <%= icon :disclose, class: "size-5 group-open:hidden" %>
           <%= icon :close_panel, class: "size-5 hidden group-open:block" %>
@@ -29,7 +29,7 @@
       <%= render "layouts/group_switcher", memberships:, current_group: group %>
     </details>
   <% else %>
-    <span class="font-heading text-shell sm:text-hero truncate min-w-0"><%= group ? group_name : brand_name %></span>
+    <h1 class="font-heading text-shell sm:text-hero truncate min-w-0"><%= group ? group_name : brand_name %></h1>
   <% end %>
 
   <% if editable && !title %>
