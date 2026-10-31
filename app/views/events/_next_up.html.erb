@@ -7,7 +7,7 @@
 %>
 <div id="<%= dom_id event, :next_up %>" class="card card-sm bg-base-200">
   <div class="card-body gap-2">
-    <p class="text-xs"><%= event_kicker event %></p>
+    <p class="text-xs font-semibold uppercase tracking-wider text-secondary"><%= event_kicker event %></p>
 
     <%# Frame 4h's pencil at the end of the name's row, with Duplicate before it, each asked of the rule its action authorizes as on the event screen (`events/_event` carries why Duplicate asks `create?`), so a reader refused one gets no control. %>
     <div class="flex items-center justify-between gap-2">

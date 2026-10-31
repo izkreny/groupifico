@@ -94,6 +94,19 @@ RSpec.describe "The events list", type: :system do
     expect(gaps).to eq [ 8, 14 ]
   end
 
+  it "sets the hero's kicker as a secondary eyebrow" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    next_event_for(member)
+    sign_in_as member.user
+
+    visit group_events_path(member.group)
+
+    kicker = find("[id^=next_up] .card-body > p:first-child").evaluate_script(<<~JS)
+      ((style, probe) => [ style.color === getComputedStyle(probe).color, style.textTransform, style.fontWeight, style.letterSpacing, probe.remove() ].slice(0, 4))(getComputedStyle(this), document.body.appendChild(Object.assign(document.createElement("span"), { className: "text-secondary" })))
+    JS
+    expect(kicker).to eq [ true, "uppercase", "600", "0.6px" ]
+  end
+
   it "shows the lit pill by its label in light" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
     create(:registration, event: next_event_for(member), member:, status: :yes)
