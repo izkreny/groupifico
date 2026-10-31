@@ -22,7 +22,7 @@
 
         <% if allowed_to?(:edit?, @member) %>
           <%= link_to edit_group_member_path(@group, @member), class: "btn btn-ghost btn-circle btn-sm text-primary flex-none", aria: { label: "Edit" } do %>
-            <%= icon :edit, class: "size-4" %>
+            <%= icon :edit, class: "size-5" %>
           <% end %>
         <% end %>
       </div>
@@ -44,7 +44,7 @@
           <span><%= @member.email %></span>
 
           <%= mail_to @member.email, class: "btn btn-ghost btn-circle btn-sm flex-none", aria: { label: "Email #{name}" } do %>
-            <%= icon :email, class: "size-4" %>
+            <%= icon :email, class: "size-5" %>
           <% end %>
         </dd>
       </div>
@@ -56,7 +56,7 @@
             <span><%= @member.mobile_phone %></span>
 
             <%= phone_to @member.mobile_phone, class: "btn btn-ghost btn-circle btn-sm flex-none", aria: { label: "Call #{name}" } do %>
-              <%= icon :call, class: "size-4" %>
+              <%= icon :call, class: "size-5" %>
             <% end %>
           </dd>
         </div>
