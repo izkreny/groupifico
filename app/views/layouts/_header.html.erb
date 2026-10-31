@@ -4,7 +4,8 @@
 <header class="navbar bg-base-100 border-b border-base-content/5 min-h-0 gap-2.5 px-4 py-3">
   <span class="flex-none grid w-5 h-5 place-items-center">
     <% if back_path %>
-      <%= link_to back_path, class: "text-primary", aria: { label: "Back" } do %>
+      <%# WHY: a 32px box, the size of every other icon control, centred on the 20px slot by `-m-1.5`, so the chevron is tapped as easily as they are and stays where the group mark stands. %>
+      <%= link_to back_path, class: "grid size-8 -m-1.5 place-items-center text-primary", aria: { label: "Back" } do %>
         <%= icon :back, class: "size-5" %>
       <% end %>
     <% elsif group %>

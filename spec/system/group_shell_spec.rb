@@ -272,6 +272,19 @@ RSpec.describe "The group shell", type: :system do
     expect(page).to have_current_path group_path(member.group)
   end
 
+  # WCAG 2.2's 2.5.8 asks for a 24px target; the chevron's box is the 32px every icon control has, and the chevron stays where the title expects it.
+  it "gives the back chevron a 32px target without moving it" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    sign_in_as member.user
+    resize_to ViewportHelper::MOBILE
+
+    visit edit_group_path(member.group)
+
+    expect(page.evaluate_script(<<~JS)).to eq [ 32, 32, 20, 10 ]
+      ((link, chevron, title) => [ link.width, link.height, chevron.width, Math.round(title.left - chevron.right) ])(...[ "header a[aria-label='Back']", "header a[aria-label='Back'] svg", "header h1" ].map(selector => document.querySelector(selector).getBoundingClientRect()))
+    JS
+  end
+
   # `text-primary` is the colour the current tab, the back chevron and the icon buttons all paint,
   # so primary against `base-100` is the theme's one text-on-ground pair the shell depends on. axe
   # cannot see it: the tab is an icon with no text. Watched failing at 3.0:1 with light primary set
