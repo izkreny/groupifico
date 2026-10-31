@@ -1353,13 +1353,15 @@ RSpec.describe "Events", type: :request do
         expect(response).to have_http_status :ok
       end
 
-      it "ends with Delete, opening the plain confirm sheet" do
+      it "leads the form's button row with Delete, opening the plain confirm sheet" do
         actor = create(:member, :active, :events_administrator)
         event = create(:event, group: actor.group)
         sign_in_as(actor.user)
 
         get edit_group_event_path(event.group, event)
 
+        trigger = Nokogiri::HTML(response.body).at_css("form[action='#{group_event_path(event.group, event)}'] .btn:first-child[type='submit']")
+        expect([ trigger["form"], trigger.text.strip ]).to eq [ "#{ActionView::RecordIdentifier.dom_id(event, :confirm_delete)}_form", "Delete event" ]
         expect(response.body).to include "Delete this event?", "Keep event"
         expect(response.body).not_to include "to confirm"
       end

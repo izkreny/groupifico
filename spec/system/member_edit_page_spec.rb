@@ -46,7 +46,7 @@ RSpec.describe "The member edit page", type: :system do
 
       expect(page).to have_checked_field "Events administrator"
       expect(page).to paint ".join input[type=radio]:checked"
-      expect(page).to paint "##{ActionView::RecordIdentifier.dom_id(member, :confirm_delete)}_form .btn-error"
+      expect(page).to paint "[data-dialog-target='trigger'].btn-error"
       expect(page).to be_accessible
     end
 

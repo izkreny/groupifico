@@ -571,22 +571,22 @@ RSpec.describe "Groups", type: :request do
         expect(page_text(response.body)).to include "Delete group"
       end
 
-      # The confirm sheet's trigger is the delete form's own submit button, which is what makes the
+      # The confirm sheet's trigger is a submit button of the delete form, which is what makes the
       # sheet an enhancement rather than the only route: with JavaScript off the click posts the
-      # delete straight away. The markup carries that claim, so it is asserted here rather than in
-      # `spec/system/confirm_sheet_spec.rb` - `.rspec` keeps the system suite out of the runner's
-      # own run, and this is the one gate a CI job sees.
-      it "renders the delete as the trigger's own form" do
+      # delete straight away. On the edit screen it stands in the form's button row and joins the
+      # delete form through its `form` attribute. The markup carries that claim, so it is asserted
+      # here rather than in `spec/system/confirm_sheet_spec.rb` - `.rspec` keeps the system suite
+      # out of the runner's own run, and this is the one gate a CI job sees.
+      it "renders the delete as a form its trigger submits, first in the form's button row" do
         member = create(:member, :owner)
         sign_in_as(member.user)
 
         get edit_group_path(member.group)
 
         body = Nokogiri::HTML(response.body)
-        form = "form##{ActionView::RecordIdentifier.dom_id(member.group, :confirm_delete)}_form"
-        expect(body.at_css("#{form}[action='#{group_path(member.group)}'][method='post']")).to be_present
-        expect(body.at_css("#{form} input[name='_method'][value='delete']")).to be_present
-        expect(body.at_css("#{form} button[type='submit']").text.strip).to eq "Delete group"
+        id = "#{ActionView::RecordIdentifier.dom_id(member.group, :confirm_delete)}_form"
+        expect(body.at_css("form##{id}[action='#{group_path(member.group)}'][method='post'] input[name='_method'][value='delete']")).to be_present
+        expect(body.at_css("form[action='#{group_path(member.group)}'] .btn:first-child[type='submit'][form='#{id}']").text.strip).to eq "Delete group"
       end
     end
 

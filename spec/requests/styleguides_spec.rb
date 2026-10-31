@@ -438,10 +438,10 @@ RSpec.describe "The styleguide", type: :request do
         "#{path.dirname.relative_path_from(Rails.root.join("app/views"))}/#{path.basename.to_s.delete_prefix("_").delete_suffix(".html.erb")}"
       end
       # The summary is reached only through the builder, which draws it after the fields it reads,
-      # and the confirm sheet through the event's delete partial, which is where its strings live.
+      # and the confirm sheet through the event's delete partial, which is where its strings live; its scope wraps what it is rendered around, and its trigger is passed into a form's row.
       # The address fields and the role tags are each drawn by the one partial that renders them.
       # The switcher is drawn through the header, the tabs through the layout's own wrappers, and an alert's frame and the roster toggle each wrap what they are rendered around.
-      rendered_by = { "shared/errors" => "form.with_error_summary", "shared/confirm_sheet" => %(render "events/delete"), "addresses/form_fields" => %(render "events/form"), "members/roles" => %(render "members/member"), "layouts/group_switcher" => %(render "layouts/header"), "layouts/group_tabs" => %(render "layouts/dock"), "shared/alert" => %(render layout: "shared/alert"), "events/roster_toggle" => %(render layout: "events/roster_toggle") }
+      rendered_by = { "shared/errors" => "form.with_error_summary", "shared/confirm_sheet" => %(render "events/delete"), "shared/confirm_scope" => %(render layout: "shared/confirm_scope"), "shared/confirm_trigger" => 'render("shared/confirm_trigger"', "addresses/form_fields" => %(render "events/form"), "members/roles" => %(render "members/member"), "layouts/group_switcher" => %(render "layouts/header"), "layouts/group_tabs" => %(render "layouts/dock"), "shared/alert" => %(render layout: "shared/alert"), "events/roster_toggle" => %(render layout: "events/roster_toggle") }
 
       expect(partials).not_to be_empty
       expect((partials - %w[ layouts/head styleguides/section ]).reject { template.include?(rendered_by.fetch(it, %(render "#{it}"))) }).to be_empty

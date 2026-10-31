@@ -564,14 +564,15 @@ RSpec.describe "Members", type: :request do
         expect(rows).to eq [ %w[administrator events_administrator members_administrator], %w[events_administrator members_administrator], [], [] ]
       end
 
-      it "offers Remove" do
+      it "offers Remove, first in the form's button row" do
         actor  = create(:member, :active, :owner)
         target = create(:member, group: actor.group)
         sign_in_as(actor.user)
 
         get edit_group_member_path(target.group, target)
 
-        expect(Nokogiri::HTML(response.body).at_css("form[action='#{group_member_path(target.group, target)}'] button").text).to eq "Remove"
+        trigger = Nokogiri::HTML(response.body).at_css("form[action='#{group_member_path(target.group, target)}'] .btn:first-child[type='submit']")
+        expect([ trigger["form"], trigger.text.strip ]).to eq [ "#{ActionView::RecordIdentifier.dom_id(target, :confirm_delete)}_form", "Remove" ]
       end
     end
 

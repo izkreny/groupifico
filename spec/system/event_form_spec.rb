@@ -216,7 +216,7 @@ RSpec.describe "The event form", type: :system do
     sign_in_as actor.user
 
     visit edit_group_event_path(event.group, event)
-    within("##{dom_id(event, :confirm_delete)}_form") { click_button "Delete event" }
+    find("button[form='#{dom_id(event, :confirm_delete)}_form']").click
     within("dialog[open]") { click_button "Delete event" }
 
     expect(page).to have_current_path group_events_path(event.group)

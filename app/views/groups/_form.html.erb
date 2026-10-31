@@ -1,4 +1,4 @@
-<%# locals: (group:, namespace: nil) %>
+<%# locals: (group:, namespace: nil, leading: nil) %>
 <%# `namespace` is the styleguide's, which draws this form once per theme; every screen leaves it out and keeps its ids. %>
 <%= form_with(model: group, namespace:, class: "contents") do |form| %>
   <%= form.with_error_summary do %>
@@ -74,6 +74,7 @@
   <% end %>
 
   <div class="flex flex-wrap items-center gap-2 mt-4">
+    <%= leading %>
     <%= link_to "Cancel", (group.persisted? ? group_path(group) : groups_path), class: "btn btn-ghost" %>
     <%= form.submit (group.persisted? ? "Save changes" : "Create group"), class: "btn btn-primary" %>
   </div>

@@ -2,26 +2,24 @@
 
 <%= render "shared/page_header", title: "Group" %>
 
-<div class="w-full">
+<%# The delete leads the form's button row, as on every edit screen, with its sheet detached below the form, since a form cannot hold the sheet's own. `destroy?`, the rule the delete authorizes, rather than the `edit?` that admitted the member. %>
+<% deletable = allowed_to?(:destroy?, @group) %>
+<% id = dom_id(@group, :confirm_delete) %>
+<%= render layout: "shared/confirm_scope", locals: { enabled: deletable, classes: "w-full" } do %>
   <%# `name_in_database` for the reason the layout gives: a refused rename leaves the typed name
       assigned, and this heading is the screen's own record title. %>
   <h1 class="text-record"><%= @group.name_in_database %></h1>
 
-  <%= render "groups/form", group: @group %>
+  <%= render "groups/form", group: @group, leading: (render("shared/confirm_trigger", id:, confirm: "Delete group") if deletable) %>
 
-  <%# Alone at the bottom, below the form rather than inside it: the sheet's trigger is a
-      `button_to`, and a form cannot hold another. #247 moved the control off the group home and
-      left where it sits here to this issue. `destroy?`, the rule the delete authorizes, rather
-      than the `edit?` that admitted the member. %>
-  <% if allowed_to?(:destroy?, @group) %>
-    <div class="mt-10">
-      <%= render "shared/confirm_sheet",
-            id: dom_id(@group, :confirm_delete),
-            url: group_path(@group),
-            confirm: "Delete group",
-            title: "Delete this group?",
-            body: "Every member, event and registration goes with it. This can't be undone.",
-            dismiss: "Keep group" %>
-    </div>
+  <% if deletable %>
+    <%= render "shared/confirm_sheet",
+          id:,
+          url: group_path(@group),
+          confirm: "Delete group",
+          title: "Delete this group?",
+          body: "Every member, event and registration goes with it. This can't be undone.",
+          dismiss: "Keep group",
+          detached: true %>
   <% end %>
-</div>
+<% end %>

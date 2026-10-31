@@ -34,7 +34,7 @@ RSpec.describe "The confirm sheet", type: :system do
 
     visit edit_group_path(member.group)
 
-    trigger = find("##{dom_id(member.group, :confirm_delete)}_form button")
+    trigger = find("button[form='#{dom_id(member.group, :confirm_delete)}_form']")
     expect(trigger["aria-haspopup"]).to eq "dialog"
     expect(trigger["aria-controls"]).to eq dom_id(member.group, :confirm_delete)
   end
@@ -49,7 +49,7 @@ RSpec.describe "The confirm sheet", type: :system do
     sign_in_as member.user
     visit group_path(member.group)
     click_link "Edit group"
-    within("##{dom_id(member.group, :confirm_delete)}_form") { click_button "Delete group" }
+    find("button[form='#{dom_id(member.group, :confirm_delete)}_form']").click
     expect(page).to have_css "dialog[open]"
     record_what_gets_cached
 
@@ -67,7 +67,7 @@ RSpec.describe "The confirm sheet", type: :system do
       sign_in_as member.user
 
       visit edit_group_path(group)
-      within("##{dom_id(group, :confirm_delete)}_form") { click_button "Delete group" }
+      find("button[form='#{dom_id(group, :confirm_delete)}_form']").click
     end
 
     # `.btn-error` rather than `.modal-box`, for the reason `spec/system/groups_index_spec.rb`

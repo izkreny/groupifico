@@ -1,0 +1,3 @@
+<%# locals: (id:, confirm:) %>
+<%# A detached confirm sheet's trigger, for an edit form's button row: it submits the sheet's delete form through `form`, so with JavaScript off it still deletes on the first click, as the inline trigger does. %>
+<%= tag.button confirm, type: "submit", form: "#{id}_form", class: "btn btn-error", data: { dialog_target: "trigger" } %>

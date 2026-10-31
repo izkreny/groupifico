@@ -16,9 +16,10 @@ export default class extends Controller {
 
   // The trigger is an ordinary `method: :delete` form, so with JavaScript off it submits the delete
   // straight away. The sheet's primary submits that same form, and its event bubbles back through
-  // here, which is what the already-open sheet stands guard over.
+  // here, which is what the already-open sheet stands guard over. On an edit screen the scope also
+  // holds the record's own form, whose save bubbles here too and is left alone.
   open(event) {
-    if (this.sheetTarget.open) return
+    if (event.target !== this.triggerTarget.form || this.sheetTarget.open) return
 
     event.preventDefault()
     this.sheetTarget.showModal()

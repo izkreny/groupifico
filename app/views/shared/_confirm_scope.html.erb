@@ -1,0 +1,16 @@
+<%# locals: (enabled: true, classes: nil) %>
+<%#
+  The confirm sheet's controller, around everything that takes part in it: the trigger, the delete
+  form and the sheet. `shared/confirm_sheet` wraps itself in this; an edit screen, whose trigger
+  stands in its form's button row, wraps the form and a detached sheet in it instead. `enabled`
+  false leaves the controller off, for a detached sheet, which the screen's scope already holds,
+  and for a reader the screen offers no delete; `classes` still draws the box around the content.
+%>
+<% data = { controller: "dialog", action: "submit->dialog#open turbo:before-cache@document->dialog#close" } if enabled %>
+<% if data || classes %>
+  <%= tag.div class: classes, data: do %>
+    <%= yield %>
+  <% end %>
+<% else %>
+  <%= yield %>
+<% end %>
