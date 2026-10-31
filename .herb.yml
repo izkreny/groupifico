@@ -27,6 +27,10 @@ linter:
   # over a template the linter is complaining about.
   failLevel: hint
 
+  # WHY: `docs/` holds standalone reference pages, such as the font pairings page, that Rails never renders, so the template rules (a `<head>`, a CSP nonce) do not apply to them.
+  exclude:
+    - 'docs/**/*'
+
   rules:
     # Rails generates the static error pages under `public/`, and this rule
     # fires on each one for a missing space before `/>` inside a minified
