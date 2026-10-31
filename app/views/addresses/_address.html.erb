@@ -14,7 +14,7 @@
     <h2 class="text-record"><%= link_to_if line.nil?, address.name, address_map_url(address), class: "link link-hover", target: "_blank" %></h2>
 
     <% if allowed_to?(:update?, address) %>
-      <%= link_to "Correct", edit_address_path(address), class: "btn btn-sm flex-none" %>
+      <%= link_to edit_address_path(address), class: "btn btn-sm flex-none" do %><%= icon :edit, class: "size-5" %>Correct<% end %>
     <% end %>
   </div>
 

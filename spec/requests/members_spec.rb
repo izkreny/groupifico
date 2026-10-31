@@ -483,6 +483,17 @@ RSpec.describe "Members", type: :request do
         expect(Nokogiri::HTML(response.body).css("input[type=email][name='member[email]']")).to be_one
       end
 
+      # The paper plane every invitation draws, read off its own drawing, rather than the check a save draws.
+      it "sends the invite under the paper plane" do
+        member = create(:member, :active, :members_administrator)
+        sign_in_as(member.user)
+
+        get new_group_member_path(member.group)
+
+        submit = Nokogiri::HTML(response.body).at_css("form button.btn-primary[type=submit]")
+        expect([ submit.text.strip, submit.at_css("svg path")["d"] ]).to eq [ "Send invite", File.read(Rails.root.join("app/assets/svg/icons/heroicons/mini/paper-airplane.svg"))[/ d="([^"]+)"/, 1] ]
+      end
+
       it "offers no role checkboxes" do
         member = create(:member, :active, :members_administrator)
         sign_in_as(member.user)
@@ -606,7 +617,7 @@ RSpec.describe "Members", type: :request do
 
         get edit_group_member_path(target.group, target)
 
-        expect(Nokogiri::HTML(response.body).at_css("form[action='#{group_member_path(target.group, target)}'] button").text).to eq "Remove"
+        expect(Nokogiri::HTML(response.body).at_css("form[action='#{group_member_path(target.group, target)}'] button").text.strip).to eq "Remove"
       end
 
       it "refuses the form while the member is paused" do
@@ -647,7 +658,7 @@ RSpec.describe "Members", type: :request do
 
         get edit_group_member_path(target.group, target)
 
-        expect(Nokogiri::HTML(response.body).at_css("form[action='#{group_member_path(target.group, target)}'] button").text).to eq "Remove"
+        expect(Nokogiri::HTML(response.body).at_css("form[action='#{group_member_path(target.group, target)}'] button").text.strip).to eq "Remove"
       end
     end
 

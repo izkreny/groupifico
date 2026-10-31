@@ -1202,7 +1202,7 @@ RSpec.describe "Events", type: :request do
         get new_group_event_path(member.group)
 
         expect(response.body).to include ">Starts</label>", ">Ends</label>", ">Notes</label>", "Typed and shown in Europe/Zagreb"
-        expect(response.body).to include %(aria-label="Unconfirmed"), %(aria-label="Gig"), "New address…", %(value="Create event")
+        expect(response.body).to include %(aria-label="Unconfirmed"), %(aria-label="Gig"), "New address…", "Create event</button>"
       end
     end
 
@@ -1275,7 +1275,7 @@ RSpec.describe "Events", type: :request do
         get duplicate_group_event_path(event.group, event)
 
         expect(response.body).to include "Duplicate event", "Copied from Wed 2 Sep. Dates moved on 7 days, status back to unconfirmed, nobody registered yet."
-        expect(response.body).to include %(value="2026-09-09T19:00:00"), %(value="Create copy")
+        expect(response.body).to include %(value="2026-09-09T19:00:00"), "Create copy</button>"
         expect(Nokogiri::HTML(response.body).at_css("input[name=original_id]")["value"]).to eq event.id.to_s
       end
 
@@ -1363,6 +1363,21 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include "to confirm"
       end
 
+      # The trash, the cross and the check, read off each icon's own drawing, since the legend names the meaning and the file names the glyph.
+      it "draws an icon in every button of the form's row" do
+        actor = create(:member, :active, :events_administrator)
+        event = create(:event, group: actor.group)
+        sign_in_as(actor.user)
+
+        get edit_group_event_path(event.group, event)
+
+        row = Nokogiri::HTML(response.body).at_css("form[action='#{group_event_path(event.group, event)}'] .btn[form]").parent
+        drawing = ->(name) { File.read(Rails.root.join("app/assets/svg/icons/heroicons/mini/#{name}.svg"))[/ d="([^"]+)"/, 1] }
+        expect(row.css(".btn").map { [ it.text.strip, it.at_css("svg.size-5 path")["d"] ] }).to eq [
+          [ "Delete event", drawing.("trash") ], [ "Cancel", drawing.("x-mark") ], [ "Save changes", drawing.("check") ]
+        ]
+      end
+
       # `Group#addresses` offers the group's home address beside the events' own, and correcting it
       # is the owner's alone, so the row is offered for use but not for correction.
       it "offers Correct it on an event's address and not on the group's home address" do
@@ -1411,7 +1426,7 @@ RSpec.describe "Events", type: :request do
 
         get edit_group_event_path(event.group, event)
 
-        expect(response.body).to include %(value="Save changes")
+        expect(response.body).to include "Save changes</button>"
         expect(response.body).not_to include "Delete event"
       end
 
@@ -1549,7 +1564,7 @@ RSpec.describe "Events", type: :request do
 
         fragment = Nokogiri::HTML(response.body)
         expect(headings(response.body)).to include "New event"
-        expect(response.body).to include %(value="Create event")
+        expect(response.body).to include "Create event</button>"
         expect(fragment.at_xpath("//a[normalize-space()='Cancel']")["href"]).to eq group_events_path(member.group)
         expect(page_text(response.body)).not_to include "Copied from"
       end
@@ -1564,7 +1579,7 @@ RSpec.describe "Events", type: :request do
         fragment = Nokogiri::HTML(response.body)
         expect(headings(response.body)).to include "Duplicate event"
         expect(page_text(response.body)).to include "Copied from Wed 2 Sep."
-        expect(response.body).to include %(value="Create copy")
+        expect(response.body).to include "Create copy</button>"
         expect(fragment.at_xpath("//a[normalize-space()='Cancel']")["href"]).to eq group_event_path(member.group, original)
       end
 

@@ -19,7 +19,7 @@
   <% end %>
 
   <div class="flex flex-wrap items-center gap-2 mt-4">
-    <%= link_to "Cancel", user_profile_path, class: "btn btn-ghost" %>
-    <%= form.submit "Save", class: "btn btn-primary" %>
+    <%= link_to user_profile_path, class: "btn btn-ghost" do %><%= icon :cancel, class: "size-5" %>Cancel<% end %>
+    <%= form.button class: "btn btn-primary" do %><%= icon :save, class: "size-5" %>Save<% end %>
   </div>
 <% end %>
