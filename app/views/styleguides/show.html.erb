@@ -76,6 +76,10 @@
     <%= render "styleguides/components/button" %>
   <% end %>
 
+  <%= render layout: "styleguides/section", locals: { title: "Buttons with an icon and a label" } do %>
+    <%= render "styleguides/components/labelled_buttons" %>
+  <% end %>
+
   <%= render layout: "styleguides/section", locals: { title: "Card", docs: "https://daisyui.com/components/card/" } do %>
     <%= render "styleguides/components/card" %>
   <% end %>
