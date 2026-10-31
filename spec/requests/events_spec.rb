@@ -748,7 +748,7 @@ RSpec.describe "Events", type: :request do
         get group_event_path(event.group, event)
 
         expect(page_text(response.body)).to include "Ben Cole"
-        expect(response.body).not_to include "Take Ben Cole off the list", "Yes for Ben Cole", "Add someone", "Delete event"
+        expect(response.body).not_to include "Take Ben Cole off the list", "Yes for Ben Cole", "Add someone"
         expect(response.body).not_to include "Invite Ben Cole", "Invite the rest"
       end
 
@@ -803,7 +803,7 @@ RSpec.describe "Events", type: :request do
         expect(page_text(response.body)).to include "Managed by Ben C. · Created by Alice B.", "Bring the new folders."
       end
 
-      it "offers Duplicate and Edit in the title row and Delete at the bottom" do
+      it "offers Duplicate and Edit in the title row" do
         owner = create(:member, :active, :owner)
         event = detailed_event(owner)
         sign_in_as(owner.user)
@@ -812,7 +812,6 @@ RSpec.describe "Events", type: :request do
 
         expect(response.body).to include duplicate_group_event_path(event.group, event), %(aria-label="Duplicate")
         expect(response.body).to include edit_group_event_path(event.group, event), %(aria-label="Edit")
-        expect(page_text(response.body)).to include "Delete event"
       end
 
       # The day before `detailed_event`, since an event that has ended offers no Maybe pill.
@@ -1006,7 +1005,7 @@ RSpec.describe "Events", type: :request do
         expect(page_text(response.body)).not_to include "Did you go?"
       end
 
-      it "offers no Duplicate, Edit or Delete" do
+      it "offers neither Duplicate nor Edit" do
         member = create(:member, :active)
         event = detailed_event(member)
         sign_in_as(member.user)
@@ -1014,7 +1013,7 @@ RSpec.describe "Events", type: :request do
         get group_event_path(event.group, event)
 
         expect(page_text(response.body)).to include "Tuesday rehearsal"
-        expect(response.body).not_to include %(aria-label="Duplicate"), %(aria-label="Edit"), "Delete event"
+        expect(response.body).not_to include %(aria-label="Duplicate"), %(aria-label="Edit")
       end
 
       # The reader's own answer stands on the page above the attendance card, which holds the counts and the roster they unfold.
@@ -1085,7 +1084,7 @@ RSpec.describe "Events", type: :request do
         get group_event_path(event.group, event)
 
         expect(response.body).to include %(aria-label="Edit"), new_group_event_registration_path(event.group, event)
-        expect(response.body).not_to include %(aria-label="Duplicate"), "Delete event", "Yes for Ben Cole", "Take Ben Cole off the list"
+        expect(response.body).not_to include %(aria-label="Duplicate"), "Yes for Ben Cole", "Take Ben Cole off the list"
       end
 
       it "offers the paper plane and Invite the rest, because filling the event is the manager's job" do
@@ -1104,7 +1103,7 @@ RSpec.describe "Events", type: :request do
     # The two other columns the events table marks wherever it marks the owner, and the one role
     # column it leaves blank on every write row.
     context "when signed in as an administrator" do
-      it "offers Duplicate, Edit and Delete" do
+      it "offers Duplicate and Edit" do
         actor = create(:member, :active, :administrator)
         event = detailed_event(actor)
         sign_in_as(actor.user)
@@ -1112,12 +1111,11 @@ RSpec.describe "Events", type: :request do
         get group_event_path(event.group, event)
 
         expect(response.body).to include %(aria-label="Duplicate"), %(aria-label="Edit")
-        expect(page_text(response.body)).to include "Delete event"
       end
     end
 
     context "when signed in as an events administrator" do
-      it "offers Duplicate, Edit and Delete" do
+      it "offers Duplicate and Edit" do
         actor = create(:member, :active, :events_administrator)
         event = detailed_event(actor)
         sign_in_as(actor.user)
@@ -1125,7 +1123,6 @@ RSpec.describe "Events", type: :request do
         get group_event_path(event.group, event)
 
         expect(response.body).to include %(aria-label="Duplicate"), %(aria-label="Edit")
-        expect(page_text(response.body)).to include "Delete event"
       end
 
       it "draws the answer pills and a take-off on another member's row, and Add someone" do
@@ -1162,7 +1159,7 @@ RSpec.describe "Events", type: :request do
         get group_event_path(event.group, event)
 
         expect(page_text(response.body)).to include "Tuesday rehearsal"
-        expect(response.body).not_to include %(aria-label="Duplicate"), %(aria-label="Edit"), "Delete event"
+        expect(response.body).not_to include %(aria-label="Duplicate"), %(aria-label="Edit")
         expect(response.body).not_to include "Yes for Ben Cole", "Take Ben Cole off the list", "Add someone"
       end
     end

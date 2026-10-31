@@ -1,7 +1,7 @@
 <%# locals: (group:, event:, id: dom_id(event, :confirm_delete), detached: false) %>
-<%# The event's delete confirmation, drawn by the detail screen and the edit screen, which frame 4k
-    says both keep. Each screen keeps its own `destroy?` gate and spacing around this. `id` is the
-    styleguide's, which draws this once per theme; every screen leaves it out. %>
+<%# The event's delete confirmation, drawn by the edit screen, detached from its trigger in the form's
+    button row, which keeps its own `destroy?` gate. `id` is the styleguide's, which draws this once
+    per theme; the screen leaves it out. %>
 <%= render "shared/confirm_sheet",
       id:,
       url: group_event_path(group, event),
