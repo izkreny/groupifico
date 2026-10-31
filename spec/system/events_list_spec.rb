@@ -81,6 +81,19 @@ RSpec.describe "The events list", type: :system do
     expect(gap).to be_within(0.5).of(16)
   end
 
+  it "sets the hero's answer 14px under Who’s coming?, its facts 8px apart" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    create(:registration, event: next_event_for(member), member:, status: :yes)
+    sign_in_as member.user
+
+    visit group_events_path(member.group)
+
+    gaps = find("[id^=next_up] .card-body").evaluate_script(<<~JS)
+      (rows => rows.slice(-3).map((row, i, last) => i && Math.round(row.getBoundingClientRect().top - last[i - 1].getBoundingClientRect().bottom)).slice(1))([ ...this.children ].filter(row => row.getClientRects().length))
+    JS
+    expect(gaps).to eq [ 8, 14 ]
+  end
+
   it "shows the lit pill by its label in light" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
     create(:registration, event: next_event_for(member), member:, status: :yes)

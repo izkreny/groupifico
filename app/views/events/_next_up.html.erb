@@ -54,6 +54,7 @@
       <% end %>
     <% end %>
 
-    <%= render "events/rsvp", event: event, registration: registration %>
+    <%# WHY: `mt-1.5` on the card body's `gap-2`, so the answer sits 14px under the facts it follows where every fact sits 8px from the next. %>
+    <%= render "events/rsvp", event: event, registration: registration, classes: "mt-1.5" %>
   </div>
 </div>
