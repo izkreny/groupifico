@@ -5,10 +5,10 @@
   Upcoming is the screen's own URL, with no `scope`, which is what `EventsController#index` reads as anything but past.
 %>
 <details id="<%= id %>" class="dropdown group" data-controller="dropdown" data-action="click@document->dropdown#close keydown@document->dropdown#close">
-  <summary class="btn btn-ghost bg-base-200 rounded-full gap-2 px-4 font-normal">
+  <summary class="btn btn-ghost bg-base-200 rounded-full px-4 font-normal">
     <%= past ? "Past events" : "Upcoming events" %>
-    <%= icon :disclose, class: "size-4 group-open:hidden" %>
-    <%= icon :close_panel, class: "size-4 hidden group-open:block" %>
+    <%= icon :disclose, class: "size-5 group-open:hidden" %>
+    <%= icon :close_panel, class: "size-5 hidden group-open:block" %>
   </summary>
 
   <ul class="dropdown-content menu gap-2 bg-base-100 rounded-box border border-base-300 z-10 mt-2 w-56 p-2 shadow-sm">

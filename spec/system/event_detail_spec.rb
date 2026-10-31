@@ -102,13 +102,13 @@ RSpec.describe "The event detail", type: :system do
     expect([ wide.first.abs <= 8, wide.last, page.evaluate_script(offset)[1] ]).to eq [ true, 16, 8 ]
   end
 
-  it "draws each answer button's icon at 20px, 8px before its label" do
+  it "draws each labelled button's icon at 20px, 8px before its label" do
     owner, event, = rostered_event
     sign_in_as owner.user
 
-    visit group_event_path(event.group, event)
+    visit group_event_path(event.group, event, responses: "show")
 
-    measures = %w[ Yes Maybe No ].map { |answer| find("form.button_to button", exact_text: answer).evaluate_script(<<~JS) }
+    measures = [ "Yes", "Maybe", "No", "Add someone" ].map { |label| find(".btn", exact_text: label).evaluate_script(<<~JS) }
       ((icon, label) => [ icon.width, Math.round(label.left - icon.right) ])(this.querySelector("svg").getBoundingClientRect(), (range => { range.selectNodeContents([ ...this.childNodes ].findLast(node => node.textContent.trim())); return range.getBoundingClientRect() })(document.createRange()))
     JS
     expect(measures).to all eq [ 20, 8 ]

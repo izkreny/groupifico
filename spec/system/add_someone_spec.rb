@@ -21,13 +21,13 @@ RSpec.describe "Adding someone to an event", type: :system do
   end
 
   # An icon with no size class fills whatever holds it, which in a block button is the button's whole width.
-  it "draws the submit's paper plane at 16px" do
+  it "draws the submit's paper plane at 20px" do
     event, actor, = event_with_three_members
     sign_in_as actor.user
 
     visit new_group_event_registration_path(event.group, event)
 
-    expect(box_of("[data-invite-target=submit] svg")).to eq [ 16, 16 ]
+    expect(box_of("[data-invite-target=submit] svg")).to eq [ 20, 20 ]
   end
 
   # No `paint` assertion on this screen, deliberately, and the alternatives were measured rather

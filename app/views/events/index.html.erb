@@ -13,7 +13,7 @@
         writes the rule against. A refused reader gets no button rather than a disabled one. %>
     <% if allowed_to?(:create?, @group.events.new) %>
       <%= link_to new_group_event_path(@group), class: "btn btn-primary btn-sm" do %>
-        <%= icon :new, class: "size-4" %>New
+        <%= icon :new, class: "size-5" %>New
       <% end %>
     <% end %>
   </div>

@@ -1,33 +1,33 @@
 <%# locals: () %>
-<%# Every button the app draws with an icon and a label, in the classes its screen gives it, grouped by size, so the two rules for an icon beside a label stand side by side: 16px with daisyUI's 6px gap, and the answer buttons' 20px with 8px. Inert copies: nothing here submits or navigates. %>
+<%# Every button the app draws with an icon and a label, in the classes its screen gives it, grouped by size, each with its icon at 20px, 8px from the label (the app stylesheet's one `.btn` gap). Inert copies: nothing here submits or navigates. %>
 <div class="flex flex-col gap-4">
   <div class="flex flex-col gap-2">
     <h3 class="text-meta">Block, on the sign-in, sign-up and group screens</h3>
-    <button type="button" class="btn btn-primary btn-block"><%= icon :confirm, class: "size-4" %> Sign in</button>
-    <button type="button" class="btn btn-primary btn-block"><%= icon :email, class: "size-4" %> Email me a sign-in link</button>
-    <button type="button" class="btn btn-primary btn-block"><%= icon :new, class: "size-4" %>New group</button>
-    <button type="button" class="btn btn-primary btn-block"><%= icon :invited, class: "size-4" %><span>Invite</span></button>
+    <button type="button" class="btn btn-primary btn-block"><%= icon :confirm, class: "size-5" %> Sign in</button>
+    <button type="button" class="btn btn-primary btn-block"><%= icon :email, class: "size-5" %> Email me a sign-in link</button>
+    <button type="button" class="btn btn-primary btn-block"><%= icon :new, class: "size-5" %>New group</button>
+    <button type="button" class="btn btn-primary btn-block"><%= icon :invited, class: "size-5" %><span>Invite</span></button>
   </div>
 
   <div class="flex flex-col gap-2">
     <h3 class="text-meta">Regular and small</h3>
     <div class="flex flex-wrap items-center gap-2">
-      <button type="button" class="btn btn-primary"><%= icon :new, class: "size-4" %>New event</button>
-      <button type="button" class="btn"><%= icon :new, class: "size-4" %>Create group</button>
-      <button type="button" class="btn btn-primary btn-sm"><%= icon :new, class: "size-4" %>New</button>
-      <button type="button" class="btn btn-primary btn-sm"><%= icon :new, class: "size-4" %>Invite</button>
-      <button type="button" class="btn btn-sm"><%= icon :add_member, class: "size-4" %>Add someone</button>
-      <button type="button" class="btn btn-sm"><%= icon :invited, class: "size-4" %>Invite the rest</button>
-      <button type="button" class="btn btn-sm"><%= icon :invited, class: "size-4" %>Invite everyone</button>
+      <button type="button" class="btn btn-primary"><%= icon :new, class: "size-5" %>New event</button>
+      <button type="button" class="btn"><%= icon :new, class: "size-5" %>Create group</button>
+      <button type="button" class="btn btn-primary btn-sm"><%= icon :new, class: "size-5" %>New</button>
+      <button type="button" class="btn btn-primary btn-sm"><%= icon :new, class: "size-5" %>Invite</button>
+      <button type="button" class="btn btn-sm"><%= icon :add_member, class: "size-5" %>Add someone</button>
+      <button type="button" class="btn btn-sm"><%= icon :invited, class: "size-5" %>Invite the rest</button>
+      <button type="button" class="btn btn-sm"><%= icon :invited, class: "size-5" %>Invite everyone</button>
     </div>
   </div>
 
   <div class="flex flex-col gap-2">
-    <h3 class="text-meta">Yes · Maybe · No, at 20px with 8px to the label</h3>
+    <h3 class="text-meta">Yes · Maybe · No</h3>
     <div class="flex flex-wrap gap-2">
-      <button type="button" class="btn btn-sm gap-2 btn-success"><%= icon :yes, class: "size-5" %>Yes</button>
-      <button type="button" class="btn btn-sm gap-2 btn-ghost"><%= icon :maybe, class: "size-5 text-warning" %>Maybe</button>
-      <button type="button" class="btn btn-sm gap-2 btn-ghost"><%= icon :no, class: "size-5 text-error" %>No</button>
+      <button type="button" class="btn btn-sm btn-success"><%= icon :yes, class: "size-5" %>Yes</button>
+      <button type="button" class="btn btn-sm btn-ghost"><%= icon :maybe, class: "size-5 text-warning" %>Maybe</button>
+      <button type="button" class="btn btn-sm btn-ghost"><%= icon :no, class: "size-5 text-error" %>No</button>
     </div>
   </div>
 

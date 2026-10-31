@@ -19,7 +19,7 @@
         <%= button_to group_event_registration_path(event.group, event, registration),
               method: :patch,
               params: { registration: { status: answer } },
-              class: "btn btn-sm gap-2 #{current ? chosen[answer] : "btn-ghost"}",
+              class: "btn btn-sm #{current ? chosen[answer] : "btn-ghost"}",
               aria: (current ? { current: "true" } : {}) do %>
           <%= icon answer, class: "size-5 #{inks[answer] unless current}" %>
           <%= answer.capitalize %>
