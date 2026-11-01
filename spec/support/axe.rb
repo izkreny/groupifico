@@ -24,7 +24,7 @@ module AxeMatcher
   # `Axe::Core#wrap_driver` probes for methods rather than requiring a driver class, so these are
   # the whole of what axe asks of a browser - and answering them here is what keeps
   # `Capybara::Cuprite::Browser` unreopened. `execute_async_script` is the one that matters: the
-  # gem calls Selenium's name for it and Ferrum's is `evaluate_async`. Both append their callback
+  # gem calls Selenium's name for it and Capybara's is `evaluate_async_script`. Both append their callback
   # as the last argument, which is what axe's own `arguments[arguments.length - 1]` reads.
   class Page
     def initialize(session)
@@ -35,15 +35,9 @@ module AxeMatcher
     def evaluate_script(script, *args) = @session.evaluate_script(script, *args)
     def find_css(selector) = @session.driver.find_css(selector)
 
-    # The wait is read off the browser rather than chosen here, because two numbers that disagree
-    # mean the smaller one always wins while the larger one reads as the limit: `evaluate_async`
-    # puts its argument in a JS `setTimeout` only, and `Ferrum::Page#command` separately bounds the
-    # CDP response by `Ferrum::Browser`'s own `timeout`, which is 5s unless `cuprite.rb` raises it.
-    # What this path still buys over `Capybara::Session#evaluate_async_script` is not inheriting
-    # `default_max_wait_time`, which is 2s against an audit measured at 0.54s.
+    # WHY: the wait is the browser's own `timeout`, because `evaluate_async_script` otherwise inherits `default_max_wait_time`, which is 2s against an audit measured at 0.54s.
     def execute_async_script(script, *args)
-      browser = @session.driver.browser
-      browser.evaluate_async(script, browser.timeout, *args)
+      @session.using_wait_time(@session.driver.browser.timeout) { @session.evaluate_async_script(script, *args) }
     end
   end
 end

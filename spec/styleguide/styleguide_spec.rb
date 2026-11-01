@@ -47,7 +47,7 @@ RSpec.describe "The styleguide", type: :system do
   it "stacks the light colour tokens above the dark ones on a wide screen" do
     plant_styleguide_group
     sign_in_as create(:user)
-    page.driver.resize(1440, 900)
+    page.current_window.resize_to(1440, 900)
 
     visit styleguide_path
 
@@ -60,7 +60,7 @@ RSpec.describe "The styleguide", type: :system do
   it "fits a phone's width, the token tables scrolling inside their twins" do
     plant_styleguide_group
     sign_in_as create(:user)
-    page.driver.resize(390, 844)
+    page.current_window.resize_to(390, 844)
 
     visit styleguide_path
 

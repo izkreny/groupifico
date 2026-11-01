@@ -5,7 +5,7 @@ module SystemAuthenticationHelper
   # `AuthenticationHelper`, which is where the cookie's signing scheme lives for both suites.
   def sign_in_as(user)
     user.sessions.create!.tap do |session|
-      page.driver.set_cookie("session_id", AuthenticationHelper.signed_session_cookie(session))
+      page.driver.browser.cookies.set(name: "session_id", value: AuthenticationHelper.signed_session_cookie(session))
     end
   end
 
