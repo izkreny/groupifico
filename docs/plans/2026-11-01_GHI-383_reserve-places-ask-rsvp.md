@@ -143,6 +143,10 @@ A manager may press the button and cannot undo it, as with today's Invite the re
 | an unpicked radio's outline reads at 3:1, in light and in dark | daisyUI's 20% line, before the rule |
 | a picked radio's outline stays in full ink | the rule covering every radio |
 | a focused unpicked radio keeps its primary border | the rule written with specificity, after the focus rules |
+| another event's registration is left alone, whatever is posted as listed | reading the removal from every event's registrations |
+| a refused reservation removes nobody | removing first, outside one transaction |
+| a manager can read a registered row's caption, in light and in dark | fading the caption, and drawing the box enabled |
+| the next-up card offers no Ask everyone while the only place held is a paused member's | the card's condition without `anyone_left_to_ask?` |
 | the helper counts a border's own alpha | dropping the alpha from `ink_contrast` |
 | the helper reads a solid border as solid | reading another property in `border_contrast` |
 | the styleguide's outline and disabled tick read at 3:1 in both twins | the section absent, its disabled box drawn live, the fade back at 20%, and the outline back at 20% |
