@@ -22,7 +22,7 @@ RSpec.describe IconsHelper, type: :helper do
       expect { helper.icon(:where) }.to raise_error(ArgumentError, /size-icon-standalone/)
     end
 
-    # A raw step draws the same pixels as its token, so only this refusal keeps a view from drifting back to one.
+    # WHY: a raw step draws the same pixels as its token, so only this refusal keeps a view from drifting back to one.
     it "raises for an icon sized by a raw step rather than a token" do
       expect { helper.icon(:where, class: "size-5") }.to raise_error(ArgumentError, /size-icon-control/)
     end

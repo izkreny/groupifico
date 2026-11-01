@@ -193,7 +193,7 @@
   --spacing-card-row: 0.5rem;         /* 8px: the hero card, row → row */
   --spacing-card-break: 0.875rem;     /* 14px: the hero card, its last fact → Your answer: */
 
-  /* Derived, so each follows the tokens it is worked out from. */
+  /* WHY: derived, so each follows the tokens it is worked out from. */
   --spacing-control-inset: calc((var(--spacing-control) - var(--spacing-icon-control)) / 2);  /* 6px: a glyph inside its icon button */
   --spacing-label-control: calc(var(--spacing-icon-label) - var(--spacing-control-inset));    /* 2px: the box gap that sets a label `icon-label` from a button's glyph */
   --spacing-tally-rest: calc(var(--spacing-tally) - var(--spacing-icon-text));                /* 6px: a tag's margin, beside a row whose own gap is `icon-text` */
