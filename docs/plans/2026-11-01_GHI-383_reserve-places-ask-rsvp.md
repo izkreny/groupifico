@@ -101,7 +101,8 @@ A manager may press the button and cannot undo it, as with today's Invite the re
 - What do the screen and its roster button say, now this is the only way to remove someone? "Edit the list".
 - How do we offer reserving a place for everyone? "Reserve a place for everyone" on the roster, with no select-all on the list screen, so the issue's criterion moves to the roster.
 - What does the list screen's submit say? "Update the list", with the notice reporting what happened.
-- How does a manager's registered row look? A ticked, disabled checkbox with a caption.
+- How does a manager's registered row look? A ticked, disabled checkbox with a caption, faded to 50% rather than daisyUI's 20%, so the tick reaches 3.11:1 in light and 4.41:1 in dark.
+- What draws a checkbox's and an unpicked radio's outline? The text fields' own line, the theme's ink at 50%, at 3.11:1 in light and 4.40:1 in dark where daisyUI's default is 1.5:1 and 1.84:1. A picked radio keeps daisyUI's full ink, and keyboard focus keeps its primary border.
 
 ## Steps
 
@@ -114,6 +115,8 @@ A manager may press the button and cannot undo it, as with today's Invite the re
 - `feat:` narrow asking to held places.
 - `refactor:` remove `Event#attendees` and the "attendance card" wording.
 - `docs:` bring `docs/AUTHORIZATION.md` and the README's entity description to the same words, including the manager's paragraph, keeping the capability table's column widths.
+- `fix:` fade a manager's disabled tick to 50%.
+- `fix:` draw checkbox and radio outlines with the text fields' line.
 - Watch every new example go red per "Seen red".
 
 ## Seen red
@@ -134,6 +137,13 @@ A manager may press the button and cannot undo it, as with today's Invite the re
 | Update the list is disabled until a tick differs from what was drawn, and again once it is put back | the Stimulus controller enabling it on any change |
 | the notice counts places reserved and removed | the notice counting ticks |
 | an answered member's row still asks the question | restoring the "Your answer:" branch |
+| a manager can make out a registered row's tick, in light and in dark | daisyUI's 20% fade, before the rule |
+| a live box's outline reads at 3:1, in light and in dark | daisyUI's 20% line, before the rule |
+| an unpicked radio's outline reads at 3:1, in light and in dark | daisyUI's 20% line, before the rule |
+| a picked radio's outline stays in full ink | the rule covering every radio |
+| a focused unpicked radio keeps its primary border | the rule written with specificity, after the focus rules |
+| the helper counts a border's own alpha | dropping the alpha from `ink_contrast` |
+| the helper reads a solid border as solid | reading another property in `border_contrast` |
 
 ## Verification
 
