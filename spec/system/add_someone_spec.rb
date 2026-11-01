@@ -41,13 +41,13 @@ RSpec.describe "Editing an event's list", type: :system do
   # The dimmed row is measured separately because axe cannot see it: an ancestor's `opacity` is not
   # composited into its colour-contrast rule, watched passing at `opacity-10`, which is unreadable.
   it "renders in light, with no accessibility violations" do
-    event, actor, invitable, paused = event_with_three_members
+    event, actor, available, paused = event_with_three_members
     sign_in_as actor.user
     prefer_colour_scheme :light
     resize_to ViewportHelper::MOBILE
 
     visit edit_group_event_roster_path(event.group, event)
-    check ActionView::RecordIdentifier.dom_id(invitable, :tick)
+    check ActionView::RecordIdentifier.dom_id(available, :tick)
 
     expect(rendered_colour_scheme).to eq "light"
     expect(text_contrast("##{ActionView::RecordIdentifier.dom_id(paused)} .list-col-grow span")).to be >= ContrastHelper::WCAG_AA
@@ -55,13 +55,13 @@ RSpec.describe "Editing an event's list", type: :system do
   end
 
   it "renders in dark, with no accessibility violations" do
-    event, actor, invitable, paused = event_with_three_members
+    event, actor, available, paused = event_with_three_members
     sign_in_as actor.user
     prefer_colour_scheme :dark
     resize_to ViewportHelper::MOBILE
 
     visit edit_group_event_roster_path(event.group, event)
-    check ActionView::RecordIdentifier.dom_id(invitable, :tick)
+    check ActionView::RecordIdentifier.dom_id(available, :tick)
 
     expect(rendered_colour_scheme).to eq "dark"
     expect(text_contrast("##{ActionView::RecordIdentifier.dom_id(paused)} .list-col-grow span")).to be >= ContrastHelper::WCAG_AA
@@ -82,26 +82,26 @@ RSpec.describe "Editing an event's list", type: :system do
   # holds the column is geometry: a `span` carrying no text can collapse to nothing and slide the
   # name left, which no markup assertion sees.
   it "lines a paused member's name up with the names that have a checkbox" do
-    event, actor, invitable, paused = event_with_three_members
+    event, actor, available, paused = event_with_three_members
     sign_in_as actor.user
 
     visit edit_group_event_roster_path(event.group, event)
 
-    expect(name_left_of(paused)).to eq name_left_of(invitable)
+    expect(name_left_of(paused)).to eq name_left_of(available)
   end
 
   # Whether anything differs from what was drawn is nothing a server render can know, since the ticks never reach the server until the submit.
   it "waits for a new tick, and waits again once it is taken back" do
-    event, actor, invitable, = event_with_three_members
+    event, actor, available, = event_with_three_members
     sign_in_as actor.user
 
     visit edit_group_event_roster_path(event.group, event)
     expect(page).to have_button "Update the list", disabled: true
 
-    check ActionView::RecordIdentifier.dom_id(invitable, :tick)
+    check ActionView::RecordIdentifier.dom_id(available, :tick)
     expect(page).to have_button "Update the list", disabled: false
 
-    uncheck ActionView::RecordIdentifier.dom_id(invitable, :tick)
+    uncheck ActionView::RecordIdentifier.dom_id(available, :tick)
     expect(page).to have_button "Update the list", disabled: true
   end
 
@@ -118,11 +118,11 @@ RSpec.describe "Editing an event's list", type: :system do
 
   # The landing is the browser's part; that the rows were written is the request spec's.
   it "reserves the ticked members and lands on the event" do
-    event, actor, invitable, = event_with_three_members
+    event, actor, available, = event_with_three_members
     sign_in_as actor.user
 
     visit edit_group_event_roster_path(event.group, event)
-    check ActionView::RecordIdentifier.dom_id(invitable, :tick)
+    check ActionView::RecordIdentifier.dom_id(available, :tick)
     click_button "Update the list"
 
     expect(page).to have_current_path group_event_path(event.group, event)

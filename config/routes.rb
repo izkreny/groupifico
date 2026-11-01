@@ -20,7 +20,7 @@ Rails.application.routes.draw do
   # a place is reached from the group or event that uses it, and nothing draws one - #255.
   resources :addresses, only: %i[ show edit update ]
 
-  # No `new` and no `create`: signing up and being invited are the two ways to become a user, and
+  # No `new` and no `create`: signing up and being added to a group are the two ways to become a user, and
   # neither of them is a signed-in visitor asking for a second account. Reading and editing the
   # account is the Me screen's, which one Save writes through the profile, so the account keeps only
   # its deletion and its two old screens redirect there. `as: nil` so a retired path mints no

@@ -1,7 +1,7 @@
 require "rails_helper"
 
 # Only what a browser adds. Which pieces of the card a given reader sees - the question for an
-# invited member, the pills for nobody paused, the tags for everyone - is
+# asked member, the pills for nobody paused, the tags for everyone - is
 # `spec/requests/events_spec.rb`'s assertion, and per the duplication rule in `.agents/testing.md`
 # it does not come back here.
 #
