@@ -683,16 +683,34 @@ RSpec.describe "Events", type: :request do
     end
 
     # A screen pushed from the event goes back to it rather than to the events list: editing it, copying it and adding someone to it.
-    it "takes the back chevron from the event's own screens back to the event" do
+    it "takes the back chevron from editing the event back to the event" do
       owner = create(:member, :active, :owner)
       event = create(:event, group: owner.group, creator: owner)
       sign_in_as(owner.user)
 
-      backs = [ edit_group_event_path(event.group, event), duplicate_group_event_path(event.group, event), new_group_event_registration_path(event.group, event) ].map do |path|
-        get path
-        Nokogiri::HTML(response.body).at_css("header a[aria-label='Back']")&.[]("href")
-      end
-      expect(backs).to eq [ group_event_path(event.group, event) ] * 3
+      get edit_group_event_path(event.group, event)
+
+      expect(Nokogiri::HTML(response.body).at_css("header a[aria-label='Back']")&.[]("href")).to eq group_event_path(event.group, event)
+    end
+
+    it "takes the back chevron from duplicating the event back to the event" do
+      owner = create(:member, :active, :owner)
+      event = create(:event, group: owner.group, creator: owner)
+      sign_in_as(owner.user)
+
+      get duplicate_group_event_path(event.group, event)
+
+      expect(Nokogiri::HTML(response.body).at_css("header a[aria-label='Back']")&.[]("href")).to eq group_event_path(event.group, event)
+    end
+
+    it "takes the back chevron from Add someone back to the event" do
+      owner = create(:member, :active, :owner)
+      event = create(:event, group: owner.group, creator: owner)
+      sign_in_as(owner.user)
+
+      get new_group_event_registration_path(event.group, event)
+
+      expect(Nokogiri::HTML(response.body).at_css("header a[aria-label='Back']")&.[]("href")).to eq group_event_path(event.group, event)
     end
 
     context "when not signed in" do

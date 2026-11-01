@@ -35,19 +35,38 @@ RSpec.describe "Addresses", type: :request do
         expect(page_text(response.body)).to include "Community Hall", "Obala 14 10000 Zagreb HR", "Riverside Choir · home address"
       end
 
-      # A map is somewhere else, so every link to one opens in a new tab and leaves the reader's page where it was: the address, the event screen, and the events list's hero and rows.
-      it "opens every map link in a new tab" do
+      # A map is somewhere else, so every link to one opens in a new tab and leaves the member's page where it was: the address, the event screen, and the events list's hero and rows.
+      it "opens the address's map link in a new tab" do
         member = create(:member, :active)
         address = create(:address, name: "Community Hall", street_name: "Obala", building_number: "14")
         member.group.update!(address:)
-        events = [ 2, 9 ].map { create(:event, group: member.group, creator: member, address:, status: :confirmed, starts_at: it.days.from_now, ends_at: it.days.from_now + 2.hours) }
         sign_in_as(member.user)
 
-        targets = [ address_path(address), group_event_path(member.group, events.first), group_events_path(member.group) ].flat_map do |path|
-          get path
-          Nokogiri::HTML(response.body).css("a[href^='https://www.google.com/maps/']").map { it["target"] }
-        end
-        expect([ targets.size >= 4, targets.uniq ]).to eq [ true, [ "_blank" ] ]
+        get address_path(address)
+
+        expect(Nokogiri::HTML(response.body).css("a[href^='https://www.google.com/maps/']").map { it["target"] }).to eq [ "_blank" ]
+      end
+
+      it "opens the event screen's map link in a new tab" do
+        member = create(:member, :active)
+        address = create(:address, name: "Community Hall", street_name: "Obala", building_number: "14")
+        event = create(:event, group: member.group, creator: member, address:, status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        sign_in_as(member.user)
+
+        get group_event_path(member.group, event)
+
+        expect(Nokogiri::HTML(response.body).css("a[href^='https://www.google.com/maps/']").map { it["target"] }).to eq [ "_blank" ]
+      end
+
+      it "opens the events list's map links, hero and row, in a new tab" do
+        member = create(:member, :active)
+        address = create(:address, name: "Community Hall", street_name: "Obala", building_number: "14")
+        [ 2, 9 ].each { create(:event, group: member.group, creator: member, address:, status: :confirmed, starts_at: it.days.from_now, ends_at: it.days.from_now + 2.hours) }
+        sign_in_as(member.user)
+
+        get group_events_path(member.group)
+
+        expect(Nokogiri::HTML(response.body).css("a[href^='https://www.google.com/maps/']").map { it["target"] }).to eq [ "_blank", "_blank" ]
       end
 
       it "links the street to the reader's map application" do

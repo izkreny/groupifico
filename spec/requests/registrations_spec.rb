@@ -248,17 +248,35 @@ RSpec.describe "Registrations", type: :request do
       end
 
       # Back to the exact URL of the page it was pressed on, so Turbo takes it as a refresh and morphs; from another site, or with no page named, the event itself.
-      it "returns to the page it was pressed on, query and all, and to the event from another site" do
+      it "returns to the page it was pressed on, query and all" do
         event = create(:event)
         registration = create(:registration, event:, member: create(:member, group: event.group))
         sign_in_as(create(:member, :active, :events_administrator, group: event.group).user)
         screen = group_event_url(event.group, event, responses: "show")
 
-        landings = [ screen, group_events_url(event.group), "https://elsewhere.example#{group_event_path(event.group, event)}" ].map do |referer|
-          patch group_event_registration_path(event.group, event, registration), params: { registration: { status: "yes" } }, headers: { "Referer" => referer }
-          response.location
-        end
-        expect(landings).to eq [ screen, group_events_url(event.group), group_event_url(event.group, event) ]
+        patch group_event_registration_path(event.group, event, registration), params: { registration: { status: "yes" } }, headers: { "Referer" => screen }
+
+        expect(response.location).to eq screen
+      end
+
+      it "returns to another page it was pressed on" do
+        event = create(:event)
+        registration = create(:registration, event:, member: create(:member, group: event.group))
+        sign_in_as(create(:member, :active, :events_administrator, group: event.group).user)
+
+        patch group_event_registration_path(event.group, event, registration), params: { registration: { status: "yes" } }, headers: { "Referer" => group_events_url(event.group) }
+
+        expect(response.location).to eq group_events_url(event.group)
+      end
+
+      it "returns to the event when pressed from another site" do
+        event = create(:event)
+        registration = create(:registration, event:, member: create(:member, group: event.group))
+        sign_in_as(create(:member, :active, :events_administrator, group: event.group).user)
+
+        patch group_event_registration_path(event.group, event, registration), params: { registration: { status: "yes" } }, headers: { "Referer" => "https://elsewhere.example#{group_event_path(event.group, event)}" }
+
+        expect(response.location).to eq group_event_url(event.group, event)
       end
 
       # An answer is a button rather than a field, so a refused write has no form to return to:

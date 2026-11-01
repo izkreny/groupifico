@@ -348,18 +348,23 @@ RSpec.describe "Groups", type: :request do
         expect(Nokogiri::HTML(response.body).css("header details.dropdown")).to be_empty
       end
 
-      it "heads the screen with the group's name, alone and as the switcher" do
-        alone = create(:member, group: create(:group, name: "Riverside Choir"))
-        switching = create(:member, group: create(:group, name: "Harbour Band"))
-        create(:member, user: switching.user, group: create(:group))
+      it "heads the screen with the group's name for a member of one group" do
+        member = create(:member, group: create(:group, name: "Riverside Choir"))
+        sign_in_as(member.user)
 
-        headings = [ alone, switching ].map do |member|
-          sign_in_as(member.user)
-          get group_path(member.group)
-          Nokogiri::HTML(response.body).css("header h1").map(&:text)
-        end
+        get group_path(member.group)
 
-        expect(headings).to eq [ [ "Riverside Choir" ], [ "Harbour Band" ] ]
+        expect(Nokogiri::HTML(response.body).css("header h1").map(&:text)).to eq [ "Riverside Choir" ]
+      end
+
+      it "heads the screen with the group's name as the switcher for a member of several" do
+        member = create(:member, group: create(:group, name: "Harbour Band"))
+        create(:member, user: member.user, group: create(:group))
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(Nokogiri::HTML(response.body).css("header h1").map(&:text)).to eq [ "Harbour Band" ]
       end
 
       # `menu-active` colours the reader's current group and says nothing to a screen reader, so
