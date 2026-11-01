@@ -227,6 +227,9 @@
 /* WHY: every labelled button draws its icon at 20px, 8px from the label, where daisyUI keeps 6px; set once here so no button carries its own gap. Unlayered, so it beats daisyUI's layered `.btn`. */
 .btn { gap: var(--spacing-icon-label); }
 
+/* WHY: daisyUI sizes `btn-sm` from its own `--size`, so an icon button's box would not follow `--spacing-control` and the insets worked out from that token would be worked out around a box they cannot move. Unlayered, so it beats the layered `.btn-sm`. */
+.btn-sm:is(.btn-circle, .btn-square) { --size: var(--spacing-control); }
+
 /* WHY: daisyUI gives every size of a component the one radius its token holds, so a smaller size rounds toward a pill; each size the app uses takes its token in proportion to its height instead, the theme's 0.85rem over a 40px field and 0.5rem over a 24px badge. Set on the token rather than on `border-radius`, because a button in a `join` reads its corners through it. Unlayered, so it beats the theme's own value. */
 .btn-sm, .input-sm, .select-sm { --radius-field: calc(0.85rem * 32 / 40); }
 .badge-sm { --radius-selector: calc(0.5rem * 20 / 24); }
