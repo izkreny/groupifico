@@ -46,9 +46,8 @@
 
     <%= render "events/counts", event:, roster_link: true %>
 
-    <%# Frame 4n: an event whose every registration is a place held and nobody asked. It needs one
-        registration at least, since "every" holds of an empty list that has nobody to ask. %>
-    <% if event.registrations.any? && event.registrations.all?(&:reserved?) && allowed_to?(:create?, Registration.new(event: event)) %>
+    <%# Frame 4n: an event whose every registration is a place held and nobody asked. `anyone_left_to_ask?` is what the action reads, so the card never offers a press that asks nobody, on an empty list or on a paused member's place. %>
+    <% if event.registrations.all?(&:reserved?) && event.anyone_left_to_ask? && allowed_to?(:create?, Registration.new(event: event)) %>
       <%= button_to group_event_response_request_path(event.group, event), class: "btn btn-sm self-start" do %>
         <%= icon :response_requested, class: "size-icon-control" %>Ask everyone
       <% end %>

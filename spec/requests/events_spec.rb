@@ -403,6 +403,21 @@ RSpec.describe "Events", type: :request do
         end
       end
 
+      # Asking moves active members' held places only, so a paused member's place leaves the button nothing to do.
+      it "offers no Ask everyone while the only place held is a paused member's" do
+        freeze_time do
+          owner = create(:member, :owner)
+          next_up = confirmed_event(owner, days: 2)
+          create(:registration, event: next_up, member: create(:member, :paused, group: owner.group), status: :reserved)
+          sign_in_as(owner.user)
+
+          get group_events_path(owner.group)
+
+          expect(response.body).to include "Next up · in 2 days"
+          expect(response.body).not_to include "Ask everyone"
+        end
+      end
+
       it "offers a plain member no Ask everyone" do
         freeze_time do
           member = create(:member, :active)
