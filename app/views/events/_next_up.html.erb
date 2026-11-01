@@ -49,12 +49,12 @@
     <%# Frame 4n: an event whose every registration is a place held and nobody asked. It needs one
         registration at least, since "every" holds of an empty list that has nobody to ask. %>
     <% if event.registrations.any? && event.registrations.all?(&:reserved?) && allowed_to?(:create?, Registration.new(event: event)) %>
-      <%= button_to group_event_invitation_path(event.group, event), class: "btn btn-sm self-start" do %>
-        <%= icon :invited, class: "size-icon-control" %>Invite everyone
+      <%= button_to group_event_response_request_path(event.group, event), class: "btn btn-sm self-start" do %>
+        <%= icon :response_requested, class: "size-icon-control" %>Invite everyone
       <% end %>
     <% end %>
 
     <%# WHY: the margin is what `card-break` leaves after the card body's `card-row` gap, so the answer sits 14px under the facts it follows where every fact sits 8px from the next. %>
-    <%= render "events/rsvp", event: event, registration: registration, classes: "mt-[calc(var(--spacing-card-break)-var(--spacing-card-row))]" %>
+    <%= render "events/response", event: event, registration: registration, classes: "mt-[calc(var(--spacing-card-break)-var(--spacing-card-row))]" %>
   </div>
 </div>

@@ -5,8 +5,8 @@ class RegistrationPolicy < ApplicationPolicy
   # registered and what they answered.
   def show? = true
 
-  # The invitation row, and nobody else's: a registration is something somebody else puts you into,
-  # `reserved` or `invited`, and what a member does with it afterwards is answer it. So `own?` is
+  # The registering row, and nobody else's: a registration is something somebody else puts you into,
+  # `reserved` or `response_requested`, and what a member does with it afterwards is answer it. So `own?` is
   # absent here and present on `update?`, which is the row that grants a member their own answer.
   #
   # It reads the same as `manage_answers?` below, which is not a duplicate to fold away: this rule
@@ -26,7 +26,7 @@ class RegistrationPolicy < ApplicationPolicy
 
   # Which statuses the actor may write, asked by the controller alongside the rules above, because a
   # posted status is not on the record when `update?` runs. A member may say `yes`, `maybe` or `no`
-  # about themselves and nothing else; `reserved` and `invited` belong to whoever fills the event.
+  # about themselves and nothing else; `reserved` and `response_requested` belong to whoever fills the event.
   def manage_answers? = membership.can_manage?(:events) || manages_event?
 
   private

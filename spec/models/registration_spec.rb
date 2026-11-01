@@ -7,7 +7,7 @@ RSpec.describe Registration, type: :model do
   end
 
   describe "(enums)" do
-    it { is_expected.to define_enum_for(:status).with_values(reserved: 0, invited: 1, yes: 2, maybe: 3, no: 4).with_default(:reserved).validating }
+    it { is_expected.to define_enum_for(:status).with_values(reserved: 0, response_requested: 1, yes: 2, maybe: 3, no: 4).with_default(:reserved).validating }
   end
 
   # The invariant that closes the write the screen's own guard could only hide. It is on the model
@@ -16,14 +16,14 @@ RSpec.describe Registration, type: :model do
   # about the actor.
   describe "(answering an event that is over)" do
     it "refuses an answer to an event somebody has concluded" do
-      registration = create(:registration, status: :invited, event: create(:event, status: :concluded))
+      registration = create(:registration, status: :response_requested, event: create(:event, status: :concluded))
 
       expect(registration.update(status: :yes)).to be false
       expect(registration.errors[:status]).to include "cannot be answered once the event is over"
     end
 
     it "refuses an answer to an event that has been called off" do
-      registration = create(:registration, status: :invited, event: create(:event, status: :canceled))
+      registration = create(:registration, status: :response_requested, event: create(:event, status: :canceled))
 
       expect(registration.update(status: :yes)).to be false
     end
@@ -32,17 +32,17 @@ RSpec.describe Registration, type: :model do
     # an answer, because the roster is what it is for.
     it "allows an answer to an event that has merely ended" do
       event = create(:event, status: :confirmed, starts_at: 9.days.ago, ends_at: 9.days.ago + 2.hours)
-      registration = create(:registration, status: :invited, event:)
+      registration = create(:registration, status: :response_requested, event:)
 
       expect(registration.update(status: :yes)).to be true
     end
 
-    # `reserved` and `invited` are what somebody filling the event writes, and correcting a roster
+    # `reserved` and `response_requested` are what somebody filling the event writes, and correcting a roster
     # after the fact is theirs rather than this rule's.
     it "leaves the filling statuses alone on a concluded event" do
       registration = create(:registration, status: :reserved, event: create(:event, status: :concluded))
 
-      expect(registration.update(status: :invited)).to be true
+      expect(registration.update(status: :response_requested)).to be true
     end
   end
 
@@ -50,7 +50,7 @@ RSpec.describe Registration, type: :model do
   describe "(answering maybe after the event)" do
     it "refuses maybe to an event that has ended" do
       event = create(:event, status: :confirmed, starts_at: 9.days.ago, ends_at: 9.days.ago + 2.hours)
-      registration = create(:registration, status: :invited, event:)
+      registration = create(:registration, status: :response_requested, event:)
 
       expect(registration.update(status: :maybe)).to be false
       expect(registration.errors[:status]).to eq [ "cannot be maybe once the event has ended" ]
@@ -58,7 +58,7 @@ RSpec.describe Registration, type: :model do
 
     it "takes maybe until the event ends" do
       event = create(:event, status: :confirmed, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
-      registration = create(:registration, status: :invited, event:)
+      registration = create(:registration, status: :response_requested, event:)
 
       expect(registration.update(status: :maybe)).to be true
     end
@@ -66,7 +66,7 @@ RSpec.describe Registration, type: :model do
     # One reason is enough: an event somebody concluded takes no answer at all, so naming maybe beside that would describe a choice the member does not have.
     it "gives only the over reason on a concluded event that has ended" do
       event = create(:event, status: :concluded, starts_at: 9.days.ago, ends_at: 9.days.ago + 2.hours)
-      registration = create(:registration, status: :invited, event:)
+      registration = create(:registration, status: :response_requested, event:)
 
       registration.update(status: :maybe)
 
@@ -86,7 +86,7 @@ RSpec.describe Registration, type: :model do
 
     it "answers false for the two statuses somebody else writes" do
       expect(described_class.answer?("reserved")).to be false
-      expect(described_class.answer?("invited")).to be false
+      expect(described_class.answer?("response_requested")).to be false
     end
   end
 
@@ -99,18 +99,18 @@ RSpec.describe Registration, type: :model do
       expect(build(:registration, status: :no)).to be_answered
     end
 
-    it "answers false while the registration is reserved or invited" do
+    it "answers false while the registration is reserved or asked" do
       expect(build(:registration, status: :reserved)).not_to be_answered
-      expect(build(:registration, status: :invited)).not_to be_answered
+      expect(build(:registration, status: :response_requested)).not_to be_answered
     end
   end
 
   describe "#asked?" do
-    it "asks an invitation before the event ends" do
+    it "asks a question before the event ends" do
       freeze_time do
         ahead = build(:event, starts_at: 1.hour.from_now, ends_at: 2.hours.from_now)
 
-        expect(build(:registration, event: ahead, status: :invited)).to be_asked
+        expect(build(:registration, event: ahead, status: :response_requested)).to be_asked
       end
     end
 
@@ -125,12 +125,12 @@ RSpec.describe Registration, type: :model do
       end
     end
 
-    it "asks a held place, an invitation and a maybe once the event has ended" do
+    it "asks a held place, a question and a maybe once the event has ended" do
       freeze_time do
         over = build(:event, starts_at: 2.hours.ago, ends_at: 1.hour.ago)
 
         expect(build(:registration, event: over, status: :reserved)).to be_asked
-        expect(build(:registration, event: over, status: :invited)).to be_asked
+        expect(build(:registration, event: over, status: :response_requested)).to be_asked
         expect(build(:registration, event: over, status: :maybe)).to be_asked
       end
     end
@@ -145,27 +145,27 @@ RSpec.describe Registration, type: :model do
     end
   end
 
-  describe "#invite" do
-    it "moves a reserved registration to invited" do
+  describe "#request_response" do
+    it "moves a reserved registration to response_requested" do
       registration = create(:registration, status: :reserved)
 
-      expect(registration.invite).to be true
-      expect(registration.reload).to be_invited
+      expect(registration.request_response).to be true
+      expect(registration.reload).to be_response_requested
     end
 
-    it "leaves an invited or answered registration as it was" do
-      invited = create(:registration, status: :invited)
+    it "leaves an asked or answered registration as it was" do
+      asked = create(:registration, status: :response_requested)
       answered = create(:registration, event: create(:event, status: :confirmed), status: :yes)
 
-      expect([ invited.invite, answered.invite ]).to eq [ false, false ]
-      expect([ invited.reload.status, answered.reload.status ]).to eq %w[ invited yes ]
+      expect([ asked.request_response, answered.request_response ]).to eq [ false, false ]
+      expect([ asked.reload.status, answered.reload.status ]).to eq %w[ response_requested yes ]
     end
 
     it "leaves a paused or inactive member's held place reserved" do
       paused = create(:registration, member: create(:member, :paused), status: :reserved)
       gone = create(:registration, member: create(:member, :inactive), status: :reserved)
 
-      expect([ paused.invite, gone.invite ]).to eq [ false, false ]
+      expect([ paused.request_response, gone.request_response ]).to eq [ false, false ]
       expect([ paused.reload.status, gone.reload.status ]).to eq %w[ reserved reserved ]
     end
   end

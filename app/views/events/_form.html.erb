@@ -59,7 +59,7 @@
     </div>
 
     <%# Frames 4e, 4f and 4k: asks everyone who is active and not yet on the list, once the event is
-        saved. Drawn for a reader the invitation row admits, the question `EventsController` asks. %>
+        saved. Drawn for a reader the registering row admits, the question `EventsController` asks. %>
     <% if allowed_to?(:create?, Registration.new(event: event)) %>
       <fieldset class="fieldset">
         <label class="label">

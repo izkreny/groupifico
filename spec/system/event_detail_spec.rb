@@ -6,7 +6,7 @@ require "rails_helper"
 #
 # What no request spec can reach: that the disclosure actually folds the roster away and unfolds it
 # when the counts are pressed, that the card and a row's lit pill paint against the surface behind
-# them in both themes, that an invited row's paper plane is tinted where a reserved row's is not,
+# them in both themes, that an asked row's paper plane is tinted where a reserved row's is not,
 # that an owner's row of controls fits a phone, and where the roster's pill, its paper plane, Invite
 # the rest and the pencil land.
 #
@@ -15,13 +15,13 @@ require "rails_helper"
 # plain `btn` whose base-200 face sits on the card's own base-200, so each scores exactly 1. A
 # face-less control is seen by its glyph and its label, so that is what they assert instead: the
 # planes against the 3:1 WCAG asks of an icon, Invite the rest against the 4.5:1 it asks of text.
-# A soft primary face on the invited plane scored 1.01 in organic, which is a tint nobody can see, so
+# A soft primary face on the asked plane scored 1.01 in organic, which is a tint nobody can see, so
 # the tint is the glyph's colour and is compared directly.
 #
 # `.card` rather than `.card.bg-base-200`, so the assertion reads the rendered colour rather than
 # the class that asks for it, as `spec/system/events_list_spec.rb` explains.
 RSpec.describe "The event detail", type: :system do
-  it "paints the card and tints the invited row's paper plane, in light" do
+  it "paints the card and tints the asked row's paper plane, in light" do
     owner, event, = rostered_event
     sign_in_as owner.user
     prefer_colour_scheme :light
@@ -231,11 +231,11 @@ RSpec.describe "The event detail", type: :system do
     expect(page).to be_accessible
   end
 
-  # A plain member's rows are status icons alone, so this is the variant where the icon is the whole of what a row says, and an invited row's is drawn in the tally's info.
+  # A plain member's rows are status icons alone, so this is the variant where the icon is the whole of what a row says, and an asked row's is drawn in the tally's info.
   it "paints a plain member's status icons, with no accessibility violations" do
     owner, event, ben = rostered_event
     member = create(:member, :active, group: owner.group)
-    create(:registration, event:, member:, status: :invited)
+    create(:registration, event:, member:, status: :response_requested)
     sign_in_as member.user
     resize_to ViewportHelper::MOBILE
 
@@ -466,7 +466,7 @@ RSpec.describe "The event detail", type: :system do
   end
 
   def invite_the_rest(event)
-    "form[action='#{group_event_invitation_path(event.group, event)}'] .btn"
+    "form[action='#{group_event_response_request_path(event.group, event)}'] .btn"
   end
 
   # The rendered colour the glyph inherits, read off the button that names it.
@@ -491,7 +491,7 @@ RSpec.describe "The event detail", type: :system do
     event = create(:event, group:, creator: owner, status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
     create(:registration, event:, member: owner, status: :yes)
     create(:registration, event:, member: ben, status: :reserved)
-    create(:registration, event:, member: carla, status: :invited)
+    create(:registration, event:, member: carla, status: :response_requested)
 
     [ owner, event, ben ]
   end

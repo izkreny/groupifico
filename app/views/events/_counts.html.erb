@@ -1,7 +1,7 @@
 <%# locals: (event:, roster_link: false, inline: false) %>
 <%#
   Every tag the tally carries, in the order it carries them, so the counted statuses stay the
-  model's business alone. `invited` is the one whose label is not its own name: the legend calls
+  model's business alone. `response_requested` is the one whose label is not its own name: the legend calls
   that tally "no reply".
 
   An event nobody has been asked about, every place still reserved, draws no tags and says so in
@@ -22,7 +22,7 @@
   <% tags = capture do %>
     <% counts.each do |status, count| %>
       <span class="inline-flex items-center gap-1 mr-tally-rest <%= status_ink(status) %>">
-        <%= icon status, label: (status == "invited" ? "no reply" : status), class: "size-icon-inline" %>
+        <%= icon status, label: (status == "response_requested" ? "no reply" : status), class: "size-icon-inline" %>
         <%= count %>
       </span>
     <% end %>

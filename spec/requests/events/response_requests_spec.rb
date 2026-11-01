@@ -1,71 +1,71 @@
 require 'rails_helper'
 
-RSpec.describe "Events::Invitations", type: :request do
-  describe "POST /groups/:group_id/events/:event_id/invitation" do
+RSpec.describe "Events::ResponseRequests", type: :request do
+  describe "POST /groups/:group_id/events/:event_id/response_request" do
     context "when not signed in" do
       it "redirects to the sign-in page" do
         event = create(:event)
 
-        post group_event_invitation_path(event.group, event)
+        post group_event_response_request_path(event.group, event)
 
         expect(response).to redirect_to new_session_path
       end
     end
 
     context "when signed in as a non-member" do
-      it "returns 404 and invites nobody" do
+      it "returns 404 and asks nobody" do
         event = create(:event)
         sign_in_as(create(:user))
 
-        expect { post group_event_invitation_path(event.group, event) }.not_to change(Registration, :count)
+        expect { post group_event_response_request_path(event.group, event) }.not_to change(Registration, :count)
         expect(response).to have_http_status :not_found
       end
     end
 
     context "when signed in as a member holding no role" do
-      it "refuses with a redirect carrying an alert, and invites nobody" do
+      it "refuses with a redirect carrying an alert, and asks nobody" do
         event = create(:event)
         member = create(:member, :active, group: event.group)
         sign_in_as(member.user)
 
-        expect { post group_event_invitation_path(event.group, event) }.not_to change(Registration, :count)
+        expect { post group_event_response_request_path(event.group, event) }.not_to change(Registration, :count)
         expect(response).to redirect_to root_path
         expect(flash[:alert]).to be_present
       end
     end
 
     context "when signed in as a members administrator" do
-      it "refuses, because the invitation row does not mark that column" do
+      it "refuses, because the registering row does not mark that column" do
         event = create(:event)
         actor = create(:member, :active, :members_administrator, group: event.group)
         sign_in_as(actor.user)
 
-        expect { post group_event_invitation_path(event.group, event) }.not_to change(Registration, :count)
+        expect { post group_event_response_request_path(event.group, event) }.not_to change(Registration, :count)
         expect(response).to redirect_to root_path
       end
     end
 
     context "when signed in as a paused events administrator" do
-      it "refuses, because inviting is a write" do
+      it "refuses, because asking is a write" do
         event = create(:event)
         actor = create(:member, :paused, :events_administrator, group: event.group)
         sign_in_as(actor.user)
 
-        expect { post group_event_invitation_path(event.group, event) }.not_to change(Registration, :count)
+        expect { post group_event_response_request_path(event.group, event) }.not_to change(Registration, :count)
         expect(response).to redirect_to root_path
       end
     end
 
     context "when signed in as the event's manager" do
-      it "invites every active member still missing a registration" do
+      it "asks every active member still missing a registration" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, creator: actor, manager: actor)
         create(:member, :active, group: event.group)
         sign_in_as(actor.user)
 
-        post group_event_invitation_path(event.group, event)
+        post group_event_response_request_path(event.group, event)
 
-        expect(event.registrations.invited.count).to eq 2
+        expect(event.registrations.response_requested.count).to eq 2
         expect(response).to redirect_to group_event_path(event.group, event)
         expect(flash[:notice]).to eq "2 members invited."
       end
@@ -78,7 +78,7 @@ RSpec.describe "Events::Invitations", type: :request do
         create(:registration, event:, member: actor, status: :reserved)
         sign_in_as(actor.user)
 
-        post group_event_invitation_path(event.group, event), headers: { "HTTP_REFERER" => group_url(event.group) }
+        post group_event_response_request_path(event.group, event), headers: { "HTTP_REFERER" => group_url(event.group) }
 
         expect(response).to redirect_to group_url(event.group)
       end
@@ -94,20 +94,20 @@ RSpec.describe "Events::Invitations", type: :request do
         missing = create(:member, :active, group: event.group)
         sign_in_as(actor.user)
 
-        post group_event_invitation_path(event.group, event)
+        post group_event_response_request_path(event.group, event)
 
-        expect([ held.reload.status, answered.reload.status ]).to eq %w[ invited maybe ]
-        expect(event.registrations.invited.pluck(:member_id)).to contain_exactly(actor.id, missing.id)
+        expect([ held.reload.status, answered.reload.status ]).to eq %w[ response_requested maybe ]
+        expect(event.registrations.response_requested.pluck(:member_id)).to contain_exactly(actor.id, missing.id)
         expect(flash[:notice]).to eq "2 members invited."
       end
 
-      it "says so when nobody was left to invite" do
+      it "says so when nobody was left to ask" do
         actor = create(:member, :active, :events_administrator)
         event = create(:event, group: actor.group, creator: actor)
         create(:registration, event:, member: actor, status: :yes)
         sign_in_as(actor.user)
 
-        post group_event_invitation_path(event.group, event)
+        post group_event_response_request_path(event.group, event)
 
         expect(flash[:notice]).to eq "Nobody was left to invite."
       end

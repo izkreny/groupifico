@@ -39,7 +39,7 @@ RSpec.describe "Registrations", type: :request do
     end
 
     context "when signed in as the event's manager" do
-      it "shows the screen, which is the invitation row" do
+      it "shows the screen, which is the registering row" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, manager: actor)
         sign_in_as(actor.user)
@@ -339,7 +339,7 @@ RSpec.describe "Registrations", type: :request do
         registration = create(:registration, status: "yes", event:, member: actor)
         sign_in_as(actor.user)
 
-        patch group_event_registration_path(event.group, event, registration), params: { registration: { status: "invited" } }
+        patch group_event_registration_path(event.group, event, registration), params: { registration: { status: "response_requested" } }
 
         expect(response).to redirect_to root_path
         expect(registration.reload.status).to eq "yes"
@@ -487,7 +487,7 @@ RSpec.describe "Registrations", type: :request do
   def racing_on(event)
     insert = ->(registration) {
       Registration.insert_all!([ { event_id: event.id, member_id: registration.member_id,
-        status: Registration.statuses[:invited], created_at: Time.current, updated_at: Time.current } ])
+        status: Registration.statuses[:response_requested], created_at: Time.current, updated_at: Time.current } ])
     }
 
     Registration.set_callback(:create, :before, insert)

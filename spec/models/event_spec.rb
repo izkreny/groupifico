@@ -376,16 +376,16 @@ RSpec.describe Event, type: :model do
       event = create(:event)
       create(:registration, event:, member: create(:member, group: event.group), status: :yes)
       create(:registration, event:, member: create(:member, group: event.group), status: :yes)
-      create(:registration, event:, member: create(:member, group: event.group), status: :invited)
+      create(:registration, event:, member: create(:member, group: event.group), status: :response_requested)
       create(:registration, event:, member: create(:member, group: event.group), status: :reserved)
 
-      expect(event.answer_counts).to eq("invited" => 1, "yes" => 2, "maybe" => 0, "no" => 0, "reserved" => 1)
+      expect(event.answer_counts).to eq("response_requested" => 1, "yes" => 2, "maybe" => 0, "no" => 0, "reserved" => 1)
     end
 
     # The card draws the tags in this order and reads no set of its own, so the order is part of
     # what this method answers.
     it "puts the three answers first, then the unanswered, then the places nobody was asked about" do
-      expect(create(:event).answer_counts.keys).to eq %w[ yes maybe no invited reserved ]
+      expect(create(:event).answer_counts.keys).to eq %w[ yes maybe no response_requested reserved ]
     end
 
     it "counts only reserved places for an event whose registrations are all reserved" do
@@ -417,15 +417,15 @@ RSpec.describe Event, type: :model do
 
   describe "#roster" do
     # Upcoming, because an event that has ended takes no `maybe` and the factory's date is random.
-    it "lists the answers first, then the invited, then the reserved, reserved ones included" do
+    it "lists the answers first, then the asked, then the reserved, reserved ones included" do
       event = create(:event, starts_at: 1.day.from_now)
       reserved = registration_named("Adam", on: event, status: :reserved)
-      invited = registration_named("Bea", on: event, status: :invited)
+      asked = registration_named("Bea", on: event, status: :response_requested)
       declined = registration_named("Carl", on: event, status: :no)
       unsure = registration_named("Dora", on: event, status: :maybe)
       coming = registration_named("Emil", on: event, status: :yes)
 
-      expect(event.roster).to eq [ coming, unsure, declined, invited, reserved ]
+      expect(event.roster).to eq [ coming, unsure, declined, asked, reserved ]
     end
 
     # A name typed in lower case is still the same name to somebody scanning the list for it.
@@ -452,7 +452,7 @@ RSpec.describe Event, type: :model do
       second = create(:member, group: event.group)
 
       expect { event.invite([ first, second ]) }.to change(Registration, :count).by(2)
-      expect(event.reload.registrations.pluck(:status)).to all eq "invited"
+      expect(event.reload.registrations.pluck(:status)).to all eq "response_requested"
     end
 
     # The unique index is what a member already on the list hits, and the transaction is what stops
@@ -468,23 +468,23 @@ RSpec.describe Event, type: :model do
     end
   end
 
-  describe "#invite_all_active_members" do
-    it "invites every active member who has no registration" do
+  describe "#request_all_responses" do
+    it "asks every active member who has no registration" do
       event = create(:event)
       first = create(:member, :active, group: event.group)
       second = create(:member, :active, group: event.group)
 
-      expect(event.invite_all_active_members).to eq 3
-      expect(event.registrations.invited.pluck(:member_id)).to contain_exactly(event.creator_id, first.id, second.id)
+      expect(event.request_all_responses).to eq 3
+      expect(event.registrations.response_requested.pluck(:member_id)).to contain_exactly(event.creator_id, first.id, second.id)
     end
 
-    it "moves an active member's held place to invited and leaves an answer as it was" do
+    it "moves an active member's held place to response_requested and leaves an answer as it was" do
       event = create(:event, status: :confirmed)
       held = create(:registration, event:, member: event.creator, status: :reserved)
       answered = create(:registration, event:, member: create(:member, group: event.group), status: :no)
 
-      expect(event.invite_all_active_members).to eq 1
-      expect([ held.reload.status, answered.reload.status ]).to eq %w[ invited no ]
+      expect(event.request_all_responses).to eq 1
+      expect([ held.reload.status, answered.reload.status ]).to eq %w[ response_requested no ]
     end
 
     it "leaves out paused and inactive members, and other groups' members" do
@@ -493,7 +493,7 @@ RSpec.describe Event, type: :model do
       create(:member, :inactive, group: event.group)
       create(:member)
 
-      event.invite_all_active_members
+      event.request_all_responses
 
       expect(event.registrations.pluck(:member_id)).to eq [ event.creator_id ]
     end
@@ -504,31 +504,31 @@ RSpec.describe Event, type: :model do
       gone = create(:registration, event:, member: create(:member, :inactive, group: event.group), status: :reserved)
       create(:registration, event:, member: event.creator, status: :yes)
 
-      expect(event.invite_all_active_members).to eq 0
+      expect(event.request_all_responses).to eq 0
       expect([ paused.reload.status, gone.reload.status ]).to eq %w[ reserved reserved ]
     end
   end
 
-  describe "#anyone_left_to_invite?" do
+  describe "#anyone_left_to_ask?" do
     it "answers true while an active member has no registration" do
       event = create(:event)
 
-      expect(event).to be_anyone_left_to_invite
+      expect(event).to be_anyone_left_to_ask
     end
 
     it "answers true while an active member's place is only held" do
       event = create(:event)
       create(:registration, event:, member: event.creator, status: :reserved)
 
-      expect(event).to be_anyone_left_to_invite
+      expect(event).to be_anyone_left_to_ask
     end
 
     it "answers false once every active member is asked, whoever else is held" do
       event = create(:event)
-      create(:registration, event:, member: event.creator, status: :invited)
+      create(:registration, event:, member: event.creator, status: :response_requested)
       create(:registration, event:, member: create(:member, :paused, group: event.group), status: :reserved)
 
-      expect(event).not_to be_anyone_left_to_invite
+      expect(event).not_to be_anyone_left_to_ask
     end
   end
 

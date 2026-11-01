@@ -7,7 +7,7 @@
 <div class="w-full">
   <div class="mb-2">
     <p class="text-lg"><%= @event.name %></p>
-    <p class="text-xs"><%= event_schedule_range(@event) %> · <%= invited_tally(@group, @event) %></p>
+    <p class="text-xs"><%= event_schedule_range(@event) %> · <%= list_tally(@group, @event) %></p>
   </div>
 
   <%# Loaded once and split here rather than queried twice: `members_available` orders the tickable
@@ -54,7 +54,7 @@
 
       <div class="mt-4">
         <%= render "shared/block_button", data: { invite_target: "submit" } do %>
-          <%= icon :invited, class: "size-icon-control" %>
+          <%= icon :response_requested, class: "size-icon-control" %>
           <span data-invite-target="label">Invite</span>
         <% end %>
       </div>

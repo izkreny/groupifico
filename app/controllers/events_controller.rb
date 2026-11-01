@@ -69,7 +69,7 @@ class EventsController < ApplicationController
     authorize_invitation!
 
     if @event.save
-      @event.invite_all_active_members if @event.invite_active_members?
+      @event.request_all_responses if @event.invite_active_members?
 
       redirect_to group_event_path(@group, @event),
         notice: "Event was successfully created."
@@ -90,7 +90,7 @@ class EventsController < ApplicationController
     authorize_invitation!
 
     if @event.update(event_params)
-      @event.invite_all_active_members if @event.invite_active_members?
+      @event.request_all_responses if @event.invite_active_members?
 
       redirect_to group_event_path(@group, @event),
         notice: "Event was successfully updated.",

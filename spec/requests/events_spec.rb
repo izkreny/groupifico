@@ -212,12 +212,12 @@ RSpec.describe "Events", type: :request do
         end
       end
 
-      it "draws the hero card, a row beneath it and the question for an invited owner" do
+      it "draws the hero card, a row beneath it and the question for an owner asked to respond" do
         freeze_time do
           owner = create(:member, :owner)
           next_up = confirmed_event(owner, name: "Tuesday rehearsal", category: :rehearsal, days: 2)
           later = confirmed_event(owner, name: "Sunday service", days: 5)
-          create(:registration, event: next_up, member: owner, status: :invited)
+          create(:registration, event: next_up, member: owner, status: :response_requested)
           sign_in_as(owner.user)
 
           get group_events_path(owner.group)
@@ -255,17 +255,17 @@ RSpec.describe "Events", type: :request do
       end
 
       # Where the question is asked, which is the one thing about it this screen decides: inside the
-      # hero's own card, and again under any row the reader was invited to. `id="events"` is the
+      # hero's own card, and again under any row the reader was asked to. `id="events"` is the
       # list's wrapper, so a match that crosses it has one copy on each side of the list's start.
       #
       # The count is what makes the order mean anything. Either copy alone satisfies the match on
       # its own, which is what the screen looked like when the answer row sat once below the list.
-      it "asks inside the hero card and again under an invited row" do
+      it "asks inside the hero card and again under an asked row" do
         owner = create(:member, :owner)
         next_up = confirmed_event(owner, days: 2, name: "Tuesday rehearsal")
         later = confirmed_event(owner, days: 5, name: "Sunday service")
-        create(:registration, event: next_up, member: owner, status: :invited)
-        create(:registration, event: later, member: owner, status: :invited)
+        create(:registration, event: next_up, member: owner, status: :response_requested)
+        create(:registration, event: later, member: owner, status: :response_requested)
         sign_in_as(owner.user)
 
         get group_events_path(owner.group)
@@ -283,7 +283,7 @@ RSpec.describe "Events", type: :request do
         answered_row = confirmed_event(member, days: 5)
         asked_row = confirmed_event(member, days: 7)
         create(:registration, event: answered_row, member:, status: :maybe)
-        create(:registration, event: asked_row, member:, status: :invited)
+        create(:registration, event: asked_row, member:, status: :response_requested)
         sign_in_as(member.user)
 
         get group_events_path(member.group)
@@ -334,7 +334,7 @@ RSpec.describe "Events", type: :request do
         freeze_time do
           member = create(:member, :paused)
           next_up = confirmed_event(member, days: 2)
-          registration = create(:registration, event: next_up, member:, status: :invited)
+          registration = create(:registration, event: next_up, member:, status: :response_requested)
           sign_in_as(member.user)
 
           get group_events_path(member.group)
@@ -371,7 +371,7 @@ RSpec.describe "Events", type: :request do
 
           get group_events_path(owner.group)
 
-          expect(response.body).to include "Invite everyone", group_event_invitation_path(owner.group, next_up)
+          expect(response.body).to include "Invite everyone", group_event_response_request_path(owner.group, next_up)
         end
       end
 
@@ -379,7 +379,7 @@ RSpec.describe "Events", type: :request do
         freeze_time do
           owner = create(:member, :owner)
           next_up = confirmed_event(owner, days: 2)
-          create(:registration, event: next_up, member: owner, status: :invited)
+          create(:registration, event: next_up, member: owner, status: :response_requested)
           create(:registration, event: next_up, member: create(:member, group: owner.group), status: :reserved)
           sign_in_as(owner.user)
 
@@ -443,7 +443,7 @@ RSpec.describe "Events", type: :request do
       it "asks in the past tense under an event that has ended" do
         member = create(:member, :active)
         over = confirmed_event(member, days: -9, name: "Spring concert")
-        create(:registration, event: over, member:, status: :invited)
+        create(:registration, event: over, member:, status: :response_requested)
         sign_in_as(member.user)
 
         get group_events_path(member.group, scope: "past")
@@ -456,7 +456,7 @@ RSpec.describe "Events", type: :request do
         member = create(:member, :active)
         over = create(:event, group: member.group, creator: member, status: :concluded,
           name: "Summer gig", starts_at: 9.days.ago, ends_at: 9.days.ago + 2.hours)
-        create(:registration, event: over, member:, status: :invited)
+        create(:registration, event: over, member:, status: :response_requested)
         sign_in_as(member.user)
 
         get group_events_path(member.group, scope: "past")
@@ -466,12 +466,12 @@ RSpec.describe "Events", type: :request do
       end
 
       # Once an event has ended, whoever has not said yes or no is asked, a held place nobody asked included.
-      it "asks a held place and an invitation whether they went, with yes and no only" do
+      it "asks a held place and a question whether they went, with yes and no only" do
         member = create(:member, :active)
         held = confirmed_event(member, days: -9, name: "Spring concert")
         asked = confirmed_event(member, days: -6, name: "Summer gig")
         create(:registration, event: held, member:, status: :reserved)
-        create(:registration, event: asked, member:, status: :invited)
+        create(:registration, event: asked, member:, status: :response_requested)
         sign_in_as(member.user)
 
         get group_events_path(member.group, scope: "past")
@@ -606,12 +606,12 @@ RSpec.describe "Events", type: :request do
     # still ahead, so it does ask: nobody has called it off, and gauging who would come is most of
     # what an unconfirmed event is for. Without this the `unconfirmed?` term is a one-token deletion
     # nothing catches.
-    context "when the group's only upcoming event is unconfirmed and the reader was invited" do
+    context "when the group's only upcoming event is unconfirmed and the reader was asked" do
       it "asks under its row" do
         member = create(:member, :active)
         pencilled = create(:event, group: member.group, creator: member, status: :unconfirmed,
           name: "Extra rehearsal", starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
-        create(:registration, event: pencilled, member:, status: :invited)
+        create(:registration, event: pencilled, member:, status: :response_requested)
         sign_in_as(member.user)
 
         get group_events_path(member.group)
@@ -627,7 +627,7 @@ RSpec.describe "Events", type: :request do
         member = create(:member, :active)
         called_off = create(:event, group: member.group, creator: member, status: :canceled,
           name: "Autumn gig", starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
-        create(:registration, event: called_off, member:, status: :invited)
+        create(:registration, event: called_off, member:, status: :response_requested)
         sign_in_as(member.user)
 
         get group_events_path(member.group)
@@ -875,7 +875,7 @@ RSpec.describe "Events", type: :request do
         expect(response.body).to include %(title="Yes")
       end
 
-      it "puts the reserved icon and a plain paper plane on a reserved row, and the tinted plane alone on an invited row" do
+      it "puts the reserved icon and a plain paper plane on a reserved row, and the tinted plane alone on an asked row" do
         owner = create(:member, :active, :owner)
         event = detailed_event(owner)
         sign_in_as(owner.user)
@@ -926,13 +926,13 @@ RSpec.describe "Events", type: :request do
 
         get group_event_path(event.group, event)
 
-        expect(response.body).to include "Invite the rest", group_event_invitation_path(event.group, event)
+        expect(response.body).to include "Invite the rest", group_event_response_request_path(event.group, event)
       end
 
       it "offers no Invite the rest once every active member is asked" do
         owner = create(:member, :active, :owner)
         event = detailed_event(owner)
-        event.registrations.reserved.update_all(status: :invited)
+        event.registrations.reserved.update_all(status: :response_requested)
         sign_in_as(owner.user)
 
         get group_event_path(event.group, event)
@@ -1013,7 +1013,7 @@ RSpec.describe "Events", type: :request do
       # `Registration` refuses every answer on a concluded event, so its screen asks nothing.
       it "asks nothing on an event somebody has concluded" do
         member = create(:member, :active)
-        event = detailed_event(member, reader_status: :invited)
+        event = detailed_event(member, reader_status: :response_requested)
         event.update!(status: :concluded)
         sign_in_as(member.user)
 
@@ -1052,7 +1052,7 @@ RSpec.describe "Events", type: :request do
       it "opens the roster when the hero card's responses link here" do
         travel_to Time.zone.parse("2026-09-01 12:00") do
           member = create(:member, :active)
-          event = detailed_event(member, reader_status: :invited)
+          event = detailed_event(member, reader_status: :response_requested)
           sign_in_as(member.user)
 
           get group_event_path(event.group, event, responses: "show")
@@ -1065,7 +1065,7 @@ RSpec.describe "Events", type: :request do
       it "draws the tally's tags right after the Who’s coming heading" do
         travel_to Time.zone.parse("2026-09-01 12:00") do
           member = create(:member, :active)
-          event = detailed_event(member, reader_status: :invited)
+          event = detailed_event(member, reader_status: :response_requested)
           sign_in_as(member.user)
 
           get group_event_path(event.group, event)
@@ -1078,7 +1078,7 @@ RSpec.describe "Events", type: :request do
       it "draws the five count tags and the reader's own question" do
         travel_to Time.zone.parse("2026-09-01 12:00") do
           member = create(:member, :active)
-          event = detailed_event(member, reader_status: :invited)
+          event = detailed_event(member, reader_status: :response_requested)
           sign_in_as(member.user)
 
           get group_event_path(event.group, event)
@@ -1658,7 +1658,7 @@ RSpec.describe "Events", type: :request do
 
         post group_events_path(creator.group), params: { event: params }
 
-        expect(Event.sole.registrations.invited.pluck(:member_id)).to contain_exactly(creator.id, active.id)
+        expect(Event.sole.registrations.response_requested.pluck(:member_id)).to contain_exactly(creator.id, active.id)
       end
 
       it "invites nobody when the box is left unticked" do
@@ -1767,12 +1767,12 @@ RSpec.describe "Events", type: :request do
         patch group_event_path(event.group, event), params: { event: { invite_active_members: "1" } }
 
         expect(answered.reload).to be_no
-        expect(event.registrations.invited.pluck(:member_id)).to contain_exactly(event.creator_id, missing.id)
+        expect(event.registrations.response_requested.pluck(:member_id)).to contain_exactly(event.creator_id, missing.id)
       end
 
       # The attribute casts "true", "on" and "yes" as it casts "1", so the gate has to read the box
-      # the same way or a differently spelled tick invites without the invitation row being asked.
-      it "asks the invitation row however the tick is spelled" do
+      # the same way or a differently spelled tick invites without the registering row being asked.
+      it "asks the registering row however the tick is spelled" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, manager: actor)
         sign_in_as(actor.user)
@@ -1792,7 +1792,7 @@ RSpec.describe "Events", type: :request do
         patch group_event_path(event.group, event), params: { event: { manager_id: successor.id, invite_active_members: "1" } }
 
         expect(event.reload.manager).to eq successor
-        expect(event.registrations.invited.count).to eq 3
+        expect(event.registrations.response_requested.count).to eq 3
       end
     end
 
@@ -1991,7 +1991,7 @@ RSpec.describe "Events", type: :request do
       ends_at: Time.zone.parse("2026-09-02 21:00"))
     create(:registration, event:, member: alice, status: :yes)
     create(:registration, event:, member: ben, status: :reserved)
-    create(:registration, event:, member: carla, status: :invited)
+    create(:registration, event:, member: carla, status: :response_requested)
     create(:registration, event:, member: reader, status: reader_status)
     event
   end

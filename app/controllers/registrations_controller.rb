@@ -1,7 +1,7 @@
 class RegistrationsController < ApplicationController
   include GroupScoped
 
-  # One message for every way a ticked member can stop being invitable while the reader was
+  # One message for every way a ticked member can stop being on offer while the reader was
   # choosing - registered by somebody else, paused, or gone from the group - and for both sides of
   # the write it can happen on. It names none of them, because the controller cannot tell which
   # happened and the reader's answer is the same either way: the list moved, here it is again.
@@ -13,8 +13,8 @@ class RegistrationsController < ApplicationController
   before_action :set_event
   before_action :set_registration, only: %i[ update destroy ]
 
-  # The invitation screen. A registration nobody has been chosen for is nobody's, so `own?` is
-  # false on it and `create?` is the three roles and the event's manager alone - the invitation row
+  # The list screen. A registration nobody has been chosen for is nobody's, so `own?` is
+  # false on it and `create?` is the three roles and the event's manager alone - the registering row
   # of the events table, which is exactly who this screen is for.
   def new
     @registration = @event.registrations.new
@@ -22,8 +22,8 @@ class RegistrationsController < ApplicationController
     authorize! @registration
   end
 
-  # One `invited` registration per ticked member. The status is written here rather than posted,
-  # because this screen is the only thing that posts here and `invited` is the only thing it means,
+  # One `response_requested` registration per ticked member. The status is written here rather than posted,
+  # because this screen is the only thing that posts here and `response_requested` is the only thing it means,
   # so there is no posted status for a second question to ask about - which is why `create` asks
   # one rule where `update` asks two.
   #
@@ -41,7 +41,7 @@ class RegistrationsController < ApplicationController
       redirect_to group_event_path(@group, @event),
         notice: "#{helpers.pluralize(invited.size, "member")} invited."
     else
-      # The two ways of inviting nobody read the same to the controller and differently to the
+      # The two ways of writing nobody read the same to the controller and differently to the
       # reader: one of them ticked somebody, and telling them to tick somebody sends them back to
       # re-tick the row that was taken out from under them.
       flash.now[:alert] = ticked.any? ? MOVED_ON : "Pick at least one member to invite."

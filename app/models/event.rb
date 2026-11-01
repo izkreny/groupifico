@@ -101,7 +101,7 @@ class Event < ApplicationRecord
   # The tallies the event card draws, in one query, with a zero for a status nobody holds so the
   # card draws the same tags whatever the answers are.
   #
-  # Ordered here rather than in the card, answers first, then the invited still unanswered, then the
+  # Ordered here rather than in the card, answers first, then the asked still unanswered, then the
   # places nobody has been asked about, so the set of counted statuses has one home: a view spelling
   # the same five out again would keep drawing five after a sixth status arrived.
   def answer_counts
@@ -157,8 +157,8 @@ class Event < ApplicationRecord
     registrations.preloaded.sort_by { [ order.index(it.status), it.member.full_name.downcase ] }
   end
 
-  # Filling the event, all or nothing: a set refused part way through leaves nobody half-invited.
-  # `invited` rather than a posted status, because being put on the list is what an invitation is
+  # Filling the event, all or nothing: a set refused part way through leaves nobody half-asked.
+  # `response_requested` rather than a posted status, because being put on the list is what asking is
   # and answering it is the member's own move afterwards.
   #
   # Here rather than in the controller because creating several registrations at once is what the
@@ -166,7 +166,7 @@ class Event < ApplicationRecord
   # what happens to them.
   def invite(members)
     transaction do
-      members.map { registrations.create!(member: it, status: :invited) }
+      members.map { registrations.create!(member: it, status: :response_requested) }
     end
   end
 
@@ -179,16 +179,16 @@ class Event < ApplicationRecord
   # is never overruled, and a paused or inactive member is never asked. Record by record rather than
   # `update_all` and `insert_all`, so every registration runs its callbacks, which a notification
   # will hang off. The read and the writes share one transaction, which SQLite opens immediate, so
-  # no registration can land between them. Returns how many were invited.
-  def invite_all_active_members
+  # no registration can land between them. Returns how many were asked.
+  def request_all_responses
     transaction do
-      active_members_reserved_registrations.count(&:invite) + invite(unregistered_active_members).size
+      active_members_reserved_registrations.count(&:request_response) + invite(unregistered_active_members).size
     end
   end
 
-  # Whether `invite_all_active_members` would ask anybody, asked by the roster before it offers
+  # Whether `request_all_responses` would ask anybody, asked by the roster before it offers
   # "Invite the rest". Reads the same two sets, so the offer and the action cannot disagree.
-  def anyone_left_to_invite?
+  def anyone_left_to_ask?
     active_members_reserved_registrations.exists? || unregistered_active_members.exists?
   end
 

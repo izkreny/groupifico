@@ -6,7 +6,7 @@
   <%= render "events/event", event: @event %>
 
   <%# The reader's own answer row stands on the page above the attendance card, which holds Who's coming? folding the roster beneath it. %>
-  <%= render "events/rsvp", event: @event, registration: @event.registration_for(Current.member) %>
+  <%= render "events/response", event: @event, registration: @event.registration_for(Current.member) %>
 
   <div class="card card-sm bg-base-200">
     <div class="card-body gap-3">

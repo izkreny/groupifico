@@ -7,7 +7,7 @@ require "rails_helper"
 # What makes "under each theme" falsifiable is the twin's own `color-scheme`, the property each
 # daisyUI theme sets, read as `ColourSchemeHelper#rendered_colour_scheme` reads the root's.
 RSpec.describe "The styleguide", type: :system do
-  it "paints the hero card and the lit RSVP pill in the light twin" do
+  it "paints the hero card and the lit reply pill in the light twin" do
     plant_styleguide_group(manager: "Ana Horvat")
     sign_in_as planted_member("Ana Horvat").user
 

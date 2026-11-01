@@ -138,7 +138,7 @@ RSpec.describe "The events list", type: :system do
   # can tell the two apart.
   it "fits the card inside the page at both widths" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
-    create(:registration, event: next_event_for(member), member:, status: :invited)
+    create(:registration, event: next_event_for(member), member:, status: :response_requested)
     sign_in_as member.user
 
     [ ViewportHelper::MOBILE, ViewportHelper::DESKTOP ].each do |viewport|
@@ -153,7 +153,7 @@ RSpec.describe "The events list", type: :system do
   it "writes the hero's answer and stays on the list" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
     event = next_event_for(member)
-    registration = create(:registration, event:, member:, status: :invited)
+    registration = create(:registration, event:, member:, status: :response_requested)
     sign_in_as member.user
     resize_to ViewportHelper::MOBILE
 
@@ -170,7 +170,7 @@ RSpec.describe "The events list", type: :system do
     member = create(:member, :owner)
     next_event_for(member)
     event = create(:event, group: member.group, creator: member, status: :confirmed, starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours)
-    create(:registration, event:, member:, status: :invited)
+    create(:registration, event:, member:, status: :response_requested)
     sign_in_as member.user
 
     visit group_events_path(member.group)
@@ -193,7 +193,7 @@ RSpec.describe "The events list", type: :system do
 
     visit group_events_path(member.group)
 
-    expect(text_contrast("form[action$='/invitation'] .btn")).to be >= ContrastHelper::WCAG_AA
+    expect(text_contrast("form[action$='/response_request'] .btn")).to be >= ContrastHelper::WCAG_AA
     expect(page).to be_accessible
     click_button "Invite everyone"
 
@@ -211,7 +211,7 @@ RSpec.describe "The events list", type: :system do
     visit group_events_path(member.group)
 
     expect(rendered_colour_scheme).to eq "dark"
-    expect(text_contrast("form[action$='/invitation'] .btn")).to be >= ContrastHelper::WCAG_AA
+    expect(text_contrast("form[action$='/response_request'] .btn")).to be >= ContrastHelper::WCAG_AA
     expect(page).to be_accessible
   end
 
@@ -250,7 +250,7 @@ RSpec.describe "The events list", type: :system do
   it "puts a row's question under its name when the row also carries the pencil" do
     member = create(:member, :owner)
     next_event_for(member)
-    registration = create(:registration, member:, status: :invited, event: create(:event, group: member.group, creator: member, status: :confirmed, starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours))
+    registration = create(:registration, member:, status: :response_requested, event: create(:event, group: member.group, creator: member, status: :confirmed, starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours))
     sign_in_as member.user
     resize_to ViewportHelper::MOBILE
 

@@ -1,7 +1,7 @@
-# A roster row's paper plane. The invitation row rather than `RegistrationsController#update`,
+# A roster row's paper plane. The registering row rather than `RegistrationsController#update`,
 # because asking somebody is filling the event, which the event's manager may do and `update?`
 # refuses them.
-class Registrations::InvitationsController < ApplicationController
+class Registrations::ResponseRequestsController < ApplicationController
   include GroupScoped
 
   before_action :set_registration
@@ -12,7 +12,7 @@ class Registrations::InvitationsController < ApplicationController
     member = @registration.member
 
     if member.active?
-      notice = "#{member.full_name} was already asked." unless @registration.invite
+      notice = "#{member.full_name} was already asked." unless @registration.request_response
       redirect_back_or_to group_event_path(@group, @registration.event), status: :see_other, notice:
     else
       redirect_back_or_to group_event_path(@group, @registration.event), status: :see_other, alert: "#{member.full_name} is #{member.status}, so they are not asked."

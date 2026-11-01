@@ -49,9 +49,9 @@ class Member < ApplicationRecord
 
   scope :preloaded, -> { includes(:roles, :user, :profile, :group) }
 
-  # Members with no registration on the event, never invited or taken off. The whole of what it
+  # Members with no registration on the event, never added or taken off. The whole of what it
   # decides, so each caller states its own status rule beside it rather than inheriting one the
-  # name does not mention: the invitation screen keeps paused members, who are listed and cannot
+  # name does not mention: the list screen keeps paused members, who are listed and cannot
   # be ticked, and the create behind it takes `active` alone.
   #
   # Here rather than in `RegistrationsHelper` because both ask it, and two spellings of one rule
