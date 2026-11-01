@@ -25,7 +25,7 @@
 
   <% asking = registration&.asked? && event.open_to_answers? %>
   <% if registration && !asking %>
-    <%= status_icon registration, label: registration.answered? ? "your answer: #{registration.status}" : registration_status_label(registration), class: "size-icon-control self-center #{status_ink(registration.status)}" %>
+    <%= status_icon registration, label: registration.answered? ? "you said #{registration.status}" : registration_status_label(registration), class: "size-icon-control self-center #{status_ink(registration.status)}" %>
   <% end %>
 
   <%# Frame 4h's pencil, last in the row, for a reader `edit?` allows. WHY: 20px, the answer's size and a step under the event's 24px status, so it reads beside the answer without competing with the name. WHY: the margin takes the row's 16px gap, daisyUI's rather than a token, down to `controls` plus the pencil's own inset, which sets its glyph 20px from the answer's bare one, the glyph gap the event screen's roster keeps. %>

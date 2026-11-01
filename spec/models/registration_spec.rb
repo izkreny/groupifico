@@ -19,7 +19,7 @@ RSpec.describe Registration, type: :model do
       registration = create(:registration, status: :response_requested, event: create(:event, status: :concluded))
 
       expect(registration.update(status: :yes)).to be false
-      expect(registration.errors[:status]).to include "cannot be answered once the event is over"
+      expect(registration.errors[:base]).to include "This event is over, so it no longer takes replies."
     end
 
     it "refuses an answer to an event that has been called off" do
@@ -53,7 +53,7 @@ RSpec.describe Registration, type: :model do
       registration = create(:registration, status: :response_requested, event:)
 
       expect(registration.update(status: :maybe)).to be false
-      expect(registration.errors[:status]).to eq [ "cannot be maybe once the event has ended" ]
+      expect(registration.errors[:base]).to eq [ "This event has ended, so it is a yes or a no." ]
     end
 
     it "takes maybe until the event ends" do
@@ -70,7 +70,7 @@ RSpec.describe Registration, type: :model do
 
       registration.update(status: :maybe)
 
-      expect(registration.errors[:status]).to eq [ "cannot be answered once the event is over" ]
+      expect(registration.errors[:base]).to eq [ "This event is over, so it no longer takes replies." ]
     end
   end
 

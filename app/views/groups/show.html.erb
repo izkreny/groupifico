@@ -21,7 +21,7 @@
         event rather than of the group, because that is the record the rule is written against; a
         refused reader gets no control rather than a disabled one. %>
     <% if allowed_to?(:create?, @group.events.new) %>
-      <p>Add your first rehearsal and everyone gets asked whether they&rsquo;re coming.</p>
+      <p>Add your first rehearsal, then ask everyone whether they&rsquo;re coming.</p>
 
       <%= link_to new_group_event_path(@group), class: "btn btn-primary" do %>
         <%= icon :new, class: "size-icon-control" %>New event

@@ -48,7 +48,7 @@ RSpec.describe RegistrationsHelper, type: :helper do
       create(:member, :active, group: event.group)
       create(:registration, event:, member: event.creator)
 
-      expect(helper.list_tally(event.group, event)).to eq "1 of 2 invited"
+      expect(helper.list_tally(event.group, event)).to eq "1 of 2 on the list"
     end
 
     it "counts neither a paused nor an inactive member on either side" do
@@ -56,7 +56,7 @@ RSpec.describe RegistrationsHelper, type: :helper do
       create(:registration, event:, member: create(:member, :paused, group: event.group))
       create(:registration, event:, member: create(:member, :inactive, group: event.group))
 
-      expect(helper.list_tally(event.group, event)).to eq "0 of 1 invited"
+      expect(helper.list_tally(event.group, event)).to eq "0 of 1 on the list"
     end
   end
 
@@ -68,7 +68,7 @@ RSpec.describe RegistrationsHelper, type: :helper do
     # The badge is the row's only statement of where it stands, so the two unanswered statuses
     # are spelled out rather than left as the enum's own words.
     it "reads an asked registration as a question still waiting" do
-      expect(helper.registration_status_label(build(:registration, status: :response_requested))).to eq "Invited, no reply yet"
+      expect(helper.registration_status_label(build(:registration, status: :response_requested))).to eq "Asked, no reply yet"
     end
 
     it "reads a reserved registration as a place held before anybody asked" do

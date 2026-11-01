@@ -187,7 +187,7 @@ class Event < ApplicationRecord
   end
 
   # Whether `request_all_responses` would ask anybody, asked by the roster before it offers
-  # "Invite the rest". Reads the same two sets, so the offer and the action cannot disagree.
+  # "Ask the rest". Reads the same two sets, so the offer and the action cannot disagree.
   def anyone_left_to_ask?
     active_members_reserved_registrations.exists? || unregistered_active_members.exists?
   end

@@ -191,7 +191,7 @@
 
   --spacing-tally: 0.75rem;           /* 12px: the Who's coming? tally, tag → tag */
   --spacing-card-row: 0.5rem;         /* 8px: the hero card, row → row */
-  --spacing-card-break: 0.875rem;     /* 14px: the hero card, its last fact → Your answer: */
+  --spacing-card-break: 0.875rem;     /* 14px: the hero card, its last fact → Are you coming? */
 
   /* WHY: derived, so each follows the tokens it is worked out from. */
   --spacing-control-inset: calc((var(--spacing-control) - var(--spacing-icon-control)) / 2);  /* 6px: a glyph inside its icon button */

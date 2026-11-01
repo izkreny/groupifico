@@ -88,10 +88,10 @@ class Registration < ApplicationRecord
 
   private
     def event_must_be_open_to_answers
-      errors.add(:status, "cannot be answered once the event is over") unless event&.open_to_answers?
+      errors.add(:base, "This event is over, so it no longer takes replies.") unless event&.open_to_answers?
     end
 
     def answer_must_be_one_the_event_takes
-      errors.add(:status, "cannot be #{status} once the event has ended") unless event.available_registration_answers.include?(status)
+      errors.add(:base, "This event has ended, so it is a yes or a no.") unless event.available_registration_answers.include?(status)
     end
 end

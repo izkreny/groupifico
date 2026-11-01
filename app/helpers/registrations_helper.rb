@@ -17,7 +17,7 @@ module RegistrationsHelper
   def list_tally(group, event)
     active = group.members.active
 
-    "#{active.where(id: event.registrations.select(:member_id)).count} of #{active.count} invited"
+    "#{active.where(id: event.registrations.select(:member_id)).count} of #{active.count} on the list"
   end
 
   # What a roster row's badge says to a screen reader, and on hover. An answer is its own word; the
@@ -25,7 +25,7 @@ module RegistrationsHelper
   # member rather than as where the question stands.
   def registration_status_label(registration)
     if registration.response_requested?
-      "Invited, no reply yet"
+      "Asked, no reply yet"
     elsif registration.reserved?
       "Place reserved, not asked yet"
     else

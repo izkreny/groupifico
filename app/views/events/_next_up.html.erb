@@ -50,7 +50,7 @@
         registration at least, since "every" holds of an empty list that has nobody to ask. %>
     <% if event.registrations.any? && event.registrations.all?(&:reserved?) && allowed_to?(:create?, Registration.new(event: event)) %>
       <%= button_to group_event_response_request_path(event.group, event), class: "btn btn-sm self-start" do %>
-        <%= icon :response_requested, class: "size-icon-control" %>Invite everyone
+        <%= icon :response_requested, class: "size-icon-control" %>Ask everyone
       <% end %>
     <% end %>
 
