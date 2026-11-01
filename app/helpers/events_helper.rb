@@ -6,7 +6,7 @@ module EventsHelper
   DOT             = " · "
 
   # The Who's coming? tally's colours, which the tally, the roster, the event row and the answer buttons all paint a status in. Whole class names, so Tailwind finds each one.
-  STATUS_INKS = { "yes" => "text-success", "maybe" => "text-warning", "no" => "text-error", "invited" => "text-info" }.freeze
+  STATUS_INKS = { "yes" => "text-success", "maybe" => "text-warning", "no" => "text-error", "response_requested" => "text-info" }.freeze
 
   def status_ink(status)
     STATUS_INKS[status]

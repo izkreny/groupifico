@@ -48,6 +48,6 @@
   <div class="flex gap-2">
     <%= leading %>
     <%= link_to cancel, class: "btn btn-ghost" do %><%= icon :cancel, class: "size-icon-control" %>Cancel<% end %>
-    <%= form.button class: "btn btn-primary" do %><%= icon (member.persisted? ? :save : :invited), class: "size-icon-control" %><%= submit %><% end %>
+    <%= form.button class: "btn btn-primary" do %><%= icon (member.persisted? ? :save : :send_invite), class: "size-icon-control" %><%= submit %><% end %>
   </div>
 <% end %>

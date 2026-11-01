@@ -2,7 +2,7 @@
 <html lang="<%= I18n.locale %>">
   <head>
     <%= render "layouts/head" %>
-    <%# WHY: an answer, an invitation or a take-off redirects back to the page it was pressed on, which Turbo takes as a refresh, so the page morphs in place, keeping its scroll, rather than redrawing from the top. %>
+    <%# WHY: an answer or a question redirects back to the page it was pressed on, which Turbo takes as a refresh, so the page morphs in place, keeping its scroll, rather than redrawing from the top. %>
     <%= turbo_refresh_method_tag :morph %>
     <%= turbo_refresh_scroll_tag :preserve %>
   </head>

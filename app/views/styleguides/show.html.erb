@@ -10,11 +10,11 @@
 <%
   soon = 2.days.from_now.change(hour: 19)
 
-  question = @next_up.registrations.find(&:invited?)
+  question = @next_up.registrations.find(&:response_requested?)
   answer   = @next_up.registrations.find(&:yes?)
 
   rows = [
-    [ @unconfirmed, @unconfirmed.registrations.find(&:invited?) ],
+    [ @unconfirmed, @unconfirmed.registrations.find(&:response_requested?) ],
     [ @ongoing,     @ongoing.registrations.find(&:yes?) ],
     [ @concluded,   nil ],
     [ @canceled,    nil ]
@@ -84,6 +84,10 @@
     <%= render "styleguides/components/card" %>
   <% end %>
 
+  <%= render layout: "styleguides/section", locals: { title: "Checkbox", docs: "https://daisyui.com/components/checkbox/" } do |theme| %>
+    <%= render "styleguides/components/checkbox", theme: %>
+  <% end %>
+
   <%= render layout: "styleguides/section", locals: { title: "Collapse", docs: "https://daisyui.com/components/collapse/" } do %>
     <%= render "styleguides/components/collapse", event: @next_up %>
   <% end %>
@@ -133,8 +137,8 @@
     <%= render "events/counts", event: @next_up %>
   <% end %>
 
-  <%= render layout: "styleguides/section", locals: { title: "RSVP, question and answer" } do %>
-    <%= render "styleguides/app_partials/rsvps", event: @next_up, question:, answer: %>
+  <%= render layout: "styleguides/section", locals: { title: "Question and reply" } do %>
+    <%= render "styleguides/app_partials/responses", event: @next_up, question:, answer: %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Roster" } do %>

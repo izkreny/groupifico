@@ -7,7 +7,7 @@ require "rails_helper"
 # What makes "under each theme" falsifiable is the twin's own `color-scheme`, the property each
 # daisyUI theme sets, read as `ColourSchemeHelper#rendered_colour_scheme` reads the root's.
 RSpec.describe "The styleguide", type: :system do
-  it "paints the hero card and the lit RSVP pill in the light twin" do
+  it "paints the hero card and the lit reply pill in the light twin" do
     plant_styleguide_group(manager: "Ana Horvat")
     sign_in_as planted_member("Ana Horvat").user
 
@@ -111,6 +111,18 @@ RSpec.describe "The styleguide", type: :system do
       find("[data-theme=organic] #{selector}", match: :first).evaluate_script("parseFloat(getComputedStyle(this).borderTopLeftRadius)")
     end
     expect(radii).to match [ 13.6, 10.88, 13.6, 6.67 ].map { a_value_within(0.01).of(it) }
+  end
+
+  # WHY: axe measures neither a boundary nor a disabled control, so only this holds each twin's own line and tick at 3:1. The fields are what make the disabled box falsifiable, since a live tick would pass the ratio by itself.
+  it "draws a checkbox's outline and a disabled box's tick at 3:1, in both twins" do
+    plant_styleguide_group
+    sign_in_as create(:user)
+
+    visit styleguide_path
+
+    themes = %w[ organic organic-dark ]
+    expect(themes.map { has_field?("checkbox_disabled_#{it}", checked: true, disabled: true) }).to all be true
+    expect(themes.flat_map { [ border_contrast("#checkbox_unticked_#{it}"), text_contrast("#checkbox_disabled_#{it}") ] }).to all be >= ContrastHelper::WCAG_NON_TEXT
   end
 
   # The dismiss slot stays on an alert with nothing to dismiss, so its icon, words and slot sit in the same columns as a dismissible alert's.

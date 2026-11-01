@@ -4,39 +4,39 @@
   the same order for every reader: what varies is only what a reader may do with a row.
 
   The two capabilities are the reader's rather than a row's, so each is asked once, of a
-  registration with no member on it - the record `RegistrationsController#new` asks. With no member
+  registration with no member on it - the record `Events::RostersController#edit` asks. With no member
   `own?` is false, so `update?` there is "change another member's answer" alone; asked per row it
   would hand a plain member controls on their own row. `Registration.new(event:)` rather than
   `event.registrations.new`, which would join the loaded association `events/_counts` sizes.
 
   A row whose pills already say where it stands draws no status icon beside them. An unanswered row keeps
-  its status icon, because no pill is current there to tell `reserved` from `invited`. A reader who may invite gets the paper plane beside it: plain on a `reserved` row, which it asks, and tinted on an `invited` one, which is already asked and stays as it is, where the plane alone says it, so the row draws no second one. A paused
+  its status icon, because no pill is current there to tell `reserved` from `response_requested`. A reader who may ask gets the paper plane beside it: plain on a `reserved` row, which it asks, and tinted on a `response_requested` one, which is already asked and stays as it is, where the plane alone says it, so the row draws no second one. A paused
   or inactive member's row keeps its status icon alone, because they are never asked.
 
   The pills are `Event#available_registration_answers`, so once the event has ended a maybe given before it has no pill to light, and its row keeps the status icon as an unanswered one does.
 
   The pills also wait on `Event#open_to_answers?`, as on `events/_row`: `Registration` refuses every
-  answer on an event that is over, so a pill there is a control certain to fail. The take-off does
+  answer on an event that is over, so a pill there is a control certain to fail. Editing the list does
   not, since correcting a roster after the fact is still the three roles' business.
 %>
 <% unattached = Registration.new(event: event) %>
-<% may_invite = allowed_to?(:create?, unattached) %>
+<% may_ask = allowed_to?(:create?, unattached) %>
 <% may_answer = event.open_to_answers? && allowed_to?(:update?, unattached) %>
-<% may_remove = allowed_to?(:destroy?, unattached) %>
 <% answers = event.available_registration_answers %>
-<% uninvited = may_invite && event.anyone_left_to_invite? %>
+<% anyone_to_ask = may_ask && event.anyone_left_to_ask? %>
+<% anyone_to_reserve = may_ask && event.anyone_left_to_reserve? %>
 <% roster = event.roster %>
 
 <div class="flex flex-col gap-2">
   <div>
-    <h3 class="font-semibold">Who&rsquo;s invited</h3>
+    <h3 class="font-semibold">Who&rsquo;s on the list</h3>
     <p class="text-xs">
-      <%= invited_tally(event.group, event) %><% if (left_out = left_out_line(event.group, event)) %> · <%= left_out %><% end %>
+      <%= list_tally(event.group, event) %><% if (left_out = left_out_line(event.group, event)) %> · <%= left_out %><% end %>
     </p>
   </div>
 
   <%# WHY: daisyUI fills a button carrying aria-current as active, so the lit pill clears that fill at rest to stay chosen by its colour alone, and keeps the hover every button has. %>
-  <%# The Who's coming? tally's colours: the chosen answer in its status colour and an invitation in info, every control not yet used in the muted icon ink, and a row's status icon drawn where no control stands, as the tally draws it. %>
+  <%# The Who's coming? tally's colours: the chosen answer in its status colour and a question in info, every control not yet used in the muted icon ink, and a row's status icon drawn where no control stands, as the tally draws it. %>
   <% if roster.any? %>
     <ul class="list">
       <% roster.each do |registration| %>
@@ -44,32 +44,22 @@
         <li id="<%= dom_id registration, :roster %>" class="list-row items-center px-0 py-2">
           <span class="list-col-grow"><%= name %></span>
 
-          <%# WHY: one strip at one gap, so every status icon on the row sits the same distance from its neighbours whichever controls the reader gets; the take-off leads it, 30px glyph to glyph from the first status icon, a distance only this row keeps, so it reads as its own control rather than one more status; its margin is that 30px less the strip's gap and the two insets. %>
+          <%# WHY: one strip at one gap, so every status icon on the row sits the same distance from its neighbours whichever controls the reader gets. %>
           <div class="flex items-center gap-controls">
-            <% if may_remove %>
-              <%= button_to group_event_registration_path(event.group, event, registration),
-                    method: :delete,
-                    form_class: "mr-[calc(1.875rem-var(--spacing-controls)-2*var(--spacing-control-inset))]",
-                    class: "btn btn-ghost btn-sm btn-square text-icon-muted",
-                    aria: { label: "Take #{name} off the list" } do %>
-                <%= icon :delete, class: "size-icon-control" %>
-              <% end %>
-            <% end %>
-
-            <% invitable = may_invite && !registration.answered? && registration.member.active? %>
-            <% asked = registration.invited? %>
-            <% if (!may_answer || answers.exclude?(registration.status)) && !(invitable && asked) %>
+            <% askable = may_ask && !registration.answered? && registration.member.active? %>
+            <% asked = registration.response_requested? %>
+            <% if (!may_answer || answers.exclude?(registration.status)) && !(askable && asked) %>
               <span class="inline-flex size-control items-center justify-center <%= status_ink(registration.status) %>" title="<%= registration_status_label(registration) %>">
                 <%= status_icon registration, label: registration_status_label(registration), class: "size-icon-control" %>
               </span>
             <% end %>
 
-            <% if invitable %>
-              <%= button_to group_event_registration_invitation_path(event.group, event, registration),
+            <% if askable %>
+              <%= button_to group_event_registration_response_request_path(event.group, event, registration),
                     class: "btn btn-ghost btn-sm btn-square #{asked ? "text-info" : "text-icon-muted"}",
                     title: registration_status_label(registration),
-                    aria: { label: asked ? "#{name} is invited, no reply yet" : "Invite #{name}" } do %>
-                <%= icon :invited, class: "size-icon-control" %>
+                    aria: { label: asked ? "#{name} was asked, no reply yet" : "Ask #{name} if they're coming" } do %>
+                <%= icon :response_requested, class: "size-icon-control" %>
               <% end %>
             <% end %>
 
@@ -93,16 +83,22 @@
     <p class="text-sm">Nobody is on the list yet.</p>
   <% end %>
 
-  <% if may_invite %>
+  <% if may_ask %>
     <div class="flex flex-wrap gap-2">
-      <%= link_to new_group_event_registration_path(event.group, event), class: "btn btn-sm" do %>
-        <%= icon :add_member, class: "size-icon-control" %>Add someone
+      <%= link_to edit_group_event_roster_path(event.group, event), class: "btn btn-sm" do %>
+        <%= icon :edit, class: "size-icon-control" %>Edit the list
       <% end %>
 
-      <%# Only while it can do something: every active member already asked leaves it nothing. %>
-      <% if uninvited %>
-        <%= button_to group_event_invitation_path(event.group, event), class: "btn btn-sm" do %>
-          <%= icon :invited, class: "size-icon-control" %>Invite the rest
+      <%# Each only while it can do something: every active member already listed, or already asked, leaves it nothing. %>
+      <% if anyone_to_reserve %>
+        <%= button_to group_event_reservation_path(event.group, event), class: "btn btn-sm" do %>
+          <%= icon :reserved, class: "size-icon-control" %>Reserve a place for everyone
+        <% end %>
+      <% end %>
+
+      <% if anyone_to_ask %>
+        <%= button_to group_event_response_request_path(event.group, event), class: "btn btn-sm" do %>
+          <%= icon :response_requested, class: "size-icon-control" %>Ask the rest
         <% end %>
       <% end %>
     </div>

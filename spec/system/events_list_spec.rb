@@ -1,7 +1,7 @@
 require "rails_helper"
 
 # Only what a browser adds. Which pieces of the card a given reader sees - the question for an
-# invited member, the pills for nobody paused, the tags for everyone - is
+# asked member, the pills for nobody paused, the tags for everyone - is
 # `spec/requests/events_spec.rb`'s assertion, and per the duplication rule in `.agents/testing.md`
 # it does not come back here.
 #
@@ -77,7 +77,7 @@ RSpec.describe "The events list", type: :system do
 
     visit group_events_path(member.group)
 
-    gap = find("[id^=next_up] p", text: "Your answer:").evaluate_script("(words => { words.selectNodeContents(this); return this.nextElementSibling.getBoundingClientRect().left - words.getBoundingClientRect().right })(document.createRange())")
+    gap = find("[id^=next_up] p", text: "Are you coming?").evaluate_script("(words => { words.selectNodeContents(this); return this.nextElementSibling.getBoundingClientRect().left - words.getBoundingClientRect().right })(document.createRange())")
     expect(gap).to be_within(0.5).of(16)
   end
 
@@ -138,7 +138,7 @@ RSpec.describe "The events list", type: :system do
   # can tell the two apart.
   it "fits the card inside the page at both widths" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
-    create(:registration, event: next_event_for(member), member:, status: :invited)
+    create(:registration, event: next_event_for(member), member:, status: :response_requested)
     sign_in_as member.user
 
     [ ViewportHelper::MOBILE, ViewportHelper::DESKTOP ].each do |viewport|
@@ -153,14 +153,14 @@ RSpec.describe "The events list", type: :system do
   it "writes the hero's answer and stays on the list" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
     event = next_event_for(member)
-    registration = create(:registration, event:, member:, status: :invited)
+    registration = create(:registration, event:, member:, status: :response_requested)
     sign_in_as member.user
     resize_to ViewportHelper::MOBILE
 
     visit group_events_path(member.group)
     click_button "Yes"
 
-    expect(page).to have_css "[id^=next_up] p", text: "Your answer:"
+    expect(page).to have_css "[id^=next_up] p", text: "Are you coming?"
     expect(page).to have_current_path group_events_path(member.group)
     expect(registration.reload).to be_yes
   end
@@ -170,13 +170,13 @@ RSpec.describe "The events list", type: :system do
     member = create(:member, :owner)
     next_event_for(member)
     event = create(:event, group: member.group, creator: member, status: :confirmed, starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours)
-    create(:registration, event:, member:, status: :invited)
+    create(:registration, event:, member:, status: :response_requested)
     sign_in_as member.user
 
     visit group_events_path(member.group)
     within("##{ActionView::RecordIdentifier.dom_id(event)}") { click_button "Maybe" }
 
-    expect(page).to have_css "##{ActionView::RecordIdentifier.dom_id(event)} > svg[aria-label='your answer: maybe']"
+    expect(page).to have_css "##{ActionView::RecordIdentifier.dom_id(event)} > svg[aria-label='you said maybe']"
     expect(page).to have_current_path group_events_path(member.group)
     expect(page).to have_no_css "##{ActionView::RecordIdentifier.dom_id(event)} form"
   end
@@ -184,8 +184,8 @@ RSpec.describe "The events list", type: :system do
   # Frame 4n. Which reader is offered it is `spec/requests/events_spec.rb`'s; that its label shows and
   # where pressing it lands is what a browser adds. No `paint` assertion, measured rather than
   # assumed: it is a plain `btn`, whose base-200 face sits on the hero's own base-200 and scores
-  # exactly 1, as `Add someone` does on the event's roster, so its label carries the claim instead.
-  it "shows Invite everyone by its label, and lands back on the list" do
+  # exactly 1, as `Edit the list` does on the event's roster, so its label carries the claim instead.
+  it "shows Ask everyone by its label, and lands back on the list" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
     create(:registration, event: next_event_for(member), member:, status: :reserved)
     sign_in_as member.user
@@ -193,15 +193,15 @@ RSpec.describe "The events list", type: :system do
 
     visit group_events_path(member.group)
 
-    expect(text_contrast("form[action$='/invitation'] .btn")).to be >= ContrastHelper::WCAG_AA
+    expect(text_contrast("form[action$='/response_request'] .btn")).to be >= ContrastHelper::WCAG_AA
     expect(page).to be_accessible
-    click_button "Invite everyone"
+    click_button "Ask everyone"
 
     expect(page).to have_current_path group_events_path(member.group)
-    expect(page).to have_text "1 member invited."
+    expect(page).to have_text "1 member asked."
   end
 
-  it "shows Invite everyone by its label in dark" do
+  it "shows Ask everyone by its label in dark" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
     create(:registration, event: next_event_for(member), member:, status: :reserved)
     sign_in_as member.user
@@ -211,7 +211,7 @@ RSpec.describe "The events list", type: :system do
     visit group_events_path(member.group)
 
     expect(rendered_colour_scheme).to eq "dark"
-    expect(text_contrast("form[action$='/invitation'] .btn")).to be >= ContrastHelper::WCAG_AA
+    expect(text_contrast("form[action$='/response_request'] .btn")).to be >= ContrastHelper::WCAG_AA
     expect(page).to be_accessible
   end
 
@@ -250,7 +250,7 @@ RSpec.describe "The events list", type: :system do
   it "puts a row's question under its name when the row also carries the pencil" do
     member = create(:member, :owner)
     next_event_for(member)
-    registration = create(:registration, member:, status: :invited, event: create(:event, group: member.group, creator: member, status: :confirmed, starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours))
+    registration = create(:registration, member:, status: :response_requested, event: create(:event, group: member.group, creator: member, status: :confirmed, starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours))
     sign_in_as member.user
     resize_to ViewportHelper::MOBILE
 
@@ -285,7 +285,7 @@ RSpec.describe "The events list", type: :system do
 
     visit group_events_path(member.group)
 
-    answer = "##{ActionView::RecordIdentifier.dom_id(event)} > svg[aria-label='your answer: yes']"
+    answer = "##{ActionView::RecordIdentifier.dom_id(event)} > svg[aria-label='you said yes']"
     placed = find(answer).evaluate_script("[ this.getBoundingClientRect().left > this.parentElement.querySelector(':scope > div').getBoundingClientRect().right, this.getAttribute('class').includes('text-success') ]")
     expect(placed).to eq [ true, true ]
     expect(text_contrast(answer)).to be >= ContrastHelper::WCAG_NON_TEXT
@@ -328,7 +328,7 @@ RSpec.describe "The events list", type: :system do
     visit group_events_path(member.group)
 
     expect(find_by_id(ActionView::RecordIdentifier.dom_id(event)).evaluate_script(<<~JS)).to eq 20
-      Math.round(this.querySelector("a[aria-label^='Edit '] svg").getBoundingClientRect().left - this.querySelector(":scope > svg[aria-label^='your answer']").getBoundingClientRect().right)
+      Math.round(this.querySelector("a[aria-label^='Edit '] svg").getBoundingClientRect().left - this.querySelector(":scope > svg[aria-label^='you said']").getBoundingClientRect().right)
     JS
   end
 

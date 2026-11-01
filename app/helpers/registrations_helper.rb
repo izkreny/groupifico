@@ -1,5 +1,5 @@
 module RegistrationsHelper
-  # Who the invitation screen lists: members with no registration on the event, `inactive` ones
+  # Who the list screen lists as off the list: members with no registration on the event, `inactive` ones
   # excluded because they have left the group, tickable ones first and paused ones after, since a
   # paused member is shown and cannot be ticked. `status` is an enum backed by its declaration
   # order, `active` before `paused`, so ordering by the column is ordering by that rule rather
@@ -12,20 +12,20 @@ module RegistrationsHelper
   end
 
   # The screen's header line. Both numbers count active members alone: a paused member cannot be
-  # invited, so counting them would state a shortfall nobody can close, and an inactive one has
+  # added, so counting them would state a shortfall nobody can close, and an inactive one has
   # left the group entirely.
-  def invited_tally(group, event)
+  def list_tally(group, event)
     active = group.members.active
 
-    "#{active.where(id: event.registrations.select(:member_id)).count} of #{active.count} invited"
+    "#{active.where(id: event.registrations.select(:member_id)).count} of #{active.count} on the list"
   end
 
   # What a roster row's badge says to a screen reader, and on hover. An answer is its own word; the
-  # two unanswered statuses are not, because "invited" and "reserved" read as facts about the
+  # two unanswered statuses are not, because "asked" and "reserved" read as facts about the
   # member rather than as where the question stands.
   def registration_status_label(registration)
-    if registration.invited?
-      "Invited, no reply yet"
+    if registration.response_requested?
+      "Asked, no reply yet"
     elsif registration.reserved?
       "Place reserved, not asked yet"
     else
@@ -34,7 +34,7 @@ module RegistrationsHelper
   end
 
   # The event roster's line above its rows, naming whoever the tally leaves out for being paused: a
-  # paused member cannot be invited, so without the line they are missing from both the numbers
+  # paused member cannot be added, so without the line they are missing from both the numbers
   # and the rows with nothing saying why. One who is already registered has a row of their own.
   def left_out_line(group, event)
     names = group.members.paused.without_registration_for(event).preloaded.map(&:full_name).sort_by(&:downcase)

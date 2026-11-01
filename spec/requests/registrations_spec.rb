@@ -1,216 +1,6 @@
 require 'rails_helper'
 
 RSpec.describe "Registrations", type: :request do
-  describe "GET /groups/:group_id/events/:event_id/registrations/new" do
-    context "when not signed in" do
-      it "redirects to the sign-in page" do
-        event = create(:event)
-
-        get new_group_event_registration_path(event.group, event)
-
-        expect(response).to redirect_to new_session_path
-      end
-    end
-
-    context "when signed in as a non-member" do
-      it "returns 404" do
-        event = create(:event)
-        sign_in_as(create(:user))
-
-        get new_group_event_registration_path(event.group, event)
-
-        expect(response).to have_http_status :not_found
-      end
-    end
-
-    # The invitation row of the events table, which the screen asks as `manage_answers?`: a member
-    # holding no role answers for themselves on the event's roster and never opens this screen.
-    context "when signed in as a member holding no role" do
-      it "refuses with a redirect carrying an alert" do
-        event = create(:event)
-        member = create(:member, :active, group: event.group)
-        sign_in_as(member.user)
-
-        get new_group_event_registration_path(event.group, event)
-
-        expect(response).to redirect_to root_path
-        expect(flash[:alert]).to be_present
-      end
-    end
-
-    context "when signed in as the event's manager" do
-      it "shows the screen, which is the invitation row" do
-        actor = create(:member, :active)
-        event = create(:event, group: actor.group, manager: actor)
-        sign_in_as(actor.user)
-
-        get new_group_event_registration_path(event.group, event)
-
-        expect(response).to have_http_status :ok
-      end
-    end
-
-    context "when signed in as an events administrator" do
-      it "offers a member with no registration, and lists nobody who already has one" do
-        event = create(:event)
-        listed = create(:member, :active, group: event.group)
-        registered = create(:member, :active, group: event.group)
-        create(:registration, event:, member: registered)
-        actor = create(:member, :active, :events_administrator, group: event.group)
-        sign_in_as(actor.user)
-
-        get new_group_event_registration_path(event.group, event)
-
-        expect(response.body).to include %(id="#{ActionView::RecordIdentifier.dom_id(listed, :invite)}")
-        expect(response.body).not_to include %(id="#{ActionView::RecordIdentifier.dom_id(registered)}")
-      end
-
-      it "lists a paused member with no checkbox, and omits an inactive one" do
-        event = create(:event)
-        paused = create(:member, :paused, group: event.group)
-        gone = create(:member, :inactive, group: event.group)
-        actor = create(:member, :active, :events_administrator, group: event.group)
-        sign_in_as(actor.user)
-
-        get new_group_event_registration_path(event.group, event)
-
-        expect(response.body).to include %(id="#{ActionView::RecordIdentifier.dom_id(paused)}")
-        expect(response.body).not_to include %(id="#{ActionView::RecordIdentifier.dom_id(paused, :invite)}")
-        expect(response.body).not_to include %(id="#{ActionView::RecordIdentifier.dom_id(gone)}")
-      end
-    end
-  end
-
-  describe "POST /groups/:group_id/events/:event_id/registrations" do
-    context "when not signed in" do
-      it "redirects to the sign-in page" do
-        event = create(:event)
-        member = create(:member, group: event.group)
-
-        post group_event_registrations_path(event.group, event), params: { member_ids: [ member.id ] }
-
-        expect(response).to redirect_to new_session_path
-      end
-    end
-
-    context "when signed in as a non-member" do
-      it "returns 404 and invites nobody" do
-        event = create(:event)
-        member = create(:member, group: event.group)
-        sign_in_as(create(:user))
-
-        expect { post group_event_registrations_path(event.group, event), params: { member_ids: [ member.id ] } }
-          .not_to change(Registration, :count)
-
-        expect(response).to have_http_status :not_found
-      end
-    end
-
-    context "when signed in as a member holding no role" do
-      it "refuses with a redirect carrying an alert, and invites nobody" do
-        event = create(:event)
-        member = create(:member, :active, group: event.group)
-        sign_in_as(member.user)
-
-        expect { post group_event_registrations_path(event.group, event), params: { member_ids: [ member.id ] } }
-          .not_to change(Registration, :count)
-
-        expect(response).to redirect_to root_path
-        expect(flash[:alert]).to be_present
-      end
-    end
-
-    context "when signed in as a paused member" do
-      it "refuses with a redirect carrying an alert, and invites nobody" do
-        event = create(:event)
-        member = create(:member, :paused, group: event.group)
-        sign_in_as(member.user)
-
-        expect { post group_event_registrations_path(event.group, event), params: { member_ids: [ member.id ] } }
-          .not_to change(Registration, :count)
-
-        expect(response).to redirect_to root_path
-        expect(flash[:alert]).to be_present
-      end
-    end
-
-    # Filling the event is the manager's job and the three roles'. The status those rows carry is
-    # `Event#invite`'s to write and `spec/models/event_spec.rb`'s to assert.
-    context "when signed in as the event's manager" do
-      it "invites every ticked member at once" do
-        actor = create(:member, :active)
-        event = create(:event, group: actor.group, manager: actor)
-        first = create(:member, :active, group: actor.group)
-        second = create(:member, :active, group: actor.group)
-        sign_in_as(actor.user)
-
-        expect { post group_event_registrations_path(event.group, event), params: { member_ids: [ "", first.id, second.id ] } }
-          .to change(Registration, :count).by(2)
-
-        expect(response).to redirect_to group_event_path(event.group, event)
-      end
-    end
-
-    context "when signed in as an events administrator" do
-      # The two ways of inviting nobody, which differ only in the message: this one ticked nothing.
-      it "re-renders the screen when nothing was ticked" do
-        event = create(:event)
-        actor = create(:member, :active, :events_administrator, group: event.group)
-        sign_in_as(actor.user)
-
-        expect { post group_event_registrations_path(event.group, event), params: { member_ids: [ "" ] } }
-          .not_to change(Registration, :count)
-
-        expect(response).to have_http_status :unprocessable_content
-        expect(flash[:alert]).to include "Pick at least one"
-      end
-
-      it "ignores a ticked member who is paused, inactive or already registered" do
-        event = create(:event)
-        paused = create(:member, :paused, group: event.group)
-        gone = create(:member, :inactive, group: event.group)
-        registered = create(:member, :active, group: event.group)
-        create(:registration, event:, member: registered)
-        actor = create(:member, :active, :events_administrator, group: event.group)
-        sign_in_as(actor.user)
-
-        expect { post group_event_registrations_path(event.group, event), params: { member_ids: [ paused.id, gone.id, registered.id ] } }
-          .not_to change(Registration, :count)
-
-        expect(flash[:alert]).to include "Nobody was invited"
-      end
-
-      # The row the intersection cannot see: it lands after `invitees` has read the set and reaches
-      # the unique index instead. The racing row rolls back with the rest here, where a real one on
-      # another connection would not, so what this proves is the answer rather than the row count.
-      it "answers the screen again when somebody is invited mid-request" do
-        event = create(:event)
-        invitee = create(:member, :active, group: event.group)
-        actor = create(:member, :active, :events_administrator, group: event.group)
-        sign_in_as actor.user
-
-        racing_on(event) do
-          post group_event_registrations_path(event.group, event), params: { member_ids: [ invitee.id ] }
-        end
-
-        expect(response).to have_http_status :unprocessable_content
-        expect(flash[:alert]).to include "Nobody was invited"
-      end
-
-      it "ignores a ticked member from another group, whose name is nobody here's to publish" do
-        event = create(:event)
-        outsider = create(:member, :active)
-        actor = create(:member, :active, :events_administrator, group: event.group)
-        sign_in_as(actor.user)
-
-        expect { post group_event_registrations_path(event.group, event), params: { member_ids: [ outsider.id ] } }
-          .not_to change(Registration, :count)
-
-        expect(event.reload.attendees).not_to include outsider
-      end
-    end
-  end
-
   describe "PATCH /groups/:group_id/events/:event_id/registrations/:id" do
     context "when not signed in" do
       it "redirects to the sign-in page" do
@@ -333,13 +123,13 @@ RSpec.describe "Registrations", type: :request do
         expect(registration.reload.status).to eq "yes"
       end
 
-      it "refuses a member writing invited onto their own registration" do
+      it "refuses a member writing response_requested onto their own registration" do
         event = create(:event)
         actor = create(:member, :active, group: event.group)
         registration = create(:registration, status: "yes", event:, member: actor)
         sign_in_as(actor.user)
 
-        patch group_event_registration_path(event.group, event, registration), params: { registration: { status: "invited" } }
+        patch group_event_registration_path(event.group, event, registration), params: { registration: { status: "response_requested" } }
 
         expect(response).to redirect_to root_path
         expect(registration.reload.status).to eq "yes"
@@ -373,48 +163,7 @@ RSpec.describe "Registrations", type: :request do
         expect(registration.reload.status).to eq "reserved"
       end
     end
-  end
 
-  describe "DELETE /groups/:group_id/events/:event_id/registrations/:id" do
-    context "when not signed in" do
-      it "redirects to the sign-in page" do
-        registration = create(:registration)
-
-        expect { delete group_event_registration_path(registration.event.group, registration.event, registration) }
-          .not_to change(Registration, :count)
-
-        expect(response).to redirect_to new_session_path
-      end
-    end
-
-    context "when signed in as a non-member" do
-      it "returns 404 and does not destroy the registration" do
-        registration = create(:registration)
-        sign_in_as(create(:user))
-
-        expect { delete group_event_registration_path(registration.event.group, registration.event, registration) }
-          .not_to change(Registration, :count)
-
-        expect(response).to have_http_status :not_found
-      end
-    end
-
-    context "when signed in as an events administrator" do
-      it "destroys the registration" do
-        event = create(:event)
-        registration = create(:registration, event:, member: create(:member, group: event.group))
-        actor = create(:member, :active, :events_administrator, group: event.group)
-        sign_in_as(actor.user)
-
-        expect { delete group_event_registration_path(event.group, event, registration) }
-          .to change(Registration, :count).by(-1)
-
-        expect(response).to redirect_to group_event_path(event.group, event)
-      end
-    end
-
-    # A registration is answered, never withdrawn: declining is the `no` answer, so nobody removes
-    # their own and the manager does not remove anybody's.
     # update? is decided against the record as loaded, so a member passes it on their own
     # registration before any posted member_id is applied. Permitting member_id there let them
     # answer for somebody else and lose their own registration in the same request - two capabilities
@@ -434,65 +183,5 @@ RSpec.describe "Registrations", type: :request do
         expect(other.registrations).to be_empty
       end
     end
-
-    context "when signed in as the member the registration is for" do
-      it "refuses, leaving them to answer no instead" do
-        event = create(:event)
-        actor = create(:member, :active, group: event.group)
-        registration = create(:registration, event:, member: actor)
-        sign_in_as(actor.user)
-
-        expect { delete group_event_registration_path(event.group, event, registration) }
-          .not_to change(Registration, :count)
-
-        expect(response).to redirect_to root_path
-      end
-    end
-
-    context "when signed in as the event's manager" do
-      it "refuses, because taking a registration away is not theirs" do
-        event = create(:event)
-        manager = create(:member, :active, group: event.group)
-        event.update!(manager: manager)
-        registration = create(:registration, event:, member: create(:member, group: event.group))
-        sign_in_as(manager.user)
-
-        expect { delete group_event_registration_path(event.group, event, registration) }
-          .not_to change(Registration, :count)
-
-        expect(response).to redirect_to root_path
-      end
-    end
-
-    context "when signed in as a paused member" do
-      it "refuses with a redirect carrying an alert, and does not destroy the registration" do
-        event = create(:event)
-        registration = create(:registration, event:, member: create(:member, group: event.group))
-        actor = create(:member, :paused, group: event.group)
-        sign_in_as(actor.user)
-
-        expect { delete group_event_registration_path(event.group, event, registration) }
-          .not_to change(Registration, :count)
-
-        expect(response).to redirect_to root_path
-        expect(flash[:alert]).to be_present
-      end
-    end
-  end
-
-  # Runs the block with the row the request is about to write already landing from inside the
-  # request, after `invitees` has read the set, which is the only place a spec can reach that
-  # window. The lambda is held in a local so `skip_callback` is handed the object `set_callback`
-  # was given.
-  def racing_on(event)
-    insert = ->(registration) {
-      Registration.insert_all!([ { event_id: event.id, member_id: registration.member_id,
-        status: Registration.statuses[:invited], created_at: Time.current, updated_at: Time.current } ])
-    }
-
-    Registration.set_callback(:create, :before, insert)
-    yield
-  ensure
-    Registration.skip_callback(:create, :before, insert)
   end
 end

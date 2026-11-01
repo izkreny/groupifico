@@ -57,7 +57,6 @@ class Event < ApplicationRecord
     default: -> { Current.member if new_record? }
   belongs_to :manager, class_name: "Member", foreign_key: "manager_id", inverse_of: :managed_events, optional: true
   has_many :registrations, dependent: :destroy
-  has_many :attendees, through: :registrations, source: :member
 
   enum :status, %i[ unconfirmed confirmed concluded canceled ], default: :unconfirmed, validate: true
   enum :category, %i[ other rehearsal gig ], default: :other, validate: true
@@ -101,7 +100,7 @@ class Event < ApplicationRecord
   # The tallies the event card draws, in one query, with a zero for a status nobody holds so the
   # card draws the same tags whatever the answers are.
   #
-  # Ordered here rather than in the card, answers first, then the invited still unanswered, then the
+  # Ordered here rather than in the card, answers first, then the asked still unanswered, then the
   # places nobody has been asked about, so the set of counted statuses has one home: a view spelling
   # the same five out again would keep drawing five after a sixth status arrived.
   def answer_counts
@@ -157,39 +156,48 @@ class Event < ApplicationRecord
     registrations.preloaded.sort_by { [ order.index(it.status), it.member.full_name.downcase ] }
   end
 
-  # Filling the event, all or nothing: a set refused part way through leaves nobody half-invited.
-  # `invited` rather than a posted status, because being put on the list is what an invitation is
-  # and answering it is the member's own move afterwards.
+  # Filling the event, all or nothing: a set refused part way through leaves nobody half-listed.
+  # `reserved` rather than a posted status, because being put on the list holds a place and asks
+  # nobody; asking is a separate act, and answering is the member's own move after that.
   #
   # Here rather than in the controller because creating several registrations at once is what the
   # event does, not what a request does; the controller decides who is in the set and this decides
   # what happens to them.
-  def invite(members)
+  def reserve(members)
     transaction do
-      members.map { registrations.create!(member: it, status: :invited) }
+      members.map { registrations.create!(member: it, status: :reserved) }
     end
   end
 
-  # WHY: the form's "Invite all active members" box is a request to act after the save, not a fact
-  # about the event, so it is a virtual attribute `EventsController` reads rather than a column.
-  attribute :invite_active_members, :boolean, default: false
-
-  # WHY: asks every active member nobody has asked yet, in one transaction: a held place becomes a
-  # question, and an active member with no registration gets one. An answer is the member's own and
-  # is never overruled, and a paused or inactive member is never asked. Record by record rather than
-  # `update_all` and `insert_all`, so every registration runs its callbacks, which a notification
-  # will hang off. The read and the writes share one transaction, which SQLite opens immediate, so
-  # no registration can land between them. Returns how many were invited.
-  def invite_all_active_members
+  # WHY: the list screen's one submit, all or nothing: a new tick holds a place and an untick removes one in the same transaction, so a refused reservation removes nobody either. Returns how many of each.
+  def update_roster(arriving:, leaving:)
     transaction do
-      active_members_reserved_registrations.count(&:invite) + invite(unregistered_active_members).size
+      [ reserve(arriving).size, leaving.destroy_all.size ]
     end
   end
 
-  # Whether `invite_all_active_members` would ask anybody, asked by the roster before it offers
-  # "Invite the rest". Reads the same two sets, so the offer and the action cannot disagree.
-  def anyone_left_to_invite?
-    active_members_reserved_registrations.exists? || unregistered_active_members.exists?
+  # WHY: every active member off the list gets a held place, and nothing else moves. Record by record through `reserve` rather than `insert_all`, so every registration runs its callbacks. The read happens inside the transaction, which SQLite opens immediate, so no registration can land between it and the writes. Returns how many places were reserved.
+  def reserve_all_active_members
+    reserve(unregistered_active_members).size
+  end
+
+  # Whether `reserve_all_active_members` would add anybody, asked by the roster before it offers the button.
+  def anyone_left_to_reserve? = unregistered_active_members.exists?
+
+  # WHY: the form's "Reserve a place for every active member" box is a request to act after the save, not a fact about the event, so it is a virtual attribute `EventsController` reads rather than a column.
+  attribute :reserve_active_members, :boolean, default: false
+
+  # WHY: asks every active member holding a place, in one transaction. Being off the list is a choice, so nobody joins it by being asked. An answer is the member's own and is never overruled, and a paused or inactive member is never asked. Record by record rather than `update_all`, so every registration runs its callbacks, which a notification will hang off. The read and the writes share one transaction, which SQLite opens immediate, so no registration can land between them. Returns how many were asked.
+  def request_all_responses
+    transaction do
+      active_members_reserved_registrations.count(&:request_response)
+    end
+  end
+
+  # Whether `request_all_responses` would ask anybody, asked by the roster before it offers
+  # "Ask the rest". Reads the same set, so the offer and the action cannot disagree.
+  def anyone_left_to_ask?
+    active_members_reserved_registrations.exists?
   end
 
   # TODO: add event's time_zone context
