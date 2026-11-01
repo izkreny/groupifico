@@ -25,6 +25,7 @@
 <% may_remove = allowed_to?(:destroy?, unattached) %>
 <% answers = event.available_registration_answers %>
 <% anyone_to_ask = may_ask && event.anyone_left_to_ask? %>
+<% anyone_to_reserve = may_ask && event.anyone_left_to_reserve? %>
 <% roster = event.roster %>
 
 <div class="flex flex-col gap-2">
@@ -99,7 +100,13 @@
         <%= icon :edit, class: "size-icon-control" %>Edit the list
       <% end %>
 
-      <%# Only while it can do something: every active member already asked leaves it nothing. %>
+      <%# Each only while it can do something: every active member already listed, or already asked, leaves it nothing. %>
+      <% if anyone_to_reserve %>
+        <%= button_to group_event_reservation_path(event.group, event), class: "btn btn-sm" do %>
+          <%= icon :reserved, class: "size-icon-control" %>Reserve a place for everyone
+        <% end %>
+      <% end %>
+
       <% if anyone_to_ask %>
         <%= button_to group_event_response_request_path(event.group, event), class: "btn btn-sm" do %>
           <%= icon :response_requested, class: "size-icon-control" %>Ask the rest

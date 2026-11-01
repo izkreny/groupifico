@@ -928,6 +928,28 @@ RSpec.describe "Events", type: :request do
         expect(response.body).to include "Ask the rest", group_event_response_request_path(event.group, event)
       end
 
+      it "offers Reserve a place for everyone while an active member is off the list" do
+        owner = create(:member, :active, :owner)
+        event = detailed_event(owner)
+        create(:member, :active, group: owner.group)
+        sign_in_as(owner.user)
+
+        get group_event_path(event.group, event)
+
+        expect(response.body).to include "Reserve a place for everyone", group_event_reservation_path(event.group, event)
+      end
+
+      it "offers no Reserve a place for everyone once every active member is listed" do
+        owner = create(:member, :active, :owner)
+        event = detailed_event(owner)
+        owner.group.members.active.where.not(id: event.registrations.select(:member_id)).find_each { create(:registration, event:, member: it) }
+        sign_in_as(owner.user)
+
+        get group_event_path(event.group, event)
+
+        expect(response.body).not_to include "Reserve a place for everyone"
+      end
+
       it "offers no Ask the rest once every active member is asked" do
         owner = create(:member, :active, :owner)
         event = detailed_event(owner)
@@ -982,7 +1004,7 @@ RSpec.describe "Events", type: :request do
         expect(page_text(response.body)).to match(/Alice Bird.*Carla Duke.*Ben Cole/)
         expect(response.body).to include "Place reserved, not asked yet", "Asked, no reply yet"
         expect(response.body).not_to include "Take Ben Cole off the list", "Yes for Ben Cole", "Edit the list"
-        expect(response.body).not_to include "Yes for #{member.full_name}", "Ask Ben Cole if they&#39;re coming", "Ask the rest"
+        expect(response.body).not_to include "Yes for #{member.full_name}", "Ask Ben Cole if they&#39;re coming", "Ask the rest", "Reserve a place for everyone"
       end
 
       # `detailed_event` has ended, so a place held for the reader is now a question about whether they went.
@@ -1447,14 +1469,14 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include "Delete event"
       end
 
-      it "offers Invite all active members, because inviting is the manager's too" do
+      it "offers the box for every active member, because reserving is the manager's too" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, manager: actor)
         sign_in_as(actor.user)
 
         get edit_group_event_path(event.group, event)
 
-        expect(response.body).to include "Invite all active members"
+        expect(response.body).to include "Reserve a place for every active member"
       end
     end
 
@@ -1647,23 +1669,23 @@ RSpec.describe "Events", type: :request do
       end
     end
 
-    context "when signed in as an events administrator ticking Invite all active members" do
-      it "invites every active member and leaves out a paused one" do
+    context "when signed in as an events administrator ticking the box for every active member" do
+      it "reserves a place for every active member, asks nobody, and leaves out a paused one" do
         creator = create(:member, :active, :events_administrator)
         active = create(:member, :active, group: creator.group)
         create(:member, :paused, group: creator.group)
         sign_in_as(creator.user)
-        params = { name: "Rehearsal", starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour, invite_active_members: "1" }
+        params = { name: "Rehearsal", starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour, reserve_active_members: "1" }
 
         post group_events_path(creator.group), params: { event: params }
 
-        expect(Event.sole.registrations.response_requested.pluck(:member_id)).to contain_exactly(creator.id, active.id)
+        expect(Event.sole.registrations.reserved.pluck(:member_id)).to contain_exactly(creator.id, active.id)
       end
 
-      it "invites nobody when the box is left unticked" do
+      it "reserves nothing when the box is left unticked" do
         creator = create(:member, :active, :events_administrator)
         sign_in_as(creator.user)
-        params = { name: "Rehearsal", starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour, invite_active_members: "0" }
+        params = { name: "Rehearsal", starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour, reserve_active_members: "0" }
 
         post group_events_path(creator.group), params: { event: params }
 
@@ -1755,43 +1777,43 @@ RSpec.describe "Events", type: :request do
       end
     end
 
-    context "when signed in as the event's manager ticking Invite all active members" do
-      it "invites the members still missing and touches no existing registration" do
+    context "when signed in as the event's manager ticking the box for every active member" do
+      it "reserves for the members still missing and touches no existing registration" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, manager: actor, status: :confirmed)
         answered = create(:registration, event:, member: actor, status: :no)
         missing = create(:member, :active, group: event.group)
         sign_in_as(actor.user)
 
-        patch group_event_path(event.group, event), params: { event: { invite_active_members: "1" } }
+        patch group_event_path(event.group, event), params: { event: { reserve_active_members: "1" } }
 
         expect(answered.reload).to be_no
-        expect(event.registrations.response_requested.pluck(:member_id)).to contain_exactly(event.creator_id, missing.id)
+        expect(event.registrations.reserved.pluck(:member_id)).to contain_exactly(event.creator_id, missing.id)
       end
 
       # The attribute casts "true", "on" and "yes" as it casts "1", so the gate has to read the box
-      # the same way or a differently spelled tick invites without the registering row being asked.
+      # the same way or a differently spelled tick reserves without the registering row being asked.
       it "asks the registering row however the tick is spelled" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, manager: actor)
         sign_in_as(actor.user)
 
-        expect { patch group_event_path(event.group, event), params: { event: { invite_active_members: "true" } } }
+        expect { patch group_event_path(event.group, event), params: { event: { reserve_active_members: "true" } } }
           .to be_authorized_to(:create?, have_attributes(event_id: event.id)).with(RegistrationPolicy)
       end
 
-      # The invitation is asked of the event as it was loaded, so handing it on in the same save
-      # does not take the manager's own invitation away from them.
-      it "still invites when the same save hands the event to somebody else" do
+      # The rule is asked of the event as it was loaded, so handing it on in the same save
+      # does not take the manager's own reserving away from them.
+      it "still reserves when the same save hands the event to somebody else" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, manager: actor)
         successor = create(:member, :active, group: event.group)
         sign_in_as(actor.user)
 
-        patch group_event_path(event.group, event), params: { event: { manager_id: successor.id, invite_active_members: "1" } }
+        patch group_event_path(event.group, event), params: { event: { manager_id: successor.id, reserve_active_members: "1" } }
 
         expect(event.reload.manager).to eq successor
-        expect(event.registrations.response_requested.count).to eq 3
+        expect(event.registrations.reserved.count).to eq 3
       end
     end
 

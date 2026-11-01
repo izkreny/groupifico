@@ -445,14 +445,14 @@ RSpec.describe Event, type: :model do
     end
   end
 
-  describe "#invite" do
-    it "creates one invited registration per member" do
+  describe "#reserve" do
+    it "creates one reserved registration per member" do
       event = create(:event)
       first = create(:member, group: event.group)
       second = create(:member, group: event.group)
 
-      expect { event.invite([ first, second ]) }.to change(Registration, :count).by(2)
-      expect(event.reload.registrations.pluck(:status)).to all eq "response_requested"
+      expect { event.reserve([ first, second ]) }.to change(Registration, :count).by(2)
+      expect(event.reload.registrations.pluck(:status)).to all eq "reserved"
     end
 
     # The unique index is what a member already on the list hits, and the transaction is what stops
@@ -463,19 +463,66 @@ RSpec.describe Event, type: :model do
       fresh = create(:member, group: event.group)
       create(:registration, event:, member: listed)
 
-      expect { event.invite([ fresh, listed ]) }.to raise_error ActiveRecord::RecordNotUnique
+      expect { event.reserve([ fresh, listed ]) }.to raise_error ActiveRecord::RecordNotUnique
       expect(event.reload.registrations.count).to eq 1
     end
   end
 
-  describe "#request_all_responses" do
-    it "asks every active member who has no registration" do
+  describe "#reserve_all_active_members" do
+    it "reserves a place for every active member who has no registration" do
       event = create(:event)
       first = create(:member, :active, group: event.group)
       second = create(:member, :active, group: event.group)
 
-      expect(event.request_all_responses).to eq 3
-      expect(event.registrations.response_requested.pluck(:member_id)).to contain_exactly(event.creator_id, first.id, second.id)
+      expect(event.reserve_all_active_members).to eq 3
+      expect(event.registrations.reserved.pluck(:member_id)).to contain_exactly(event.creator_id, first.id, second.id)
+    end
+
+    it "leaves out paused and inactive members, and other groups' members" do
+      event = create(:event)
+      create(:member, :paused, group: event.group)
+      create(:member, :inactive, group: event.group)
+      create(:member)
+
+      event.reserve_all_active_members
+
+      expect(event.registrations.pluck(:member_id)).to eq [ event.creator_id ]
+    end
+
+    it "leaves an answer and a question as they were" do
+      event = create(:event, status: :confirmed)
+      answered = create(:registration, event:, member: event.creator, status: :no)
+      asked = create(:registration, event:, member: create(:member, :active, group: event.group), status: :response_requested)
+
+      expect(event.reserve_all_active_members).to eq 0
+      expect([ answered.reload.status, asked.reload.status ]).to eq %w[ no response_requested ]
+    end
+  end
+
+  describe "#anyone_left_to_reserve?" do
+    it "answers true while an active member has no registration" do
+      event = create(:event)
+
+      expect(event).to be_anyone_left_to_reserve
+    end
+
+    it "answers false once every active member is listed, whoever paused is not" do
+      event = create(:event)
+      create(:registration, event:, member: event.creator, status: :reserved)
+      create(:member, :paused, group: event.group)
+
+      expect(event).not_to be_anyone_left_to_reserve
+    end
+  end
+
+  describe "#request_all_responses" do
+    it "leaves a member with no registration off the list" do
+      event = create(:event)
+      create(:registration, event:, member: event.creator, status: :reserved)
+      create(:member, :active, group: event.group)
+
+      expect(event.request_all_responses).to eq 1
+      expect(event.registrations.pluck(:member_id)).to eq [ event.creator_id ]
     end
 
     it "moves an active member's held place to response_requested and leaves an answer as it was" do
@@ -485,17 +532,6 @@ RSpec.describe Event, type: :model do
 
       expect(event.request_all_responses).to eq 1
       expect([ held.reload.status, answered.reload.status ]).to eq %w[ response_requested no ]
-    end
-
-    it "leaves out paused and inactive members, and other groups' members" do
-      event = create(:event)
-      create(:member, :paused, group: event.group)
-      create(:member, :inactive, group: event.group)
-      create(:member)
-
-      event.request_all_responses
-
-      expect(event.registrations.pluck(:member_id)).to eq [ event.creator_id ]
     end
 
     it "leaves a paused or inactive member's held place reserved" do
@@ -510,10 +546,10 @@ RSpec.describe Event, type: :model do
   end
 
   describe "#anyone_left_to_ask?" do
-    it "answers true while an active member has no registration" do
+    it "answers false while an active member merely has no registration" do
       event = create(:event)
 
-      expect(event).to be_anyone_left_to_ask
+      expect(event).not_to be_anyone_left_to_ask
     end
 
     it "answers true while an active member's place is only held" do

@@ -359,7 +359,7 @@ RSpec.describe "The event detail", type: :system do
     expect(page).to have_css "button[aria-label='Maybe for Ben Cole'][aria-current='true']"
   end
 
-  # That the place was asked is `spec/requests/registrations/invitations_spec.rb`'s; the landing is
+  # That the place was asked is `spec/requests/registrations/response_requests_spec.rb`'s; the landing is
   # what a browser adds.
   it "asks a reserved member from their row's paper plane and lands back on the event" do
     owner, event, = rostered_event
@@ -373,7 +373,7 @@ RSpec.describe "The event detail", type: :system do
     expect(page).to have_css "button[aria-label='Ben Cole was asked, no reply yet']"
   end
 
-  it "invites the rest and lands back on the event" do
+  it "asks the rest and lands back on the event" do
     owner, event, = rostered_event
     sign_in_as owner.user
 
@@ -381,9 +381,22 @@ RSpec.describe "The event detail", type: :system do
     open_roster
     click_button "Ask the rest"
 
-    # WHY: Ben's held place and the member with none are both asked.
+    # WHY: Ben's held place is asked, and the member off the list stays off it.
     expect(page).to have_current_path group_event_path(event.group, event)
-    expect(page).to have_text "2 members asked."
+    expect(page).to have_text "1 member asked."
+  end
+
+  it "reserves a place for everyone off the list and lands back on the event" do
+    owner, event, = rostered_event
+    sign_in_as owner.user
+
+    visit group_event_path(event.group, event)
+    open_roster
+    expect(text_contrast("form[action$='/reservation'] .btn")).to be >= ContrastHelper::WCAG_AA
+    click_button "Reserve a place for everyone"
+
+    expect(page).to have_current_path group_event_path(event.group, event)
+    expect(page).to have_text "1 place reserved."
   end
 
   it "sets Who’s coming as a 16px heading" do
@@ -478,9 +491,9 @@ RSpec.describe "The event detail", type: :system do
     ActionView::RecordIdentifier.dom_id(member.registrations.sole, :roster)
   end
 
-  # An owner who has answered, Ben, whose place is reserved, Carla, who is invited, and an active
-  # member nobody has asked: a row with a lit pill, a plain member's badge on Ben's row, the tinted
-  # paper plane on Carla's, and Ask the rest for the member missing. Named, because every row
+  # An owner who has answered, Ben, whose place is reserved, Carla, who is asked, and an active
+  # member off the list: a row with a lit pill, a plain member's badge on Ben's row, the tinted
+  # paper plane on Carla's, Ask the rest for Ben, and Reserve a place for everyone for the member off the list. Named, because every row
   # draws a name and the pills and planes are pressed by it.
   def rostered_event
     group = create(:group)

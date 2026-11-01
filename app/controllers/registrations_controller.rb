@@ -8,7 +8,7 @@ class RegistrationsController < ApplicationController
   #
   # It says nobody rather than some, because that is what reaching it means: the set is empty, so
   # every ticked member was dropped. Which also makes it read the same for one tick and for ten.
-  MOVED_ON = "Nobody was invited: nobody you ticked is still on the list. Here it is again.".freeze
+  MOVED_ON = "Nothing changed: nobody you ticked is still on offer. Here it is again.".freeze
 
   before_action :set_event
   before_action :set_registration, only: %i[ update destroy ]
@@ -22,8 +22,8 @@ class RegistrationsController < ApplicationController
     authorize! @registration
   end
 
-  # One `response_requested` registration per ticked member. The status is written here rather than posted,
-  # because this screen is the only thing that posts here and `response_requested` is the only thing it means,
+  # One `reserved` registration per ticked member. The status is written here rather than posted,
+  # because this screen is the only thing that posts here and `reserved` is the only thing it means,
   # so there is no posted status for a second question to ask about - which is why `create` asks
   # one rule where `update` asks two.
   #
@@ -34,17 +34,17 @@ class RegistrationsController < ApplicationController
 
     authorize! @registration
 
-    ticked  = member_ids
-    invited = @event.invite(invitees(ticked))
+    ticked   = member_ids
+    reserved = @event.reserve(available_members(ticked))
 
-    if invited.any?
+    if reserved.any?
       redirect_to group_event_path(@group, @event),
-        notice: "#{helpers.pluralize(invited.size, "member")} invited."
+        notice: "#{helpers.pluralize(reserved.size, "place")} reserved."
     else
       # The two ways of writing nobody read the same to the controller and differently to the
       # reader: one of them ticked somebody, and telling them to tick somebody sends them back to
       # re-tick the row that was taken out from under them.
-      flash.now[:alert] = ticked.any? ? MOVED_ON : "Pick at least one member to invite."
+      flash.now[:alert] = ticked.any? ? MOVED_ON : "Pick at least one member to add."
       render :new, status: :unprocessable_content
     end
   rescue ActiveRecord::RecordNotUnique
@@ -103,7 +103,7 @@ class RegistrationsController < ApplicationController
     # It reads the set as it stands now, which closes the row that was registered while the form sat
     # open and not the one registered while this request runs - that one reaches the unique index,
     # and `create` rescues it.
-    def invitees(ids)
+    def available_members(ids)
       @group.members.active.without_registration_for(@event).where(id: ids)
     end
 

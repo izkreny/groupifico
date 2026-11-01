@@ -8,7 +8,7 @@ require "rails_helper"
 # note says are all `spec/requests/events_spec.rb`'s assertions, and per the duplication rule in
 # `.agents/testing.md` none of them comes back here. What is left: that the status icons paint as
 # one control whose picked segment names itself, that New address unfolds its fields, that the
-# Invite all active members box is daisyUI's and its ticked save lands, and that Correct it, Cancel
+# Reserve a place for every active member box is daisyUI's and its ticked save lands, and that Correct it, Cancel
 # and Delete land where they say.
 RSpec.describe "The event form", type: :system do
   include ActionView::RecordIdentifier
@@ -129,20 +129,20 @@ RSpec.describe "The event form", type: :system do
     expect(event.reload.status).to eq "confirmed"
   end
 
-  # Which members the ticked box invites is `spec/requests/events_spec.rb`'s. Its size rather than
+  # Which members the ticked box reserves for is `spec/requests/events_spec.rb`'s. Its size rather than
   # `paint`, for the reason `spec/system/add_someone_spec.rb` measured: daisyUI's plain `.checkbox`
   # scores exactly 1 ticked or not, and only a box larger than the platform's 13px tick proves it is
   # daisyUI's.
-  it "draws Invite all active members as a daisyUI checkbox, and saves with it ticked" do
+  it "draws the box for every active member as a daisyUI checkbox, and saves with it ticked" do
     actor = create(:member, :active, :events_administrator)
     event = create(:event, group: actor.group)
     sign_in_as actor.user
     resize_to ViewportHelper::MOBILE
 
     visit edit_group_event_path(event.group, event)
-    check "Invite all active members"
+    check "Reserve a place for every active member"
 
-    expect(page.evaluate_script(%(document.querySelector("#event_invite_active_members").getBoundingClientRect().width))).to be > 16
+    expect(page.evaluate_script(%(document.querySelector("#event_reserve_active_members").getBoundingClientRect().width))).to be > 16
     click_button "Save changes"
 
     expect(page).to have_current_path group_event_path(event.group, event)

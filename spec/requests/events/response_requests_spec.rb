@@ -57,10 +57,11 @@ RSpec.describe "Events::ResponseRequests", type: :request do
     end
 
     context "when signed in as the event's manager" do
-      it "asks every active member still missing a registration" do
+      it "asks every active member holding a place" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, creator: actor, manager: actor)
-        create(:member, :active, group: event.group)
+        create(:registration, event:, member: actor, status: :reserved)
+        create(:registration, event:, member: create(:member, :active, group: event.group), status: :reserved)
         sign_in_as(actor.user)
 
         post group_event_response_request_path(event.group, event)
@@ -86,19 +87,19 @@ RSpec.describe "Events::ResponseRequests", type: :request do
 
     context "when signed in as an events administrator" do
       # Upcoming, because an event that has ended takes no `maybe` and the factory's date is random.
-      it "asks a held place and a member with none alike, and leaves an answer as it was" do
+      it "asks a held place, leaves an answer as it was, and leaves a member off the list off it" do
         actor = create(:member, :active, :events_administrator)
         event = create(:event, group: actor.group, creator: actor, status: :confirmed, starts_at: 1.day.from_now)
         held = create(:registration, event:, member: actor, status: :reserved)
         answered = create(:registration, event:, member: create(:member, :active, group: event.group), status: :maybe)
-        missing = create(:member, :active, group: event.group)
+        off_the_list = create(:member, :active, group: event.group)
         sign_in_as(actor.user)
 
         post group_event_response_request_path(event.group, event)
 
         expect([ held.reload.status, answered.reload.status ]).to eq %w[ response_requested maybe ]
-        expect(event.registrations.response_requested.pluck(:member_id)).to contain_exactly(actor.id, missing.id)
-        expect(flash[:notice]).to eq "2 members asked."
+        expect(event.registrations.where(member: off_the_list)).to be_empty
+        expect(flash[:notice]).to eq "1 member asked."
       end
 
       it "says so when nobody was left to ask" do

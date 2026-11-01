@@ -94,7 +94,7 @@ RSpec.describe "Registrations", type: :request do
     end
 
     context "when signed in as a non-member" do
-      it "returns 404 and invites nobody" do
+      it "returns 404 and reserves nothing" do
         event = create(:event)
         member = create(:member, group: event.group)
         sign_in_as(create(:user))
@@ -107,7 +107,7 @@ RSpec.describe "Registrations", type: :request do
     end
 
     context "when signed in as a member holding no role" do
-      it "refuses with a redirect carrying an alert, and invites nobody" do
+      it "refuses with a redirect carrying an alert, and reserves nothing" do
         event = create(:event)
         member = create(:member, :active, group: event.group)
         sign_in_as(member.user)
@@ -121,7 +121,7 @@ RSpec.describe "Registrations", type: :request do
     end
 
     context "when signed in as a paused member" do
-      it "refuses with a redirect carrying an alert, and invites nobody" do
+      it "refuses with a redirect carrying an alert, and reserves nothing" do
         event = create(:event)
         member = create(:member, :paused, group: event.group)
         sign_in_as(member.user)
@@ -135,9 +135,9 @@ RSpec.describe "Registrations", type: :request do
     end
 
     # Filling the event is the manager's job and the three roles'. The status those rows carry is
-    # `Event#invite`'s to write and `spec/models/event_spec.rb`'s to assert.
+    # `Event#reserve`'s to write and `spec/models/event_spec.rb`'s to assert.
     context "when signed in as the event's manager" do
-      it "invites every ticked member at once" do
+      it "reserves a place for every ticked member at once" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, manager: actor)
         first = create(:member, :active, group: actor.group)
@@ -152,7 +152,7 @@ RSpec.describe "Registrations", type: :request do
     end
 
     context "when signed in as an events administrator" do
-      # The two ways of inviting nobody, which differ only in the message: this one ticked nothing.
+      # The two ways of writing nobody, which differ only in the message: this one ticked nothing.
       it "re-renders the screen when nothing was ticked" do
         event = create(:event)
         actor = create(:member, :active, :events_administrator, group: event.group)
@@ -177,24 +177,24 @@ RSpec.describe "Registrations", type: :request do
         expect { post group_event_registrations_path(event.group, event), params: { member_ids: [ paused.id, gone.id, registered.id ] } }
           .not_to change(Registration, :count)
 
-        expect(flash[:alert]).to include "Nobody was invited"
+        expect(flash[:alert]).to include "Nothing changed"
       end
 
-      # The row the intersection cannot see: it lands after `invitees` has read the set and reaches
+      # The row the intersection cannot see: it lands after `available_members` has read the set and reaches
       # the unique index instead. The racing row rolls back with the rest here, where a real one on
       # another connection would not, so what this proves is the answer rather than the row count.
-      it "answers the screen again when somebody is invited mid-request" do
+      it "answers the screen again when somebody is registered mid-request" do
         event = create(:event)
-        invitee = create(:member, :active, group: event.group)
+        available = create(:member, :active, group: event.group)
         actor = create(:member, :active, :events_administrator, group: event.group)
         sign_in_as actor.user
 
         racing_on(event) do
-          post group_event_registrations_path(event.group, event), params: { member_ids: [ invitee.id ] }
+          post group_event_registrations_path(event.group, event), params: { member_ids: [ available.id ] }
         end
 
         expect(response).to have_http_status :unprocessable_content
-        expect(flash[:alert]).to include "Nobody was invited"
+        expect(flash[:alert]).to include "Nothing changed"
       end
 
       it "ignores a ticked member from another group, whose name is nobody here's to publish" do
@@ -333,7 +333,7 @@ RSpec.describe "Registrations", type: :request do
         expect(registration.reload.status).to eq "yes"
       end
 
-      it "refuses a member writing invited onto their own registration" do
+      it "refuses a member writing response_requested onto their own registration" do
         event = create(:event)
         actor = create(:member, :active, group: event.group)
         registration = create(:registration, status: "yes", event:, member: actor)
@@ -481,7 +481,7 @@ RSpec.describe "Registrations", type: :request do
   end
 
   # Runs the block with the row the request is about to write already landing from inside the
-  # request, after `invitees` has read the set, which is the only place a spec can reach that
+  # request, after `available_members` has read the set, which is the only place a spec can reach that
   # window. The lambda is held in a local so `skip_callback` is handed the object `set_callback`
   # was given.
   def racing_on(event)

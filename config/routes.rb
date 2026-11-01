@@ -46,8 +46,10 @@ Rails.application.routes.draw do
         resource :response_request, only: :create, module: :registrations
       end
       # WHY: asking the whole list at once is a resource of the event's: `create` asks every active
-      # member nobody has asked yet, whether their place is held or they have none.
+      # member holding a place, and adds nobody to the list.
       resource :response_request, only: :create, module: :events
+      # WHY: reserving for everyone off the list at once is a resource of the event's for the same reason: `create` holds a place for each and asks nobody.
+      resource :reservation, only: :create, module: :events
     end
   end
 

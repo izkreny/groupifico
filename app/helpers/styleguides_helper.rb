@@ -8,7 +8,7 @@ module StyleguidesHelper
     confirmed: "An event's status: the Status choice on the event form, the event's row on the events list, the status line on the event screen, and the next-up card on Home and the events list.",
     concluded: "An event's status: the Status choice on the event form, the event's row on the events list, and the status line on the event screen.",
     canceled: "An event's status: the Status choice on the event form, the event's row on the events list, and the status line on the event screen.",
-    reserved: "A registration nobody has asked yet: the badge beside a name on the event's roster, for a reader who cannot ask, and the reserved count in the tally on the next-up card and the event screen.",
+    reserved: "A registration nobody has asked yet: the badge beside a name on the event's roster, for a reader who cannot ask, Reserve a place for everyone under the roster, and the reserved count in the tally on the next-up card and the event screen.",
     response_requested: "A registration asked but unanswered: the ask button and badge on a roster row, Ask the rest and Ask everyone, the no-reply count, and the Invite button on the list screen.",
     yes: "An answer: the reply button and badge on a roster row, its count in Who's coming and on the next-up card, and the reader's own answer on the events list.",
     maybe: "An answer: the reply button and badge on a roster row, its count in Who's coming and on the next-up card, and the reader's own answer on the events list.",
