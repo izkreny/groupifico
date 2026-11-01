@@ -117,6 +117,7 @@ A manager may press the button and cannot undo it, as with today's Invite the re
 - `docs:` bring `docs/AUTHORIZATION.md` and the README's entity description to the same words, including the manager's paragraph, keeping the capability table's column widths.
 - `fix:` fade a manager's disabled tick to 50%.
 - `fix:` draw checkbox and radio outlines with the text fields' line.
+- `feat:` draw a Checkbox section in the styleguide, unticked, ticked and disabled, in both themes.
 - Watch every new example go red per "Seen red".
 
 ## Seen red
@@ -144,6 +145,7 @@ A manager may press the button and cannot undo it, as with today's Invite the re
 | a focused unpicked radio keeps its primary border | the rule written with specificity, after the focus rules |
 | the helper counts a border's own alpha | dropping the alpha from `ink_contrast` |
 | the helper reads a solid border as solid | reading another property in `border_contrast` |
+| the styleguide's outline and disabled tick read at 3:1 in both twins | the section absent, its disabled box drawn live, the fade back at 20%, and the outline back at 20% |
 
 ## Verification
 

@@ -1,0 +1,22 @@
+<%# locals: (theme:) %>
+<div class="flex flex-col gap-2">
+  <h3 class="text-meta">As the app uses it</h3>
+  <p class="text-meta">The outline is the text fields' own line. The disabled box is a manager's registered row on the list screen, faded to 50% so its tick still reads at 3:1.</p>
+
+  <fieldset class="fieldset">
+    <label class="label">
+      <input type="checkbox" id="checkbox_unticked_<%= theme %>" class="checkbox">
+      Unticked
+    </label>
+
+    <label class="label">
+      <input type="checkbox" id="checkbox_ticked_<%= theme %>" class="checkbox" checked>
+      Ticked
+    </label>
+
+    <label class="label">
+      <input type="checkbox" id="checkbox_disabled_<%= theme %>" class="checkbox" checked disabled>
+      Ticked and disabled
+    </label>
+  </fieldset>
+</div>

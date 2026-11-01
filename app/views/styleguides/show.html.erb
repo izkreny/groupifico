@@ -84,6 +84,10 @@
     <%= render "styleguides/components/card" %>
   <% end %>
 
+  <%= render layout: "styleguides/section", locals: { title: "Checkbox", docs: "https://daisyui.com/components/checkbox/" } do |theme| %>
+    <%= render "styleguides/components/checkbox", theme: %>
+  <% end %>
+
   <%= render layout: "styleguides/section", locals: { title: "Collapse", docs: "https://daisyui.com/components/collapse/" } do %>
     <%= render "styleguides/components/collapse", event: @next_up %>
   <% end %>
