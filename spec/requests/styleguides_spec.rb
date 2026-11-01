@@ -332,7 +332,7 @@ RSpec.describe "The styleguide", type: :request do
 
         tokens = Nokogiri::HTML(response.body).css("section").to_h { [ it.at_css("h2")&.text, it.css("code").map(&:text) ] }
         expect(tokens["Legend icons"]).to include("size-icon-standalone", "size-icon-control", "size-icon-inline")
-        expect(tokens["Button"]).to include("size-control", "size-icon-control", "gap-controls")
+        expect(tokens["Button"]).to include("--spacing-control", "size-icon-control", "gap-controls")
         expect(tokens["Buttons with an icon and a label"]).to include("size-icon-control", "--spacing-icon-label")
       end
 
