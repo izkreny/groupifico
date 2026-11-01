@@ -47,7 +47,7 @@
               <span class="grow min-w-0 truncate"><%= group.address.name %></span>
 
               <%= link_to edit_address_path(group.address), class: "btn btn-ghost btn-circle btn-sm text-primary flex-none", aria: { label: "Correct address" } do %>
-                <%= icon :edit, class: "size-5" %>
+                <%= icon :edit, class: "size-icon-control" %>
               <% end %>
             </div>
 
@@ -75,7 +75,7 @@
 
   <div class="flex flex-wrap items-center gap-2 mt-4">
     <%= leading %>
-    <%= link_to (group.persisted? ? group_path(group) : groups_path), class: "btn btn-ghost" do %><%= icon :cancel, class: "size-5" %>Cancel<% end %>
-    <%= form.button class: "btn btn-primary" do %><%= icon :save, class: "size-5" %><%= group.persisted? ? "Save changes" : "Create group" %><% end %>
+    <%= link_to (group.persisted? ? group_path(group) : groups_path), class: "btn btn-ghost" do %><%= icon :cancel, class: "size-icon-control" %>Cancel<% end %>
+    <%= form.button class: "btn btn-primary" do %><%= icon :save, class: "size-icon-control" %><%= group.persisted? ? "Save changes" : "Create group" %><% end %>
   </div>
 <% end %>

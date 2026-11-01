@@ -1,11 +1,11 @@
 <%# locals: (brand_name:, group: nil, group_name: nil, title: nil, initials: nil, editable: false, switcher_id: nil, memberships: nil, back_path: nil, tabs: false, section: nil) %>
 <%# The leading 20px slot is present whether it holds the group mark or a back chevron: that is what makes every title start at the same x. %>
 <header class="navbar bg-base-100 border-b border-base-content/5 min-h-0 gap-2.5 px-4 py-3">
-  <span class="flex-none grid w-5 h-5 place-items-center">
+  <span class="flex-none grid size-icon-control place-items-center">
     <% if back_path %>
-      <%# WHY: a 32px box, the size of every other icon control, centred on the 20px slot by `-m-1.5`, so the chevron is tapped as easily as they are and stays where the group mark stands. %>
-      <%= link_to back_path, class: "grid size-8 -m-1.5 place-items-center text-primary", aria: { label: "Back" } do %>
-        <%= icon :back, class: "size-5" %>
+      <%# WHY: a 32px box, the size of every other icon control, centred on the 20px slot by its inset, so the chevron is tapped as easily as they are and stays where the group mark stands. %>
+      <%= link_to back_path, class: "grid size-control -m-control-inset place-items-center text-primary", aria: { label: "Back" } do %>
+        <%= icon :back, class: "size-icon-control" %>
       <% end %>
     <% elsif group %>
       <span class="status status-primary" aria-hidden="true"></span>
@@ -18,11 +18,11 @@
   <%# With a second group the name and its chevron are the switcher, looking as a plain name and a ghost chevron button do, and opening a menu of the reader's groups, each a link, so nothing moves until one is pressed. The two chevrons swap on `[open]` alone. %>
   <% elsif switcher_id %>
     <details id="<%= switcher_id %>" class="dropdown group min-w-0" data-controller="dropdown" data-action="click@document->dropdown#close keydown@document->dropdown#close">
-      <summary class="flex items-center gap-0.5 min-w-0 cursor-pointer list-none rounded-field focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+      <summary class="flex items-center gap-label-control min-w-0 cursor-pointer list-none rounded-field focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
         <h1 class="font-heading text-shell sm:text-hero truncate min-w-0"><%= group_name %></h1>
         <span class="btn btn-ghost btn-circle btn-sm text-primary flex-none">
-          <%= icon :disclose, class: "size-5 group-open:hidden" %>
-          <%= icon :close_panel, class: "size-5 hidden group-open:block" %>
+          <%= icon :disclose, class: "size-icon-control group-open:hidden" %>
+          <%= icon :close_panel, class: "size-icon-control hidden group-open:block" %>
         </span>
       </summary>
 
@@ -33,9 +33,9 @@
   <% end %>
 
   <% if editable && !title %>
-    <%# WHY: the navbar's `gap-2.5` spaces the whole row, so the pencil pulls back from it: its glyph lands 16px from the chevron's, or 8px from the name where no switcher stands between them, as the chevron does. %>
-    <%= link_to edit_group_path(group), class: [ "btn btn-ghost btn-circle btn-sm text-primary flex-none", switcher_id ? "-ml-1.5" : "-ml-2" ], aria: { label: "Edit group" } do %>
-      <%= icon :edit, class: "size-5" %>
+    <%# WHY: the navbar's `gap-2.5`, 0.625rem, spaces the whole row, so the pencil pulls back from it: its glyph lands 16px from the chevron's, a distance only the header keeps, or `icon-label` from the name where no switcher stands between them, as the chevron does. %>
+    <%= link_to edit_group_path(group), class: [ "btn btn-ghost btn-circle btn-sm text-primary flex-none", switcher_id ? "ml-[calc(1rem-2*var(--spacing-control-inset)-0.625rem)]" : "ml-[calc(var(--spacing-label-control)-0.625rem)]" ], aria: { label: "Edit group" } do %>
+      <%= icon :edit, class: "size-icon-control" %>
     <% end %>
   <% end %>
 

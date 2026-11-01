@@ -1391,7 +1391,7 @@ RSpec.describe "Events", type: :request do
 
         row = Nokogiri::HTML(response.body).at_css("form[action='#{group_event_path(event.group, event)}'] .btn[form]").parent
         drawing = ->(name) { File.read(Rails.root.join("app/assets/svg/icons/heroicons/mini/#{name}.svg"))[/ d="([^"]+)"/, 1] }
-        expect(row.css(".btn").map { [ it.text.strip, it.at_css("svg.size-5 path")["d"] ] }).to eq [
+        expect(row.css(".btn").map { [ it.text.strip, it.at_css("svg.size-icon-control path")["d"] ] }).to eq [
           [ "Delete event", drawing.("trash") ], [ "Cancel", drawing.("x-mark") ], [ "Save changes", drawing.("check") ]
         ]
       end

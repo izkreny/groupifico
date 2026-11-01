@@ -430,6 +430,15 @@ RSpec.describe "The event detail", type: :system do
     expect(gap).to be_within(0.5).of(6)
   end
 
+  it "draws a fact's icon at 16px" do
+    owner, event, = rostered_event
+    sign_in_as owner.user
+
+    visit group_event_path(event.group, event)
+
+    expect(find("##{ActionView::RecordIdentifier.dom_id(event)} > p:nth-of-type(2) svg").evaluate_script("this.getBoundingClientRect().width")).to eq 16
+  end
+
   it "spaces the heading from the first tag as the tags are spaced from each other" do
     owner, event, = rostered_event
     sign_in_as owner.user

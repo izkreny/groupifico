@@ -136,6 +136,17 @@ RSpec.describe "The styleguide", type: :system do
     expect(alert.evaluate_script("[ this.querySelector(':scope > svg'), this.querySelector('button svg') ].map(icon => icon.getBoundingClientRect().width)")).to eq [ 24, 24 ]
   end
 
+  # WHY: the frame's first track holds the icon, so a track narrower than the icon lets it run toward the words.
+  it "sets an alert's words 16px from its icon" do
+    plant_styleguide_group
+    sign_in_as create(:user)
+
+    visit styleguide_path
+
+    alert = first("[data-theme=organic] .alert:has(button)", text: "Event was successfully updated.")
+    expect(alert.evaluate_script("Math.round(this.querySelector(':scope > div').getBoundingClientRect().left - this.querySelector(':scope > svg').getBoundingClientRect().right)")).to eq 16
+  end
+
   # The badge centres its line box, and Commissioner's descender room would leave a word with no descender sitting high, so the line is trimmed to the x-height. Measured on an "x" that inherits the trim: trimmed it is the x-height alone, about 6px, untrimmed the 18px line, centred either way.
   it "centres a badge's lowercase letters on their x-height" do
     plant_styleguide_group

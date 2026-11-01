@@ -2,23 +2,24 @@
 <div class="flex flex-col gap-4">
   <div class="flex flex-col gap-2">
     <h3 class="text-meta">As the app uses it</h3>
+    <p class="text-meta">An icon button's box is <code>--spacing-control</code>, which the app stylesheet gives every <code>btn-sm</code> circle and square, around a <code>size-icon-control</code> glyph. A strip of them stands <code>gap-controls</code> apart, which sets the glyphs 20px apart.</p>
 
     <div class="flex flex-wrap items-center gap-2">
-      <button type="button" class="btn btn-primary"><%= icon :save, class: "size-5" %>Save</button>
-      <button type="button" class="btn"><%= icon :edit, class: "size-5" %>Correct</button>
-      <button type="button" class="btn btn-ghost"><%= icon :cancel, class: "size-5" %>Cancel</button>
-      <button type="button" class="btn btn-error"><%= icon :delete, class: "size-5" %>Delete</button>
-      <button type="button" class="btn btn-sm"><%= icon :invited, class: "size-5" %>Invite the rest</button>
+      <button type="button" class="btn btn-primary"><%= icon :save, class: "size-icon-control" %>Save</button>
+      <button type="button" class="btn"><%= icon :edit, class: "size-icon-control" %>Correct</button>
+      <button type="button" class="btn btn-ghost"><%= icon :cancel, class: "size-icon-control" %>Cancel</button>
+      <button type="button" class="btn btn-error"><%= icon :delete, class: "size-icon-control" %>Delete</button>
+      <button type="button" class="btn btn-sm"><%= icon :invited, class: "size-icon-control" %>Invite the rest</button>
       <button type="button" class="btn btn-ghost btn-circle btn-sm text-primary" aria-label="Edit">
-        <%= icon :edit, class: "size-5" %>
+        <%= icon :edit, class: "size-icon-control" %>
       </button>
       <button type="button" class="btn btn-ghost btn-sm btn-square" aria-label="Email">
-        <%= icon :email, class: "size-5" %>
+        <%= icon :email, class: "size-icon-control" %>
       </button>
     </div>
 
     <%= render "shared/block_button", url: new_group_path do %>
-      <%= icon :new, class: "size-5" %>New group
+      <%= icon :new, class: "size-icon-control" %>New group
     <% end %>
   </div>
 

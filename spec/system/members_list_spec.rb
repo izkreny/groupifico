@@ -82,4 +82,17 @@ RSpec.describe "The members list", type: :system do
       ((call, email) => [ call.width, email.width, Math.round(email.left - call.right), email.height ])(...["Call", "Email"].map(verb => this.querySelector(`a[aria-label^='${verb} '] svg`).getBoundingClientRect()))
     JS
   end
+
+  # WHY: daisyUI's `btn-sm` computes the same 32px at the shipped token, so only a changed token can tell the button's box follows it.
+  it "sizes an icon button's box from the control token" do
+    actor  = create(:member, :active, :members_administrator, :with_all_attributes)
+    target = create(:member, :with_all_attributes, group: actor.group)
+    sign_in_as actor.user
+
+    visit group_members_path(actor.group)
+
+    expect(find("##{ActionView::RecordIdentifier.dom_id(target, :row)} a[aria-label^='Call ']").evaluate_script(<<~JS)).to eq [ 40, 40 ]
+      (() => { this.style.setProperty("--spacing-control", "2.5rem"); const box = this.getBoundingClientRect(); return [ box.width, box.height ] })()
+    JS
+  end
 end

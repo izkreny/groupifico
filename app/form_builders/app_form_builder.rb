@@ -167,7 +167,7 @@ class AppFormBuilder < ActionView::Helpers::FormBuilder
 
           if meaning
             @template.tag.label class: "join-item btn has-checked:btn-primary" do
-              @template.safe_join [ radio, @template.icon(meaning, class: "size-5"), @template.tag.span(text, class: "hidden peer-checked:inline", aria: { hidden: true }) ]
+              @template.safe_join [ radio, @template.icon(meaning, class: "size-icon-control"), @template.tag.span(text, class: "hidden peer-checked:inline", aria: { hidden: true }) ]
             end
           else
             radio

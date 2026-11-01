@@ -10,7 +10,7 @@
   `col-start-2` pins it under the name: the grid places it in the column of the cell before it, so behind the pencil it would land in the pencil's column and widen it until the name had no room.
 %>
 <li id="<%= dom_id event %>" class="list-row">
-  <%= status_icon event, label: event.status, class: "size-6 self-center text-icon-muted" %>
+  <%= status_icon event, label: event.status, class: "size-icon-standalone self-center text-icon-muted" %>
 
   <div>
     <%= link_to event.name, group_event_path(event.group, event), class: "link link-hover" %>
@@ -25,13 +25,13 @@
 
   <% asking = registration&.asked? && event.open_to_answers? %>
   <% if registration && !asking %>
-    <%= status_icon registration, label: registration.answered? ? "your answer: #{registration.status}" : registration_status_label(registration), class: "size-5 self-center #{status_ink(registration.status)}" %>
+    <%= status_icon registration, label: registration.answered? ? "your answer: #{registration.status}" : registration_status_label(registration), class: "size-icon-control self-center #{status_ink(registration.status)}" %>
   <% end %>
 
-  <%# Frame 4h's pencil, last in the row, for a reader `edit?` allows. WHY: 20px, the answer's size and a step under the event's 24px status, so it reads beside the answer without competing with the name. WHY: `-ml-0.5` takes the row's 16px gap to 14px, which with the 6px inside the pencil's 32px button sets its glyph 20px from the answer's, the glyph gap the event screen's roster keeps. %>
+  <%# Frame 4h's pencil, last in the row, for a reader `edit?` allows. WHY: 20px, the answer's size and a step under the event's 24px status, so it reads beside the answer without competing with the name. WHY: the margin takes the row's 16px gap, daisyUI's rather than a token, down to `controls` plus the pencil's own inset, which sets its glyph 20px from the answer's bare one, the glyph gap the event screen's roster keeps. %>
   <% if allowed_to?(:edit?, event) %>
-    <%= link_to edit_group_event_path(event.group, event), class: "btn btn-ghost btn-circle btn-sm text-primary self-center -ml-0.5", aria: { label: "Edit #{event.name}" } do %>
-      <%= icon :edit, class: "size-5" %>
+    <%= link_to edit_group_event_path(event.group, event), class: "btn btn-ghost btn-circle btn-sm text-primary self-center ml-[calc(var(--spacing-controls)+var(--spacing-control-inset)-1rem)]", aria: { label: "Edit #{event.name}" } do %>
+      <%= icon :edit, class: "size-icon-control" %>
     <% end %>
   <% end %>
 
