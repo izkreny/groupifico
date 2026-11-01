@@ -50,7 +50,7 @@ For more information, check out the [backlog](https://github.com/izkreny/groupif
 - Main organizational group entity
 
 #### Registration
-- A place at an Event is reserved for a Member, or the Member is invited to it, by whoever fills the event
+- A place at an Event is reserved for a Member by whoever fills the event, who may then ask the Member whether they are coming
 - The Member answers with yes, maybe or no, while the Event is still open to answers
 
 ### Other Domain Models
@@ -179,7 +179,7 @@ erDiagram
   %% UNIQUE INDEX (member_id, event_id): a Member cannot register for the same Event twice
   %% FK: member_id and event_id both ON DELETE CASCADE, ON UPDATE CASCADE
   REGISTRATION {
-    %% ENUM status options: reserved | invited | yes | maybe | no. Default: reserved
+    %% ENUM status options: reserved | response_requested | yes | maybe | no. Default: reserved
     INTEGER status "ENUM, NN"
   }
 
