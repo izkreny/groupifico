@@ -765,7 +765,7 @@ RSpec.describe "Events", type: :request do
         get group_event_path(event.group, event)
 
         expect(page_text(response.body)).to include "Ben Cole"
-        expect(response.body).not_to include "Take Ben Cole off the list", "Yes for Ben Cole", "Edit the list"
+        expect(response.body).not_to include "Yes for Ben Cole", "Edit the list"
         expect(response.body).not_to include "Ask Ben Cole if they&#39;re coming", "Ask the rest"
       end
 
@@ -832,7 +832,7 @@ RSpec.describe "Events", type: :request do
       end
 
       # The day before `detailed_event`, since an event that has ended offers no Maybe pill.
-      it "draws the answer pills and a take-off on every roster row, and Edit the list" do
+      it "draws the answer pills on every roster row, and Edit the list" do
         travel_to Time.zone.parse("2026-09-01 12:00") do
           owner = create(:member, :active, :owner)
           event = detailed_event(owner)
@@ -841,7 +841,6 @@ RSpec.describe "Events", type: :request do
           get group_event_path(event.group, event)
 
           expect(response.body).to include "Yes for Ben Cole", "Maybe for Carla Duke", "No for Alice Bird"
-          expect(response.body).to include "Take Ben Cole off the list", "Take Carla Duke off the list"
           expect(response.body).to include edit_group_event_roster_path(event.group, event)
         end
       end
@@ -860,7 +859,7 @@ RSpec.describe "Events", type: :request do
 
       # `Registration` refuses every answer on an event that is over, so a pill there is a control
       # certain to fail. Taking somebody off stays, since correcting a closed roster is still theirs.
-      it "leaves the pills off the roster of a concluded event, and keeps the status icons and the take-off" do
+      it "leaves the pills off the roster of a concluded event, and keeps the status icons" do
         owner = create(:member, :active, :owner)
         event = detailed_event(owner)
         event.update!(status: :concluded)
@@ -868,7 +867,7 @@ RSpec.describe "Events", type: :request do
 
         get group_event_path(event.group, event)
 
-        expect(response.body).to include "Place reserved, not asked yet", "Take Ben Cole off the list"
+        expect(response.body).to include "Place reserved, not asked yet"
         expect(response.body).not_to include "Yes for Ben Cole"
         # With no pill lit to say where an answered row stands, the status icon says it instead.
         expect(response.body).to include %(title="Yes")
@@ -898,8 +897,8 @@ RSpec.describe "Events", type: :request do
 
           get group_event_path(event.group, event)
 
-          classes = Nokogiri::HTML(response.body).then { |html| [ "Yes for Alice Bird", "Maybe for Alice Bird", "Take Alice Bird off the list" ].map { html.at_css("button[aria-label='#{it}']")["class"] } }
-          expect(classes).to match [ include("text-success"), include("text-icon-muted"), include("text-icon-muted") ]
+          classes = Nokogiri::HTML(response.body).then { |html| [ "Yes for Alice Bird", "Maybe for Alice Bird" ].map { html.at_css("button[aria-label='#{it}']")["class"] } }
+          expect(classes).to match [ include("text-success"), include("text-icon-muted") ]
         end
       end
 
@@ -1003,7 +1002,7 @@ RSpec.describe "Events", type: :request do
 
         expect(page_text(response.body)).to match(/Alice Bird.*Carla Duke.*Ben Cole/)
         expect(response.body).to include "Place reserved, not asked yet", "Asked, no reply yet"
-        expect(response.body).not_to include "Take Ben Cole off the list", "Yes for Ben Cole", "Edit the list"
+        expect(response.body).not_to include "Yes for Ben Cole", "Edit the list"
         expect(response.body).not_to include "Yes for #{member.full_name}", "Ask Ben Cole if they&#39;re coming", "Ask the rest", "Reserve a place for everyone"
       end
 
@@ -1123,7 +1122,7 @@ RSpec.describe "Events", type: :request do
         get group_event_path(event.group, event)
 
         expect(response.body).to include %(aria-label="Edit"), edit_group_event_roster_path(event.group, event)
-        expect(response.body).not_to include %(aria-label="Duplicate"), "Yes for Ben Cole", "Take Ben Cole off the list"
+        expect(response.body).not_to include %(aria-label="Duplicate"), "Yes for Ben Cole"
       end
 
       it "offers the paper plane and Ask the rest, because filling the event is the manager's job" do
@@ -1164,14 +1163,14 @@ RSpec.describe "Events", type: :request do
         expect(response.body).to include %(aria-label="Duplicate"), %(aria-label="Edit")
       end
 
-      it "draws the answer pills and a take-off on another member's row, and Edit the list" do
+      it "draws the answer pills on another member's row, and Edit the list" do
         actor = create(:member, :active, :events_administrator)
         event = detailed_event(actor)
         sign_in_as(actor.user)
 
         get group_event_path(event.group, event)
 
-        expect(response.body).to include "Yes for Ben Cole", "Take Ben Cole off the list"
+        expect(response.body).to include "Yes for Ben Cole"
         expect(response.body).to include edit_group_event_roster_path(event.group, event)
       end
 
@@ -1199,7 +1198,7 @@ RSpec.describe "Events", type: :request do
 
         expect(page_text(response.body)).to include "Tuesday rehearsal"
         expect(response.body).not_to include %(aria-label="Duplicate"), %(aria-label="Edit")
-        expect(response.body).not_to include "Yes for Ben Cole", "Take Ben Cole off the list", "Edit the list"
+        expect(response.body).not_to include "Yes for Ben Cole", "Edit the list"
       end
     end
   end

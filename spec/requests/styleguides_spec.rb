@@ -51,7 +51,7 @@ RSpec.describe "The styleguide", type: :request do
         expect(html.css("[aria-label='no reply']")).not_to be_empty
       end
 
-      # The owner may answer for every member and take anyone off the list, so every row draws both controls.
+      # The owner may answer for every member.
       it "draws the roster's controls on every row for the owner" do
         plant_styleguide_group(manager: "Ana Horvat", waiting: "Ivan Kovačević", said_yes: "Marija Babić")
         sign_in_as(planted_member("Ana Horvat").user)
@@ -60,7 +60,7 @@ RSpec.describe "The styleguide", type: :request do
 
         html = Nokogiri::HTML(response.body)
         expect(html.css("button[aria-label='Yes for Ivan Kovačević']")).not_to be_empty
-        expect(html.css("button[aria-label='Take Marija Babić off the list']")).not_to be_empty
+        expect(html.css("button[aria-label='Yes for Marija Babić']")).not_to be_empty
       end
 
       # The page asks the signed-in user's own policies, so a user outside the group is offered nothing they could not do.
@@ -72,7 +72,7 @@ RSpec.describe "The styleguide", type: :request do
 
         html = Nokogiri::HTML(response.body)
         expect(html.css("button[aria-label='Yes for Ivan Kovačević']")).to be_empty
-        expect(html.css("button[aria-label='Take Marija Babić off the list']")).to be_empty
+        expect(html.css("button[aria-label='Yes for Marija Babić']")).to be_empty
       end
 
       it "draws the member rows' Edit pencils for the owner" do

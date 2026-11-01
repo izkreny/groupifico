@@ -7,11 +7,11 @@ require "rails_helper"
 # What no request spec can reach: that the disclosure actually folds the roster away and unfolds it
 # when the counts are pressed, that the card and a row's lit pill paint against the surface behind
 # them in both themes, that an asked row's paper plane is tinted where a reserved row's is not,
-# that an owner's row of controls fits a phone, and where the roster's pill, its paper plane, Invite
+# that an owner's row of controls fits a phone, and where the roster's pill, its paper plane, Ask
 # the rest and the pencil land.
 #
 # Neither paper plane nor Ask the rest takes a `paint` assertion, and both were measured rather
-# than assumed: the planes are ghost buttons, like the take-off beside them, and Ask the rest is a
+# than assumed: the planes are ghost buttons, and Ask the rest is a
 # plain `btn` whose base-200 face sits on the card's own base-200, so each scores exactly 1. A
 # face-less control is seen by its glyph and its label, so that is what they assert instead: the
 # planes against the 3:1 WCAG asks of an icon, Ask the rest against the 4.5:1 it asks of text.
@@ -261,10 +261,10 @@ RSpec.describe "The event detail", type: :system do
     expect(page).to have_css "##{roster_row(ben)}", visible: :visible
   end
 
-  # Three pills and a take-off beside a name is the widest row the screen draws, and whether it
+  # Three pills beside a name is the widest row the screen draws, and whether it
   # fits is geometry the markup cannot state. Measured at the row's last control rather than off the
   # document, because the collapse clips what overflows it: a row 600px wide was watched leaving the
-  # page's scroll width untouched while its take-off sat out of reach past the card's edge.
+  # page's scroll width untouched while its last control sat out of reach past the card's edge.
   it "fits an owner's widest row inside the card on a phone" do
     owner, event, ben = rostered_event
     sign_in_as owner.user
@@ -276,8 +276,8 @@ RSpec.describe "The event detail", type: :system do
     expect(gap_to_row_end("##{roster_row(ben)} [aria-label='No for Ben Cole']", ".card-body")).to be >= 0
   end
 
-  # Ben's row is the fullest an owner gets, the take-off, his status, the paper plane and the pills, so it is the one where the status icons would fall into groups, and a phone is where they would wrap. The take-off leads, 30px from the first status icon where the status icons sit 20px apart.
-  it "spaces a roster row's status icons evenly on a phone, the take-off set 30px before them" do
+  # Ben's row is the fullest an owner gets, the status, the paper plane and the pills, so it is the one where the status icons would fall into groups, and a phone is where they would wrap.
+  it "spaces a roster row's status icons evenly on a phone" do
     owner, event, ben = rostered_event
     sign_in_as owner.user
     resize_to ViewportHelper::MOBILE
@@ -288,7 +288,7 @@ RSpec.describe "The event detail", type: :system do
     gaps = find_by_id(roster_row(ben)).evaluate_script(<<~JS)
       [...this.querySelectorAll("svg")].map(icon => icon.getBoundingClientRect()).map((rect, i, rects) => i && Math.round(rect.left - rects[i - 1].right)).slice(1)
     JS
-    expect(gaps).to eq [ 30, 20, 20, 20, 20 ]
+    expect(gaps).to eq [ 20, 20, 20, 20 ]
   end
 
   it "draws a roster row's icons at 20px" do

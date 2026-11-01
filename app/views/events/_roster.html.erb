@@ -16,13 +16,12 @@
   The pills are `Event#available_registration_answers`, so once the event has ended a maybe given before it has no pill to light, and its row keeps the status icon as an unanswered one does.
 
   The pills also wait on `Event#open_to_answers?`, as on `events/_row`: `Registration` refuses every
-  answer on an event that is over, so a pill there is a control certain to fail. The take-off does
+  answer on an event that is over, so a pill there is a control certain to fail. Editing the list does
   not, since correcting a roster after the fact is still the three roles' business.
 %>
 <% unattached = Registration.new(event: event) %>
 <% may_ask = allowed_to?(:create?, unattached) %>
 <% may_answer = event.open_to_answers? && allowed_to?(:update?, unattached) %>
-<% may_remove = allowed_to?(:destroy?, unattached) %>
 <% answers = event.available_registration_answers %>
 <% anyone_to_ask = may_ask && event.anyone_left_to_ask? %>
 <% anyone_to_reserve = may_ask && event.anyone_left_to_reserve? %>
@@ -45,18 +44,8 @@
         <li id="<%= dom_id registration, :roster %>" class="list-row items-center px-0 py-2">
           <span class="list-col-grow"><%= name %></span>
 
-          <%# WHY: one strip at one gap, so every status icon on the row sits the same distance from its neighbours whichever controls the reader gets; the take-off leads it, 30px glyph to glyph from the first status icon, a distance only this row keeps, so it reads as its own control rather than one more status; its margin is that 30px less the strip's gap and the two insets. %>
+          <%# WHY: one strip at one gap, so every status icon on the row sits the same distance from its neighbours whichever controls the reader gets. %>
           <div class="flex items-center gap-controls">
-            <% if may_remove %>
-              <%= button_to group_event_registration_path(event.group, event, registration),
-                    method: :delete,
-                    form_class: "mr-[calc(1.875rem-var(--spacing-controls)-2*var(--spacing-control-inset))]",
-                    class: "btn btn-ghost btn-sm btn-square text-icon-muted",
-                    aria: { label: "Take #{name} off the list" } do %>
-                <%= icon :delete, class: "size-icon-control" %>
-              <% end %>
-            <% end %>
-
             <% askable = may_ask && !registration.answered? && registration.member.active? %>
             <% asked = registration.response_requested? %>
             <% if (!may_answer || answers.exclude?(registration.status)) && !(askable && asked) %>

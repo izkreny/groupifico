@@ -2,7 +2,7 @@ class RegistrationsController < ApplicationController
   include GroupScoped
 
   before_action :set_event
-  before_action :set_registration, only: %i[ update destroy ]
+  before_action :set_registration
 
   # WHY: back to where the button was pressed, a row, a hero card or the event screen, so Turbo takes it as a refresh and the page morphs in place; the event is the fallback for a request that names no page of ours.
   def update
@@ -19,14 +19,6 @@ class RegistrationsController < ApplicationController
       # wrong on the screen the buttons live on.
       redirect_back_or_to group_event_path(@group, @event), alert: @registration.errors.full_messages.to_sentence, status: :see_other
     end
-  end
-
-  def destroy
-    authorize! @registration
-
-    @registration.destroy!
-
-    redirect_back_or_to group_event_path(@group, @event), status: :see_other
   end
 
   private
