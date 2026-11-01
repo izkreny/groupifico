@@ -148,6 +148,50 @@ RSpec.describe "The event form", type: :system do
     expect(page).to have_current_path group_event_path(event.group, event)
   end
 
+  # WHY: axe does not measure a boundary, and an unpicked radio is nothing but its outline.
+  it "draws an unpicked radio's outline at 3:1 in light" do
+    event = event_at_a_saved_address
+    sign_in_as event.creator.user
+    prefer_colour_scheme :light
+
+    visit edit_group_event_path(event.group, event)
+
+    expect(border_contrast("input.radio:not(:checked)")).to be >= ContrastHelper::WCAG_NON_TEXT
+  end
+
+  it "draws an unpicked radio's outline at 3:1 in dark" do
+    event = event_at_a_saved_address
+    sign_in_as event.creator.user
+    prefer_colour_scheme :dark
+
+    visit edit_group_event_path(event.group, event)
+
+    expect(border_contrast("input.radio:not(:checked)")).to be >= ContrastHelper::WCAG_NON_TEXT
+  end
+
+  # WHY: the outline rule draws a line only for what is not picked, and daisyUI's full ink is what ties a picked radio's ring to its dot.
+  it "leaves a picked radio's outline in full ink" do
+    event = event_at_a_saved_address
+    sign_in_as event.creator.user
+    prefer_colour_scheme :light
+
+    visit edit_group_event_path(event.group, event)
+
+    expect(border_contrast("input.radio:checked")).to eq text_contrast("input.radio:checked")
+  end
+
+  # WHY: `.radio:focus-visible` and an outline rule written as `.radio:not(:checked)` tie on specificity, so the later one would take the focus border away. Nothing is picked on a new event, so the first Where row is the tab stop. The style matcher retries, which waits out daisyUI's border transition.
+  it "keeps a focused unpicked radio's border in primary" do
+    event = event_at_a_saved_address
+    sign_in_as event.creator.user
+    prefer_colour_scheme :light
+
+    visit new_group_event_path(event.group)
+    tab_to "input.radio"
+
+    expect(page).to have_css "input.radio:focus-visible:not(:checked)", style: { "border-top-width" => "2px", "border-top-color" => "rgb(140, 73, 26)" }
+  end
+
   it "unfolds the new-address fields when New address is picked, and saves with them" do
     actor = create(:member, :active, :events_administrator)
     event = create(:event, group: actor.group)
@@ -222,4 +266,20 @@ RSpec.describe "The event form", type: :system do
     expect(page).to have_current_path group_events_path(event.group)
     expect(Event.exists?(event.id)).to be false
   end
+
+  private
+    def event_at_a_saved_address
+      actor = create(:member, :active, :events_administrator)
+
+      create(:event, group: actor.group, creator: actor, address: create(:address, name: "Studio B"))
+    end
+
+    # WHY: Ferrum's keyboard rather than `send_keys`, which clicks its element first and would leave the radio picked. Bounded, so a tab order that never reaches the radio fails on the expectation rather than hanging.
+    def tab_to(selector)
+      30.times do
+        break if page.evaluate_script("document.activeElement.matches(arguments[0])", selector)
+
+        page.driver.browser.keyboard.type(:Tab)
+      end
+    end
 end

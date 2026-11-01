@@ -36,7 +36,29 @@ RSpec.describe "The contrast helper", type: :system do
     expect(text_contrast('[data-probe="yes"] span')).to be >= ContrastHelper::WCAG_AA
   end
 
+  # A border carrying its own alpha, as daisyUI's `.checkbox` computes, is as faint as the alpha makes it.
+  it "counts a border's own alpha against the page" do
+    append_outlined_probe "rgba(32, 30, 29, 0.05)"
+
+    expect(border_contrast("#outlined")).to be < ContrastHelper::WCAG_NON_TEXT
+  end
+
+  it "reads a solid border as solid" do
+    append_outlined_probe "rgb(32, 30, 29)"
+
+    expect(border_contrast("#outlined")).to be >= ContrastHelper::WCAG_NON_TEXT
+  end
+
   private
+    def append_outlined_probe(colour)
+      page.execute_script(<<~JAVASCRIPT, colour)
+        const probe = document.createElement("div");
+        probe.id = "outlined";
+        probe.style.border = `1px solid ${arguments[0]}`;
+        document.body.appendChild(probe);
+      JAVASCRIPT
+    end
+
     # Injected rather than routed, for the reason the paint matcher's own control gives: a test-only
     # route would be application code that exists for the suite.
     def append_probe(opacity:, colour: nil)

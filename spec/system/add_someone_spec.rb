@@ -68,6 +68,27 @@ RSpec.describe "Editing an event's list", type: :system do
     expect(page).to be_accessible
   end
 
+  # WHY: axe does not measure a boundary, and on an unticked box the outline is the only thing saying there is a box to tap.
+  it "draws a live box's outline at 3:1 in light" do
+    event, actor, = event_with_three_members
+    sign_in_as actor.user
+    prefer_colour_scheme :light
+
+    visit edit_group_event_roster_path(event.group, event)
+
+    expect(border_contrast("input.checkbox:not(:checked)")).to be >= ContrastHelper::WCAG_NON_TEXT
+  end
+
+  it "draws a live box's outline at 3:1 in dark" do
+    event, actor, = event_with_three_members
+    sign_in_as actor.user
+    prefer_colour_scheme :dark
+
+    visit edit_group_event_roster_path(event.group, event)
+
+    expect(border_contrast("input.checkbox:not(:checked)")).to be >= ContrastHelper::WCAG_NON_TEXT
+  end
+
   it "fits a phone without scrolling sideways" do
     event, actor, = event_with_three_members
     sign_in_as actor.user
