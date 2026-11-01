@@ -1,6 +1,8 @@
 <%# locals: () %>
 <%# Every button the app draws with an icon and a label, in the classes its screen gives it, grouped by size, each with its icon at 20px, 8px from the label (the app stylesheet's one `.btn` gap). Inert copies: nothing here submits or navigates. %>
 <div class="flex flex-col gap-4">
+  <p class="text-meta">Each icon is <code>size-icon-control</code>, set <code>--spacing-icon-label</code> from its label by the app stylesheet's <code>.btn</code> rule.</p>
+
   <div class="flex flex-col gap-2">
     <h3 class="text-meta">Block, on the sign-in, sign-up and group screens</h3>
     <button type="button" class="btn btn-primary btn-block"><%= icon :confirm, class: "size-icon-control" %> Sign in</button>

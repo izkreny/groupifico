@@ -324,6 +324,18 @@ RSpec.describe "The styleguide", type: :request do
         expect(section.css("a[href='https://heroicons.com']").map(&:text)).to eq [ "The rest of Heroicons" ]
       end
 
+      it "names the size and spacing tokens where it draws icons and buttons" do
+        plant_styleguide_group
+        sign_in_as(create(:user))
+
+        get "/styleguide"
+
+        tokens = Nokogiri::HTML(response.body).css("section").to_h { [ it.at_css("h2")&.text, it.css("code").map(&:text) ] }
+        expect(tokens["Legend icons"]).to include("size-icon-standalone", "size-icon-control", "size-icon-inline")
+        expect(tokens["Button"]).to include("size-control", "size-icon-control", "gap-controls")
+        expect(tokens["Buttons with an icon and a label"]).to include("size-icon-control", "--spacing-icon-label")
+      end
+
       # The members' names are Croatian, so the letters a font may lack are drawn in every rung a name is set in.
       it "draws the Croatian letters in each body weight and in the record title" do
         plant_styleguide_group
