@@ -281,3 +281,8 @@
   outline: none;
   border: 2px solid var(--color-primary);
 }
+
+/* WHY: daisyUI fades a disabled checkbox to 20%, which leaves a manager's tick at 1.49:1 in light and 1.85:1 in dark. At 50% it reaches 3.11:1 and 4.41:1 and still reads weaker than a live tick. Unlayered, so it beats daisyUI's layered rule. */
+.checkbox:disabled {
+  opacity: 50%;
+}

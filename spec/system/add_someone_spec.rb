@@ -129,6 +129,27 @@ RSpec.describe "Editing an event's list", type: :system do
     expect(page).to have_text "1 place reserved."
   end
 
+  # WHY: a disabled box is exempt from WCAG's contrast rule, so axe skips it and only this holds the tick at 3:1. `text_contrast` reads the box's ink with its opacity folded in, and daisyUI paints the tick in that ink.
+  it "lets a manager make out a registered row's tick in light" do
+    actor, event, registered = managed_event_with_a_registration
+    sign_in_as actor.user
+    prefer_colour_scheme :light
+
+    visit edit_group_event_roster_path(event.group, event)
+
+    expect(text_contrast("##{ActionView::RecordIdentifier.dom_id(registered, :tick)}")).to be >= ContrastHelper::WCAG_NON_TEXT
+  end
+
+  it "lets a manager make out a registered row's tick in dark" do
+    actor, event, registered = managed_event_with_a_registration
+    sign_in_as actor.user
+    prefer_colour_scheme :dark
+
+    visit edit_group_event_roster_path(event.group, event)
+
+    expect(text_contrast("##{ActionView::RecordIdentifier.dom_id(registered, :tick)}")).to be >= ContrastHelper::WCAG_NON_TEXT
+  end
+
   # A disabled box is exempt from WCAG's contrast rule and axe skips it, so whether the manager can read the line beside it is measured here.
   it "lets a manager read a registered row's caption in light" do
     actor, event, registered = managed_event_with_a_registration
