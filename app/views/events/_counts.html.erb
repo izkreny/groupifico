@@ -21,7 +21,7 @@
 <% if counts.except("reserved").values.any?(&:positive?) %>
   <% tags = capture do %>
     <% counts.each do |status, count| %>
-      <span class="inline-flex items-center gap-1 mr-1.5 <%= status_ink(status) %>">
+      <span class="inline-flex items-center gap-1 mr-tally-rest <%= status_ink(status) %>">
         <%= icon status, label: (status == "invited" ? "no reply" : status), class: "size-icon-inline" %>
         <%= count %>
       </span>
@@ -31,12 +31,12 @@
   <% if inline %>
     <%= tags %>
   <% else %>
-    <p class="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+    <p class="flex flex-wrap items-center gap-x-icon-text gap-y-1">
       <%= icon :members, class: "size-icon-inline flex-none text-icon-muted" %>
       <% if roster_link %>
-        <%= link_to "Who’s coming?", group_event_path(event.group, event, responses: "show"), class: "link link-hover mr-1.5" %>
+        <%= link_to "Who’s coming?", group_event_path(event.group, event, responses: "show"), class: "link link-hover mr-tally-rest" %>
       <% else %>
-        <span class="mr-1.5">Who&rsquo;s coming?</span>
+        <span class="mr-tally-rest">Who&rsquo;s coming?</span>
       <% end %>
 
       <%= tags %>

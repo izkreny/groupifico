@@ -44,12 +44,12 @@
         <li id="<%= dom_id registration, :roster %>" class="list-row items-center px-0 py-2">
           <span class="list-col-grow"><%= name %></span>
 
-          <%# WHY: one strip at one gap, so every status icon on the row sits the same distance from its neighbours whichever controls the reader gets; the take-off leads it, 30px from the first status icon, so it reads as its own control rather than one more status. %>
-          <div class="flex items-center gap-2">
+          <%# WHY: one strip at one gap, so every status icon on the row sits the same distance from its neighbours whichever controls the reader gets; the take-off leads it, 30px glyph to glyph from the first status icon, a distance only this row keeps, so it reads as its own control rather than one more status; its margin is that 30px less the strip's gap and the two insets. %>
+          <div class="flex items-center gap-controls">
             <% if may_remove %>
               <%= button_to group_event_registration_path(event.group, event, registration),
                     method: :delete,
-                    form_class: "mr-2.5",
+                    form_class: "mr-[calc(1.875rem-var(--spacing-controls)-2*var(--spacing-control-inset))]",
                     class: "btn btn-ghost btn-sm btn-square text-icon-muted",
                     aria: { label: "Take #{name} off the list" } do %>
                 <%= icon :delete, class: "size-icon-control" %>
