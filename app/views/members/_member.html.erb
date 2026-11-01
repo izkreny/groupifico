@@ -34,17 +34,17 @@
   <div class="flex flex-none gap-2">
     <% if member.mobile_phone %>
       <%= phone_to member.mobile_phone, class: "btn btn-ghost btn-circle btn-sm", aria: { label: "Call #{name}" } do %>
-        <%= icon :call, class: "size-5" %>
+        <%= icon :call, class: "size-icon-control" %>
       <% end %>
     <% end %>
 
     <%= mail_to member.email, class: "btn btn-ghost btn-circle btn-sm", aria: { label: "Email #{name}" } do %>
-      <%= icon :email, class: "size-5" %>
+      <%= icon :email, class: "size-icon-control" %>
     <% end %>
 
     <% if manages %>
       <%= link_to edit_group_member_path(member.group, member), class: "btn btn-ghost btn-circle btn-sm text-primary", aria: { label: "Edit #{name}" } do %>
-        <%= icon :edit, class: "size-5" %>
+        <%= icon :edit, class: "size-icon-control" %>
       <% end %>
     <% end %>
   </div>

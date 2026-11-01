@@ -13,7 +13,7 @@
       <% IconsHelper::ICONS.group_by(&:last).each do |name, uses| %>
         <% meanings = uses.map(&:first) %>
         <tr>
-          <td><%= icon meanings.first, class: "size-6" %></td>
+          <td><%= icon meanings.first, class: "size-icon-standalone" %></td>
           <td><code><%= name %></code></td>
           <td>
             <% if meanings.one? %>

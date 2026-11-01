@@ -52,15 +52,15 @@
                     form_class: "mr-2.5",
                     class: "btn btn-ghost btn-sm btn-square text-icon-muted",
                     aria: { label: "Take #{name} off the list" } do %>
-                <%= icon :delete, class: "size-5" %>
+                <%= icon :delete, class: "size-icon-control" %>
               <% end %>
             <% end %>
 
             <% invitable = may_invite && !registration.answered? && registration.member.active? %>
             <% asked = registration.invited? %>
             <% if (!may_answer || answers.exclude?(registration.status)) && !(invitable && asked) %>
-              <span class="inline-flex size-8 items-center justify-center <%= status_ink(registration.status) %>" title="<%= registration_status_label(registration) %>">
-                <%= status_icon registration, label: registration_status_label(registration), class: "size-5" %>
+              <span class="inline-flex size-control items-center justify-center <%= status_ink(registration.status) %>" title="<%= registration_status_label(registration) %>">
+                <%= status_icon registration, label: registration_status_label(registration), class: "size-icon-control" %>
               </span>
             <% end %>
 
@@ -69,7 +69,7 @@
                     class: "btn btn-ghost btn-sm btn-square #{asked ? "text-info" : "text-icon-muted"}",
                     title: registration_status_label(registration),
                     aria: { label: asked ? "#{name} is invited, no reply yet" : "Invite #{name}" } do %>
-                <%= icon :invited, class: "size-5" %>
+                <%= icon :invited, class: "size-icon-control" %>
               <% end %>
             <% end %>
 
@@ -81,7 +81,7 @@
                       params: { registration: { status: answer } },
                       class: "btn btn-ghost btn-sm btn-square #{current ? "#{status_ink(answer)} not-hover:bg-transparent not-hover:border-transparent" : "text-icon-muted"}",
                       aria: { label: "#{answer.capitalize} for #{name}", current: (current ? "true" : nil) } do %>
-                  <%= icon answer, class: "size-5" %>
+                  <%= icon answer, class: "size-icon-control" %>
                 <% end %>
               <% end %>
             <% end %>
@@ -96,13 +96,13 @@
   <% if may_invite %>
     <div class="flex flex-wrap gap-2">
       <%= link_to new_group_event_registration_path(event.group, event), class: "btn btn-sm" do %>
-        <%= icon :add_member, class: "size-5" %>Add someone
+        <%= icon :add_member, class: "size-icon-control" %>Add someone
       <% end %>
 
       <%# Only while it can do something: every active member already asked leaves it nothing. %>
       <% if uninvited %>
         <%= button_to group_event_invitation_path(event.group, event), class: "btn btn-sm" do %>
-          <%= icon :invited, class: "size-5" %>Invite the rest
+          <%= icon :invited, class: "size-icon-control" %>Invite the rest
         <% end %>
       <% end %>
     </div>

@@ -3,13 +3,13 @@
 
     WHY: the grid's three tracks are fixed, the last as wide as the button, so an alert with nothing to dismiss keeps the empty slot and its words line up with a dismissible one's. %>
 <%= tag.div id:, role:, class: [ "alert alert-soft alert-#{kind} grid-cols-[1.5rem_1fr_2rem]", classes ], data: ({ controller: "dismiss" } if dismissible) do %>
-  <%= icon kind, class: "size-6" %>
+  <%= icon kind, class: "size-icon-standalone" %>
 
   <div class="flex flex-col"><%= yield %></div>
 
   <% if dismissible %>
     <button type="button" class="btn btn-ghost btn-sm btn-square" aria-label="Dismiss" data-action="dismiss#remove">
-      <%= icon :dismiss, class: "size-6" %>
+      <%= icon :dismiss, class: "size-icon-standalone" %>
     </button>
   <% end %>
 <% end %>

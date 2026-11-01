@@ -20,7 +20,7 @@
               params: { registration: { status: answer } },
               class: "btn btn-sm #{current ? chosen[answer] : "btn-ghost"}",
               aria: (current ? { current: "true" } : {}) do %>
-          <%= icon answer, class: "size-5 #{status_ink(answer) unless current}" %>
+          <%= icon answer, class: "size-icon-control #{status_ink(answer) unless current}" %>
           <%= answer.capitalize %>
         <% end %>
       <% end %>

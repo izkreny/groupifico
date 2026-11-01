@@ -20,7 +20,7 @@
       <%= hidden_field_tag :authenticity_token, form_authenticity_token, id: nil %>
     </form>
   <% else %>
-    <%= button_to safe_join([ icon(:delete, class: "size-5"), confirm ]), url, method: :delete, class: "btn btn-error",
+    <%= button_to safe_join([ icon(:delete, class: "size-icon-control"), confirm ]), url, method: :delete, class: "btn btn-error",
           form: { id: "#{id}_form" }, data: { dialog_target: "trigger" } %>
   <% end %>
 
@@ -55,13 +55,13 @@
 
       <div class="modal-action">
         <form method="dialog">
-          <button class="btn btn-sm"><%= icon :cancel, class: "size-5" %><%= dismiss %></button>
+          <button class="btn btn-sm"><%= icon :cancel, class: "size-icon-control" %><%= dismiss %></button>
         </form>
 
         <%= tag.button form: "#{id}_form", class: "btn btn-sm btn-error",
               disabled: word.present? || block.present?,
               data: { type_to_confirm_target: ("primary" if word) } do %>
-          <%= icon :delete, class: "size-5" %><%= confirm %>
+          <%= icon :delete, class: "size-icon-control" %><%= confirm %>
         <% end %>
       </div>
     </div>

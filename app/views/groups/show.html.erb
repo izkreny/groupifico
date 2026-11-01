@@ -9,7 +9,7 @@
     <%= render "events/next_up", event: @featured_event, registration: @featured_event.registration_for(@membership) %>
 
     <%= link_to group_events_path(@group), class: "link link-hover inline-flex items-center gap-1 text-card-fact" do %>
-      See all events<%= icon :go_to, class: "size-4" %>
+      See all events<%= icon :go_to, class: "size-icon-inline" %>
     <% end %>
   </div>
 <% else %>
@@ -24,7 +24,7 @@
       <p>Add your first rehearsal and everyone gets asked whether they&rsquo;re coming.</p>
 
       <%= link_to new_group_event_path(@group), class: "btn btn-primary" do %>
-        <%= icon :new, class: "size-5" %>New event
+        <%= icon :new, class: "size-icon-control" %>New event
       <% end %>
     <% end %>
 

@@ -18,29 +18,29 @@
       <div class="flex flex-none gap-2">
         <% if allowed_to?(:create?, event) %>
           <%= link_to duplicate_group_event_path(event.group, event), class: "btn btn-ghost btn-circle btn-sm text-primary", aria: { label: "Duplicate #{event.name}" } do %>
-            <%= icon :duplicate, class: "size-5" %>
+            <%= icon :duplicate, class: "size-icon-control" %>
           <% end %>
         <% end %>
 
         <% if allowed_to?(:edit?, event) %>
           <%= link_to edit_group_event_path(event.group, event), class: "btn btn-ghost btn-circle btn-sm text-primary", aria: { label: "Edit #{event.name}" } do %>
-            <%= icon :edit, class: "size-5" %>
+            <%= icon :edit, class: "size-icon-control" %>
           <% end %>
         <% end %>
       </div>
     </div>
 
     <p class="flex items-center gap-1.5">
-      <%= status_icon event, class: "size-4 text-icon-muted" %><%= event_status_line event %>
+      <%= status_icon event, class: "size-icon-inline text-icon-muted" %><%= event_status_line event %>
     </p>
 
     <p class="flex items-center gap-1.5">
-      <%= icon :when, class: "size-4 text-icon-muted" %><%= event_schedule_range event %>
+      <%= icon :when, class: "size-icon-inline text-icon-muted" %><%= event_schedule_range event %>
     </p>
 
     <% if event.address %>
       <p class="flex items-center gap-1.5">
-        <%= icon :where, class: "size-4 text-icon-muted" %><%= link_to event.address.name, address_map_url(event.address), class: "link link-hover", target: "_blank" %>
+        <%= icon :where, class: "size-icon-inline text-icon-muted" %><%= link_to event.address.name, address_map_url(event.address), class: "link link-hover", target: "_blank" %>
       </p>
     <% end %>
 
@@ -50,7 +50,7 @@
         registration at least, since "every" holds of an empty list that has nobody to ask. %>
     <% if event.registrations.any? && event.registrations.all?(&:reserved?) && allowed_to?(:create?, Registration.new(event: event)) %>
       <%= button_to group_event_invitation_path(event.group, event), class: "btn btn-sm self-start" do %>
-        <%= icon :invited, class: "size-5" %>Invite everyone
+        <%= icon :invited, class: "size-icon-control" %>Invite everyone
       <% end %>
     <% end %>
 

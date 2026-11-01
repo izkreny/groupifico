@@ -22,7 +22,7 @@
   <% tags = capture do %>
     <% counts.each do |status, count| %>
       <span class="inline-flex items-center gap-1 mr-1.5 <%= status_ink(status) %>">
-        <%= icon status, label: (status == "invited" ? "no reply" : status), class: "size-4" %>
+        <%= icon status, label: (status == "invited" ? "no reply" : status), class: "size-icon-inline" %>
         <%= count %>
       </span>
     <% end %>
@@ -32,7 +32,7 @@
     <%= tags %>
   <% else %>
     <p class="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-      <%= icon :members, class: "size-4 flex-none text-icon-muted" %>
+      <%= icon :members, class: "size-icon-inline flex-none text-icon-muted" %>
       <% if roster_link %>
         <%= link_to "Who’s coming?", group_event_path(event.group, event, responses: "show"), class: "link link-hover mr-1.5" %>
       <% else %>
