@@ -58,7 +58,10 @@ module IconsHelper
   }.freeze
 
   # Heroicons' filled set for each size class the app draws: solid, mini and micro are drawn on their own 24, 20 and 16px grids, where its outline set exists at 24px alone.
-  VARIANTS = { "size-6" => "solid", "size-5" => "mini", "size-4" => "micro" }.freeze
+  VARIANTS = {
+    "size-icon-standalone" => "solid", "size-icon-control" => "mini", "size-icon-inline" => "micro",
+    "size-6" => "solid", "size-5" => "mini", "size-4" => "micro"
+  }.freeze
 
   # Draws a legend meaning. Decorative by default, because an icon beside its own label is read twice otherwise; pass `label:` where the icon is the only thing a control says.
   #

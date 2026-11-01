@@ -177,6 +177,28 @@
   --text-meta: 0.75rem;         /* 12px */
 }
 
+/* WHY: each value #366 settled, named once, so a view says which rule it follows and `IconsHelper::VARIANTS` can pick a drawing from the rule. A `--spacing-<name>` yields every spacing utility for that name, `size-icon-control` and `gap-controls` among them. */
+@theme {
+  --spacing-icon-inline: 1rem;        /* 16px: beside text, on a fact line, in the tally, after a link */
+  --spacing-icon-control: 1.25rem;    /* 20px: in any button, and a registration's status outside the tally */
+  --spacing-icon-standalone: 1.5rem;  /* 24px: alone, an event row's status, an alert's icon and dismiss, a tab */
+
+  --spacing-control: 2rem;            /* 32px: an icon button's box */
+  --spacing-controls: 0.5rem;         /* 8px: between icon buttons, which sets their glyphs 20px apart */
+
+  --spacing-icon-label: 0.5rem;       /* 8px: a button's icon → its label, through the `.btn` rule */
+  --spacing-icon-text: 0.375rem;      /* 6px: a fact line's icon → its text */
+
+  --spacing-tally: 0.75rem;           /* 12px: the Who's coming? tally, tag → tag */
+  --spacing-card-row: 0.5rem;         /* 8px: the hero card, row → row */
+  --spacing-card-break: 0.875rem;     /* 14px: the hero card, its last fact → Your answer: */
+
+  /* Derived, so each follows the tokens it is worked out from. */
+  --spacing-control-inset: calc((var(--spacing-control) - var(--spacing-icon-control)) / 2);  /* 6px: a glyph inside its icon button */
+  --spacing-label-control: calc(var(--spacing-icon-label) - var(--spacing-control-inset));    /* 2px: the box gap that sets a label `icon-label` from a button's glyph */
+  --spacing-tally-rest: calc(var(--spacing-tally) - var(--spacing-icon-text));                /* 6px: a tag's margin, beside a row whose own gap is `icon-text` */
+}
+
 /* WHY: the page's ink dimmed, named once so every use matches. `icon-muted`, 60%, is 4.1:1 on the light page: enough for an icon at 3:1 and not for text at 4.5:1, which is why its name says icon. `muted`, 70%, is the quieter text that still passes AA, placeholders included. `inline` so each utility mixes the ink where it is used, since the styleguide sets a theme per section inside a page with its own, and a variable resolved at the root would carry the root's ink into every twin. */
 @theme inline {
   --color-icon-muted: color-mix(in oklab, var(--color-base-content) 60%, transparent);
@@ -203,7 +225,7 @@
 }
 
 /* WHY: every labelled button draws its icon at 20px, 8px from the label, where daisyUI keeps 6px; set once here so no button carries its own gap. Unlayered, so it beats daisyUI's layered `.btn`. */
-.btn { gap: 0.5rem; }
+.btn { gap: var(--spacing-icon-label); }
 
 /* WHY: daisyUI gives every size of a component the one radius its token holds, so a smaller size rounds toward a pill; each size the app uses takes its token in proportion to its height instead, the theme's 0.85rem over a 40px field and 0.5rem over a 24px badge. Set on the token rather than on `border-radius`, because a button in a `join` reads its corners through it. Unlayered, so it beats the theme's own value. */
 .btn-sm, .input-sm, .select-sm { --radius-field: calc(0.85rem * 32 / 40); }
