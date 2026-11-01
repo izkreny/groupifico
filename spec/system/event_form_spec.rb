@@ -180,14 +180,15 @@ RSpec.describe "The event form", type: :system do
     expect(border_contrast("input.radio:checked")).to eq text_contrast("input.radio:checked")
   end
 
-  # WHY: `.radio:focus-visible` and an outline rule written as `.radio:not(:checked)` tie on specificity, so the later one would take the focus border away. Nothing is picked on a new event, so the first Where row is the tab stop. The style matcher retries, which waits out daisyUI's border transition.
+  # WHY: `.radio:focus-visible` and an outline rule written as `.radio:not(:checked)` tie on specificity, so the later one would take the focus border away. Nothing is picked on a new event and the new-address fields are hidden, so Shift+Tab from the description passes the manager's select and lands on the last Where row. Ferrum's keyboard rather than `send_keys`, which clicks its element first and would pick the radio. The style matcher retries, which waits out daisyUI's border transition.
   it "keeps a focused unpicked radio's border in primary" do
     event = event_at_a_saved_address
     sign_in_as event.creator.user
     prefer_colour_scheme :light
 
     visit new_group_event_path(event.group)
-    tab_to "input.radio"
+    find_by_id("event_description").click
+    page.driver.browser.keyboard.type([ :shift, :tab ], [ :shift, :tab ])
 
     expect(page).to have_css "input.radio:focus-visible:not(:checked)", style: { "border-top-width" => "2px", "border-top-color" => "rgb(140, 73, 26)" }
   end
@@ -272,14 +273,5 @@ RSpec.describe "The event form", type: :system do
       actor = create(:member, :active, :events_administrator)
 
       create(:event, group: actor.group, creator: actor, address: create(:address, name: "Studio B"))
-    end
-
-    # WHY: Ferrum's keyboard rather than `send_keys`, which clicks its element first and would leave the radio picked. Bounded, so a tab order that never reaches the radio fails on the expectation rather than hanging.
-    def tab_to(selector)
-      30.times do
-        break if page.evaluate_script("document.activeElement.matches(arguments[0])", selector)
-
-        page.driver.browser.keyboard.type(:Tab)
-      end
     end
 end
