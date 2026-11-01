@@ -243,6 +243,16 @@ RSpec.describe "Addresses", type: :request do
         expect(response).to have_http_status :ok
       end
 
+      it "goes back to the address it corrects" do
+        address = create(:address)
+        member  = create(:member, :owner, group: create(:group, address:))
+        sign_in_as(member.user)
+
+        get edit_address_path(address)
+
+        expect(Nokogiri::HTML(response.body).at_css("header a[aria-label='Back']")&.[]("href")).to eq address_path(address)
+      end
+
       # The form is asked of the rule its Save is, so a member who may only read the address is
       # refused it rather than offered a Save certain to fail.
       it "refuses the form to a member who may not correct the address" do
