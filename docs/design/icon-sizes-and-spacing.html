@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Icon Sizes and Spacing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Alegreya:wght@600&family=Commissioner:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root { --page: #f5ead8; --b200: #ebddc5; --b300: #dcd3c4; --ink: #201e1d; --muted-text: #5d5852; --line: rgba(32, 30, 29, 0.08); --primary: #8c491a; --success: #1d6626; --warning: #675301; --error: #972622; --info: #185a89; --icon-muted: color-mix(in oklab, #201e1d 60%, transparent); --secondary: #526539; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page: #f5ead8; } }
+  :root[data-theme="dark"] { --page: #f5ead8; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink); font: 15px/1.5 "Commissioner", system-ui, sans-serif; padding: 24px 16px 64px; }
+  main { max-width: 900px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 17px; margin: 0 0 2px; }
+  p { font-size: 14px; color: #3d3935; margin: 0 0 10px; }
+  code { font-size: 12.5px; background: var(--b200); padding: 1px 5px; border-radius: 5px; }
+  table { border-collapse: collapse; font-size: 13px; margin: 6px 0 16px; width: 100%; }
+  th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .ex { margin: 26px 0 0; padding-top: 18px; border-top: 1px solid rgba(32,30,29,.15); }
+  .solved { font-size: 12px; font-weight: 600; vertical-align: middle; margin-left: 6px; padding: 2px 10px; border-radius: 999px; color: var(--success); background: color-mix(in oklab, var(--success) 14%, var(--page)); }
+  .ex .note { font-size: 13px; color: var(--muted-text); margin-bottom: 10px; }
+  .panes { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+  .pane-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--muted-text); margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+  .pane-label.try { color: var(--secondary); }
+  .pane-label button { font: inherit; font-size: 11px; text-transform: none; letter-spacing: 0; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); background: var(--b200); cursor: pointer; color: var(--ink); }
+  .stage { background: var(--page); border: 1px solid rgba(32,30,29,.12); border-radius: 16px; padding: 14px 16px; overflow: hidden; }
+  .sliders { margin-top: 10px; display: grid; gap: 6px; }
+  .sl { display: grid; grid-template-columns: minmax(0, 1fr) 120px 44px; gap: 8px; align-items: center; font-size: 13px; }
+  .sl input { width: 100%; accent-color: var(--primary); }
+  .sl output { font-variant-numeric: tabular-nums; text-align: right; }
+  .sl.changed output { color: var(--secondary); font-weight: 600; }
+  /* WHY: one fixed row height and one label height on both panes, so each Today value sits level with its slider. */
+  .sl { height: 26px; }
+  .pane-label { height: 22px; }
+  .sl.static { grid-template-columns: minmax(0, 1fr) auto; }
+  .sl.static b { font-variant-numeric: tabular-nums; }
+  /* mock pieces */
+  .row { display: flex; align-items: center; }
+  .box { display: inline-grid; place-items: center; width: 32px; height: 32px; flex: none; border-radius: 999px; }
+  svg.i { flex: none; display: block; }
+  .card { background: var(--b200); border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+  .kicker { font-size: 12px; }
+  .title { font: 600 18px/1.3 "Alegreya", serif; }
+  .fact { display: flex; align-items: center; font-size: 15px; }
+  .name { font-size: 16px; }
+  .meta { font-size: 12px; }
+  .hdr { display: flex; align-items: center; border-bottom: 1px solid var(--line); padding-bottom: 10px; }
+  .shell { font: 600 20px/1.2 "Alegreya", serif; }
+  .avatar { width: 32px; height: 32px; border-radius: 999px; background: var(--b300); display: grid; place-items: center; font-size: 13px; flex: none; }
+  .alert { display: grid; align-items: center; border-radius: 12px; padding: 12px 16px; background: color-mix(in oklab, var(--success) 12%, var(--page)); color: var(--success); font-size: 14px; }
+  .btn { display: inline-flex; align-items: center; border: 1px solid transparent; border-radius: 12px; padding: 0 12px; height: 32px; font-weight: 600; font-size: 14px; background: transparent; }
+  .listrow { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .listrow:last-child { border-bottom: 0; }
+  .grow { flex: 1; min-width: 0; }
+  .dock { display: flex; justify-content: space-around; border-top: 1px solid var(--line); padding-top: 10px; }
+  .opt { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+  .opt h3 { font-size: 15px; margin: 0; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Icon sizes and spacing</h1>
+  <p>Every place the app puts icons next to each other or next to text, drawn with its own Heroicons (filled since AC 73: solid at 24px, mini at 20px, micro at 16px; a slider size in between takes the nearest set), colours and fonts. Each example shows <b>Today</b>, then the same thing with sliders. Spacing is measured glyph to glyph, the gap you see, whatever invisible button box sits around an icon; the sliders work in those terms and the mock works out the CSS.</p>
+
+  <div id="top-examples"></div>
+
+  <h2>Summary</h2>
+  <table>
+    <tr><th>Size</th><th>Where</th></tr>
+    <tr><td>16px · <code>size-4</code></td><td>Icons beside text, 12 uses: the hero card and event screen's fact lines and tally, and the chevron after See all events and in the Me screen's list.</td></tr>
+    <tr><td>20px · <code>size-5</code></td><td>Icon controls and every labelled button (AC 92, AC 94): the header back chevron; the event row's answer (AC 82) and pencil; the member row's call, email and edit (AC 75); the roster strip (AC 76); the hero card's Duplicate and Edit (AC 77); the header's switcher chevron and group pencil (AC 78); the Yes · Maybe · No icons (AC 79); the event screen's Duplicate and Edit (AC 80); the member screen's edit, email and call (AC 83).</td></tr>
+    <tr><td>24px · <code>size-6</code></td><td>Standalone icons: the event row's status; an alert's leading icon and its dismiss × (AC 71); the dock and header tab icons (AC 74, AC 81).</td></tr>
+  </table>
+  <table>
+    <tr><th>Glyph gap</th><th>Where</th></tr>
+    <tr><td>20px</td><td>The standard between icon controls: 20px glyphs in 32px boxes 8px apart (<code>gap-2</code>). Event screen and hero Duplicate/Edit, member row, roster strip; the event row's answer → pencil.</td></tr>
+    <tr><td>30px</td><td>The roster's take-off, set apart with an extra <code>mr-2.5</code> (AC 93).</td></tr>
+    <tr><td>10px</td><td>The back chevron → the pushed screen's title (the 20px slot and the header's <code>gap-2.5</code>).</td></tr>
+    <tr><td>14px</td><td>The hero card's Who's coming? → Your answer: (AC 86), against 8px between its other rows (<code>gap-2</code>).</td></tr>
+    <tr><td>16px</td><td>Header tab icons and the avatar (<code>gap-4</code>); the header's switcher chevron → group pencil (AC 78); an event row's status icon → name; an alert's icon → text.</td></tr>
+    <tr><td>12px / 4px</td><td>Tally: tag → tag 12px, icon → its number 4px.</td></tr>
+    <tr><td>6px</td><td>Icon → its own text on a fact line (<code>gap-1.5</code>).</td></tr>
+    <tr><td>8px</td><td>Icon → label inside every button (one <code>.btn</code> rule, AC 92); between the Yes · Maybe · No buttons (<code>gap-2</code>); the group name → switcher chevron, or → pencil with no switcher (AC 78).</td></tr>
+  </table>
+
+  <div id="examples"></div>
+</main>
+<script>
+// The app's filled icons: Heroicons' solid, mini and micro sets, each drawn on its own 24, 20 and 16px grid. A slider size between those takes the nearest set, as the app would only ever draw one of the three.
+const F = {"24": {"check-badge": [["M8.603 3.799A4.49 4.49 0 0 1 12 2.25c1.357 0 2.573.6 3.397 1.549a4.49 4.49 0 0 1 3.498 1.307 4.491 4.491 0 0 1 1.307 3.497A4.49 4.49 0 0 1 21.75 12a4.49 4.49 0 0 1-1.549 3.397 4.491 4.491 0 0 1-1.307 3.497 4.491 4.491 0 0 1-3.497 1.307A4.49 4.49 0 0 1 12 21.75a4.49 4.49 0 0 1-3.397-1.549 4.49 4.49 0 0 1-3.498-1.306 4.491 4.491 0 0 1-1.307-3.498A4.49 4.49 0 0 1 2.25 12c0-1.357.6-2.573 1.549-3.397a4.49 4.49 0 0 1 1.307-3.497 4.49 4.49 0 0 1 3.497-1.307Zm7.007 6.387a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z", true]], "check-circle": [["M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z", true]], "clock": [["M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 6a.75.75 0 0 0-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 0 0 0-1.5h-3.75V6Z", true]], "minus-circle": [["M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm3 10.5a.75.75 0 0 0 0-1.5H9a.75.75 0 0 0 0 1.5h6Z", true]], "paper-airplane": [["M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z", false]], "bookmark": [["M6.32 2.577a49.255 49.255 0 0 1 11.36 0c1.497.174 2.57 1.46 2.57 2.93V21a.75.75 0 0 1-1.085.67L12 18.089l-7.165 3.583A.75.75 0 0 1 3.75 21V5.507c0-1.47 1.073-2.756 2.57-2.93Z", true]], "pencil-square": [["M21.731 2.269a2.625 2.625 0 0 0-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 0 0 0-3.712ZM19.513 8.199l-3.712-3.712-8.4 8.4a5.25 5.25 0 0 0-1.32 2.214l-.8 2.685a.75.75 0 0 0 .933.933l2.685-.8a5.25 5.25 0 0 0 2.214-1.32l8.4-8.4Z", false], ["M5.25 5.25a3 3 0 0 0-3 3v10.5a3 3 0 0 0 3 3h10.5a3 3 0 0 0 3-3V13.5a.75.75 0 0 0-1.5 0v5.25a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5V8.25a1.5 1.5 0 0 1 1.5-1.5h5.25a.75.75 0 0 0 0-1.5H5.25Z", false]], "document-duplicate": [["M7.5 3.375c0-1.036.84-1.875 1.875-1.875h.375a3.75 3.75 0 0 1 3.75 3.75v1.875C13.5 8.161 14.34 9 15.375 9h1.875A3.75 3.75 0 0 1 21 12.75v3.375C21 17.16 20.16 18 19.125 18h-9.75A1.875 1.875 0 0 1 7.5 16.125V3.375Z", false], ["M15 5.25a5.23 5.23 0 0 0-1.279-3.434 9.768 9.768 0 0 1 6.963 6.963A5.23 5.23 0 0 0 17.25 7.5h-1.875A.375.375 0 0 1 15 7.125V5.25ZM4.875 6H6v10.125A3.375 3.375 0 0 0 9.375 19.5H16.5v1.125c0 1.035-.84 1.875-1.875 1.875h-9.75A1.875 1.875 0 0 1 3 20.625V7.875C3 6.839 3.84 6 4.875 6Z", false]], "trash": [["M16.5 4.478v.227a48.816 48.816 0 0 1 3.878.512.75.75 0 1 1-.256 1.478l-.209-.035-1.005 13.07a3 3 0 0 1-2.991 2.77H8.084a3 3 0 0 1-2.991-2.77L4.087 6.66l-.209.035a.75.75 0 0 1-.256-1.478A48.567 48.567 0 0 1 7.5 4.705v-.227c0-1.564 1.213-2.9 2.816-2.951a52.662 52.662 0 0 1 3.369 0c1.603.051 2.815 1.387 2.815 2.951Zm-6.136-1.452a51.196 51.196 0 0 1 3.273 0C14.39 3.05 15 3.684 15 4.478v.113a49.488 49.488 0 0 0-6 0v-.113c0-.794.609-1.428 1.364-1.452Zm-.355 5.945a.75.75 0 1 0-1.5.058l.347 9a.75.75 0 1 0 1.499-.058l-.346-9Zm5.48.058a.75.75 0 1 0-1.498-.058l-.347 9a.75.75 0 0 0 1.5.058l.345-9Z", true]], "calendar": [["M6.75 2.25A.75.75 0 0 1 7.5 3v1.5h9V3A.75.75 0 0 1 18 3v1.5h.75a3 3 0 0 1 3 3v11.25a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V7.5a3 3 0 0 1 3-3H6V3a.75.75 0 0 1 .75-.75Zm13.5 9a1.5 1.5 0 0 0-1.5-1.5H5.25a1.5 1.5 0 0 0-1.5 1.5v7.5a1.5 1.5 0 0 0 1.5 1.5h13.5a1.5 1.5 0 0 0 1.5-1.5v-7.5Z", true]], "map-pin": [["m11.54 22.351.07.04.028.016a.76.76 0 0 0 .723 0l.028-.015.071-.041a16.975 16.975 0 0 0 1.144-.742 19.58 19.58 0 0 0 2.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 0 0-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 0 0 2.682 2.282 16.975 16.975 0 0 0 1.145.742ZM12 13.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z", true]], "users": [["M4.5 6.375a4.125 4.125 0 1 1 8.25 0 4.125 4.125 0 0 1-8.25 0ZM14.25 8.625a3.375 3.375 0 1 1 6.75 0 3.375 3.375 0 0 1-6.75 0ZM1.5 19.125a7.125 7.125 0 0 1 14.25 0v.003l-.001.119a.75.75 0 0 1-.363.63 13.067 13.067 0 0 1-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 0 1-.364-.63l-.001-.122ZM17.25 19.128l-.001.144a2.25 2.25 0 0 1-.233.96 10.088 10.088 0 0 0 5.06-1.01.75.75 0 0 0 .42-.643 4.875 4.875 0 0 0-6.957-4.611 8.586 8.586 0 0 1 1.71 5.157v.003Z", false]], "chevron-left": [["M7.72 12.53a.75.75 0 0 1 0-1.06l7.5-7.5a.75.75 0 1 1 1.06 1.06L9.31 12l6.97 6.97a.75.75 0 1 1-1.06 1.06l-7.5-7.5Z", true]], "chevron-down": [["M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z", true]], "home": [["M11.47 3.841a.75.75 0 0 1 1.06 0l8.69 8.69a.75.75 0 1 0 1.06-1.061l-8.689-8.69a2.25 2.25 0 0 0-3.182 0l-8.69 8.69a.75.75 0 1 0 1.061 1.06l8.69-8.689Z", false], ["m12 5.432 8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 0 1-.75-.75v-4.5a.75.75 0 0 0-.75-.75h-3a.75.75 0 0 0-.75.75V21a.75.75 0 0 1-.75.75H5.625a1.875 1.875 0 0 1-1.875-1.875v-6.198a2.29 2.29 0 0 0 .091-.086L12 5.432Z", false]], "phone": [["M1.5 4.5a3 3 0 0 1 3-3h1.372c.86 0 1.61.586 1.819 1.42l1.105 4.423a1.875 1.875 0 0 1-.694 1.955l-1.293.97c-.135.101-.164.249-.126.352a11.285 11.285 0 0 0 6.697 6.697c.103.038.25.009.352-.126l.97-1.293a1.875 1.875 0 0 1 1.955-.694l4.423 1.105c.834.209 1.42.959 1.42 1.82V19.5a3 3 0 0 1-3 3h-2.25C8.552 22.5 1.5 15.448 1.5 6.75V4.5Z", true]], "envelope": [["M1.5 8.67v8.58a3 3 0 0 0 3 3h15a3 3 0 0 0 3-3V8.67l-8.928 5.493a3 3 0 0 1-3.144 0L1.5 8.67Z", false], ["M22.5 6.908V6.75a3 3 0 0 0-3-3h-15a3 3 0 0 0-3 3v.158l9.714 5.978a1.5 1.5 0 0 0 1.572 0L22.5 6.908Z", false]], "x-mark": [["M5.47 5.47a.75.75 0 0 1 1.06 0L12 10.94l5.47-5.47a.75.75 0 1 1 1.06 1.06L13.06 12l5.47 5.47a.75.75 0 1 1-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 0 1-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 0 1 0-1.06Z", true]], "question-mark-circle": [["M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm11.378-3.917c-.89-.777-2.366-.777-3.255 0a.75.75 0 0 1-.988-1.129c1.454-1.272 3.776-1.272 5.23 0 1.513 1.324 1.513 3.518 0 4.842a3.75 3.75 0 0 1-.837.552c-.676.328-1.028.774-1.028 1.152v.75a.75.75 0 0 1-1.5 0v-.75c0-1.279 1.06-2.107 1.875-2.502.182-.088.351-.199.503-.331.83-.727.83-1.857 0-2.584ZM12 18a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z", true]], "no-symbol": [["m6.72 5.66 11.62 11.62A8.25 8.25 0 0 0 6.72 5.66Zm10.56 12.68L5.66 6.72a8.25 8.25 0 0 0 11.62 11.62ZM5.105 5.106c3.807-3.808 9.98-3.808 13.788 0 3.808 3.807 3.808 9.98 0 13.788-3.807 3.808-9.98 3.808-13.788 0-3.808-3.807-3.808-9.98 0-13.788Z", true]], "user-plus": [["M5.25 6.375a4.125 4.125 0 1 1 8.25 0 4.125 4.125 0 0 1-8.25 0ZM2.25 19.125a7.125 7.125 0 0 1 14.25 0v.003l-.001.119a.75.75 0 0 1-.363.63 13.067 13.067 0 0 1-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 0 1-.364-.63l-.001-.122ZM18.75 7.5a.75.75 0 0 0-1.5 0v2.25H15a.75.75 0 0 0 0 1.5h2.25v2.25a.75.75 0 0 0 1.5 0v-2.25H21a.75.75 0 0 0 0-1.5h-2.25V7.5Z", false]], "shield-check": [["M12.516 2.17a.75.75 0 0 0-1.032 0 11.209 11.209 0 0 1-7.877 3.08.75.75 0 0 0-.722.515A12.74 12.74 0 0 0 2.25 9.75c0 5.942 4.064 10.933 9.563 12.348a.749.749 0 0 0 .374 0c5.499-1.415 9.563-6.406 9.563-12.348 0-1.39-.223-2.73-.635-3.985a.75.75 0 0 0-.722-.516l-.143.001c-2.996 0-5.717-1.17-7.734-3.08Zm3.094 8.016a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z", true]], "plus": [["M12 3.75a.75.75 0 0 1 .75.75v6.75h6.75a.75.75 0 0 1 0 1.5h-6.75v6.75a.75.75 0 0 1-1.5 0v-6.75H4.5a.75.75 0 0 1 0-1.5h6.75V4.5a.75.75 0 0 1 .75-.75Z", true]], "check": [["M19.916 4.626a.75.75 0 0 1 .208 1.04l-9 13.5a.75.75 0 0 1-1.154.114l-6-6a.75.75 0 0 1 1.06-1.06l5.353 5.353 8.493-12.74a.75.75 0 0 1 1.04-.207Z", true]]}, "20": {"check-badge": [["M16.403 12.652a3 3 0 0 0 0-5.304 3 3 0 0 0-3.75-3.751 3 3 0 0 0-5.305 0 3 3 0 0 0-3.751 3.75 3 3 0 0 0 0 5.305 3 3 0 0 0 3.75 3.751 3 3 0 0 0 5.305 0 3 3 0 0 0 3.751-3.75Zm-2.546-4.46a.75.75 0 0 0-1.214-.883l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z", true]], "check-circle": [["M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z", true]], "clock": [["M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm.75-13a.75.75 0 0 0-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 0 0 0-1.5h-3.25V5Z", true]], "minus-circle": [["M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM6.75 9.25a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5Z", true]], "paper-airplane": [["M3.105 2.288a.75.75 0 0 0-.826.95l1.414 4.926A1.5 1.5 0 0 0 5.135 9.25h6.115a.75.75 0 0 1 0 1.5H5.135a1.5 1.5 0 0 0-1.442 1.086l-1.414 4.926a.75.75 0 0 0 .826.95 28.897 28.897 0 0 0 15.293-7.155.75.75 0 0 0 0-1.114A28.897 28.897 0 0 0 3.105 2.288Z", false]], "bookmark": [["M10 2c-1.716 0-3.408.106-5.07.31C3.806 2.45 3 3.414 3 4.517V17.25a.75.75 0 0 0 1.075.676L10 15.082l5.925 2.844A.75.75 0 0 0 17 17.25V4.517c0-1.103-.806-2.068-1.93-2.207A41.403 41.403 0 0 0 10 2Z", true]], "pencil-square": [["m5.433 13.917 1.262-3.155A4 4 0 0 1 7.58 9.42l6.92-6.918a2.121 2.121 0 0 1 3 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 0 1-.65-.65Z", false], ["M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0 0 10 3H4.75A2.75 2.75 0 0 0 2 5.75v9.5A2.75 2.75 0 0 0 4.75 18h9.5A2.75 2.75 0 0 0 17 15.25V10a.75.75 0 0 0-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5Z", false]], "document-duplicate": [["M7 3.5A1.5 1.5 0 0 1 8.5 2h3.879a1.5 1.5 0 0 1 1.06.44l3.122 3.12A1.5 1.5 0 0 1 17 6.622V12.5a1.5 1.5 0 0 1-1.5 1.5h-1v-3.379a3 3 0 0 0-.879-2.121L10.5 5.379A3 3 0 0 0 8.379 4.5H7v-1Z", false], ["M4.5 6A1.5 1.5 0 0 0 3 7.5v9A1.5 1.5 0 0 0 4.5 18h7a1.5 1.5 0 0 0 1.5-1.5v-5.879a1.5 1.5 0 0 0-.44-1.06L9.44 6.439A1.5 1.5 0 0 0 8.378 6H4.5Z", false]], "trash": [["M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z", true]], "calendar": [["M5.75 2a.75.75 0 0 1 .75.75V4h7V2.75a.75.75 0 0 1 1.5 0V4h.25A2.75 2.75 0 0 1 18 6.75v8.5A2.75 2.75 0 0 1 15.25 18H4.75A2.75 2.75 0 0 1 2 15.25v-8.5A2.75 2.75 0 0 1 4.75 4H5V2.75A.75.75 0 0 1 5.75 2Zm-1 5.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25v-6.5c0-.69-.56-1.25-1.25-1.25H4.75Z", true]], "map-pin": [["m9.69 18.933.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 0 0 .281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 1 0 3 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 0 0 2.273 1.765 11.842 11.842 0 0 0 .976.544l.062.029.018.008.006.003ZM10 11.25a2.25 2.25 0 1 0 0-4.5 2.25 2.25 0 0 0 0 4.5Z", true]], "users": [["M7 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM14.5 9a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5ZM1.615 16.428a1.224 1.224 0 0 1-.569-1.175 6.002 6.002 0 0 1 11.908 0c.058.467-.172.92-.57 1.174A9.953 9.953 0 0 1 7 18a9.953 9.953 0 0 1-5.385-1.572ZM14.5 16h-.106c.07-.297.088-.611.048-.933a7.47 7.47 0 0 0-1.588-3.755 4.502 4.502 0 0 1 5.874 2.636.818.818 0 0 1-.36.98A7.465 7.465 0 0 1 14.5 16Z", false]], "chevron-left": [["M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z", true]], "chevron-down": [["M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z", true]], "home": [["M9.293 2.293a1 1 0 0 1 1.414 0l7 7A1 1 0 0 1 17 11h-1v6a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-6H3a1 1 0 0 1-.707-1.707l7-7Z", true]], "phone": [["M2 3.5A1.5 1.5 0 0 1 3.5 2h1.148a1.5 1.5 0 0 1 1.465 1.175l.716 3.223a1.5 1.5 0 0 1-1.052 1.767l-.933.267c-.41.117-.643.555-.48.95a11.542 11.542 0 0 0 6.254 6.254c.395.163.833-.07.95-.48l.267-.933a1.5 1.5 0 0 1 1.767-1.052l3.223.716A1.5 1.5 0 0 1 18 15.352V16.5a1.5 1.5 0 0 1-1.5 1.5H15c-1.149 0-2.263-.15-3.326-.43A13.022 13.022 0 0 1 2.43 8.326 13.019 13.019 0 0 1 2 5V3.5Z", true]], "envelope": [["M3 4a2 2 0 0 0-2 2v1.161l8.441 4.221a1.25 1.25 0 0 0 1.118 0L19 7.162V6a2 2 0 0 0-2-2H3Z", false], ["m19 8.839-7.77 3.885a2.75 2.75 0 0 1-2.46 0L1 8.839V14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.839Z", false]], "x-mark": [["M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z", false]], "question-mark-circle": [["M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM8.94 6.94a.75.75 0 1 1-1.061-1.061 3 3 0 1 1 2.871 5.026v.345a.75.75 0 0 1-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 1 0 8.94 6.94ZM10 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z", true]], "no-symbol": [["m5.965 4.904 9.131 9.131a6.5 6.5 0 0 0-9.131-9.131Zm8.07 10.192L4.904 5.965a6.5 6.5 0 0 0 9.131 9.131ZM4.343 4.343a8 8 0 1 1 11.314 11.314A8 8 0 0 1 4.343 4.343Z", true]], "user-plus": [["M10 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM1.615 16.428a1.224 1.224 0 0 1-.569-1.175 6.002 6.002 0 0 1 11.908 0c.058.467-.172.92-.57 1.174A9.953 9.953 0 0 1 7 18a9.953 9.953 0 0 1-5.385-1.572ZM16.25 5.75a.75.75 0 0 0-1.5 0v2h-2a.75.75 0 0 0 0 1.5h2v2a.75.75 0 0 0 1.5 0v-2h2a.75.75 0 0 0 0-1.5h-2v-2Z", false]], "shield-check": [["M9.661 2.237a.531.531 0 0 1 .678 0 11.947 11.947 0 0 0 7.078 2.749.5.5 0 0 1 .479.425c.069.52.104 1.05.104 1.59 0 5.162-3.26 9.563-7.834 11.256a.48.48 0 0 1-.332 0C5.26 16.564 2 12.163 2 7c0-.538.035-1.069.104-1.589a.5.5 0 0 1 .48-.425 11.947 11.947 0 0 0 7.077-2.75Zm4.196 5.954a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z", true]], "plus": [["M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z", false]], "check": [["M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z", true]]}, "16": {"check-badge": [["M15 8c0 .982-.472 1.854-1.202 2.402a2.995 2.995 0 0 1-.848 2.547 2.995 2.995 0 0 1-2.548.849A2.996 2.996 0 0 1 8 15a2.996 2.996 0 0 1-2.402-1.202 2.995 2.995 0 0 1-2.547-.848 2.995 2.995 0 0 1-.849-2.548A2.996 2.996 0 0 1 1 8c0-.982.472-1.854 1.202-2.402a2.995 2.995 0 0 1 .848-2.547 2.995 2.995 0 0 1 2.548-.849A2.995 2.995 0 0 1 8 1c.982 0 1.854.472 2.402 1.202a2.995 2.995 0 0 1 2.547.848c.695.695.978 1.645.849 2.548A2.996 2.996 0 0 1 15 8Zm-3.291-2.843a.75.75 0 0 1 .135 1.052l-4.25 5.5a.75.75 0 0 1-1.151.043l-2.25-2.5a.75.75 0 1 1 1.114-1.004l1.65 1.832 3.7-4.789a.75.75 0 0 1 1.052-.134Z", true]], "check-circle": [["M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14Zm3.844-8.791a.75.75 0 0 0-1.188-.918l-3.7 4.79-1.649-1.833a.75.75 0 1 0-1.114 1.004l2.25 2.5a.75.75 0 0 0 1.15-.043l4.25-5.5Z", true]], "clock": [["M1 8a7 7 0 1 1 14 0A7 7 0 0 1 1 8Zm7.75-4.25a.75.75 0 0 0-1.5 0V8c0 .414.336.75.75.75h3.25a.75.75 0 0 0 0-1.5h-2.5v-3.5Z", true]], "minus-circle": [["M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14Zm4-7a.75.75 0 0 0-.75-.75h-6.5a.75.75 0 0 0 0 1.5h6.5A.75.75 0 0 0 12 8Z", true]], "paper-airplane": [["M2.87 2.298a.75.75 0 0 0-.812 1.021L3.39 6.624a1 1 0 0 0 .928.626H8.25a.75.75 0 0 1 0 1.5H4.318a1 1 0 0 0-.927.626l-1.333 3.305a.75.75 0 0 0 .811 1.022 24.89 24.89 0 0 0 11.668-5.115.75.75 0 0 0 0-1.175A24.89 24.89 0 0 0 2.869 2.298Z", false]], "bookmark": [["M3.75 2a.75.75 0 0 0-.75.75v10.5a.75.75 0 0 0 1.28.53L8 10.06l3.72 3.72a.75.75 0 0 0 1.28-.53V2.75a.75.75 0 0 0-.75-.75h-8.5Z", false]], "pencil-square": [["M13.488 2.513a1.75 1.75 0 0 0-2.475 0L6.75 6.774a2.75 2.75 0 0 0-.596.892l-.848 2.047a.75.75 0 0 0 .98.98l2.047-.848a2.75 2.75 0 0 0 .892-.596l4.261-4.262a1.75 1.75 0 0 0 0-2.474Z", false], ["M4.75 3.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h6.5c.69 0 1.25-.56 1.25-1.25V9A.75.75 0 0 1 14 9v2.25A2.75 2.75 0 0 1 11.25 14h-6.5A2.75 2.75 0 0 1 2 11.25v-6.5A2.75 2.75 0 0 1 4.75 2H7a.75.75 0 0 1 0 1.5H4.75Z", false]], "document-duplicate": [["M5.5 3.5A1.5 1.5 0 0 1 7 2h2.879a1.5 1.5 0 0 1 1.06.44l2.122 2.12a1.5 1.5 0 0 1 .439 1.061V9.5A1.5 1.5 0 0 1 12 11V8.621a3 3 0 0 0-.879-2.121L9 4.379A3 3 0 0 0 6.879 3.5H5.5Z", false], ["M4 5a1.5 1.5 0 0 0-1.5 1.5v6A1.5 1.5 0 0 0 4 14h5a1.5 1.5 0 0 0 1.5-1.5V8.621a1.5 1.5 0 0 0-.44-1.06L7.94 5.439A1.5 1.5 0 0 0 6.878 5H4Z", false]], "trash": [["M5 3.25V4H2.75a.75.75 0 0 0 0 1.5h.3l.815 8.15A1.5 1.5 0 0 0 5.357 15h5.285a1.5 1.5 0 0 0 1.493-1.35l.815-8.15h.3a.75.75 0 0 0 0-1.5H11v-.75A2.25 2.25 0 0 0 8.75 1h-1.5A2.25 2.25 0 0 0 5 3.25Zm2.25-.75a.75.75 0 0 0-.75.75V4h3v-.75a.75.75 0 0 0-.75-.75h-1.5ZM6.05 6a.75.75 0 0 1 .787.713l.275 5.5a.75.75 0 0 1-1.498.075l-.275-5.5A.75.75 0 0 1 6.05 6Zm3.9 0a.75.75 0 0 1 .712.787l-.275 5.5a.75.75 0 0 1-1.498-.075l.275-5.5a.75.75 0 0 1 .786-.711Z", true]], "calendar": [["M4 1.75a.75.75 0 0 1 1.5 0V3h5V1.75a.75.75 0 0 1 1.5 0V3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2V1.75ZM4.5 6a1 1 0 0 0-1 1v4.5a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1h-7Z", true]], "map-pin": [["m7.539 14.841.003.003.002.002a.755.755 0 0 0 .912 0l.002-.002.003-.003.012-.009a5.57 5.57 0 0 0 .19-.153 15.588 15.588 0 0 0 2.046-2.082c1.101-1.362 2.291-3.342 2.291-5.597A5 5 0 0 0 3 7c0 2.255 1.19 4.235 2.292 5.597a15.591 15.591 0 0 0 2.046 2.082 8.916 8.916 0 0 0 .189.153l.012.01ZM8 8.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z", true]], "users": [["M8.5 4.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0ZM10.9 12.006c.11.542-.348.994-.9.994H2c-.553 0-1.01-.452-.902-.994a5.002 5.002 0 0 1 9.803 0ZM14.002 12h-1.59a2.556 2.556 0 0 0-.04-.29 6.476 6.476 0 0 0-1.167-2.603 3.002 3.002 0 0 1 3.633 1.911c.18.522-.283.982-.836.982ZM12 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z", false]], "chevron-left": [["M9.78 4.22a.75.75 0 0 1 0 1.06L7.06 8l2.72 2.72a.75.75 0 1 1-1.06 1.06L5.47 8.53a.75.75 0 0 1 0-1.06l3.25-3.25a.75.75 0 0 1 1.06 0Z", true]], "chevron-down": [["M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z", true]], "home": [["M8.543 2.232a.75.75 0 0 0-1.085 0l-5.25 5.5A.75.75 0 0 0 2.75 9H4v4a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-1a1 1 0 1 1 2 0v1a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1V9h1.25a.75.75 0 0 0 .543-1.268l-5.25-5.5Z", false]], "phone": [["m3.855 7.286 1.067-.534a1 1 0 0 0 .542-1.046l-.44-2.858A1 1 0 0 0 4.036 2H3a1 1 0 0 0-1 1v2c0 .709.082 1.4.238 2.062a9.012 9.012 0 0 0 6.7 6.7A9.024 9.024 0 0 0 11 14h2a1 1 0 0 0 1-1v-1.036a1 1 0 0 0-.848-.988l-2.858-.44a1 1 0 0 0-1.046.542l-.534 1.067a7.52 7.52 0 0 1-4.86-4.859Z", true]], "envelope": [["M2.5 3A1.5 1.5 0 0 0 1 4.5v.793c.026.009.051.02.076.032L7.674 8.51c.206.1.446.1.652 0l6.598-3.185A.755.755 0 0 1 15 5.293V4.5A1.5 1.5 0 0 0 13.5 3h-11Z", false], ["M15 6.954 8.978 9.86a2.25 2.25 0 0 1-1.956 0L1 6.954V11.5A1.5 1.5 0 0 0 2.5 13h11a1.5 1.5 0 0 0 1.5-1.5V6.954Z", false]], "x-mark": [["M5.28 4.22a.75.75 0 0 0-1.06 1.06L6.94 8l-2.72 2.72a.75.75 0 1 0 1.06 1.06L8 9.06l2.72 2.72a.75.75 0 1 0 1.06-1.06L9.06 8l2.72-2.72a.75.75 0 0 0-1.06-1.06L8 6.94 5.28 4.22Z", false]], "question-mark-circle": [["M15 8A7 7 0 1 1 1 8a7 7 0 0 1 14 0Zm-6 3.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM7.293 5.293a1 1 0 1 1 .99 1.667c-.459.134-1.033.566-1.033 1.29v.25a.75.75 0 1 0 1.5 0v-.115a2.5 2.5 0 1 0-2.518-4.153.75.75 0 1 0 1.061 1.06Z", true]], "no-symbol": [["M3.05 3.05a7 7 0 1 1 9.9 9.9 7 7 0 0 1-9.9-9.9Zm1.627.566 7.707 7.707a5.501 5.501 0 0 0-7.707-7.707Zm6.646 8.768L3.616 4.677a5.501 5.501 0 0 0 7.707 7.707Z", true]], "user-plus": [["M8.5 4.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0ZM10 13c.552 0 1.01-.452.9-.994a5.002 5.002 0 0 0-9.802 0c-.109.542.35.994.902.994h8ZM12.5 3.5a.75.75 0 0 1 .75.75v1h1a.75.75 0 0 1 0 1.5h-1v1a.75.75 0 0 1-1.5 0v-1h-1a.75.75 0 0 1 0-1.5h1v-1a.75.75 0 0 1 .75-.75Z", false]], "shield-check": [["M8.5 1.709a.75.75 0 0 0-1 0 8.963 8.963 0 0 1-4.84 2.217.75.75 0 0 0-.654.72 10.499 10.499 0 0 0 5.647 9.672.75.75 0 0 0 .694-.001 10.499 10.499 0 0 0 5.647-9.672.75.75 0 0 0-.654-.719A8.963 8.963 0 0 1 8.5 1.71Zm2.34 5.504a.75.75 0 0 0-1.18-.926L7.394 9.17l-1.156-.99a.75.75 0 1 0-.976 1.138l1.75 1.5a.75.75 0 0 0 1.078-.106l2.75-3.5Z", true]], "plus": [["M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z", false]], "check": [["M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z", true]]}};
+const gridFor = size => size <= 18 ? 16 : size <= 22 ? 20 : 24;
+const ico = (name, size, color = "currentColor") => {
+  const grid = gridFor(size);
+  return `<svg class="i" width="${size}" height="${size}" viewBox="0 0 ${grid} ${grid}" fill="${color}">${F[grid][name].map(([d, eo]) => `<path${eo ? ` fill-rule="evenodd" clip-rule="evenodd"` : ""} d="${d}"/>`).join("")}</svg>`;
+};
+// An item in a strip: { name, size, color, box } - box means a 32px button around the glyph.
+// The margin before each item is the glyph gap minus the empty space on both sides of the two neighbouring glyphs.
+const inset = it => it.box ? (32 - it.size) / 2 : 0;
+const strip = (items, gaps) => `<span class="row">${items.map((it, i) => {
+  const gap = Array.isArray(gaps) ? gaps[i - 1] : gaps;
+  const ml = i === 0 ? 0 : gap - inset(items[i - 1]) - inset(it);
+  const glyph = ico(it.name, it.size, it.color);
+  return `<span style="margin-left:${ml}px;display:inline-flex">${it.box ? `<span class="box" style="color:${it.color}">${glyph}</span>` : `<span style="color:${it.color};display:inline-flex">${glyph}</span>`}</span>`;
+}).join("")}</span>`;
+const M = "var(--icon-muted)", PR = "var(--primary)";
+
+// The hero card, as a phone draws it; the kicker and the title are swappable so the kicker options draw the same card.
+const heroCard = (p, kicker = `<div class="kicker">Happening now · ends in about 6 hours</div>`, title = "Girls Just Want to Have Sums") => {
+  const tally = [["check-circle", "var(--success)", 10], ["clock", "var(--warning)", 6], ["minus-circle", "var(--error)", 8], ["paper-airplane", "var(--info)", 11], ["bookmark", "var(--ink)", 9]]
+    .map(([n, c, v]) => `<span class="row" style="gap:4px;color:${c}">${ico(n, 16, c)}${v}</span>`).join("");
+  const buttons = [["check-circle", "Yes", true], ["clock", "Maybe", false], ["minus-circle", "No", false]]
+    .map(([n, l, chosen]) => {
+      const ink = { Yes: "var(--success)", Maybe: "var(--warning)", No: "var(--error)" }[l];
+      return `<span class="btn" style="gap:8px;${chosen ? `background:${ink};color:var(--page)` : ""}">${ico(n, 20, chosen ? "var(--page)" : ink)}${l}</span>`;
+    }).join("");
+  const fact = (icon, text) => `<div class="fact" style="gap:6px;margin-top:${p.fact}px">${ico(icon, 16, M)}${text}</div>`;
+  return `<div class="card" style="gap:0">
+    ${kicker}
+    <div class="row" style="justify-content:space-between;gap:8px;margin-top:${p.fact}px"><span class="title">${title}</span>${strip([{ name: "document-duplicate", size: 20, color: PR, box: true }, { name: "pencil-square", size: 20, color: PR, box: true }], 20)}</div>
+    ${fact("check-badge", "Confirmed")}
+    ${fact("calendar", "Wed 28 Oct · 18:00 – Sat 31 Oct · 18:00")}
+    ${fact("map-pin", "KBBL Broadcasting")}
+    <div class="fact" style="gap:6px;flex-wrap:wrap;margin-top:${p.fact}px">${ico("users", 16, M)}<span>Who’s coming?</span><span class="row" style="gap:12px;margin-left:6px">${tally}</span></div>
+    <div style="margin-top:${p.answer}px;font-weight:600;font-size:14px;line-height:20px">Your answer:</div>
+    <div class="row" style="gap:8px;margin-top:${p.buttons}px">${buttons}</div>
+  </div>`;
+};
+
+const examples = [
+  {
+    title: "Hero card", solved: "AC 66 · AC 70 · AC 77", note: "Facts, tally and the Duplicate · Edit pair at the top right.",
+    params: [
+      ["size", "Icon size", 12, 28, 16], ["text", "Icon → its text", 0, 16, 6], ["pairSize", "Duplicate · Edit size", 12, 28, 20], ["pair", "Duplicate → Edit", 4, 40, 20],
+      ["num", "Tally icon → number", 0, 12, 4], ["tag", "Tally tag → tag", 4, 28, 12]
+    ],
+    render: p => `<div class="card">
+      <div class="kicker">Happening now · ends in 1 day</div>
+      <div class="row" style="justify-content:space-between"><span class="title">Sectional</span>${strip([{ name: "document-duplicate", size: p.pairSize, color: PR, box: true }, { name: "pencil-square", size: p.pairSize, color: PR, box: true }], p.pair)}</div>
+      <div class="fact" style="gap:${p.text}px">${ico("check-badge", p.size, M)}Confirmed</div>
+      <div class="fact" style="gap:${p.text}px">${ico("calendar", p.size, M)}Wed 28 Oct · 18:00</div>
+      <div class="fact" style="gap:${p.text}px;flex-wrap:wrap">${ico("users", p.size, M)}<span style="margin-right:${Math.max(p.tag - p.text, 0)}px">Who’s coming?</span>${
+        [["check-circle", "var(--success)", 9], ["clock", "var(--warning)", 9], ["minus-circle", "var(--error)", 9], ["paper-airplane", "var(--info)", 8], ["bookmark", "var(--ink)", 9]]
+          .map(([n, c, v], i) => `<span class="row" style="gap:${p.num}px;color:${c};margin-left:${i ? p.tag - p.text : 0}px">${ico(n, p.size, c)}${v}</span>`).join("")}</div>
+    </div>`
+  },
+  {
+    title: "Event row", solved: "AC 68 · AC 69 · AC 82", note: "Status icon, name, your answer and the pencil (AC 68, AC 69).",
+    params: [
+      ["row", "Status size", 14, 32, 24], ["answer", "Answer size", 12, 28, 20], ["pencil", "Pencil size", 12, 28, 20],
+      ["name", "Status → name", 4, 28, 16], ["gap", "Answer → pencil", 4, 40, 20]
+    ],
+    render: p => [["check-badge", "check-circle", "var(--success)", "Sectional", "Wed 28 Oct · 18:00"], ["question-mark-circle", "clock", "var(--warning)", "Christmas gig", "Tue 5 Jan · 18:00 · Community hall"]]
+      .map(([st, an, c, n, m]) => `<div class="listrow"><span style="color:${M};display:inline-flex;margin-right:${p.name}px">${ico(st, p.row, M)}</span><div class="grow"><div class="name">${n}</div><div class="meta">${m}</div></div>${strip([{ name: an, size: p.answer, color: c }, { name: "pencil-square", size: p.pencil, color: PR, box: true }], p.gap)}</div>`).join("")
+  },
+  {
+    title: "Roster row (event screen)", solved: "AC 76", note: "Take-off, then status and the answer buttons, each a 32px square.",
+    params: [["size", "Icon size", 12, 28, 20], ["gap", "Icon → icon", 4, 40, 20], ["take", "Take-off → first icon", 8, 64, 30]],
+    render: p => ["Ana Horvat", "Ivan Kovačević"].map((n, r) => `<div class="listrow"><span class="grow">${n}</span>${strip([
+      { name: "trash", size: p.size, color: M, box: true },
+      { name: r ? "paper-airplane" : "check-circle", size: p.size, color: r ? "var(--info)" : "var(--success)", box: true },
+      { name: "clock", size: p.size, color: M, box: true }, { name: "minus-circle", size: p.size, color: M, box: true }
+    ], [p.take, p.gap, p.gap])}</div>`).join("")
+  },
+  {
+    title: "Header", solved: "AC 78 · AC 81", note: "Group name, switcher chevron, group pencil; tabs and avatar at the right (desktop). Below it, pushed screens with real titles: the back chevron and the title.",
+    params: [
+      ["size", "Chevron and pencil size", 12, 28, 20], ["chev", "Name → chevron", 0, 32, 8], ["pair", "Chevron → pencil", 4, 48, 16],
+      ["tab", "Tab icon size", 14, 28, 24], ["tabgap", "Tab → tab", 4, 40, 16],
+      ["back", "Back chevron size", 14, 28, 20], ["backgap", "Back chevron → title", 0, 32, 10]
+    ],
+    render: p => `<div class="hdr"><span class="shell" style="margin-right:${p.chev - (32 - p.size) / 2}px">Samplifichoir</span>${strip([{ name: "chevron-down", size: p.size, color: PR, box: true }, { name: "pencil-square", size: p.size, color: PR, box: true }], p.pair)}<span class="grow"></span>${strip([{ name: "home", size: p.tab, color: M }, { name: "calendar", size: p.tab, color: PR }, { name: "users", size: p.tab, color: M }], p.tabgap)}<span style="margin-left:16px" class="avatar">LM</span></div>
+      ${["Sectional", "Edit event", "Duplicate event", "Add someone", "Marija Babić", "Edit group"].map(t =>
+        `<div class="hdr" style="margin-top:12px"><span style="color:${PR};display:inline-flex;margin-right:${p.backgap}px">${ico("chevron-left", p.back, PR)}</span><span class="shell">${t}</span><span class="grow"></span><span class="avatar">LM</span></div>`).join("")}`
+  },
+  {
+    title: "Member row", solved: "AC 75", note: "Call, email and edit at the row's end.",
+    params: [["size", "Icon size", 12, 28, 20], ["gap", "Icon → icon", 4, 40, 20]],
+    render: p => ["Marija Babić", "Luka Marić"].map(n => `<div class="listrow"><span class="grow">${n}</span>${strip([{ name: "phone", size: p.size, color: "var(--ink)", box: true }, { name: "envelope", size: p.size, color: "var(--ink)", box: true }, { name: "pencil-square", size: p.size, color: PR, box: true }], p.gap)}</div>`).join("")
+  },
+  {
+    title: "Answer buttons", solved: "AC 79", note: "Are you coming? and the three buttons, each an icon and its label.",
+    params: [["size", "Icon size", 12, 24, 20], ["label", "Icon → label", 0, 16, 8], ["gap", "Button → button", 0, 32, 8]],
+    render: p => `<div class="row" style="flex-wrap:wrap;gap:8px 16px"><b style="font-size:14px">Are you coming?</b><span class="row" style="gap:${p.gap}px">${
+      [["check-circle", "var(--success)", "Yes"], ["clock", "var(--warning)", "Maybe"], ["minus-circle", "var(--error)", "No"]]
+        .map(([n, c, l]) => `<span class="btn" style="gap:${p.label}px">${ico(n, p.size, c)}${l}</span>`).join("")}</span></div>`
+  },
+  {
+    title: "Alert", solved: "AC 71", note: "The kind's icon, the message, and the dismiss button.",
+    params: [["lead", "Leading icon size", 14, 32, 24], ["text", "Icon → text", 4, 28, 16], ["x", "Dismiss size", 12, 28, 24]],
+    render: p => `<div class="alert" style="grid-template-columns:${p.lead}px 1fr 32px;gap:${p.text}px">${ico("check-circle", p.lead)}<span>Event was successfully updated.</span><span class="box" style="color:var(--ink)">${ico("x-mark", p.x)}</span></div>`
+  },
+  {
+    title: "Dock (phone)", solved: "AC 74", note: "The three tabs pinned to the bottom of a phone screen.",
+    params: [["size", "Icon size", 14, 32, 24]],
+    render: p => `<div class="dock">${ico("home", p.size, M)}<span style="color:${PR};display:inline-flex;border-bottom:3px solid ${PR};padding-bottom:4px">${ico("calendar", p.size, PR)}</span>${ico("users", p.size, M)}</div>`
+  },
+  {
+    title: "Back control (options)", note: "The pushed screen's back control: the chevron, plain and on every theme fill, the circle always shown. Today it is the plain chevron, 20px, 10px before the title; a 24px Base 200 circle around a 16px chevron was tried in the app and reverted. The gap is measured from the circle's edge, or from the glyph where there is no circle. On Mobbin, 20 iOS content screens with a plain header split evenly: 10 bare glyphs, 10 in a soft container (9 circles of about 32-36px, glyph about 45% of it, white, light grey or tinted to the theme); nearly every circle holds a chevron.",
+    params: [["size", "Glyph size", 14, 22, 20], ["circle", "Circle diameter", 24, 44, 32], ["gap", "Control → title", 0, 24, 10]],
+    render: p => {
+      const glyphs = [["chevron-left", "Chevron"]];
+      // Every fill the theme offers, always on: [key, label, circle style, glyph colour].
+      const tint = c => `background:color-mix(in oklab, ${c} 14%, var(--page))`;
+      const ring = c => `box-shadow:inset 0 0 0 1.5px color-mix(in oklab, ${c} 45%, transparent)`;
+      const backs = [
+        ["none", "Plain", "", PR],
+        ["b200", "Base 200", "background:var(--b200)", PR],
+        ["b300", "Base 300", "background:var(--b300)", PR],
+        ["tint-primary", "Primary tint", tint("var(--primary)"), PR],
+        ["tint-secondary", "Secondary tint", tint("var(--secondary)"), PR],
+        ["tint-ink", "Ink tint", tint("var(--ink)"), PR],
+        ["solid-primary", "Primary solid", "background:var(--primary)", "var(--page)"],
+        ["solid-secondary", "Secondary solid", "background:var(--secondary)", "var(--page)"],
+        ["ring-primary", "Primary outline", ring("var(--primary)"), PR],
+        ["ring-ink", "Ink outline", ring("var(--ink)"), PR]
+      ];
+      return glyphs.map(([g, gl]) => backs.map(([b, bl, style, glyph]) => {
+        const control = b === "none"
+          ? `<span style="color:${glyph};display:inline-flex">${ico(g, p.size, glyph)}</span>`
+          : `<span style="display:inline-grid;place-items:center;flex:none;width:${p.circle}px;height:${p.circle}px;border-radius:999px;color:${glyph};${style}">${ico(g, p.size, glyph)}</span>`;
+        return `<div class="hdr" style="margin-top:6px"><span style="margin-right:${p.gap}px;display:inline-flex">${control}</span><span class="shell">Sectional</span><span class="grow"></span><span class="note" style="margin:0">${gl} · ${bl}</span></div>`;
+      }).join("")).join("");
+    }
+  },
+  {
+    title: "Back control: push, squeeze, or the dot in a circle too", note: "Each version pairs a section screen (the group name, led by the 8px group dot) with a pushed screen (the back chevron), as a phone header draws them. The dashed line marks where each title starts; the header's 16px gutter is the stage's own padding. The circle is Base 200 throughout.",
+    params: [["circle", "Circle diameter", 24, 44, 32], ["gap", "Circle → title", 0, 24, 8], ["size", "Chevron size", 14, 22, 20]],
+    render: p => {
+      const dot = `<span style="width:8px;height:8px;border-radius:999px;background:${PR};display:block"></span>`;
+      const chev = `<span style="color:${PR};display:inline-flex">${ico("chevron-left", p.size, PR)}</span>`;
+      const slot = inner => `<span style="display:inline-grid;place-items:center;flex:none;width:20px;height:20px">${inner}</span>`;
+      const circle = inner => `<span style="display:inline-grid;place-items:center;flex:none;width:${p.circle}px;height:${p.circle}px;border-radius:999px;background:var(--b200)">${inner}</span>`;
+      const rootRight = `<span style="margin-left:8px;display:inline-flex">${ico("chevron-down", 20, PR)}</span><span class="grow"></span><span class="avatar">LM</span>`;
+      const pushRight = `<span class="grow"></span><span class="avatar">LM</span>`;
+      // A header row: the lead control's width, its margin into the gutter, and the gap before the title; x is where the title starts.
+      const row = (lead, width, ml, gap, title, right) => ({ x: ml + width + gap, html: `<div class="hdr" style="margin-top:8px"><span style="display:inline-flex;margin-left:${ml}px;margin-right:${gap}px">${lead}</span><span class="shell">${title}</span>${right}</div>` });
+      const today = row(slot(dot), 20, 0, 10, "Samplifichoir", rootRight);
+      const hang = (p.circle - 20) / 2;
+      const versions = [
+        ["Today", "The plain 20px chevron in the dot's 20px slot.", today, row(slot(chev), 20, 0, 10, "Sectional", pushRight)],
+        ["A · Push", "The circle widens the slot on pushed screens only; their titles start further right than the group name.", today, row(circle(chev), p.circle, 0, p.gap, "Sectional", pushRight)],
+        ["B · Squeeze", "The circle hangs into the gutter so the chevron and the title keep today's places; the circle → title gap is what is left over.", today, row(circle(chev), p.circle, -hang, Math.max(10 - hang, 0), "Sectional", pushRight)],
+        ["C · Dot in a circle too", "The group dot gets the same Base 200 circle, so both screens lead with one control and every title starts at one x.", row(circle(dot), p.circle, 0, p.gap, "Samplifichoir", rootRight), row(circle(chev), p.circle, 0, p.gap, "Sectional", pushRight)]
+      ];
+      return versions.map(([name, why, root, pushed]) => {
+        const shift = pushed.x - root.x;
+        const lines = [...new Set([root.x, pushed.x])].map((x, i) => `<span style="position:absolute;top:0;bottom:0;left:${x}px;border-left:1px dashed ${i ? "var(--error)" : "var(--secondary)"}"></span>`).join("");
+        const verdict = shift === 0 ? `Titles line up at ${root.x}px.` : `The pushed title starts ${Math.abs(shift)}px ${shift > 0 ? "right" : "left"} of the group name (${root.x}px vs ${pushed.x}px).`;
+        return `<div style="margin-bottom:18px"><div style="font-weight:600;font-size:14px">${name}</div><div class="note" style="margin:2px 0 4px">${why} <b>${verdict}</b></div><div style="position:relative">${root.html}${pushed.html}${lines}</div></div>`;
+      }).join("");
+    }
+  },
+  {
+    title: "Hero card: Who’s coming? → Your answer:", solved: "AC 86", note: "The whole hero card, as a phone draws it: kicker, title with Duplicate and Edit, the fact lines, Who's coming?, and the answer with its three buttons wrapped below the question. Every row of the card sits 8px from the next (the card body's gap-2), except Who's coming? → Your answer:, which is 14px (AC 86). Measured on the app's own card at 390px.",
+    params: [["fact", "Fact row → fact row", 0, 24, 8], ["answer", "Who’s coming? → Your answer:", 0, 40, 14], ["buttons", "Your answer: → buttons", 0, 24, 8]],
+    render: p => heroCard(p)
+  }
+];
+
+// The top sections, lettered so the numbered ones below keep their numbers.
+const btnStyle = (kind, size) => {
+  const fill = { error: "background:var(--error);color:var(--page)", primary: "background:var(--primary);color:var(--page)", plain: "background:var(--b200);color:var(--ink)", ghost: "color:var(--ink)", success: "background:var(--success);color:var(--page)" }[kind];
+  const box = { block: "width:100%;height:40px;justify-content:center", regular: "height:40px;padding:0 16px", small: "font-size:12px" }[size];
+  return `${fill};${box}`;
+};
+const labelled = (kind, size, iconName, label, p, color) => `<span class="btn" style="gap:${p.label}px;${btnStyle(kind, size)}">${ico(iconName, p.size, color || "currentColor")}${label}</span>`;
+const box32 = (glyph, ml = 0) => `<span style="display:inline-grid;place-items:center;flex:none;width:32px;height:32px;border-radius:999px;outline:1px dashed var(--muted-text);margin-left:${ml}px">${glyph}</span>`;
+const how = (title, row, maths) => `<div style="margin-bottom:16px"><div style="font-weight:600;font-size:14px;margin-bottom:6px">${title}</div><div class="row" style="flex-wrap:wrap">${row}</div><div class="note" style="margin:6px 0 0">${maths}</div></div>`;
+const topSections = [
+  {
+    title: "Buttons with an icon and a label", solved: "AC 92 · AC 94", note: "Every button the app draws with an icon and a label, as its screen draws it: every icon 20px, 8px from the label (AC 92), and every labelled button with an icon (AC 94). Regular and block buttons set their label at 14px, small ones at 12px, both at weight 600. The styleguide has the same buttons under Buttons with an icon and a label.",
+    params: [["size", "Icon size", 12, 24, 20], ["label", "Icon → label", 0, 16, 8]],
+    render: p => {
+      const answer = p;
+      return `<div style="display:flex;flex-direction:column;gap:8px">
+        <div class="kicker">Block, on the sign-in, sign-up and group screens</div>
+        ${labelled("primary", "block", "check", "Sign in", p)}
+        ${labelled("primary", "block", "envelope", "Email me a sign-in link", p)}
+        ${labelled("primary", "block", "plus", "New group", p)}
+        <div class="kicker" style="margin-top:8px">Regular and small</div>
+        <div class="row" style="gap:8px;flex-wrap:wrap">
+          ${labelled("primary", "regular", "plus", "New event", p)}${labelled("plain", "regular", "plus", "Create group", p)}
+          ${labelled("primary", "small", "plus", "New", p)}${labelled("plain", "small", "user-plus", "Add someone", p)}${labelled("plain", "small", "paper-airplane", "Invite the rest", p)}
+        </div>
+        <div class="kicker" style="margin-top:8px">A form's button row (edit screens lead with Delete)</div>
+        <div class="row" style="gap:8px;flex-wrap:wrap">
+          ${labelled("error", "regular", "trash", "Delete event", p)}${labelled("ghost", "regular", "x-mark", "Cancel", p)}${labelled("primary", "regular", "check", "Save changes", p)}
+        </div>
+        <div class="kicker" style="margin-top:8px">Yes · Maybe · No</div>
+        <div class="row" style="gap:8px">
+          ${labelled("success", "small", "check-circle", "Yes", answer)}${labelled("ghost", "small", "clock", "Maybe", answer, "var(--warning)")}${labelled("ghost", "small", "minus-circle", "No", answer, "var(--error)")}
+        </div>
+      </div>`;
+    }
+  },
+  {
+    title: "How the 20px gap between icon controls is built", note: "Each dashed circle is a control's 32px button; the glyph sits inside it with empty space around it (6px for a 20px glyph). The gap you see is glyph to glyph, but the CSS sets the gap between boxes, so each construction subtracts or adds that empty space differently. The values are the owner's (header 8 and 16 on purpose, AC 78); the point is only how many different ways the CSS gets there.",
+    params: [],
+    render: () => [
+      how("1 · Strip: hero and event Duplicate · Edit, member row, roster", box32(ico("document-duplicate", 20, PR)) + box32(ico("pencil-square", 20, PR), 8),
+        "boxes 8px apart (<code>gap-2</code>) + 6px + 6px of empty space → <b>20px</b> glyph to glyph."),
+      how("2 · Event row: the answer has no box, the pencil does", `<span style="display:inline-flex">${ico("check-circle", 20, "var(--success)")}</span>` + box32(ico("pencil-square", 20, PR), 14),
+        "the list row's 16px gap − 2px (<code>-ml-0.5</code>) = 14px to the box, + 6px inside it → <b>20px</b>."),
+      how("3 · Roster take-off", box32(ico("trash", 20, M)) + box32(ico("check-circle", 20, "var(--success)"), 18),
+        "<code>mr-2.5</code> 10px + the strip's 8px + 6px + 6px → <b>30px</b>, set apart on purpose (AC 93)."),
+      how("4 · Header with the switcher", `<span class="shell">Samplifichoir</span>` + box32(ico("chevron-down", 20, PR), 2) + box32(ico("pencil-square", 20, PR), 4),
+        "name → chevron: <code>gap-0.5</code> 2px + 6px → <b>8px</b>. Chevron → pencil: the header's <code>gap-2.5</code> 10px − 6px (<code>-ml-1.5</code>) = 4px, + 6px + 6px → <b>16px</b>."),
+      how("5 · Header without the switcher", `<span class="shell">Samplifichoir</span>` + box32(ico("pencil-square", 20, PR), 2),
+        "the header's <code>gap-2.5</code> 10px − 8px (<code>-ml-2</code>) = 2px, + 6px → <b>8px</b>.")
+    ].join("")
+  }
+];
+
+const mount = (list, root, mark) => list.forEach((ex, n) => {
+  const defaults = Object.fromEntries(ex.params.map(([k, , , , d]) => [k, d]));
+  const el = document.createElement("section");
+  el.className = "ex";
+  el.innerHTML = `<h2>${mark(n)} · ${ex.title}${ex.solved ? ` <span class="solved">Solved · ${ex.solved}</span>` : ""}</h2><div class="note">${ex.note}</div>
+    <div class="panes">
+      <div><div class="pane-label">Today</div><div class="stage">${ex.render(defaults)}</div>
+        <div class="sliders">${ex.params.map(([, label, , , d]) =>
+          `<div class="sl static"><span>${label}</span><b>${d}px</b></div>`).join("")}</div>
+      </div>
+      <div><div class="pane-label try">Try <span><button type="button" class="copy">Copy values</button> <button type="button" class="reset">Reset</button></span></div><div class="stage try-stage"></div>
+        <div class="sliders">${ex.params.map(([k, label, min, max, d]) =>
+          `<label class="sl"><span>${label}</span><input type="range" min="${min}" max="${max}" step="1" value="${d}" data-k="${k}" data-d="${d}"><output>${d}px</output></label>`).join("")}</div>
+      </div>
+    </div>`;
+  root.appendChild(el);
+  // A section with nothing to slide draws Today alone.
+  if (!ex.params.length) { el.querySelector(".try-stage").parentElement.remove(); return; }
+  const stage = el.querySelector(".try-stage");
+  const inputs = [...el.querySelectorAll("input")];
+  const draw = () => {
+    const p = Object.fromEntries(inputs.map(i => [i.dataset.k, Number(i.value)]));
+    stage.innerHTML = ex.render(p);
+    inputs.forEach(i => { i.nextElementSibling.textContent = `${i.value}px`; i.closest(".sl").classList.toggle("changed", i.value !== i.dataset.d); });
+  };
+  inputs.forEach(i => i.addEventListener("input", draw));
+  el.querySelector(".pane-label .reset").addEventListener("click", () => { inputs.forEach(i => i.value = i.dataset.d); draw(); });
+  // Slider positions live only in the viewer's browser, so this puts them in words to paste into a comment.
+  el.querySelector(".pane-label .copy").addEventListener("click", async e => {
+    const text = `${mark(n)} · ${ex.title}: ${ex.params.map(([, label], j) => `${label} ${inputs[j].value}px`).join(", ")}`;
+    try { await navigator.clipboard.writeText(text); e.target.textContent = "Copied, paste it in a comment"; }
+    catch {
+      e.target.textContent = "Select the line below";
+      const line = el.querySelector(".copied") || el.querySelector(".try-stage").parentElement.appendChild(Object.assign(document.createElement("div"), { className: "note copied" }));
+      line.textContent = text;
+    }
+    setTimeout(() => { e.target.textContent = "Copy values"; }, 2500);
+  });
+  draw();
+});
+mount(topSections, document.getElementById("top-examples"), n => String.fromCharCode(65 + n));
+mount(examples, document.getElementById("examples"), n => n + 1);
+</script>
+</body>
+</html>

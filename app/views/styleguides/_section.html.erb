@@ -7,27 +7,38 @@
   `stacked` puts the twins one above the other at every width, for a section too wide to share a row.
   `docs` is the component's page in the daisyUI documentation, for a section that draws one component.
   `source` is the name and site of the set a section draws a few of, linked for the rest of it.
+
+  Each section folds under its title, and the `fold` controller keeps it folded through a member switch and a reload.
 %>
-<section class="flex flex-col gap-2" data-section-anchor-target="section" data-title="<%= title %>">
-  <div class="flex flex-wrap items-baseline justify-between gap-2">
-    <h2 class="text-lg font-semibold"><%= title %></h2>
+<section data-section-anchor-target="section" data-title="<%= title %>" data-controller="fold" data-action="turbo:morph@document->fold#restore">
+  <details class="collapse collapse-arrow" open data-fold-target="details" data-action="toggle->fold#remember">
+    <summary class="collapse-title ps-0 py-2">
+      <h2 class="text-lg font-semibold"><%= title %></h2>
+    </summary>
 
-    <% if docs %>
-      <%= link_to "#{title} in the daisyUI docs", docs, class: "link text-meta" %>
-    <% end %>
+    <%# WHY: the links sit inside the fold rather than in the summary beside the title, because a link inside a summary is a control nested in a control. %>
+    <div class="collapse-content flex flex-col gap-2 px-0">
+      <% if docs || source %>
+        <div class="flex flex-wrap gap-x-4 gap-y-1">
+          <% if docs %>
+            <%= link_to "#{title} in the daisyUI docs", docs, class: "link text-meta" %>
+          <% end %>
 
-    <% if source %>
-      <% name, site_url = source %>
-      <%= link_to "The rest of #{name}", site_url, class: "link text-meta" %>
-    <% end %>
-  </div>
+          <% if source %>
+            <% name, site_url = source %>
+            <%= link_to "The rest of #{name}", site_url, class: "link text-meta" %>
+          <% end %>
+        </div>
+      <% end %>
 
-  <div class="grid gap-4 <%= "lg:grid-cols-2" unless stacked %>">
-    <% %w[ organic organic-dark ].each do |theme| %>
-      <%# WHY: `min-w-0`, because a grid item will not shrink below its widest content, so the token table would widen the page on a phone instead of scrolling in its own wrapper. %>
-      <div data-theme="<%= theme %>" class="min-w-0 bg-base-100 text-base-content rounded-box border border-base-300 p-4">
-        <%= yield theme %>
+      <div class="grid gap-4 <%= "lg:grid-cols-2" unless stacked %>">
+        <% %w[ organic organic-dark ].each do |theme| %>
+          <%# WHY: `min-w-0`, because a grid item will not shrink below its widest content, so the token table would widen the page on a phone instead of scrolling in its own wrapper. %>
+          <div data-theme="<%= theme %>" class="min-w-0 bg-base-100 text-base-content rounded-box border border-base-300 p-4">
+            <%= yield theme %>
+          </div>
+        <% end %>
       </div>
-    <% end %>
-  </div>
+    </div>
+  </details>
 </section>

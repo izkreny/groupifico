@@ -5,6 +5,13 @@ module EventsHelper
   RANGE           = "–"
   DOT             = " · "
 
+  # The Who's coming? tally's colours, which the tally, the roster, the event row and the answer buttons all paint a status in. Whole class names, so Tailwind finds each one.
+  STATUS_INKS = { "yes" => "text-success", "maybe" => "text-warning", "no" => "text-error", "invited" => "text-info" }.freeze
+
+  def status_ink(status)
+    STATUS_INKS[status]
+  end
+
   # The card's own two readings of the same schedule: the range a hero card and the detail screen
   # carry, and the start alone that a compact row carries beside the place. Both print in
   # `Time.zone`, which `starts_at` already answers in.
@@ -56,16 +63,6 @@ module EventsHelper
   # nothing, so it leaves the status standing alone.
   def event_status_line(event)
     [ event.status.capitalize, (event.category unless event.other?) ].compact.join(" ")
-  end
-
-  # Who has said yes, for the hero card's one line of names. Queried with the names preloaded
-  # rather than read off the loaded registrations: the hero is fetched by `Group#featured_event`, which
-  # no screen's preload reaches, and `Member` gets its name through `user` - so selecting in memory
-  # walked two queries per answer.
-  def said_yes_line(event)
-    names = event.registrations.yes.preloaded.map { it.member.full_name }
-
-    "#{names.to_sentence} said yes" if names.any?
   end
 
   # TODO: Translate statuses and categories, something like:

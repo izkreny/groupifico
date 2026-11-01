@@ -1,6 +1,6 @@
 <% content_for :title, "Edit me" %>
 
-<%= render "shared/page_header", title: "Edit me" %>
+<%= render "shared/page_header", title: "Edit me", back: user_profile_path %>
 
 <div class="w-full">
   <%= render "user_profiles/form", user_profile: @user_profile %>

@@ -143,6 +143,15 @@ RSpec.describe "The group form", type: :system do
       expect(page).to have_current_path edit_address_path(member.group.address)
     end
 
+    it "draws the address's pencil at 20px, as every icon control" do
+      member = create(:member, :active, :owner, :with_all_attributes)
+      sign_in_as member.user
+
+      visit edit_group_path(member.group)
+
+      expect(width_of("a[aria-label='Correct address'] svg")).to eq 20
+    end
+
     it "returns to the group home when the edit screen is cancelled" do
       member = create(:member, :active, :owner)
       sign_in_as member.user

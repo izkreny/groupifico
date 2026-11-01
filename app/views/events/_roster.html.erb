@@ -9,13 +9,11 @@
   would hand a plain member controls on their own row. `Registration.new(event:)` rather than
   `event.registrations.new`, which would join the loaded association `events/_counts` sizes.
 
-  A row whose pills already say where it stands draws no badge beside them. An unanswered row keeps
-  its badge, because no pill is current there to tell `reserved` from `invited` - except for a
-  reader who may invite, where frame 4l puts the paper plane in its place: plain on a `reserved` row,
-  which it asks, and tinted on an `invited` one, which is already asked and stays as it is. A paused
-  or inactive member's row keeps its badge, because they are never asked.
+  A row whose pills already say where it stands draws no status icon beside them. An unanswered row keeps
+  its status icon, because no pill is current there to tell `reserved` from `invited`. A reader who may invite gets the paper plane beside it: plain on a `reserved` row, which it asks, and tinted on an `invited` one, which is already asked and stays as it is, where the plane alone says it, so the row draws no second one. A paused
+  or inactive member's row keeps its status icon alone, because they are never asked.
 
-  The pills are `Event#available_registration_answers`, so once the event has ended a maybe given before it has no pill to light, and its row keeps the badge as an unanswered one does.
+  The pills are `Event#available_registration_answers`, so once the event has ended a maybe given before it has no pill to light, and its row keeps the status icon as an unanswered one does.
 
   The pills also wait on `Event#open_to_answers?`, as on `events/_row`: `Registration` refuses every
   answer on an event that is over, so a pill there is a control certain to fail. The take-off does
@@ -37,50 +35,57 @@
     </p>
   </div>
 
+  <%# WHY: daisyUI fills a button carrying aria-current as active, so the lit pill clears that fill at rest to stay chosen by its colour alone, and keeps the hover every button has. %>
+  <%# The Who's coming? tally's colours: the chosen answer in its status colour and an invitation in info, every control not yet used in the muted icon ink, and a row's status icon drawn where no control stands, as the tally draws it. %>
   <% if roster.any? %>
     <ul class="list">
       <% roster.each do |registration| %>
         <% name = registration.member.full_name %>
-        <li id="<%= dom_id registration, :roster %>" class="list-row items-center px-0">
+        <li id="<%= dom_id registration, :roster %>" class="list-row items-center px-0 py-2">
           <span class="list-col-grow"><%= name %></span>
 
-          <% if may_invite && !registration.answered? && registration.member.active? %>
-            <% asked = registration.invited? %>
-            <%= button_to group_event_registration_invitation_path(event.group, event, registration),
-                  class: "btn btn-ghost btn-sm btn-square#{" text-primary" if asked}",
-                  title: registration_status_label(registration),
-                  aria: { label: asked ? "#{name} is invited, no reply yet" : "Invite #{name}" } do %>
-              <%= icon :invited, class: "size-4" %>
+          <%# WHY: one strip at one gap, so every status icon on the row sits the same distance from its neighbours whichever controls the reader gets; the take-off leads it, 30px from the first status icon, so it reads as its own control rather than one more status. %>
+          <div class="flex items-center gap-2">
+            <% if may_remove %>
+              <%= button_to group_event_registration_path(event.group, event, registration),
+                    method: :delete,
+                    form_class: "mr-2.5",
+                    class: "btn btn-ghost btn-sm btn-square text-icon-muted",
+                    aria: { label: "Take #{name} off the list" } do %>
+                <%= icon :delete, class: "size-5" %>
+              <% end %>
             <% end %>
-          <% elsif !may_answer || answers.exclude?(registration.status) %>
-            <span class="badge badge-sm" title="<%= registration_status_label(registration) %>">
-              <%= status_icon registration, label: registration_status_label(registration), class: "size-4" %>
-            </span>
-          <% end %>
 
-          <% if may_answer %>
-            <div class="join">
+            <% invitable = may_invite && !registration.answered? && registration.member.active? %>
+            <% asked = registration.invited? %>
+            <% if (!may_answer || answers.exclude?(registration.status)) && !(invitable && asked) %>
+              <span class="inline-flex size-8 items-center justify-center <%= status_ink(registration.status) %>" title="<%= registration_status_label(registration) %>">
+                <%= status_icon registration, label: registration_status_label(registration), class: "size-5" %>
+              </span>
+            <% end %>
+
+            <% if invitable %>
+              <%= button_to group_event_registration_invitation_path(event.group, event, registration),
+                    class: "btn btn-ghost btn-sm btn-square #{asked ? "text-info" : "text-icon-muted"}",
+                    title: registration_status_label(registration),
+                    aria: { label: asked ? "#{name} is invited, no reply yet" : "Invite #{name}" } do %>
+                <%= icon :invited, class: "size-5" %>
+              <% end %>
+            <% end %>
+
+            <% if may_answer %>
               <% answers.each do |answer| %>
                 <% current = registration.status == answer %>
                 <%= button_to group_event_registration_path(event.group, event, registration),
                       method: :patch,
                       params: { registration: { status: answer } },
-                      class: "join-item btn btn-sm btn-square#{" btn-primary" if current}",
+                      class: "btn btn-ghost btn-sm btn-square #{current ? "#{status_ink(answer)} not-hover:bg-transparent not-hover:border-transparent" : "text-icon-muted"}",
                       aria: { label: "#{answer.capitalize} for #{name}", current: (current ? "true" : nil) } do %>
-                  <%= icon answer, class: "size-4" %>
+                  <%= icon answer, class: "size-5" %>
                 <% end %>
               <% end %>
-            </div>
-          <% end %>
-
-          <% if may_remove %>
-            <%= button_to group_event_registration_path(event.group, event, registration),
-                  method: :delete,
-                  class: "btn btn-ghost btn-sm btn-square",
-                  aria: { label: "Take #{name} off the list" } do %>
-              <%= icon :delete, class: "size-4" %>
             <% end %>
-          <% end %>
+          </div>
         </li>
       <% end %>
     </ul>
@@ -91,13 +96,13 @@
   <% if may_invite %>
     <div class="flex flex-wrap gap-2">
       <%= link_to new_group_event_registration_path(event.group, event), class: "btn btn-sm" do %>
-        <%= icon :add_member, class: "size-4" %>Add someone
+        <%= icon :add_member, class: "size-5" %>Add someone
       <% end %>
 
       <%# Only while it can do something: every active member already asked leaves it nothing. %>
       <% if uninvited %>
         <%= button_to group_event_invitation_path(event.group, event), class: "btn btn-sm" do %>
-          <%= icon :invited, class: "size-4" %>Invite the rest
+          <%= icon :invited, class: "size-5" %>Invite the rest
         <% end %>
       <% end %>
     </div>

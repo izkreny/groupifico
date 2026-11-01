@@ -5,36 +5,21 @@
 <div class="flex flex-col gap-4 w-full">
   <%= render "events/event", event: @event %>
 
-  <%#
-    The attendance card, in the frames' order: the counts, the reader's own answer row, and the
-    roster unfolding below both. The counts are the disclosure's summary, but the roster cannot be
-    its body, because everything after a `<summary>` folds with it and the answer row between them
-    has to show while the roster is folded - nor can the answer row go inside the summary, since a
-    `button_to` form cannot live in one. So the `<details>` holds its summary alone and the roster is
-    a later sibling that `peer-open:` shows, with `aria-controls` telling assistive technology which
-    element the summary's expanded state is about.
-  %>
+  <%# The reader's own answer row stands on the page above the attendance card, which holds Who's coming? folding the roster beneath it. %>
+  <%= render "events/rsvp", event: @event, registration: @event.registration_for(Current.member) %>
+
   <div class="card card-sm bg-base-200">
     <div class="card-body gap-3">
-      <%= render "events/roster_toggle", event: @event, roster_id: dom_id(@event, :roster) %>
-
-      <%= render "events/rsvp", event: @event, registration: @event.registration_for(Current.member) %>
-
-      <div id="<%= dom_id @event, :roster %>" class="hidden peer-open:block">
-        <%= render "events/roster", event: @event %>
-      </div>
+      <%# The next-up card's tally links here with `responses=show`, so the reader lands on Who's coming already unfolded. %>
+      <%= render layout: "events/roster_toggle", locals: { event: @event, open: params[:responses] == "show" } do %>
+        <div id="<%= dom_id @event, :roster %>">
+          <%= render "events/roster", event: @event %>
+        </div>
+      <% end %>
     </div>
   </div>
 
   <% if @event.description.present? %>
     <%= simple_format @event.description %>
-  <% end %>
-
-  <%# `destroy?` rather than the `show?` that admitted the reader, for the reason `groups/edit` gives:
-      a paused member reads the screen and is refused every write on it. %>
-  <% if allowed_to?(:destroy?, @event) %>
-    <div class="mt-6">
-      <%= render "events/delete", group: @group, event: @event %>
-    </div>
   <% end %>
 </div>

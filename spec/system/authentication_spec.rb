@@ -47,7 +47,8 @@ RSpec.describe "Authentication", type: :system do
   # about whether a reader can see it: `spec/system/sign_in_page_spec.rb` carries why a class the
   # stylesheet never compiled leaves a control in the DOM with its label intact.
   describe "the page the emailed sign-in link opens" do
-    let(:link) { sign_in_path(token: SignInToken.mint(create(:member).user)) }
+    let(:user) { create(:member).user }
+    let(:link) { sign_in_path(token: SignInToken.mint(user)) }
 
     before do
       visit link
@@ -55,6 +56,16 @@ RSpec.describe "Authentication", type: :system do
 
     it "paints the button that spends the link" do
       expect(page).to paint ".btn-primary"
+    end
+
+    # Frame 10a sets the address in the secondary colour, #526539, on a line of its own.
+    it "sets the address in the secondary colour" do
+      expect(find("h1 span", text: user.email).evaluate_script("getComputedStyle(this).color")).to eq "rgb(82, 101, 57)"
+    end
+
+    # `spec/system/sign_in_page_spec.rb` carries why the heading is the measure.
+    it "stretches the button across the column" do
+      expect(width_of(".btn-primary")).to eq width_of("h1")
     end
 
     # What catches the failure no other layer reaches on this screen: the heading names an address,

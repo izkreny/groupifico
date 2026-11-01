@@ -11,16 +11,16 @@
 <% line = street.presence || area.presence %>
 <div id="<%= dom_id address %>" class="flex flex-col gap-2">
   <div class="flex items-start justify-between gap-2">
-    <h2 class="text-record"><%= link_to_if line.nil?, address.name, address_map_url(address), class: "link link-hover" %></h2>
+    <h2 class="text-record"><%= link_to_if line.nil?, address.name, address_map_url(address), class: "link link-hover", target: "_blank" %></h2>
 
     <% if allowed_to?(:update?, address) %>
-      <%= link_to "Correct", edit_address_path(address), class: "btn btn-sm flex-none" %>
+      <%= link_to edit_address_path(address), class: "btn btn-sm flex-none" do %><%= icon :edit, class: "size-5" %>Correct<% end %>
     <% end %>
   </div>
 
   <address class="flex flex-col not-italic">
     <% if line %>
-      <%= link_to line, address_map_url(address), class: "link link-hover" %>
+      <%= link_to line, address_map_url(address), class: "link link-hover", target: "_blank" %>
     <% end %>
     <% if street.present? && area.present? %>
       <span><%= area %></span>

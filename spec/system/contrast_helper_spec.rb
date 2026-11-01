@@ -21,6 +21,13 @@ RSpec.describe "The contrast helper", type: :system do
     expect(text_contrast("#probe span")).to be < ContrastHelper::WCAG_AA
   end
 
+  # A colour carrying its own alpha, as `text-base-content/60` computes, is as faint as the alpha makes it, whatever its channels say.
+  it "counts the colour's own alpha against the text" do
+    append_probe opacity: 1, colour: "rgba(32, 30, 29, 0.05)"
+
+    expect(text_contrast("#probe span")).to be < ContrastHelper::WCAG_AA
+  end
+
   # The selector reaches the script as an argument rather than as interpolated source, so a double
   # quote inside it is data. Every attribute selector carries two.
   it "measures a selector carrying double quotes" do
@@ -32,13 +39,14 @@ RSpec.describe "The contrast helper", type: :system do
   private
     # Injected rather than routed, for the reason the paint matcher's own control gives: a test-only
     # route would be application code that exists for the suite.
-    def append_probe(opacity:)
-      page.execute_script(<<~JAVASCRIPT, opacity)
+    def append_probe(opacity:, colour: nil)
+      page.execute_script(<<~JAVASCRIPT, opacity, colour)
         const probe = document.createElement("div");
         probe.id = "probe";
         probe.dataset.probe = "yes";
         probe.style.opacity = arguments[0];
         probe.innerHTML = "<span>probe</span>";
+        if (arguments[1]) probe.firstChild.style.color = arguments[1];
         document.body.appendChild(probe);
       JAVASCRIPT
     end

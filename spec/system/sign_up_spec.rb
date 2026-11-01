@@ -14,7 +14,12 @@ RSpec.describe "Creating a group", type: :system do
     end
 
     it "paints the submit button" do
-      expect(page).to paint "input[type=submit]"
+      expect(page).to paint "button[type=submit]"
+    end
+
+    # Frame 9b's full-width button; `spec/system/sign_in_page_spec.rb` carries why the heading is the measure.
+    it "stretches the submit button across the column" do
+      expect(width_of("button[type=submit]")).to eq width_of("h1")
     end
 
     # The one entry screen whose copy still goes through `AppFormBuilder#note_tag`, which renders
@@ -45,6 +50,15 @@ RSpec.describe "Creating a group", type: :system do
       expect(page).to have_css "#notice"
       expect(page).to paint "#notice"
     end
+
+    # The soft notice sets its words in the success colour itself, #1d6626, as `group_refusal_spec.rb` holds the alert to the error colour.
+    it "sets the notice soft, its words in the success colour" do
+      fill_in "Your email", with: "starter@example.com"
+      fill_in "Group name", with: "Riverside Choir"
+      click_button "Send my confirmation link"
+
+      expect(find_by_id("notice").evaluate_script("getComputedStyle(this).color")).to eq "rgb(29, 102, 38)"
+    end
   end
 
   describe "the page the confirmation link opens" do
@@ -60,6 +74,17 @@ RSpec.describe "Creating a group", type: :system do
 
     it "has no accessibility violations" do
       expect(page).to be_accessible
+    end
+
+    # Frame 10b sets the address and the group name in the secondary colour, #526539, each on a line of its own.
+    it "sets the address and the group name in the secondary colour" do
+      colours = [ "starter@example.com", "Riverside Choir" ].map { |value| find("h1 span", text: value).evaluate_script("getComputedStyle(this).color") }
+
+      expect(colours).to eq [ "rgb(82, 101, 57)" ] * 2
+    end
+
+    it "stretches the button across the column" do
+      expect(width_of(".btn-primary")).to eq width_of("h1")
     end
 
     # `spec/system/sign_in_page_spec.rb` carries why this is a separate assertion from the two

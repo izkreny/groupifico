@@ -1,25 +1,47 @@
-<%# locals: (event:) %>
+<%# locals: (event:, roster_link: false, inline: false) %>
 <%#
   Every tag the tally carries, in the order it carries them, so the counted statuses stay the
   model's business alone. `invited` is the one whose label is not its own name: the legend calls
   that tally "no reply".
 
-  An event nobody has been asked about sums to zero, because `reserved` is the one status
-  `Event#answer_counts` leaves out, and says so in words instead: a card drawing nothing there
-  reads as a card that failed to load the answers rather than as one with no answers to show. An
-  event with no registrations at all still draws nothing, since "0 on the list" is not a fact
-  worth a line.
+  An event nobody has been asked about, every place still reserved, draws no tags and says so in
+  words instead: four zeros beside the reserved count read as answers that failed to load rather
+  than as nobody asked yet. An event with no registrations at all still draws nothing, since "0 on
+  the list" is not a fact worth a line.
+
+  Each tag is its icon and number alone, without a badge, in the theme's status colour: yes in
+  success, maybe in warning, no in error and no reply in info; reserved, a place nobody has been
+  asked about yet, in the page's ink.
+
+  A fact line like the ones above it, led by the people icon. `roster_link` makes "Who's coming?" a link
+  to the event screen with its roster unfolded, for the next-up card. `inline` draws the tags alone,
+  for the event screen's Who's coming row, whose heading already says what they count.
 %>
 <% counts = event.answer_counts %>
-<% if counts.values.any?(&:positive?) %>
-  <div class="flex flex-wrap gap-2">
+<% if counts.except("reserved").values.any?(&:positive?) %>
+  <% tags = capture do %>
     <% counts.each do |status, count| %>
-      <span class="badge badge-sm gap-1">
-        <%= icon status, label: (status == "invited" ? "no reply" : status), class: "size-3.5" %>
+      <span class="inline-flex items-center gap-1 mr-1.5 <%= status_ink(status) %>">
+        <%= icon status, label: (status == "invited" ? "no reply" : status), class: "size-4" %>
         <%= count %>
       </span>
     <% end %>
-  </div>
+  <% end %>
+
+  <% if inline %>
+    <%= tags %>
+  <% else %>
+    <p class="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+      <%= icon :members, class: "size-4 flex-none text-icon-muted" %>
+      <% if roster_link %>
+        <%= link_to "Who’s coming?", group_event_path(event.group, event, responses: "show"), class: "link link-hover mr-1.5" %>
+      <% else %>
+        <span class="mr-1.5">Who&rsquo;s coming?</span>
+      <% end %>
+
+      <%= tags %>
+    </p>
+  <% end %>
 <% else %>
   <% waiting = event.registrations.size %>
   <% if waiting.positive? %>

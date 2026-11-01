@@ -1,16 +1,15 @@
 <% content_for :title, "Edit event" %>
 
-<%= render "shared/page_header", title: "Edit event" %>
+<%= render "shared/page_header", title: "Edit event", back: group_event_path(@group, @event) %>
 
-<div class="w-full">
-  <%= render "events/form", group: @group, event: @event, submit: "Save changes", cancel: group_event_path(@group, @event) %>
+<%# The delete leads the form's button row, as on every edit screen, with its sheet detached below the form, since a form cannot hold the sheet's own. `destroy?` rather than the `edit?` that admitted the reader, because the event's manager may edit it and may not delete it. %>
+<% deletable = allowed_to?(:destroy?, @event) %>
+<% id = dom_id(@event, :confirm_delete) %>
+<%= render layout: "shared/confirm_scope", locals: { enabled: deletable, classes: "w-full" } do %>
+  <%= render "events/form", group: @group, event: @event, submit: "Save changes", cancel: group_event_path(@group, @event),
+        leading: (render("shared/confirm_trigger", id:, confirm: "Delete event") if deletable) %>
 
-  <%# Below the form rather than in its button row, where frame 4k draws it: the sheet's trigger is
-      a `button_to`, and a form cannot hold another. `destroy?` rather than the `edit?` that
-      admitted the reader, because the event's manager may edit it and may not delete it. %>
-  <% if allowed_to?(:destroy?, @event) %>
-    <div class="mt-10">
-      <%= render "events/delete", group: @group, event: @event %>
-    </div>
+  <% if deletable %>
+    <%= render "events/delete", group: @group, event: @event, id:, detached: true %>
   <% end %>
-</div>
+<% end %>

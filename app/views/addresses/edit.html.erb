@@ -1,6 +1,6 @@
 <% content_for :title, "Correct place" %>
 
-<%= render "shared/page_header", title: "Correct place" %>
+<%= render "shared/page_header", title: "Correct place", back: address_path(@address) %>
 
 <div class="w-full">
   <%= render "addresses/form", address: @address %>

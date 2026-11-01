@@ -70,4 +70,16 @@ RSpec.describe "The members list", type: :system do
     expect(page).to have_current_path edit_group_member_path(actor.group, target)
     expect(page).to have_button "Save member"
   end
+
+  it "draws a row's icons at 20px, 20px apart" do
+    actor  = create(:member, :active, :members_administrator, :with_all_attributes)
+    target = create(:member, :with_all_attributes, group: actor.group)
+    sign_in_as actor.user
+
+    visit group_members_path(actor.group)
+
+    expect(find_by_id(ActionView::RecordIdentifier.dom_id(target, :row)).evaluate_script(<<~JS)).to eq [ 20, 20, 20, 20 ]
+      ((call, email) => [ call.width, email.width, Math.round(email.left - call.right), email.height ])(...["Call", "Email"].map(verb => this.querySelector(`a[aria-label^='${verb} '] svg`).getBoundingClientRect()))
+    JS
+  end
 end

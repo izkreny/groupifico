@@ -1,6 +1,6 @@
 <% content_for :title, "Duplicate event" %>
 
-<%= render "shared/page_header", title: "Duplicate event" %>
+<%= render "shared/page_header", title: "Duplicate event", back: group_event_path(@group, @original) %>
 
 <div class="w-full">
   <div class="mb-4"><%= render "events/duplicate_notice", original: @original %></div>

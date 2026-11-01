@@ -34,51 +34,65 @@ RSpec.describe ApplicationHelper, type: :helper do
     end
   end
 
-  describe "#shell_tabs?" do
-    it "is true on a list screen inside a group" do
-      allow(helper).to receive_messages(controller_name: "events", action_name: "index")
+  describe "#shell_header_tabs?" do
+    it "is true on a form inside a group, since the header's tabs sit out of its way" do
+      allow(helper).to receive_messages(controller_name: "events", action_name: "edit")
 
-      expect(helper.shell_tabs?(build_stubbed(:group))).to be true
-    end
-
-    it "is true on a detail screen inside a group" do
-      allow(helper).to receive_messages(controller_name: "members", action_name: "show")
-
-      expect(helper.shell_tabs?(build_stubbed(:group))).to be true
-    end
-
-    it "is false on a form" do
-      allow(helper).to receive_messages(controller_name: "events", action_name: "new")
-
-      expect(helper.shell_tabs?(build_stubbed(:group))).to be false
-    end
-
-    # `create` and `update` re-render their form with `unprocessable_content` on a failed save, so
-    # a reader who mistypes a field is looking at a form and must see no tabs. Watched failing:
-    # with both dropped from `FORM_ACTIONS` these two examples go red and the four above stay
-    # green, which is the whole reason they are named separately.
-    it "is false on a failed create, which re-renders the form" do
-      allow(helper).to receive_messages(controller_name: "events", action_name: "create")
-
-      expect(helper.shell_tabs?(build_stubbed(:group))).to be false
-    end
-
-    it "is false on a failed update, which re-renders the form" do
-      allow(helper).to receive_messages(controller_name: "groups", action_name: "update")
-
-      expect(helper.shell_tabs?(build_stubbed(:group))).to be false
+      expect(helper.shell_header_tabs?(build_stubbed(:group))).to be true
     end
 
     it "is false with no group, which is what keeps them off the groups index" do
       allow(helper).to receive_messages(controller_name: "groups", action_name: "index")
 
-      expect(helper.shell_tabs?(nil)).to be false
+      expect(helper.shell_header_tabs?(nil)).to be false
     end
 
     it "is false outside a group entirely" do
       allow(helper).to receive_messages(controller_name: "user_profiles", action_name: "show")
 
-      expect(helper.shell_tabs?(nil)).to be false
+      expect(helper.shell_header_tabs?(nil)).to be false
+    end
+  end
+
+  describe "#shell_dock?" do
+    it "is true on a list screen inside a group" do
+      allow(helper).to receive_messages(controller_name: "events", action_name: "index")
+
+      expect(helper.shell_dock?(build_stubbed(:group))).to be true
+    end
+
+    it "is true on a detail screen inside a group" do
+      allow(helper).to receive_messages(controller_name: "members", action_name: "show")
+
+      expect(helper.shell_dock?(build_stubbed(:group))).to be true
+    end
+
+    it "is false on a form" do
+      allow(helper).to receive_messages(controller_name: "events", action_name: "new")
+
+      expect(helper.shell_dock?(build_stubbed(:group))).to be false
+    end
+
+    # `create` and `update` re-render their form with `unprocessable_content` on a failed save, so
+    # a reader who mistypes a field is looking at a form and must see no dock. Watched failing:
+    # with both dropped from `FORM_ACTIONS` these two examples go red and the ones above stay
+    # green, which is the whole reason they are named separately.
+    it "is false on a failed create, which re-renders the form" do
+      allow(helper).to receive_messages(controller_name: "events", action_name: "create")
+
+      expect(helper.shell_dock?(build_stubbed(:group))).to be false
+    end
+
+    it "is false on a failed update, which re-renders the form" do
+      allow(helper).to receive_messages(controller_name: "groups", action_name: "update")
+
+      expect(helper.shell_dock?(build_stubbed(:group))).to be false
+    end
+
+    it "is false with no group" do
+      allow(helper).to receive_messages(controller_name: "groups", action_name: "index")
+
+      expect(helper.shell_dock?(nil)).to be false
     end
   end
 

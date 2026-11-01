@@ -12,6 +12,19 @@ RSpec.describe StyleguidesHelper, type: :helper do
     end
   end
 
+  describe "#app_colours" do
+    it "reads the app's own colour tokens, apart from daisyUI's, from the stylesheet" do
+      expect(helper.app_colours).to eq "icon-muted" => "color-mix(in oklab, var(--color-base-content) 60%, transparent)", "muted" => "color-mix(in oklab, var(--color-base-content) 70%, transparent)"
+    end
+  end
+
+  # #757068 by hand: each channel of the light ink, #201e1d, at 60% over the light page, #f5ead8.
+  describe "#app_colour_hex" do
+    it "is the colour an app token's mix lands on over the theme's page" do
+      expect(helper.app_colour_hex("organic", "color-mix(in oklab, var(--color-base-content) 60%, transparent)")).to eq "#757068"
+    end
+  end
+
   # The literals are WCAG's published extremes and the ratio every contrast checker gives #777 on white.
   describe "#contrast_ratio" do
     it "rates black on white at 21:1" do

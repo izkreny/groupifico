@@ -88,6 +88,14 @@ RSpec.describe "UserProfiles", type: :request do
         expect(response).to have_http_status :ok
       end
 
+      it "goes back to the profile it edits" do
+        sign_in_as(create(:user))
+
+        get edit_user_profile_path
+
+        expect(Nokogiri::HTML(response.body).at_css("header a[aria-label='Back']")&.[]("href")).to eq user_profile_path
+      end
+
       it "edits the name, the mobile and the email in one form" do
         sign_in_as(create(:user))
 

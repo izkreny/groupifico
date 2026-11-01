@@ -329,23 +329,42 @@ RSpec.describe "Groups", type: :request do
         expect(response.body).not_to include 'aria-label="Edit group"'
       end
 
-      it "offers the switcher chevron to a reader with a second group" do
+      it "offers the switcher to a reader with a second group" do
         member = create(:member)
         create(:member, user: member.user, group: create(:group))
         sign_in_as(member.user)
 
         get group_path(member.group)
 
-        expect(response.body).to include 'aria-label="Switch group"'
+        expect(Nokogiri::HTML(response.body).css("header details.dropdown")).to be_present
       end
 
-      it "offers no switcher chevron to a reader with one group" do
+      it "offers no switcher to a reader with one group" do
         member = create(:member)
         sign_in_as(member.user)
 
         get group_path(member.group)
 
-        expect(response.body).not_to include 'aria-label="Switch group"'
+        expect(Nokogiri::HTML(response.body).css("header details.dropdown")).to be_empty
+      end
+
+      it "heads the screen with the group's name for a member of one group" do
+        member = create(:member, group: create(:group, name: "Riverside Choir"))
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(Nokogiri::HTML(response.body).css("header h1").map(&:text)).to eq [ "Riverside Choir" ]
+      end
+
+      it "heads the screen with the group's name as the switcher for a member of several" do
+        member = create(:member, group: create(:group, name: "Harbour Band"))
+        create(:member, user: member.user, group: create(:group))
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(Nokogiri::HTML(response.body).css("header h1").map(&:text)).to eq [ "Harbour Band" ]
       end
 
       # `menu-active` colours the reader's current group and says nothing to a screen reader, so
@@ -368,33 +387,32 @@ RSpec.describe "Groups", type: :request do
       end
 
       # A group they have left is not a group they can switch to, so it must not raise the count
-      # that decides whether the chevron appears either. Same leak `user.current_groups` closes for
+      # that decides whether the switcher appears either. Same leak `user.current_groups` closes for
       # the index, asked of the shell instead.
-      it "offers no switcher chevron for a group the reader has left" do
+      it "offers no switcher for a group the reader has left" do
         member = create(:member)
         create(:member, :inactive, user: member.user, group: create(:group))
         sign_in_as(member.user)
 
         get group_path(member.group)
 
-        expect(response.body).not_to include 'aria-label="Switch group"'
+        expect(Nokogiri::HTML(response.body).css("header details.dropdown")).to be_empty
       end
     end
   end
 
   # A failed `update` re-renders `edit` on the persisted record with the rejected attributes still
-  # assigned, so the header and the screen's own heading would otherwise read a name the save
-  # refused. Watched failing in both directions, one assertion each: against `name` in the layout
-  # the header row loses the name, and against `name` in `groups/edit` no heading carries it.
-  describe "the shell's header and the screen's heading after a refused rename" do
-    it "keeps the stored group name in both" do
+  # assigned, so the screen's own heading would otherwise read a name the save refused. The header
+  # carries the screen's title there rather than the name. Watched failing against `name` in
+  # `groups/edit`, where no heading carries the stored name.
+  describe "the screen's heading after a refused rename" do
+    it "keeps the stored group name" do
       member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
       sign_in_as(member.user)
 
       patch group_path(member.group), params: { group: { name: "" } }
 
       expect(response).to have_http_status :unprocessable_content
-      expect(header_text(response.body)).to include "Riverside Choir"
       expect(headings(response.body)).to include "Riverside Choir"
     end
   end
@@ -558,22 +576,22 @@ RSpec.describe "Groups", type: :request do
         expect(page_text(response.body)).to include "Delete group"
       end
 
-      # The confirm sheet's trigger is the delete form's own submit button, which is what makes the
+      # The confirm sheet's trigger is a submit button of the delete form, which is what makes the
       # sheet an enhancement rather than the only route: with JavaScript off the click posts the
-      # delete straight away. The markup carries that claim, so it is asserted here rather than in
-      # `spec/system/confirm_sheet_spec.rb` - `.rspec` keeps the system suite out of the runner's
-      # own run, and this is the one gate a CI job sees.
-      it "renders the delete as the trigger's own form" do
+      # delete straight away. On the edit screen it stands in the form's button row and joins the
+      # delete form through its `form` attribute. The markup carries that claim, so it is asserted
+      # here rather than in `spec/system/confirm_sheet_spec.rb` - `.rspec` keeps the system suite
+      # out of the runner's own run, and this is the one gate a CI job sees.
+      it "renders the delete as a form its trigger submits, first in the form's button row" do
         member = create(:member, :owner)
         sign_in_as(member.user)
 
         get edit_group_path(member.group)
 
         body = Nokogiri::HTML(response.body)
-        form = "form##{ActionView::RecordIdentifier.dom_id(member.group, :confirm_delete)}_form"
-        expect(body.at_css("#{form}[action='#{group_path(member.group)}'][method='post']")).to be_present
-        expect(body.at_css("#{form} input[name='_method'][value='delete']")).to be_present
-        expect(body.at_css("#{form} button[type='submit']").text.strip).to eq "Delete group"
+        id = "#{ActionView::RecordIdentifier.dom_id(member.group, :confirm_delete)}_form"
+        expect(body.at_css("form##{id}[action='#{group_path(member.group)}'][method='post'] input[name='_method'][value='delete']")).to be_present
+        expect(body.at_css("form[action='#{group_path(member.group)}'] .btn:first-child[type='submit'][form='#{id}']").text.strip).to eq "Delete group"
       end
     end
 

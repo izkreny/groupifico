@@ -23,7 +23,7 @@ RSpec.describe "Addresses", type: :request do
         expect(response).to have_http_status :ok
       end
 
-      # Frame 9k: the pushed title, then the name, the lines of the address and whose home it is.
+      # Frame 9k: the pushed title in the header, then the name, the lines of the address and whose home it is.
       it "shows the place under its pushed title" do
         address = create(:address, name: "Community Hall", street_name: "Obala", building_number: "14", postal_code: "10000", city: "Zagreb", country_code: "HR")
         member  = create(:member, group: create(:group, name: "Riverside Choir", address:))
@@ -31,7 +31,42 @@ RSpec.describe "Addresses", type: :request do
 
         get address_path(address)
 
-        expect(page_text(response.body)).to include "Place Community Hall", "Obala 14 10000 Zagreb HR", "Riverside Choir · home address"
+        expect(headings(response.body).first).to eq "Place"
+        expect(page_text(response.body)).to include "Community Hall", "Obala 14 10000 Zagreb HR", "Riverside Choir · home address"
+      end
+
+      # A map is somewhere else, so every link to one opens in a new tab and leaves the member's page where it was: the address, the event screen, and the events list's hero and rows.
+      it "opens the address's map link in a new tab" do
+        member = create(:member, :active)
+        address = create(:address, name: "Community Hall", street_name: "Obala", building_number: "14")
+        member.group.update!(address:)
+        sign_in_as(member.user)
+
+        get address_path(address)
+
+        expect(Nokogiri::HTML(response.body).css("a[href^='https://www.google.com/maps/']").map { it["target"] }).to eq [ "_blank" ]
+      end
+
+      it "opens the event screen's map link in a new tab" do
+        member = create(:member, :active)
+        address = create(:address, name: "Community Hall", street_name: "Obala", building_number: "14")
+        event = create(:event, group: member.group, creator: member, address:, status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        sign_in_as(member.user)
+
+        get group_event_path(member.group, event)
+
+        expect(Nokogiri::HTML(response.body).css("a[href^='https://www.google.com/maps/']").map { it["target"] }).to eq [ "_blank" ]
+      end
+
+      it "opens the events list's map links, hero and row, in a new tab" do
+        member = create(:member, :active)
+        address = create(:address, name: "Community Hall", street_name: "Obala", building_number: "14")
+        [ 2, 9 ].each { create(:event, group: member.group, creator: member, address:, status: :confirmed, starts_at: it.days.from_now, ends_at: it.days.from_now + 2.hours) }
+        sign_in_as(member.user)
+
+        get group_events_path(member.group)
+
+        expect(Nokogiri::HTML(response.body).css("a[href^='https://www.google.com/maps/']").map { it["target"] }).to eq [ "_blank", "_blank" ]
       end
 
       it "links the street to the reader's map application" do
@@ -225,6 +260,16 @@ RSpec.describe "Addresses", type: :request do
         get edit_address_path(address)
 
         expect(response).to have_http_status :ok
+      end
+
+      it "goes back to the address it corrects" do
+        address = create(:address)
+        member  = create(:member, :owner, group: create(:group, address:))
+        sign_in_as(member.user)
+
+        get edit_address_path(address)
+
+        expect(Nokogiri::HTML(response.body).at_css("header a[aria-label='Back']")&.[]("href")).to eq address_path(address)
       end
 
       # The form is asked of the rule its Save is, so a member who may only read the address is

@@ -3,7 +3,7 @@
 <div class="max-w-full overflow-x-auto">
   <table class="table table-sm">
     <%# WHY: daisyUI greys a table's header at 60% of the base content, 4.1:1 on the light ground; 70% is the theme's grey that holds AA in both. %>
-    <thead class="text-base-content/70">
+    <thead class="text-muted">
       <tr>
         <th>Token</th>
         <th>Swatch</th>
@@ -12,7 +12,7 @@
         <th>On <em>base-100</em></th>
       </tr>
     </thead>
-    <tbody>
+    <tbody id="daisyui_tokens_<%= theme %>">
       <% colours.each do |name, hex| %>
         <% pair = contrast_pair(name) %>
         <tr>
@@ -27,6 +27,24 @@
               <pre><strong><%= contrast_ratio_tag contrast_ratio(hex, colours.fetch("base-100")), token: name %></strong></pre>
             <% end %>
           </td>
+        </tr>
+      <% end %>
+    </tbody>
+    <tbody>
+      <tr>
+        <th colspan="5" scope="rowgroup" class="text-meta">App tokens, mixed from daisyUI's</th>
+      </tr>
+    </tbody>
+    <%# WHY: a row group of its own, so the app's tokens line up with daisyUI's without being counted among them. The swatch takes the mix itself, which resolves against the twin it sits in; the hex is where it lands on this theme's page, and its pair is the cards' base-200 it also sits on. %>
+    <tbody id="app_tokens_<%= theme %>">
+      <% app_colours.each do |name, value| %>
+        <% hex = app_colour_hex(theme, value) %>
+        <tr>
+          <td><code><%= name %></code></td>
+          <td><span class="inline-block size-8 rounded-full border border-base-300 align-middle" style="background-color: <%= value %>"></span></td>
+          <td><code><%= hex %></code></td>
+          <td><pre><strong><%= contrast_ratio_tag contrast_ratio(hex, colours.fetch("base-200")), token: name %></strong>   vs   base-200</pre></td>
+          <td><pre><strong><%= contrast_ratio_tag contrast_ratio(hex, colours.fetch("base-100")), token: name %></strong></pre></td>
         </tr>
       <% end %>
     </tbody>

@@ -30,4 +30,18 @@ RSpec.describe "Refusing a paused member", type: :system do
     expect(page).to have_css "#alert"
     expect(page).to paint "#alert"
   end
+
+  # The soft alert sets its words in the error colour itself, #972622, on a tint of it, where a solid one sets them in the pale content colour on a full fill of it.
+  it "sets the alert soft, its words in the error colour" do
+    visit edit_group_path(member.group)
+
+    expect(find_by_id("alert").evaluate_script("getComputedStyle(this).color")).to eq "rgb(151, 38, 34)"
+  end
+
+  it "takes the alert away when its x is pressed" do
+    visit edit_group_path(member.group)
+    click_button "Dismiss"
+
+    expect(page).to have_no_css "#alert"
+  end
 end

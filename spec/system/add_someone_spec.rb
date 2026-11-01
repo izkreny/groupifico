@@ -20,6 +20,16 @@ RSpec.describe "Adding someone to an event", type: :system do
     expect(height).to be > 16
   end
 
+  # An icon with no size class fills whatever holds it, which in a block button is the button's whole width.
+  it "draws the submit's paper plane at 20px" do
+    event, actor, = event_with_three_members
+    sign_in_as actor.user
+
+    visit new_group_event_registration_path(event.group, event)
+
+    expect(box_of("[data-invite-target=submit] svg")).to eq [ 20, 20 ]
+  end
+
   # No `paint` assertion on this screen, deliberately, and the alternatives were measured rather
   # than assumed. daisyUI's plain `.checkbox` sets `background-color` to `var(--input-color, #0000)`
   # in both states, so it composites to its own surface and scores exactly 1 whether it is ticked or

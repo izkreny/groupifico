@@ -99,16 +99,14 @@ class Event < ApplicationRecord
   scope :preloaded, -> { includes(:address, :group, :registrations, creator: :profile, manager: :profile) }
 
   # The tallies the event card draws, in one query, with a zero for a status nobody holds so the
-  # card draws the same tags whatever the answers are. `reserved` is not among them: a place held
-  # that nobody has been asked about is the absence of an answer rather than one, and it is the one
-  # status the card never counts.
+  # card draws the same tags whatever the answers are.
   #
-  # Ordered here rather than in the card, answers first and everything still unanswered after, so
-  # the set of counted statuses has one home: a view spelling the same four out again would keep
-  # drawing four after a sixth status arrived.
+  # Ordered here rather than in the card, answers first, then the invited still unanswered, then the
+  # places nobody has been asked about, so the set of counted statuses has one home: a view spelling
+  # the same five out again would keep drawing five after a sixth status arrived.
   def answer_counts
     tallies = registrations.group(:status).count
-    counted = Registration::ANSWERS + (Registration.statuses.keys - Registration::ANSWERS - [ "reserved" ])
+    counted = (Registration::ANSWERS | Registration.statuses.keys).excluding("reserved") + [ "reserved" ]
 
     counted.index_with { tallies.fetch(it, 0) }
   end
@@ -210,8 +208,9 @@ class Event < ApplicationRecord
   # active is not handed the copy, which starts with nobody in charge instead. Settled on #312.
   def duplicate
     self.dup.tap do |event|
-      # WHY: `dup` copies `group_id` but not the loaded group, which the form reads.
+      # WHY: `dup` copies `group_id` and `address_id` but not the loaded group and address, which the form reads.
       event.group = group
+      event.address = address
       event.status = Event.new.status
       event.manager = nil unless manager&.active?
     end

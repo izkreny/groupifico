@@ -1,4 +1,4 @@
-<%# locals: (id:, url:, confirm:, title:, body:, dismiss:, word: nil, block: nil) %>
+<%# locals: (id:, url:, confirm:, title:, body:, dismiss:, word: nil, block: nil, detached: false) %>
 <%#
   `word` makes this the type-to-confirm variant, and `block` names why the delete cannot happen
   yet. A block leaves the comparing controller unwired, so the primary stays disabled whatever is
@@ -7,10 +7,22 @@
   The field belongs to no form, deliberately. The trigger form's default button is the trigger
   itself, which is never disabled, so a field that form owned would submit the delete on Enter
   without the word ever being compared.
+
+  `detached` is an edit screen's, whose trigger stands in its form's button row, drawn there by
+  `shared/confirm_trigger`: a form cannot hold another, so the delete form stays out here empty and
+  the trigger joins it through its `form` attribute. Such a screen wraps its form and this in
+  `shared/confirm_scope` itself, since the controller has to see the trigger.
 %>
-<div data-controller="dialog" data-action="submit->dialog#open turbo:before-cache@document->dialog#close">
-  <%= button_to confirm, url, method: :delete, class: "btn btn-error",
-        form: { id: "#{id}_form" }, data: { dialog_target: "trigger" } %>
+<%= render layout: "shared/confirm_scope", locals: { enabled: !detached } do %>
+  <% if detached %>
+    <form id="<%= id %>_form" action="<%= url %>" method="post" class="hidden">
+      <%= hidden_field_tag :_method, "delete", id: nil %>
+      <%= hidden_field_tag :authenticity_token, form_authenticity_token, id: nil %>
+    </form>
+  <% else %>
+    <%= button_to safe_join([ icon(:delete, class: "size-5"), confirm ]), url, method: :delete, class: "btn btn-error",
+          form: { id: "#{id}_form" }, data: { dialog_target: "trigger" } %>
+  <% end %>
 
   <%#
     The comparing controller sits on the `<dialog>` because `close` does not bubble, and each
@@ -28,11 +40,9 @@
       <p id="<%= id %>_body" class="py-4"><%= body %></p>
 
       <% if block %>
-        <div role="alert" id="<%= id %>_block" class="alert alert-error">
-          <%= icon :alert, class: "size-6 shrink-0" %>
-
+        <%= render layout: "shared/alert", locals: { kind: :error, id: "#{id}_block" } do %>
           <span><%= block %></span>
-        </div>
+        <% end %>
       <% end %>
 
       <% if word %>
@@ -45,12 +55,14 @@
 
       <div class="modal-action">
         <form method="dialog">
-          <button class="btn btn-sm"><%= dismiss %></button>
+          <button class="btn btn-sm"><%= icon :cancel, class: "size-5" %><%= dismiss %></button>
         </form>
 
-        <%= tag.button confirm, form: "#{id}_form", class: "btn btn-sm btn-error",
+        <%= tag.button form: "#{id}_form", class: "btn btn-sm btn-error",
               disabled: word.present? || block.present?,
-              data: { type_to_confirm_target: ("primary" if word) } %>
+              data: { type_to_confirm_target: ("primary" if word) } do %>
+          <%= icon :delete, class: "size-5" %><%= confirm %>
+        <% end %>
       </div>
     </div>
 
@@ -58,4 +70,4 @@
       <button>close</button>
     </form>
   </dialog>
-</div>
+<% end %>

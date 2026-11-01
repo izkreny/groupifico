@@ -1,14 +1,16 @@
 <% content_for :title, "Create your group" %>
 
-<div class="flex flex-col gap-5">
+<div class="grow flex flex-col gap-5">
   <%# "group" rather than the group's type. Frame 10b reads "create your choir Riverside Choir",
       but `SignUp` carries no type until #137 puts the hostname's own on it. %>
-  <h1 class="text-record break-words">Sign in as <%= @sign_up.email %> and create your group <%= @sign_up.group_name %></h1>
+  <h1 class="text-record text-center break-words">Sign in as <span class="block text-secondary"><%= @sign_up.email %></span> and create your group <span class="block text-secondary"><%= @sign_up.group_name %></span></h1>
 
-  <div class="inline">
-    <%= button_to "Sign in and create group", sign_up_confirmation_path, class: "btn btn-primary" %>
-  </div>
+  <%= button_to sign_up_confirmation_path, class: "btn btn-primary btn-block" do %>
+    <%= icon :confirm, class: "size-5" %> Sign in and create group
+  <% end %>
 
   <%# `sign_ins/show` carries why this is copy rather than a link. %>
-  <p class="text-meta">Not you? Just close this page</p>
+  <p class="text-meta text-center">Not you? Just close this page</p>
+
+  <p class="text-meta text-center mt-auto">One step: your account, the group and your owner seat, then you are signed in.</p>
 </div>

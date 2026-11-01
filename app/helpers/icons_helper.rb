@@ -4,16 +4,16 @@ module IconsHelper
   ICONS = {
     # Event.statuses
     unconfirmed: "question-mark-circle",
-    confirmed: "check-circle",
-    concluded: "archive-box",
+    confirmed: "check-badge",
+    concluded: "shield-check",
     canceled: "no-symbol",
 
-    # Registration.statuses. `reserved` is drawn only on a plain member's read-only roster; every other screen reads the absence of an answer as the state.
+    # Registration.statuses
     reserved: "bookmark",
     invited: "paper-airplane",
     yes: "check-circle",
     maybe: "clock",
-    no: "x-circle",
+    no: "minus-circle",
 
     # Facts an event card states.
     when: "calendar",
@@ -25,7 +25,11 @@ module IconsHelper
     duplicate: "document-duplicate",
     delete: "trash",
     save: "check",
+    cancel: "x-mark",
     dismiss: "x-mark",
+
+    # The emailed-link pages' one button, which spends the link. The same glyph as `save` because frames 10a and 10b draw the check on it.
+    confirm: "check",
 
     # Navigation. Chevrons only - the legend has no arrow glyph.
     back: "chevron-left",
@@ -44,22 +48,26 @@ module IconsHelper
     add_member: "user-plus",
     invite_link: "link",
 
-    # States the reader is told about.
-    alert: "exclamation-triangle",
+    # States the reader is told about. The four alert kinds are named as daisyUI names them, so `shared/_alert` draws the kind it colours.
+    success: "check-circle",
+    info: "information-circle",
+    warning: "exclamation-triangle",
+    error: "no-symbol",
     signed_out: "lock-closed",
     resend: "arrow-path"
   }.freeze
 
-  # The one glyph the legend draws heavier than the 2 the initializer sets for everything else.
-  BACK_STROKE_WIDTH = "2.5"
+  # Heroicons' filled set for each size class the app draws: solid, mini and micro are drawn on their own 24, 20 and 16px grids, where its outline set exists at 24px alone.
+  VARIANTS = { "size-6" => "solid", "size-5" => "mini", "size-4" => "micro" }.freeze
 
   # Draws a legend meaning. Decorative by default, because an icon beside its own label is read twice otherwise; pass `label:` where the icon is the only thing a control says.
+  #
+  # The size class picks the drawing, so a call without one of `VARIANTS`' sizes raises rather than drawing a glyph at a size it was not made for.
   def icon(meaning, label: nil, **options)
-    meaning = meaning.to_sym
+    variant = VARIANTS.values_at(*options[:class].to_s.split).compact.first or
+      raise ArgumentError, "icon #{meaning.inspect} needs one of #{VARIANTS.keys.join(", ")} in its class"
 
-    options[:stroke_width] ||= BACK_STROKE_WIDTH if meaning == :back
-
-    super(ICONS.fetch(meaning), **accessible_attributes(label), **options)
+    super(ICONS.fetch(meaning.to_sym), variant:, **accessible_attributes(label), **options)
   end
 
   # Draws the icon for whatever the record's status is. An unknown status raises through `ICONS.fetch`, because a status nobody mapped is a gap in the legend rather than a row that quietly loses its glyph.

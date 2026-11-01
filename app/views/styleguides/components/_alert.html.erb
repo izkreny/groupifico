@@ -4,17 +4,15 @@
     <h3 class="text-meta">As the app uses it</h3>
 
     <%= render "events/duplicate_notice", original: %>
-    <div role="alert" class="alert alert-success"><span>Event was successfully updated.</span></div>
-    <div role="alert" class="alert alert-error"><span>You are not allowed to do that.</span></div>
+    <%= render layout: "shared/alert", locals: { kind: :success, dismissible: true } do %><span>Event was successfully updated.</span><% end %>
+    <%= render layout: "shared/alert", locals: { kind: :error, dismissible: true } do %><span>You are not allowed to do that.</span><% end %>
+    <%= render layout: "shared/alert", locals: { kind: :error } do %><span>Please fix the highlighted fields.</span><span>Name can't be blank</span><% end %>
   </div>
 
   <div class="flex flex-col gap-2">
     <h3 class="text-meta">Not used yet</h3>
 
-    <div role="alert" class="alert alert-info"><span>Info: your invitation was sent.</span></div>
-    <div role="alert" class="alert alert-warning"><span>Warning: the event is nearly full.</span></div>
-    <div role="alert" class="alert alert-soft alert-info"><span>Soft info</span></div>
-    <div role="alert" class="alert alert-soft alert-success"><span>Soft success</span></div>
-    <div role="alert" class="alert alert-soft alert-error"><span>Soft error</span></div>
+    <%= render layout: "shared/alert", locals: { kind: :info, dismissible: true } do %><span>Info: your invitation was sent.</span><% end %>
+    <%= render layout: "shared/alert", locals: { kind: :warning, dismissible: true } do %><span>Warning: the event is nearly full.</span><% end %>
   </div>
 </div>

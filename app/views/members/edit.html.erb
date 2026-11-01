@@ -1,24 +1,24 @@
 <% content_for :title, "Edit member" %>
 
-<%= render "shared/page_header", title: "Edit member" %>
+<%= render "shared/page_header", title: "Edit member", back: group_member_path(@group, @member) %>
 
-<div class="flex flex-col gap-4 w-full">
+<%# The removal leads the form's button row, as on every edit screen, with its sheet detached below the form, since a form cannot hold the sheet's own. `destroy?`, the rule the removal authorizes, rather than the `edit?` that admitted the member. %>
+<% deletable = allowed_to?(:destroy?, @member) %>
+<% id = dom_id(@member, :confirm_delete) %>
+<%= render layout: "shared/confirm_scope", locals: { enabled: deletable, classes: "flex flex-col gap-4 w-full" } do %>
   <h2 class="text-record"><%= @member.full_name %></h2>
 
-  <%= render "members/form", group: @group, member: @member, submit: "Save member", cancel: group_member_path(@group, @member) %>
+  <%= render "members/form", group: @group, member: @member, submit: "Save member", cancel: group_member_path(@group, @member),
+        leading: (render("shared/confirm_trigger", id:, confirm: "Remove") if deletable) %>
 
-  <%# Below the form rather than in its button row, where frame 3d draws it: the sheet's trigger is
-      a `button_to`, and a form cannot hold another. `destroy?`, the rule the removal authorizes,
-      rather than the `edit?` that admitted the member. %>
-  <% if allowed_to?(:destroy?, @member) %>
-    <div class="mt-6">
-      <%= render "shared/confirm_sheet",
-            id: dom_id(@member, :confirm_delete),
-            url: group_member_path(@group, @member),
-            confirm: "Remove",
-            title: "Remove this member?",
-            body: "They lose access to the group, and every registration they made goes with them. This can't be undone.",
-            dismiss: "Keep member" %>
-    </div>
+  <% if deletable %>
+    <%= render "shared/confirm_sheet",
+          id:,
+          url: group_member_path(@group, @member),
+          confirm: "Remove",
+          title: "Remove this member?",
+          body: "They lose access to the group, and every registration they made goes with them. This can't be undone.",
+          dismiss: "Keep member",
+          detached: true %>
   <% end %>
-</div>
+<% end %>

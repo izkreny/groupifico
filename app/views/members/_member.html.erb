@@ -8,7 +8,7 @@
   The "not signed in yet" mark is the roster's alone, never the member screen's, and only for a member who oversees the list: they are the ones who added this person and would chase them, and seeing that is a read a paused one keeps.
 %>
 <% name = member.full_name %>
-<li id="<%= dom_id member, :row %>" class="list-row items-center<%= " text-base-content/70" unless member.active? %>">
+<li id="<%= dom_id member, :row %>" class="list-row items-center<%= " text-muted" unless member.active? %>">
   <div class="avatar avatar-placeholder">
     <div class="bg-base-300 text-base-content w-10 rounded-full">
       <span><%= member.initials %></span>
@@ -31,20 +31,20 @@
     </div>
   </div>
 
-  <div class="flex flex-none gap-1">
+  <div class="flex flex-none gap-2">
     <% if member.mobile_phone %>
       <%= phone_to member.mobile_phone, class: "btn btn-ghost btn-circle btn-sm", aria: { label: "Call #{name}" } do %>
-        <%= icon :call, class: "size-4" %>
+        <%= icon :call, class: "size-5" %>
       <% end %>
     <% end %>
 
     <%= mail_to member.email, class: "btn btn-ghost btn-circle btn-sm", aria: { label: "Email #{name}" } do %>
-      <%= icon :email, class: "size-4" %>
+      <%= icon :email, class: "size-5" %>
     <% end %>
 
     <% if manages %>
       <%= link_to edit_group_member_path(member.group, member), class: "btn btn-ghost btn-circle btn-sm text-primary", aria: { label: "Edit #{name}" } do %>
-        <%= icon :edit, class: "size-4" %>
+        <%= icon :edit, class: "size-5" %>
       <% end %>
     <% end %>
   </div>

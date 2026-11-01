@@ -1,0 +1,20 @@
+<%# locals: (group:, past:, id: "scope") %>
+<%#
+  The screen's title and its filter in one: the pill names the list that is open, and its menu holds both lists as links, so nothing navigates until one is pressed. The two chevrons swap on `[open]` alone, and the `dropdown` controller closes the menu on a click elsewhere or Escape, which a `<details>` does not do by itself.
+
+  Upcoming is the screen's own URL, with no `scope`, which is what `EventsController#index` reads as anything but past.
+%>
+<details id="<%= id %>" class="dropdown group" data-controller="dropdown" data-action="click@document->dropdown#close keydown@document->dropdown#close">
+  <summary class="btn btn-ghost bg-base-200 rounded-full px-4 font-normal">
+    <%= past ? "Past events" : "Upcoming events" %>
+    <%= icon :disclose, class: "size-5 group-open:hidden" %>
+    <%= icon :close_panel, class: "size-5 hidden group-open:block" %>
+  </summary>
+
+  <ul class="dropdown-content menu gap-2 bg-base-100 rounded-box border border-base-300 z-10 mt-2 w-56 p-2 shadow-sm">
+    <% [ [ "Upcoming events", nil ], [ "Past events", "past" ] ].each do |list, scope| %>
+      <% current = scope.present? == past %>
+      <li><%= link_to list, group_events_path(group, scope:), class: { "menu-active" => current }, aria: { current: ("true" if current) } %></li>
+    <% end %>
+  </ul>
+</details>

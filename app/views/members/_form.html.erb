@@ -1,4 +1,4 @@
-<%# locals: (group:, member:, submit:, cancel:, namespace: nil) %>
+<%# locals: (group:, member:, submit:, cancel:, namespace: nil, leading: nil) %>
 <%# `namespace` is the styleguide's, which draws this form once per theme; every screen leaves it out and keeps its ids. %>
 <%= form_with(model: [group, member], namespace:, class: "contents") do |form| %>
   <%= form.with_error_summary do %>
@@ -33,12 +33,12 @@
           <% hint_id = form.field_id(:roles, box.value, :hint) %>
           <div class="group flex items-center justify-between gap-2"
                data-role-implications-target="role" data-implies="<%= choice.implied.to_json %>">
-            <%= box.label class: "inline-flex items-center gap-1.5 group-data-implied:text-base-content/70" do %>
+            <%= box.label class: "inline-flex items-center gap-1.5 group-data-implied:text-muted" do %>
               <%= box.check_box class: "checkbox", aria: { describedby: hint_id } %>
               <%= box.text %>
             <% end %>
 
-            <span id="<%= hint_id %>" class="text-xs group-data-implied:text-base-content/70"><%= choice.hint %></span>
+            <span id="<%= hint_id %>" class="text-xs group-data-implied:text-muted"><%= choice.hint %></span>
           </div>
         <% end %>
       </fieldset>
@@ -46,7 +46,8 @@
   <% end %>
 
   <div class="flex gap-2">
-    <%= link_to "Cancel", cancel, class: "btn btn-ghost" %>
-    <%= form.submit submit, class: "btn btn-primary" %>
+    <%= leading %>
+    <%= link_to cancel, class: "btn btn-ghost" do %><%= icon :cancel, class: "size-5" %>Cancel<% end %>
+    <%= form.button class: "btn btn-primary" do %><%= icon (member.persisted? ? :save : :invited), class: "size-5" %><%= submit %><% end %>
   </div>
 <% end %>

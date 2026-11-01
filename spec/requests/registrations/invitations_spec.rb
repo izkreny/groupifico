@@ -100,7 +100,18 @@ RSpec.describe "Registrations::Invitations", type: :request do
         post group_event_registration_invitation_path(event.group, event, answered)
 
         expect(answered.reload).to be_no
-        expect(flash[:notice]).to end_with "was already asked."
+      end
+
+      # The plane stays pressable on an invited row, so a press there says why nothing changed.
+      it "says a member already invited was already asked" do
+        actor = create(:member, :active)
+        event = create(:event, group: actor.group, creator: actor, manager: actor)
+        asked = create(:registration, event:, member: create(:member, :active, group: event.group), status: :invited)
+        sign_in_as(actor.user)
+
+        post group_event_registration_invitation_path(event.group, event, asked)
+
+        expect(flash[:notice]).to eq "#{asked.member.full_name} was already asked."
       end
     end
   end

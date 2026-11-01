@@ -1,5 +1,5 @@
-Copyright 2023 The Caprasimo Project Authors (https://github.com/docrepair-fonts/caprasimo-fonts).
-Copyright 2022 The Figtree Project Authors (https://github.com/erikdkennedy/figtree)
+Copyright 2011 The Alegreya Project Authors (https://github.com/huertatipografica/Alegreya)
+Copyright 2019 The Commissioner Project Authors (https://github.com/kosbarts/Commissioner)
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 This license is copied below, and is also available with a FAQ at:

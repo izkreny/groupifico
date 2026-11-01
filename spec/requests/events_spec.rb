@@ -30,29 +30,17 @@ RSpec.describe "Events", type: :request do
         expect(response).to have_http_status :ok
       end
 
-      # The select is the screen's title as well as its filter, so what proves the title is there
-      # is the control's own two options rather than a heading above them.
-      it "titles the screen with the select that chooses between the two lists" do
+      # The list menu is the screen's title as well as its filter, so what proves the title is there
+      # is the menu naming the open list and linking both, rather than a heading above them.
+      it "titles the screen with the menu that links the two lists, the open one marked" do
         member = create(:member, :active)
         sign_in_as(member.user)
 
         get group_events_path(member.group)
 
-        expect(response.body).to include %(name="scope"), ">Upcoming events</option>", ">Past events</option>"
-        expect(response.body).to include %(<option selected="selected" value="upcoming">)
-      end
-
-      # The accessible name carries a warning that choosing navigates, which is what the plan's
-      # `## Settled` accepts SC 3.2.2 on. Asserted here because axe-core has no rule for that
-      # criterion, so `be_accessible` passes over a name shortened back to the bare purpose. What
-      # this pins is the wording; that the control still changes context on input, nothing can.
-      it "warns in the select's accessible name that choosing navigates" do
-        member = create(:member, :active)
-        sign_in_as(member.user)
-
-        get group_events_path(member.group)
-
-        expect(response.body).to include %(aria-label="Which events to show; choosing one loads that list")
+        menu = Nokogiri::HTML(response.body).at_css("details#scope")
+        expect(menu.at_css("summary").text.squish).to eq "Upcoming events"
+        expect(menu.css("a").map { [ it.text, it[:href], it["aria-current"] ] }).to eq [ [ "Upcoming events", group_events_path(member.group), "true" ], [ "Past events", group_events_path(member.group, scope: "past"), nil ] ]
       end
 
       # Who may create an event is `EventPolicy#create?`, and a refused reader gets no control
@@ -111,6 +99,32 @@ RSpec.describe "Events", type: :request do
     end
 
     context "when signed in as an events administrator" do
+      # Frame 4h's pencil, on the hero card and on the row beneath it alike.
+      it "offers an Edit button on the hero card and on each row" do
+        actor = create(:member, :active, :events_administrator)
+        next_up = confirmed_event(actor, name: "Tuesday rehearsal", days: 2)
+        later = confirmed_event(actor, name: "Sunday service", days: 5)
+        sign_in_as(actor.user)
+
+        get group_events_path(actor.group)
+
+        html = Nokogiri::HTML(response.body)
+        expect(html.at_css("##{ActionView::RecordIdentifier.dom_id(next_up, :next_up)} a[href='#{edit_group_event_path(actor.group, next_up)}'][aria-label='Edit Tuesday rehearsal']")).to be_present
+        expect(html.at_css("##{ActionView::RecordIdentifier.dom_id(later)} a[href='#{edit_group_event_path(actor.group, later)}'][aria-label='Edit Sunday service']")).to be_present
+      end
+
+      # Duplicate leads Edit on the hero, as on the event screen.
+      it "offers Duplicate before Edit on the hero card" do
+        actor = create(:member, :active, :events_administrator)
+        next_up = confirmed_event(actor, name: "Tuesday rehearsal", days: 2)
+        sign_in_as(actor.user)
+
+        get group_events_path(actor.group)
+
+        labels = Nokogiri::HTML(response.body).css("##{ActionView::RecordIdentifier.dom_id(next_up, :next_up)} a[aria-label]").map { it["aria-label"] }
+        expect(labels).to eq [ "Duplicate Tuesday rehearsal", "Edit Tuesday rehearsal" ]
+      end
+
       it "offers the New button" do
         actor = create(:member, :active, :events_administrator)
         sign_in_as(actor.user)
@@ -143,6 +157,29 @@ RSpec.describe "Events", type: :request do
 
     # Managing one event is a grant on that event alone, never on making new ones.
     context "when signed in as the manager of an event" do
+      # A per-event grant, so the pencil shows on their event and on no other.
+      it "offers an Edit button on the event they manage alone" do
+        actor = create(:member, :active)
+        create(:event, group: actor.group, manager: actor, name: "Ours", starts_at: 2.days.from_now)
+        create(:event, group: actor.group, name: "Theirs", starts_at: 5.days.from_now)
+        sign_in_as(actor.user)
+
+        get group_events_path(actor.group)
+
+        expect(Nokogiri::HTML(response.body).css("a[aria-label^='Edit ']").map { it["aria-label"] }).to eq [ "Edit Ours" ]
+      end
+
+      # `duplicate` authorizes `create?`, which managing an event does not grant.
+      it "offers Edit alone on the hero card of the event they manage" do
+        actor = create(:member, :active)
+        create(:event, group: actor.group, manager: actor, name: "Ours", status: :confirmed, starts_at: 2.days.from_now)
+        sign_in_as(actor.user)
+
+        get group_events_path(actor.group)
+
+        expect(Nokogiri::HTML(response.body).css("[id^=next_up] a[aria-label]").map { it["aria-label"] }).to eq [ "Edit Ours" ]
+      end
+
       it "offers no New button" do
         actor = create(:member, :active)
         create(:event, group: actor.group, manager: actor)
@@ -161,6 +198,20 @@ RSpec.describe "Events", type: :request do
       # The hero card, one row beneath it and the reader's own answer row: the three pieces the
       # event card partials draw, asserted here rather than in a view spec because what a reader
       # sees on this screen is the response's own text.
+      it "links the hero card's responses to the event with its roster open" do
+        freeze_time do
+          owner = create(:member, :owner)
+          next_up = confirmed_event(owner, days: 2)
+          create(:registration, event: next_up, member: owner, status: :yes)
+          sign_in_as(owner.user)
+
+          get group_events_path(owner.group)
+
+          link = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(next_up, :next_up)} a[href='#{group_event_path(owner.group, next_up, responses: "show")}']")
+          expect(link&.text&.squish).to eq "Who’s coming?"
+        end
+      end
+
       it "draws the hero card, a row beneath it and the question for an invited owner" do
         freeze_time do
           owner = create(:member, :owner)
@@ -176,7 +227,20 @@ RSpec.describe "Events", type: :request do
         end
       end
 
-      it "draws the answer, the counts and the names for a plain member who has answered" do
+      it "offers a plain member no Edit button" do
+        freeze_time do
+          member = create(:member, :active)
+          confirmed_event(member, days: 2)
+          confirmed_event(member, days: 5)
+          sign_in_as(member.user)
+
+          get group_events_path(member.group)
+
+          expect(Nokogiri::HTML(response.body).css("a[aria-label^='Edit ']")).to be_empty
+        end
+      end
+
+      it "draws the answer and the counts for a plain member who has answered" do
         freeze_time do
           member = create(:member, :active, user: create(:user, :with_full_profile, first_name: "Carla", last_name: "Dean"))
           next_up = confirmed_event(member, days: 2)
@@ -185,7 +249,7 @@ RSpec.describe "Events", type: :request do
 
           get group_events_path(member.group)
 
-          expect(response.body).to include "Your answer:", "no reply", "Carla Dean said yes"
+          expect(response.body).to include "Your answer:", "no reply"
           expect(response.body).not_to include "Are you coming?"
         end
       end
@@ -228,6 +292,20 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include "your answer: invited"
       end
 
+      # A reserved place asks nothing, so the row says where the reader stands by the icon alone.
+      it "shows a reserved place as an icon on a compact row, with nothing to answer" do
+        member = create(:member, :active)
+        confirmed_event(member, days: 2)
+        reserved_row = confirmed_event(member, days: 5)
+        create(:registration, event: reserved_row, member:, status: :reserved)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group)
+
+        row = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(reserved_row)}")
+        expect([ row.css("svg[aria-label='Place reserved, not asked yet']").size, row.css("form").size ]).to eq [ 1, 0 ]
+      end
+
       # The pills themselves rather than the copy above them: three forms, one target, one value
       # each, and the reader's own answer lit. Without this the header carried both the positive
       # and the negative assertion, so a card with no pills under it read as correct.
@@ -249,7 +327,7 @@ RSpec.describe "Events", type: :request do
         expect(response.body).to include %(action="#{group_event_registration_path(member.group, next_up, registration)}")
         expect(response.body).to include %(name="_method" value="patch")
         expect(response.body).to include %(name="registration[status]" value="yes"), %(name="registration[status]" value="maybe"), %(name="registration[status]" value="no")
-        expect(response.body).to match %r{btn-primary[^>]*>\s*Maybe\s*</button>}
+        expect(response.body).to match %r{btn-warning[^>]*>\s*<svg.*?</svg>\s*Maybe\s*</button>}m
       end
 
       it "leaves the pills out for a paused member, who may not write an answer" do
@@ -428,15 +506,16 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include "Did you go?"
       end
 
-      # The select states which list is open, so a reader who lands on the past one by a typed URL
+      # The list menu states which list is open, so a reader who lands on the past one by a typed URL
       # sees the control agreeing with what is under it.
-      it "shows the past option as the select's own value" do
+      it "names the past list in the list menu and marks its link" do
         member = create(:member, :active)
         sign_in_as(member.user)
 
         get group_events_path(member.group, scope: "past")
 
-        expect(response.body).to include %(<option selected="selected" value="past">)
+        menu = Nokogiri::HTML(response.body).at_css("details#scope")
+        expect([ menu.at_css("summary").text.squish, menu.at_css("a[aria-current]").text ]).to eq [ "Past events", "Past events" ]
       end
 
       # Anything that is not "past" is the upcoming list, which is what keeps a mistyped URL a
@@ -578,6 +657,62 @@ RSpec.describe "Events", type: :request do
   end
 
   describe "GET /groups/:group_id/events/:id" do
+    # Frame 4c: a pushed screen's title stands in the header beside the back chevron, in the group name's place, and with the name go the switcher and the pencil that belong to it.
+    it "titles the header Event, beside the back chevron, in the group name's place" do
+      owner = create(:member, :active, :owner, group: create(:group, name: "Riverside Choir"))
+      create(:member, user: owner.user, group: create(:group))
+      event = create(:event, group: owner.group, creator: owner)
+      sign_in_as(owner.user)
+
+      get group_event_path(event.group, event)
+
+      header = Nokogiri::HTML(response.body).at_css("header")
+      expect([ header.at_css("h1")&.text, header.at_css("a[aria-label='Back']")&.[]("href"), header.text.include?("Riverside Choir") ]).to eq [ "Event", group_events_path(event.group), false ]
+    end
+
+    # The header's tabs stay on a form, out of its way from the breakpoint up, while the dock a phone pins to the bottom leaves it, so it never crowds the form's buttons or the keyboard.
+    it "keeps the header's tabs on the edit form and leaves the dock off it" do
+      owner = create(:member, :active, :owner)
+      event = create(:event, group: owner.group, creator: owner)
+      sign_in_as(owner.user)
+
+      get edit_group_event_path(event.group, event)
+
+      html = Nokogiri::HTML(response.body)
+      expect([ html.css("header a[aria-label='Events']").size, html.css(".dock").size ]).to eq [ 1, 0 ]
+    end
+
+    # A screen pushed from the event goes back to it rather than to the events list: editing it, copying it and adding someone to it.
+    it "takes the back chevron from editing the event back to the event" do
+      owner = create(:member, :active, :owner)
+      event = create(:event, group: owner.group, creator: owner)
+      sign_in_as(owner.user)
+
+      get edit_group_event_path(event.group, event)
+
+      expect(Nokogiri::HTML(response.body).at_css("header a[aria-label='Back']")&.[]("href")).to eq group_event_path(event.group, event)
+    end
+
+    it "takes the back chevron from duplicating the event back to the event" do
+      owner = create(:member, :active, :owner)
+      event = create(:event, group: owner.group, creator: owner)
+      sign_in_as(owner.user)
+
+      get duplicate_group_event_path(event.group, event)
+
+      expect(Nokogiri::HTML(response.body).at_css("header a[aria-label='Back']")&.[]("href")).to eq group_event_path(event.group, event)
+    end
+
+    it "takes the back chevron from Add someone back to the event" do
+      owner = create(:member, :active, :owner)
+      event = create(:event, group: owner.group, creator: owner)
+      sign_in_as(owner.user)
+
+      get new_group_event_registration_path(event.group, event)
+
+      expect(Nokogiri::HTML(response.body).at_css("header a[aria-label='Back']")&.[]("href")).to eq group_event_path(event.group, event)
+    end
+
     context "when not signed in" do
       it "redirects to the sign-in page" do
         event = create(:event)
@@ -631,7 +766,7 @@ RSpec.describe "Events", type: :request do
         get group_event_path(event.group, event)
 
         expect(page_text(response.body)).to include "Ben Cole"
-        expect(response.body).not_to include "Take Ben Cole off the list", "Yes for Ben Cole", "Add someone", "Delete event"
+        expect(response.body).not_to include "Take Ben Cole off the list", "Yes for Ben Cole", "Add someone"
         expect(response.body).not_to include "Invite Ben Cole", "Invite the rest"
       end
 
@@ -686,7 +821,7 @@ RSpec.describe "Events", type: :request do
         expect(page_text(response.body)).to include "Managed by Ben C. · Created by Alice B.", "Bring the new folders."
       end
 
-      it "offers Duplicate and Edit in the title row and Delete at the bottom" do
+      it "offers Duplicate and Edit in the title row" do
         owner = create(:member, :active, :owner)
         event = detailed_event(owner)
         sign_in_as(owner.user)
@@ -695,7 +830,6 @@ RSpec.describe "Events", type: :request do
 
         expect(response.body).to include duplicate_group_event_path(event.group, event), %(aria-label="Duplicate")
         expect(response.body).to include edit_group_event_path(event.group, event), %(aria-label="Edit")
-        expect(page_text(response.body)).to include "Delete event"
       end
 
       # The day before `detailed_event`, since an event that has ended offers no Maybe pill.
@@ -713,8 +847,8 @@ RSpec.describe "Events", type: :request do
         end
       end
 
-      # After the end the pills are Yes and No, so a maybe given before the event has no pill to light, and the badge says where that row stands instead.
-      it "offers yes and no on an ended event's roster, and a badge on a row that said maybe" do
+      # After the end the pills are Yes and No, so a maybe given before the event has no pill to light, and the status icon says where that row stands instead.
+      it "offers yes and no on an ended event's roster, and a status icon on a row that said maybe" do
         owner = create(:member, :active, :owner)
         event = travel_to(Time.zone.parse("2026-09-01 12:00")) { detailed_event(owner, reader_status: :maybe) }
         sign_in_as(owner.user)
@@ -727,7 +861,7 @@ RSpec.describe "Events", type: :request do
 
       # `Registration` refuses every answer on an event that is over, so a pill there is a control
       # certain to fail. Taking somebody off stays, since correcting a closed roster is still theirs.
-      it "leaves the pills off the roster of a concluded event, and keeps the badges and the take-off" do
+      it "leaves the pills off the roster of a concluded event, and keeps the status icons and the take-off" do
         owner = create(:member, :active, :owner)
         event = detailed_event(owner)
         event.update!(status: :concluded)
@@ -737,11 +871,11 @@ RSpec.describe "Events", type: :request do
 
         expect(response.body).to include "Place reserved, not asked yet", "Take Ben Cole off the list"
         expect(response.body).not_to include "Yes for Ben Cole"
-        # With no pill lit to say where an answered row stands, the badge says it instead.
+        # With no pill lit to say where an answered row stands, the status icon says it instead.
         expect(response.body).to include %(title="Yes")
       end
 
-      it "puts a plain paper plane on a reserved row and the tinted one on an invited row" do
+      it "puts the reserved icon and a plain paper plane on a reserved row, and the tinted plane alone on an invited row" do
         owner = create(:member, :active, :owner)
         event = detailed_event(owner)
         sign_in_as(owner.user)
@@ -749,11 +883,28 @@ RSpec.describe "Events", type: :request do
         get group_event_path(event.group, event)
 
         fragment = Nokogiri::HTML(response.body)
-        expect(fragment.at_css("button[aria-label='Invite Ben Cole']")["class"]).not_to include "text-primary"
-        expect(fragment.at_css("button[aria-label='Carla Duke is invited, no reply yet']")["class"]).to include "text-primary"
+        ben, carla = [ "Ben Cole", "Carla Duke" ].map { fragment.at_xpath("//li[span[text()='#{it}']]") }
+        expect(ben.css("span[title]").map { it["title"] }).to eq [ "Place reserved, not asked yet" ]
+        expect(ben.at_css("button[aria-label='Invite Ben Cole']")["class"]).to include "text-icon-muted"
+        expect(carla.css("span[title]")).to be_empty
+        expect(carla.at_css("button[aria-label='Carla Duke is invited, no reply yet']")["class"]).to include "text-info"
       end
 
-      it "draws the badge rather than the paper plane on a paused member's held row" do
+      # The tally's colours: the chosen answer in its status colour, every control not yet used in the muted icon ink.
+      it "colours the roster's pills as the Who’s coming? tally does" do
+        travel_to Time.zone.parse("2026-09-01 12:00") do
+          owner = create(:member, :active, :owner)
+          event = detailed_event(owner)
+          sign_in_as(owner.user)
+
+          get group_event_path(event.group, event)
+
+          classes = Nokogiri::HTML(response.body).then { |html| [ "Yes for Alice Bird", "Maybe for Alice Bird", "Take Alice Bird off the list" ].map { html.at_css("button[aria-label='#{it}']")["class"] } }
+          expect(classes).to match [ include("text-success"), include("text-icon-muted"), include("text-icon-muted") ]
+        end
+      end
+
+      it "draws the status icon rather than the paper plane on a paused member's held row" do
         owner = create(:member, :active, :owner)
         event = detailed_event(owner)
         dan = create(:member, :active, group: owner.group, user: create(:user, :with_full_profile, first_name: "Dan", last_name: "Ellis"))
@@ -822,7 +973,7 @@ RSpec.describe "Events", type: :request do
       # The owner's rows with every control gone: the order is `Event#roster`'s, asserted here only
       # as far as that this screen draws it, and a reserved row carries the bookmark because a
       # member's view has no paper plane to read the state from.
-      it "draws the same rows in roster order as badges, with nothing to press" do
+      it "draws the same rows in roster order as status icons, with nothing to press" do
         member = create(:member, :active)
         event = detailed_event(member)
         sign_in_as(member.user)
@@ -872,7 +1023,7 @@ RSpec.describe "Events", type: :request do
         expect(page_text(response.body)).not_to include "Did you go?"
       end
 
-      it "offers no Duplicate, Edit or Delete" do
+      it "offers neither Duplicate nor Edit" do
         member = create(:member, :active)
         event = detailed_event(member)
         sign_in_as(member.user)
@@ -880,13 +1031,12 @@ RSpec.describe "Events", type: :request do
         get group_event_path(event.group, event)
 
         expect(page_text(response.body)).to include "Tuesday rehearsal"
-        expect(response.body).not_to include %(aria-label="Duplicate"), %(aria-label="Edit"), "Delete event"
+        expect(response.body).not_to include %(aria-label="Duplicate"), %(aria-label="Edit")
       end
 
-      # The frames' order, which the markup has to carry because the disclosure cannot: its summary
-      # is the counts, and the roster it unfolds is drawn after the answer row rather than inside it.
+      # The reader's own answer stands on the page above the attendance card, which holds the counts and the roster they unfold.
       # The day before `detailed_event`, since an event that has ended takes no `maybe`.
-      it "draws the answer row between the counts and the roster" do
+      it "draws the answer row above the attendance card, outside it" do
         travel_to Time.zone.parse("2026-09-01 12:00") do
           member = create(:member, :active)
           event = detailed_event(member, reader_status: :maybe)
@@ -894,11 +1044,25 @@ RSpec.describe "Events", type: :request do
 
           get group_event_path(event.group, event)
 
-          expect(page_text(response.body)).to match(/Who’s coming.*Your answer:.*Who’s invited/)
+          expect(page_text(response.body)).to match(/Your answer:.*Who’s coming.*Who’s invited/)
+          expect(Nokogiri::HTML(response.body).css(".card").map(&:text).join).not_to include "Your answer:"
         end
       end
 
-      it "draws the four count tags and the reader's own question" do
+      it "opens the roster when the hero card's responses link here" do
+        travel_to Time.zone.parse("2026-09-01 12:00") do
+          member = create(:member, :active)
+          event = detailed_event(member, reader_status: :invited)
+          sign_in_as(member.user)
+
+          get group_event_path(event.group, event, responses: "show")
+
+          expect(Nokogiri::HTML(response.body).at_css("details.collapse")["open"]).not_to be_nil
+        end
+      end
+
+      # The tags alone, on the same row as the heading that says what they count.
+      it "draws the tally's tags right after the Who’s coming heading" do
         travel_to Time.zone.parse("2026-09-01 12:00") do
           member = create(:member, :active)
           event = detailed_event(member, reader_status: :invited)
@@ -906,7 +1070,20 @@ RSpec.describe "Events", type: :request do
 
           get group_event_path(event.group, event)
 
-          expect(response.body).to include %(aria-label="yes"), %(aria-label="maybe"), %(aria-label="no"), %(aria-label="no reply")
+          row = Nokogiri::HTML(response.body).at_css("details.collapse summary").element_children
+          expect([ row[0].text.squish, row[1].at_css("[aria-label='yes']") ]).to match [ "Who’s coming?", be_present ]
+        end
+      end
+
+      it "draws the five count tags and the reader's own question" do
+        travel_to Time.zone.parse("2026-09-01 12:00") do
+          member = create(:member, :active)
+          event = detailed_event(member, reader_status: :invited)
+          sign_in_as(member.user)
+
+          get group_event_path(event.group, event)
+
+          expect(response.body).to include %(aria-label="yes"), %(aria-label="maybe"), %(aria-label="no"), %(aria-label="no reply"), %(aria-label="reserved")
           expect(page_text(response.body)).to include "Are you coming?"
         end
       end
@@ -925,7 +1102,7 @@ RSpec.describe "Events", type: :request do
         get group_event_path(event.group, event)
 
         expect(response.body).to include %(aria-label="Edit"), new_group_event_registration_path(event.group, event)
-        expect(response.body).not_to include %(aria-label="Duplicate"), "Delete event", "Yes for Ben Cole", "Take Ben Cole off the list"
+        expect(response.body).not_to include %(aria-label="Duplicate"), "Yes for Ben Cole", "Take Ben Cole off the list"
       end
 
       it "offers the paper plane and Invite the rest, because filling the event is the manager's job" do
@@ -944,7 +1121,7 @@ RSpec.describe "Events", type: :request do
     # The two other columns the events table marks wherever it marks the owner, and the one role
     # column it leaves blank on every write row.
     context "when signed in as an administrator" do
-      it "offers Duplicate, Edit and Delete" do
+      it "offers Duplicate and Edit" do
         actor = create(:member, :active, :administrator)
         event = detailed_event(actor)
         sign_in_as(actor.user)
@@ -952,12 +1129,11 @@ RSpec.describe "Events", type: :request do
         get group_event_path(event.group, event)
 
         expect(response.body).to include %(aria-label="Duplicate"), %(aria-label="Edit")
-        expect(page_text(response.body)).to include "Delete event"
       end
     end
 
     context "when signed in as an events administrator" do
-      it "offers Duplicate, Edit and Delete" do
+      it "offers Duplicate and Edit" do
         actor = create(:member, :active, :events_administrator)
         event = detailed_event(actor)
         sign_in_as(actor.user)
@@ -965,7 +1141,6 @@ RSpec.describe "Events", type: :request do
         get group_event_path(event.group, event)
 
         expect(response.body).to include %(aria-label="Duplicate"), %(aria-label="Edit")
-        expect(page_text(response.body)).to include "Delete event"
       end
 
       it "draws the answer pills and a take-off on another member's row, and Add someone" do
@@ -1002,7 +1177,7 @@ RSpec.describe "Events", type: :request do
         get group_event_path(event.group, event)
 
         expect(page_text(response.body)).to include "Tuesday rehearsal"
-        expect(response.body).not_to include %(aria-label="Duplicate"), %(aria-label="Edit"), "Delete event"
+        expect(response.body).not_to include %(aria-label="Duplicate"), %(aria-label="Edit")
         expect(response.body).not_to include "Yes for Ben Cole", "Take Ben Cole off the list", "Add someone"
       end
     end
@@ -1045,7 +1220,7 @@ RSpec.describe "Events", type: :request do
         get new_group_event_path(member.group)
 
         expect(response.body).to include ">Starts</label>", ">Ends</label>", ">Notes</label>", "Typed and shown in Europe/Zagreb"
-        expect(response.body).to include %(aria-label="Unconfirmed"), %(aria-label="Gig"), "New address…", %(value="Create event")
+        expect(response.body).to include %(aria-label="Unconfirmed"), %(aria-label="Gig"), "New address…", "Create event</button>"
       end
     end
 
@@ -1118,8 +1293,31 @@ RSpec.describe "Events", type: :request do
         get duplicate_group_event_path(event.group, event)
 
         expect(response.body).to include "Duplicate event", "Copied from Wed 2 Sep. Dates moved on 7 days, status back to unconfirmed, nobody registered yet."
-        expect(response.body).to include %(value="2026-09-09T19:00:00"), %(value="Create copy")
+        expect(response.body).to include %(value="2026-09-09T19:00:00"), "Create copy</button>"
         expect(Nokogiri::HTML(response.body).at_css("input[name=original_id]")["value"]).to eq event.id.to_s
+      end
+
+      # `dup` copies the `address_id` but not the loaded address, so the form reading it on the copy was a lazy load the strict loading refuses.
+      it "copies an event that has an address, with the address" do
+        actor = create(:member, :active, :events_administrator)
+        event = create(:event, group: actor.group, address: create(:address, name: "KBBL Broadcasting"))
+        sign_in_as(actor.user)
+
+        get duplicate_group_event_path(event.group, event)
+
+        expect(response).to have_http_status :ok
+        expect(response.body).to include "KBBL Broadcasting"
+      end
+
+      # The app's alert kinds and nothing custom: the copy's note is an info alert, announced politely since it describes the form rather than reporting a failure.
+      it "states what the copy changed in an info alert" do
+        actor = create(:member, :active, :events_administrator)
+        event = create(:event, group: actor.group)
+        sign_in_as(actor.user)
+
+        get duplicate_group_event_path(event.group, event)
+
+        expect(Nokogiri::HTML(response.body).at_css("[role=status].alert-info")&.text).to include "Copied from"
       end
 
       # `Event#duplicate` is `dup`, so the copy carries the original's `creator_id`. Nothing submits
@@ -1170,15 +1368,32 @@ RSpec.describe "Events", type: :request do
         expect(response).to have_http_status :ok
       end
 
-      it "ends with Delete, opening the plain confirm sheet" do
+      it "leads the form's button row with Delete, opening the plain confirm sheet" do
         actor = create(:member, :active, :events_administrator)
         event = create(:event, group: actor.group)
         sign_in_as(actor.user)
 
         get edit_group_event_path(event.group, event)
 
+        trigger = Nokogiri::HTML(response.body).at_css("form[action='#{group_event_path(event.group, event)}'] .btn:first-child[type='submit']")
+        expect([ trigger["form"], trigger.text.strip ]).to eq [ "#{ActionView::RecordIdentifier.dom_id(event, :confirm_delete)}_form", "Delete event" ]
         expect(response.body).to include "Delete this event?", "Keep event"
         expect(response.body).not_to include "to confirm"
+      end
+
+      # The trash, the cross and the check, read off each icon's own drawing, since the legend names the meaning and the file names the glyph.
+      it "draws an icon in every button of the form's row" do
+        actor = create(:member, :active, :events_administrator)
+        event = create(:event, group: actor.group)
+        sign_in_as(actor.user)
+
+        get edit_group_event_path(event.group, event)
+
+        row = Nokogiri::HTML(response.body).at_css("form[action='#{group_event_path(event.group, event)}'] .btn[form]").parent
+        drawing = ->(name) { File.read(Rails.root.join("app/assets/svg/icons/heroicons/mini/#{name}.svg"))[/ d="([^"]+)"/, 1] }
+        expect(row.css(".btn").map { [ it.text.strip, it.at_css("svg.size-5 path")["d"] ] }).to eq [
+          [ "Delete event", drawing.("trash") ], [ "Cancel", drawing.("x-mark") ], [ "Save changes", drawing.("check") ]
+        ]
       end
 
       # `Group#addresses` offers the group's home address beside the events' own, and correcting it
@@ -1229,7 +1444,7 @@ RSpec.describe "Events", type: :request do
 
         get edit_group_event_path(event.group, event)
 
-        expect(response.body).to include %(value="Save changes")
+        expect(response.body).to include "Save changes</button>"
         expect(response.body).not_to include "Delete event"
       end
 
@@ -1367,7 +1582,7 @@ RSpec.describe "Events", type: :request do
 
         fragment = Nokogiri::HTML(response.body)
         expect(headings(response.body)).to include "New event"
-        expect(response.body).to include %(value="Create event")
+        expect(response.body).to include "Create event</button>"
         expect(fragment.at_xpath("//a[normalize-space()='Cancel']")["href"]).to eq group_events_path(member.group)
         expect(page_text(response.body)).not_to include "Copied from"
       end
@@ -1382,7 +1597,7 @@ RSpec.describe "Events", type: :request do
         fragment = Nokogiri::HTML(response.body)
         expect(headings(response.body)).to include "Duplicate event"
         expect(page_text(response.body)).to include "Copied from Wed 2 Sep."
-        expect(response.body).to include %(value="Create copy")
+        expect(response.body).to include "Create copy</button>"
         expect(fragment.at_xpath("//a[normalize-space()='Cancel']")["href"]).to eq group_event_path(member.group, original)
       end
 

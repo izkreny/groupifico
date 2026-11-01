@@ -1,7 +1,11 @@
 <% if notice.present? %>
-  <div role="alert" class="alert alert-success mb-5" id="notice"><%= notice %></div>
+  <%= render layout: "shared/alert", locals: { kind: :success, id: "notice", dismissible: true, classes: "mb-5" } do %>
+    <span><%= notice %></span>
+  <% end %>
 <% end %>
 
 <% if alert.present? %>
-  <div role="alert" class="alert alert-error mb-5" id="alert"><%= alert %></div>
+  <%= render layout: "shared/alert", locals: { kind: :error, id: "alert", dismissible: true, classes: "mb-5" } do %>
+    <span><%= alert %></span>
+  <% end %>
 <% end %>

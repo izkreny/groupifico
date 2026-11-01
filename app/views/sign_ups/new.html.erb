@@ -1,6 +1,6 @@
 <% content_for :title, "Create a group" %>
 
-<div class="flex flex-col gap-5">
+<div class="grow flex flex-col gap-5">
   <h1 class="text-record">Create a group</h1>
 
   <%= form_with model: @sign_up, url: sign_up_url, class: "contents" do |form| %>
@@ -17,8 +17,8 @@
       </fieldset>
     <% end %>
 
-    <div class="inline">
-      <%= form.submit "Send my confirmation link", class: "btn btn-primary" %>
-    </div>
+    <%= form.button class: "btn btn-primary btn-block" do %>
+      <%= icon :email, class: "size-5" %> Send my confirmation link
+    <% end %>
   <% end %>
 </div>

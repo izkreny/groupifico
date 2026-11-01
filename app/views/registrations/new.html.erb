@@ -1,6 +1,6 @@
 <% content_for :title, "Add someone" %>
 
-<%= render "shared/page_header", title: "Add someone" %>
+<%= render "shared/page_header", title: "Add someone", back: group_event_path(@group, @event) %>
 
 <%# The event this is filling, stated before the list: the reader arrives here from the event and
     the tally is the one number that says whether the job is done. %>
@@ -54,7 +54,7 @@
 
       <div class="mt-4">
         <%= render "shared/block_button", data: { invite_target: "submit" } do %>
-          <%= icon :invited %>
+          <%= icon :invited, class: "size-5" %>
           <span data-invite-target="label">Invite</span>
         <% end %>
       </div>

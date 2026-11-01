@@ -1,0 +1,444 @@
+<title>Groupifico Font Pairings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<style>
+  /* Layout: two columns, Left and Right, laid out as one grid so each section row lines up across both, and stacked in pairs at phone width. */
+  :root {
+    --bg: #f5ead8;
+    --surface: #ebddc5;
+    --line: #dcd3c4;
+    --fg: #201e1d;
+    --accent: #8c491a;
+    --on-accent: #f9f4ed;
+    --muted: color-mix(in oklab, var(--fg) 70%, transparent);
+    --ui: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #2e2b25; --surface: #474238; --line: #645c50; --fg: #f9f4ed; --accent: #e09675; --on-accent: #402310;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #2e2b25; --surface: #474238; --line: #645c50; --fg: #f9f4ed; --accent: #e09675; --on-accent: #402310;
+    color-scheme: dark;
+  }
+
+  body { background: var(--bg); color: var(--fg); font-family: var(--ui); }
+  .page { max-width: 90rem; margin: 0 auto; padding-block: 1.5rem 4rem; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 1.25rem; }
+
+  header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 0.75rem 2rem; }
+  header h1 { margin: 0; font-size: 1.5rem; font-weight: 650; text-wrap: balance; }
+  header p { margin: 0.375rem 0 0; color: var(--muted); max-width: 70ch; line-height: 1.5; }
+
+  .segmented { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; font-size: 0.8125rem; }
+  .segmented label { position: relative; }
+  .segmented input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+  .segmented span { display: block; padding: 0.25rem 0.75rem; }
+  .segmented input:checked + span { background: var(--accent); color: var(--on-accent); }
+  .segmented input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: -4px; }
+
+  .compare { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 1.5rem; }
+  .cell { min-width: 0; padding-block: 1rem; border-top: 1px solid var(--line); }
+  .cell-label { margin: 0 0 0.625rem; font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+  @media (max-width: 52rem) {
+    .compare { grid-template-columns: minmax(0, 1fr); }
+  }
+
+  .controls { display: flex; flex-direction: column; gap: 0.875rem; padding: 0.875rem 1rem; border: 1px solid var(--line); border-radius: 0.5rem; background: var(--surface); font-size: 0.8125rem; }
+  .controls-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; }
+  .controls-head strong { font-size: 1rem; }
+  .row { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; }
+  .group { display: flex; flex-direction: column; gap: 0.5rem; padding-top: 0.75rem; border-top: 1px solid var(--line); }
+  .group-title { font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+  select, button { font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 0.375rem; padding: 0.25rem 0.5rem; }
+  button { cursor: pointer; }
+  select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .field { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
+  .field > span { color: var(--muted); }
+  .sliders { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 13rem), 1fr)); gap: 0.5rem 1rem; }
+  .slider { display: grid; grid-template-columns: 1fr auto; gap: 0.125rem 0.5rem; align-items: center; }
+  .slider label { color: var(--muted); }
+  .slider output { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .slider input[type="range"] { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); margin: 0; }
+  .slider input:disabled { opacity: 0.4; }
+  .auto { display: inline-flex; gap: 0.25rem; align-items: center; color: var(--muted); }
+  .cov { font-size: 0.75rem; padding: 0.125rem 0.5rem; border-radius: 999px; border: 1px solid var(--line); }
+  .cov.full { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+
+  /* The app's own rungs, in rem as application.css has them. */
+  .spec { font-family: var(--b-font); font-weight: var(--b-wght); letter-spacing: var(--b-ls); line-height: var(--b-lh); font-variation-settings: var(--b-fvs); font-synthesis: none; }
+  .h { font-family: var(--h-font); font-weight: var(--h-wght); letter-spacing: var(--h-ls); line-height: var(--h-lh); font-variation-settings: var(--h-fvs); margin: 0; }
+  .spec.record-in-body .record { font-family: var(--b-font); font-weight: 650; letter-spacing: var(--b-ls); font-variation-settings: var(--b-fvs); }
+  .record { font-size: 1.5625rem; }
+  .hero { font-size: 1.375rem; }
+  .shell { font-size: 1.25rem; }
+  .row-title { font-size: 1rem; }
+  .card-fact { font-size: 0.8125rem; }
+  .meta { font-size: 0.75rem; }
+  .ladder { display: flex; flex-direction: column; gap: 0.25rem; }
+  .ladder p { margin: 0; }
+  .w6 { font-weight: 600; }
+  .w7 { font-weight: 700; }
+  .charset { display: flex; flex-direction: column; gap: 1rem; }
+  .rung h3 { margin: 0 0 0.25rem; font: inherit; font-size: 0.75rem; color: var(--muted); }
+  .rung p { margin: 0; overflow-wrap: anywhere; }
+  .rung .eu { display: block; margin-top: 0.25rem; padding-top: 0.25rem; border-top: 1px dashed var(--line); }
+  .sample { margin: 0; max-width: 65ch; }
+
+  pre { margin: 0; padding: 0.75rem; overflow-x: auto; border: 1px solid var(--line); border-radius: 0.375rem; background: var(--surface); font-family: var(--mono); font-size: 0.75rem; line-height: 1.5; }
+  .css-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .css-head .cell-label { margin: 0; }
+
+  footer { color: var(--muted); font-size: 0.8125rem; line-height: 1.5; max-width: 75ch; }
+  footer code { font-family: var(--mono); }
+</style>
+
+<div class="page">
+  <header>
+    <div>
+      <h1>Groupifico font pairings</h1>
+      <p>Pick a pairing for each column and tune it; each section lines up across both columns. Below each Character set, the dashed lines are letters the styleguide does not show yet: Serbian Cyrillic, set as Serbian so a font's Serbian letterforms apply, then Greek, Bulgarian and the other EU letters. A letter drawn in a different typeface there is a font that lacks it.</p>
+    </div>
+    <div class="segmented" role="radiogroup" aria-label="Theme">
+      <label><input type="radio" name="theme" id="theme-system" value="" checked><span>system</span></label>
+      <label><input type="radio" name="theme" id="theme-light" value="light"><span>organic</span></label>
+      <label><input type="radio" name="theme" id="theme-dark" value="dark"><span>organic-dark</span></label>
+    </div>
+  </header>
+
+  <div class="compare" id="compare"></div>
+
+  <footer>
+    Coverage was read from each family's source TTF in the <code>google/fonts</code> repository, letter by letter, not from Google's subset labels: Caprasimo is labelled <code>latin-ext</code> and still lacks Č Ć Đ Ž. "No Greek" fonts cover every Latin-script EU language and Serbian and Bulgarian Cyrillic. Optical size on "auto" follows the font size, the way the browser applies it by default. Your settings are remembered in this browser only.
+  </footer>
+</div>
+
+<script>
+  // Coverage: "full" = Latin-script EU + Serbian + Bulgarian + Greek; "nogreek" = all of that but Greek; "fails" = misses a required letter.
+  const FONTS = {
+    "Caprasimo": { fallback: "Georgia, serif", cov: "fails", note: "lacks Č Ć Đ Ž and Cyrillic", axes: {} },
+    "Alegreya": { fallback: "Georgia, serif", cov: "full", axes: { wght: [400, 900, 400] } },
+    "Bitter": { fallback: "Georgia, serif", cov: "nogreek", axes: { wght: [100, 900, 400] } },
+    "Comfortaa": { fallback: "system-ui, sans-serif", cov: "full", axes: { wght: [300, 700, 400] } },
+    "Literata": { fallback: "Georgia, serif", cov: "full", axes: { opsz: [7, 72, 14], wght: [200, 900, 400] } },
+    "Lora": { fallback: "Georgia, serif", cov: "nogreek", axes: { wght: [400, 700, 400] } },
+    "Merriweather": { fallback: "Georgia, serif", cov: "nogreek", axes: { opsz: [18, 144, 18], wdth: [87, 112, 100], wght: [300, 900, 400] } },
+    "Noto Serif Display": { fallback: "Georgia, serif", cov: "full", axes: { wdth: [62.5, 100, 100], wght: [100, 900, 400] } },
+    "Piazzolla": { fallback: "Georgia, serif", cov: "full", axes: { opsz: [8, 30, 14], wght: [100, 900, 400] } },
+    "Playfair Display": { fallback: "Georgia, serif", cov: "nogreek", axes: { wght: [400, 900, 400] } },
+    "Roboto Slab": { fallback: "Georgia, serif", cov: "full", axes: { wght: [100, 900, 400] } },
+    "Source Serif 4": { fallback: "Georgia, serif", cov: "full", axes: { opsz: [8, 60, 14], wght: [200, 900, 400] } },
+    "Vollkorn": { fallback: "Georgia, serif", cov: "full", axes: { wght: [400, 900, 400] } },
+    "Figtree": { fallback: "system-ui, sans-serif", cov: "fails", note: "lacks Cyrillic and Greek", axes: { wght: [300, 900, 400] } },
+    "Commissioner": { fallback: "system-ui, sans-serif", cov: "full", axes: { wght: [100, 900, 400], FLAR: [0, 100, 0], VOLM: [0, 100, 0] } },
+    "Fira Sans": { fallback: "system-ui, sans-serif", cov: "full", axes: { wght: [100, 900, 400] }, statics: [100, 200, 300, 400, 500, 600, 700, 800, 900] },
+    "Geologica": { fallback: "system-ui, sans-serif", cov: "full", axes: { wght: [100, 900, 400], CRSV: [0, 1, 0], SHRP: [0, 100, 0] } },
+    "Inter": { fallback: "system-ui, sans-serif", cov: "full", axes: { opsz: [14, 32, 14], wght: [100, 900, 400] } },
+    "Manrope": { fallback: "system-ui, sans-serif", cov: "full", axes: { wght: [200, 800, 400] } },
+    "Noto Sans": { fallback: "system-ui, sans-serif", cov: "full", axes: { wdth: [62.5, 100, 100], wght: [100, 900, 400] } },
+    "Nunito": { fallback: "system-ui, sans-serif", cov: "nogreek", axes: { wght: [200, 1000, 400] } },
+    "Open Sans": { fallback: "system-ui, sans-serif", cov: "full", axes: { wdth: [75, 100, 100], wght: [300, 800, 400] } },
+    "Roboto Flex": { fallback: "system-ui, sans-serif", cov: "full", axes: { opsz: [8, 144, 14], wdth: [25, 151, 100], wght: [100, 1000, 400], GRAD: [-200, 150, 0] } },
+    "Rubik": { fallback: "system-ui, sans-serif", cov: "nogreek", axes: { wght: [300, 900, 400] } },
+  };
+  const AXIS_NAMES = { opsz: "Optical size", wdth: "Width %", FLAR: "Flare", VOLM: "Volume", CRSV: "Cursive", SHRP: "Sharpness", GRAD: "Grade" };
+  const SERIFS = ["Caprasimo", "Alegreya", "Bitter", "Comfortaa", "Literata", "Lora", "Merriweather", "Noto Serif Display", "Piazzolla", "Playfair Display", "Roboto Slab", "Source Serif 4", "Vollkorn"];
+  const SANS = ["Figtree", "Commissioner", "Fira Sans", "Geologica", "Inter", "Manrope", "Noto Sans", "Nunito", "Open Sans", "Roboto Flex", "Rubik"];
+  const PRESETS = {
+    "Current": ["Caprasimo", "Figtree"],
+    "A": ["Merriweather", "Nunito"],
+    "B": ["Vollkorn", "Manrope"],
+    "C": ["Alegreya", "Commissioner"],
+    "D": ["Literata", "Inter"],
+    "E": ["Roboto Slab", "Geologica"],
+  };
+  const COV_LABEL = { full: "every EU language + Serbian", nogreek: "EU + Serbian, no Greek", fails: "fails" };
+
+  const LINES = [
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    "abcdefghijklmnopqrstuvwxyz",
+    "ČĆĐŠŽ čćđšž",
+    "0123456789",
+    "! @ # $ % ^ & * ( ) - _ = + [ ] { } ; : ' \" , . < > / ? \\ | ` ~ € · — ’",
+  ];
+  const EU_LINES = [
+    ["sr", "Српски ЂЈЉЊЋЏ ђјљњћџ бгдпт Ђурђица Чачић"],
+    ["el", "Ελληνικά ΑΒΓΔΘΛΞΠΣΦΨΩ αβγδθλξπσςφψω άέήίόύώ"],
+    ["bg", "Български АБВГДЖЗИЙЛПФЦЧШЩЪЮЯ абвгджзийлпфцчшщъюя Ѝѝ"],
+    ["", "Œœ Ææ Çç Ÿÿ ß Ąą Łł Ńń Śś Źź Żż Ěě Řř Ůů Őő Űű Āā Ēē Īī Ūū Ģģ Ķķ Ļļ Ņņ Ėė Įį Ųų Ċċ Ġġ Ħħ Șș Țț Ăă"],
+  ];
+
+  const loaded = new Set();
+  const loadFont = (name) => {
+    if (loaded.has(name)) return;
+    loaded.add(name);
+    const f = FONTS[name];
+    // WHY: Google's CSS2 API wants lowercase axis tags before uppercase ones, each group alphabetical, or it rejects the whole request.
+    const tags = Object.keys(f.axes).sort((a, b) => (a.toLowerCase() === a) === (b.toLowerCase() === b) ? a.localeCompare(b) : a.toLowerCase() === a ? -1 : 1);
+    let spec = "";
+    if (f.statics) spec = `:wght@${f.statics.join(";")}`;
+    else if (tags.length) spec = `:${tags.join(",")}@${tags.map((t) => `${f.axes[t][0]}..${f.axes[t][1]}`).join(",")}`;
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = `https://fonts.googleapis.com/css2?family=${name.replaceAll(" ", "+")}${spec}&display=swap`;
+    document.head.append(link);
+  };
+
+  const defaults = (heading, body) => ({ preset: "", heading, body, recordInBody: false, h: { wght: 400, ls: 0, lh: 1.2, axes: {} }, b: { wght: 400, ls: 0, lh: 1.5, axes: {} } });
+  const STORE = "groupifico-font-pairings";
+  const saved = (() => { try { return JSON.parse(localStorage.getItem(STORE)) || null } catch { return null } })();
+  const state = saved || { left: { ...defaults("Caprasimo", "Figtree"), preset: "Current" }, right: { ...defaults("Literata", "Inter"), preset: "D", h: { wght: 600, ls: 0, lh: 1.2, axes: {} } } };
+  const persist = () => { try { localStorage.setItem(STORE, JSON.stringify(state)) } catch {} };
+
+  const el = (tag, attrs = {}, ...children) => {
+    const node = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (k === "class") node.className = v;
+      else if (k in node && k !== "list") node[k] = v;
+      else node.setAttribute(k, v);
+    }
+    node.append(...children.filter((c) => c !== null && c !== undefined));
+    return node;
+  };
+
+  const fontSelect = (id, value) => {
+    const select = el("select", { id });
+    for (const [label, list] of [["Serif and display", SERIFS], ["Sans", SANS]]) {
+      const group = el("optgroup", { label });
+      for (const name of list) {
+        const f = FONTS[name];
+        const suffix = f.cov === "full" ? "" : f.cov === "nogreek" ? " (no Greek)" : ` (current: ${f.note})`;
+        group.append(el("option", { value: name, textContent: name + suffix, selected: name === value }));
+      }
+      select.append(group);
+    }
+    return select;
+  };
+
+  const fvs = (role, name) => {
+    const f = FONTS[name];
+    const parts = Object.keys(f.axes).filter((t) => t !== "wght" && role.axes[t] !== undefined && role.axes[t] !== "auto").map((t) => `"${t}" ${role.axes[t]}`);
+    return parts.length ? parts.join(", ") : "normal";
+  };
+  const clampWeight = (role, name) => {
+    const w = FONTS[name].axes.wght;
+    role.wght = w ? Math.min(Math.max(role.wght, w[0]), w[1]) : 400;
+  };
+
+  const css = (col) => {
+    const H = FONTS[col.heading], B = FONTS[col.body];
+    const lines = [
+      `@theme {`,
+      `  --font-heading: "${col.heading}", ${H.fallback};`,
+      `  --font-sans: "${col.body}", ${B.fallback};`,
+      `}`,
+      ``,
+      `h1, h2, h3 {`,
+      `  font-weight: ${col.h.wght};`,
+      `  letter-spacing: ${col.h.ls}em;`,
+      `  line-height: ${col.h.lh};`,
+    ];
+    if (fvs(col.h, col.heading) !== "normal") lines.push(`  font-variation-settings: ${fvs(col.h, col.heading)};`);
+    lines.push(`}`, ``, `body {`, `  font-weight: ${col.b.wght};`, `  letter-spacing: ${col.b.ls}em;`, `  line-height: ${col.b.lh};`);
+    if (fvs(col.b, col.body) !== "normal") lines.push(`  font-variation-settings: ${fvs(col.b, col.body)};`);
+    lines.push(`}`);
+    if (col.recordInBody) lines.push(``, `/* Record title set in the body face at 650 */`);
+    return lines.join("\n");
+  };
+
+  const slider = (id, label, min, max, step, value, onInput, format = (v) => v) => {
+    const out = el("output", { htmlFor: id, textContent: format(value) });
+    const input = el("input", { id, type: "range", min, max, step, value });
+    input.addEventListener("input", () => { out.textContent = format(input.value); onInput(Number(input.value)); });
+    return el("div", { class: "slider" }, el("label", { htmlFor: id, textContent: label }), out, input);
+  };
+
+  const roleControls = (side, key, col, title, name, refresh) => {
+    const role = col[key];
+    const f = FONTS[name];
+    const sliders = el("div", { class: "sliders" });
+    const w = f.axes.wght;
+    if (w) {
+      const step = f.statics ? 100 : 10;
+      sliders.append(slider(`${side}-${key}-wght`, "Weight", w[0], w[1], step, role.wght, (v) => { role.wght = v; refresh(); }));
+    } else {
+      const s = slider(`${side}-${key}-wght`, "Weight (single)", 400, 400, 1, 400, () => {});
+      s.querySelector("input").disabled = true;
+      sliders.append(s);
+    }
+    sliders.append(slider(`${side}-${key}-ls`, "Letter-spacing", -0.05, 0.1, 0.005, role.ls, (v) => { role.ls = v; refresh(); }, (v) => `${Number(v).toFixed(3)}em`));
+    sliders.append(slider(`${side}-${key}-lh`, "Line-height", 0.9, 1.9, 0.05, role.lh, (v) => { role.lh = v; refresh(); }, (v) => Number(v).toFixed(2)));
+    for (const [tag, [min, max, def]] of Object.entries(f.axes)) {
+      if (tag === "wght") continue;
+      const isOpsz = tag === "opsz";
+      if (role.axes[tag] === undefined) role.axes[tag] = isOpsz ? "auto" : def;
+      const auto = role.axes[tag] === "auto";
+      const s = slider(`${side}-${key}-${tag}`, AXIS_NAMES[tag] || tag, min, max, tag === "CRSV" ? 0.5 : (max - min) > 20 ? 1 : 0.5, auto ? def : role.axes[tag], (v) => { role.axes[tag] = v; refresh(); }, (v) => auto && role.axes[tag] === "auto" ? "auto" : v);
+      if (isOpsz) {
+        const input = s.querySelector("input");
+        const output = s.querySelector("output");
+        input.disabled = auto;
+        const box = el("input", { type: "checkbox", id: `${side}-${key}-${tag}-auto`, checked: auto });
+        box.addEventListener("change", () => {
+          input.disabled = box.checked;
+          role.axes[tag] = box.checked ? "auto" : Number(input.value);
+          output.textContent = box.checked ? "auto" : input.value;
+          refresh();
+        });
+        output.textContent = auto ? "auto" : role.axes[tag];
+        s.querySelector("label").after(el("label", { class: "auto", htmlFor: box.id }, box, "auto"));
+        s.style.gridTemplateColumns = "1fr auto auto";
+      }
+      sliders.append(s);
+    }
+    return el("div", { class: "group" }, el("span", { class: "group-title", textContent: title }), sliders);
+  };
+
+  const compare = document.getElementById("compare");
+  const cells = { left: {}, right: {} };
+  const ROWS = ["controls", "ladder", "charset", "sample", "css"];
+  for (const row of ROWS) {
+    for (const side of ["left", "right"]) {
+      const cell = el("div", { class: "cell" });
+      cells[side][row] = cell;
+      compare.append(cell);
+    }
+  }
+
+  const specimen = (side) => el("div", { class: "spec", id: `${side}-spec` });
+
+  const applyVars = (side) => {
+    const col = state[side];
+    for (const spec of compare.querySelectorAll(`[data-side="${side}"]`)) {
+      spec.style.setProperty("--h-font", `"${col.heading}", ${FONTS[col.heading].fallback}`);
+      spec.style.setProperty("--b-font", `"${col.body}", ${FONTS[col.body].fallback}`);
+      spec.style.setProperty("--h-wght", col.h.wght);
+      spec.style.setProperty("--b-wght", col.b.wght);
+      spec.style.setProperty("--h-ls", `${col.h.ls}em`);
+      spec.style.setProperty("--b-ls", `${col.b.ls}em`);
+      spec.style.setProperty("--h-lh", col.h.lh);
+      spec.style.setProperty("--b-lh", col.b.lh);
+      spec.style.setProperty("--h-fvs", fvs(col.h, col.heading));
+      spec.style.setProperty("--b-fvs", fvs(col.b, col.body));
+      spec.classList.toggle("record-in-body", col.recordInBody);
+    }
+    cells[side].css.querySelector("pre").textContent = css(col);
+    persist();
+  };
+
+  const buildControls = (side) => {
+    const col = state[side];
+    loadFont(col.heading);
+    loadFont(col.body);
+    clampWeight(col.h, col.heading);
+    clampWeight(col.b, col.body);
+    const refresh = () => applyVars(side);
+    const rebuild = () => { buildControls(side); applyVars(side); };
+
+    const preset = el("select", { id: `${side}-preset` });
+    preset.append(el("option", { value: "", textContent: "Custom" }));
+    for (const [key, [h, b]] of Object.entries(PRESETS)) preset.append(el("option", { value: key, textContent: `${key}: ${h} + ${b}`, selected: col.preset === key }));
+    preset.addEventListener("change", () => {
+      if (!preset.value) return;
+      [col.heading, col.body] = PRESETS[preset.value];
+      col.preset = preset.value;
+      col.h.axes = {};
+      col.b.axes = {};
+      rebuild();
+    });
+
+    const heading = fontSelect(`${side}-heading`, col.heading);
+    heading.addEventListener("change", () => { col.heading = heading.value; col.preset = ""; col.h.axes = {}; rebuild(); });
+    const body = fontSelect(`${side}-body`, col.body);
+    body.addEventListener("change", () => { col.body = body.value; col.preset = ""; col.b.axes = {}; rebuild(); });
+
+    const worst = [FONTS[col.heading].cov, FONTS[col.body].cov].includes("fails") ? "fails" : [FONTS[col.heading].cov, FONTS[col.body].cov].includes("nogreek") ? "nogreek" : "full";
+
+    const record = el("div", { class: "segmented", role: "radiogroup", "aria-label": `${side} record title face` });
+    for (const [value, label] of [["heading", "heading face"], ["body", "body face"]]) {
+      const input = el("input", { type: "radio", name: `${side}-record`, id: `${side}-record-${value}`, value, checked: (value === "body") === col.recordInBody });
+      input.addEventListener("change", () => { col.recordInBody = value === "body"; refresh(); });
+      record.append(el("label", {}, input, el("span", { textContent: label })));
+    }
+
+    const reset = el("button", { type: "button", textContent: "Reset tuning" });
+    reset.addEventListener("click", () => {
+      const fresh = defaults(col.heading, col.body);
+      Object.assign(col, { recordInBody: false, h: fresh.h, b: fresh.b });
+      rebuild();
+    });
+
+    const panel = el("div", { class: "controls" },
+      el("div", { class: "controls-head" }, el("strong", { textContent: side === "left" ? "Left" : "Right" }), el("span", { class: `cov ${worst === "full" ? "full" : ""}`, textContent: COV_LABEL[worst] }), reset),
+      el("div", { class: "row" },
+        el("label", { class: "field", htmlFor: `${side}-preset` }, el("span", { textContent: "Pairing" }), preset),
+        el("label", { class: "field", htmlFor: `${side}-heading` }, el("span", { textContent: "Heading" }), heading),
+        el("label", { class: "field", htmlFor: `${side}-body` }, el("span", { textContent: "Body" }), body)),
+      el("div", { class: "row" }, el("span", { class: "group-title", textContent: "Record title in" }), record),
+      roleControls(side, "h", col, `Heading: ${col.heading}`, col.heading, refresh),
+      roleControls(side, "b", col, `Body: ${col.body}`, col.body, refresh));
+    cells[side].controls.replaceChildren(panel);
+  };
+
+  const buildSpecimens = (side) => {
+    const label = side === "left" ? "Left" : "Right";
+
+    cells[side].ladder.replaceChildren(
+      el("p", { class: "cell-label", textContent: `${label} · Type ladder` }),
+      el("div", { class: "spec ladder", "data-side": side },
+        el("p", { class: "h record", textContent: "Record title, text-record" }),
+        el("p", { class: "h hero", textContent: "Hero title, text-hero" }),
+        el("p", { class: "h shell", textContent: "Shell title, text-shell" }),
+        el("p", { class: "h row-title", textContent: "Row title, text-row-title" }),
+        el("p", {}, "Body at the default size, regular. ", el("span", { class: "w6", textContent: "Semibold." }), " ", el("span", { class: "w7", textContent: "Bold." })),
+        el("p", { class: "card-fact", textContent: "Card fact, text-card-fact" }),
+        el("p", { class: "meta", textContent: "Meta, text-meta" })));
+
+    const charset = el("div", { class: "spec charset", "data-side": side });
+    for (const [rungLabel, cls] of [["Body at the default size, regular", ""], ["Body at the default size, semibold", "w6"], ["Body at the default size, bold", "w7"], ["Record title, text-record", "h record"]]) {
+      const text = el("p", { class: cls });
+      LINES.forEach((line, i) => { if (i) text.append(el("br")); text.append(line); });
+      const eu = el("span", { class: "eu" });
+      EU_LINES.forEach(([lang, line], i) => { if (i) eu.append(el("br")); eu.append(lang ? el("span", { lang, textContent: line }) : line); });
+      text.append(eu);
+      charset.append(el("div", { class: "rung" }, el("h3", { textContent: rungLabel }), text));
+    }
+    cells[side].charset.replaceChildren(el("p", { class: "cell-label", textContent: `${label} · Character set` }), charset);
+
+    cells[side].sample.replaceChildren(
+      el("p", { class: "cell-label", textContent: `${label} · In a sentence` }),
+      el("div", { class: "spec", "data-side": side },
+        el("p", { class: "h record", textContent: "Proba za koncert u Lisinskom" }),
+        el("p", { class: "sample", textContent: "Proba u subotu u 18:00. Dolaze Đurđica Čačić, Šime Žužić i Ivana Marić; Ćiro javlja da kasni. Œuvre complète, naïve café, Zoë." })));
+
+    const copy = el("button", { type: "button", textContent: "Copy" });
+    const pre = el("pre", {});
+    copy.addEventListener("click", () => {
+      navigator.clipboard.writeText(pre.textContent).then(() => { copy.textContent = "Copied"; setTimeout(() => { copy.textContent = "Copy"; }, 1500); }).catch(() => {
+        const range = document.createRange();
+        range.selectNodeContents(pre);
+        const selection = getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        copy.textContent = "Selected, press Ctrl+C";
+      });
+    });
+    cells[side].css.replaceChildren(el("div", { class: "css-head" }, el("p", { class: "cell-label", textContent: `${label} · CSS` }), copy), pre);
+  };
+
+  for (const side of ["left", "right"]) {
+    buildSpecimens(side);
+    buildControls(side);
+    applyVars(side);
+  }
+
+  for (const radio of document.querySelectorAll('input[name="theme"]')) {
+    radio.addEventListener("change", () => {
+      if (radio.value) document.documentElement.setAttribute("data-theme", radio.value);
+      else document.documentElement.removeAttribute("data-theme");
+    });
+  }
+</script>

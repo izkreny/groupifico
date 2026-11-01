@@ -1,19 +1,19 @@
 <% content_for :title, "Sign in" %>
 
-<div class="flex flex-col gap-5">
+<div class="grow flex flex-col gap-5">
   <%# The account is named so a link somebody else sent you is recognisable, which is the whole
       reason this GET renders a page instead of signing anybody in. %>
-  <h1 class="text-record break-words">Sign in as <%= @sign_in_token.user.email %></h1>
+  <h1 class="text-record text-center break-words">Sign in as <span class="block text-secondary"><%= @sign_in_token.user.email %></span></h1>
 
-  <div class="inline">
-    <%= button_to "Sign in", sign_in_path, class: "btn btn-primary" %>
-  </div>
+  <%= button_to sign_in_path, class: "btn btn-primary btn-block" do %>
+    <%= icon :confirm, class: "size-5" %> Sign in
+  <% end %>
 
   <%# Copy, not a route: closing the page leaves the link unspent until it expires, so there is
       nowhere for a link here to lead.
 
       `text-meta` rather than daisyUI's `label`; `sessions/new` carries the measurement. %>
-  <p class="text-meta">Not you? Just close this page</p>
+  <p class="text-meta text-center">Not you? Just close this page</p>
 
-  <p class="text-meta">Opening the link did nothing yet. Only this button signs you in, and the link then stops working.</p>
+  <p class="text-meta text-center mt-auto">Opening the link did nothing yet. Only this button signs you in, and the link then stops working.</p>
 </div>

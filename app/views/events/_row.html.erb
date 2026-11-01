@@ -5,28 +5,38 @@
 
   The question is the exception, and it is asked wherever `Registration#asked?` puts it - a row is where they are looking when they decide. The past list asks too, in the past tense: an event that has ended and that nobody concluded is still worth a roster, so there the question goes to anyone who has not said yes or no, and `EventsHelper#answer_prompt` carries the tense. `open_to_answers?` rules out the events somebody ended rather than the ones the clock did; it is asked here as well as in `events/_rsvp` so a closed event's row draws no empty wrapper.
 
-  An answer already given stays an icon beside the name rather than a second set of pills.
+  Where the row asks nothing, the member's registration stays an icon at the row's end, whatever its status, in the Who's coming? tally's colours: an answer in its status colour, an invitation in info, a reserved place in the page's ink.
   `list-col-wrap` puts the question on its own line under the row rather than in a column beside it.
+  `col-start-2` pins it under the name: the grid places it in the column of the cell before it, so behind the pencil it would land in the pencil's column and widen it until the name had no room.
 %>
 <li id="<%= dom_id event %>" class="list-row">
-  <%= status_icon event, label: event.status, class: "size-5" %>
+  <%= status_icon event, label: event.status, class: "size-6 self-center text-icon-muted" %>
 
   <div>
     <%= link_to event.name, group_event_path(event.group, event), class: "link link-hover" %>
-    <% if registration&.answered? %>
-      <%= status_icon registration, label: "your answer: #{registration.status}", class: "size-4 inline-block align-text-bottom" %>
-    <% end %>
 
     <div class="text-xs">
       <%= event_schedule_start(event) %>
       <% if event.address %>
-        · <%= link_to event.address.name, address_map_url(event.address), class: "link link-hover" %>
+        · <%= link_to event.address.name, address_map_url(event.address), class: "link link-hover", target: "_blank" %>
       <% end %>
     </div>
   </div>
 
-  <% if registration&.asked? && event.open_to_answers? %>
-    <div class="list-col-wrap">
+  <% asking = registration&.asked? && event.open_to_answers? %>
+  <% if registration && !asking %>
+    <%= status_icon registration, label: registration.answered? ? "your answer: #{registration.status}" : registration_status_label(registration), class: "size-5 self-center #{status_ink(registration.status)}" %>
+  <% end %>
+
+  <%# Frame 4h's pencil, last in the row, for a reader `edit?` allows. WHY: 20px, the answer's size and a step under the event's 24px status, so it reads beside the answer without competing with the name. WHY: `-ml-0.5` takes the row's 16px gap to 14px, which with the 6px inside the pencil's 32px button sets its glyph 20px from the answer's, the glyph gap the event screen's roster keeps. %>
+  <% if allowed_to?(:edit?, event) %>
+    <%= link_to edit_group_event_path(event.group, event), class: "btn btn-ghost btn-circle btn-sm text-primary self-center -ml-0.5", aria: { label: "Edit #{event.name}" } do %>
+      <%= icon :edit, class: "size-5" %>
+    <% end %>
+  <% end %>
+
+  <% if asking %>
+    <div class="list-col-wrap col-start-2">
       <%= render "events/rsvp", event: event, registration: registration %>
     </div>
   <% end %>

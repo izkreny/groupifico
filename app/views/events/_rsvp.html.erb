@@ -1,28 +1,29 @@
-<%# locals: (event:, registration: nil) %>
+<%# locals: (event:, registration: nil, classes: nil) %>
 <%#
   The reader's own row, in the two states that are a question or an answer. A `reserved` registration draws nothing until the event ends: it is a place held before anybody was asked, and the legend reads that absence as the state rather than as a question waiting. Once the event has ended `Registration#asked?` asks it whether they went, together with an invitation nobody answered and a maybe, and the pills are `Event#available_registration_answers`, which leaves the maybe out.
 
   Nothing is drawn on an event that no longer takes answers, because `Registration` refuses every pill there. No registration draws nothing either, and so does one the policy will not let this reader write.
-%>
-<% if registration && event.open_to_answers? && (registration.asked? || registration.answered?) && allowed_to?(:update?, registration) %>
-  <div class="space-y-1">
-    <p class="text-sm"><%= registration.asked? ? answer_prompt(event) : "Your answer:" %></p>
 
-    <div class="join">
+  Each answer is its own small button, a ghost until chosen; the chosen one is solid in its status colour, which reads on the cards' `base-200` as well as on the page, and the others carry that colour on their icon alone.
+%>
+<% chosen = { "yes" => "btn-success", "maybe" => "btn-warning", "no" => "btn-error" } %>
+<% if registration && event.open_to_answers? && (registration.asked? || registration.answered?) && allowed_to?(:update?, registration) %>
+  <%# WHY: the buttons sit 16px beside the question while the line has room for both, and wrap below it as one group, 8px down, when it does not. %>
+  <%= tag.div class: [ "flex flex-wrap items-center gap-x-4 gap-y-2", classes ] do %>
+    <%# WHY: grow-0, because daisyUI grows every paragraph in a card body, which on the next-up card pushed the buttons to its far edge. %>
+    <p class="text-sm font-semibold grow-0"><%= registration.asked? ? answer_prompt(event) : "Your answer:" %></p>
+    <div class="flex flex-wrap gap-2">
       <% event.available_registration_answers.each do |answer| %>
         <% current = registration.status == answer %>
         <%= button_to group_event_registration_path(event.group, event, registration),
               method: :patch,
               params: { registration: { status: answer } },
-              class: "join-item btn btn-sm#{" btn-primary" if current}",
+              class: "btn btn-sm #{current ? chosen[answer] : "btn-ghost"}",
               aria: (current ? { current: "true" } : {}) do %>
+          <%= icon answer, class: "size-5 #{status_ink(answer) unless current}" %>
           <%= answer.capitalize %>
         <% end %>
       <% end %>
     </div>
-
-    <% if registration.invited? %>
-      <p class="text-xs">Asked <%= time_ago_in_words(registration.updated_at) %> ago · no answer yet</p>
-    <% end %>
-  </div>
+  <% end %>
 <% end %>

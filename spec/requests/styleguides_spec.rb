@@ -27,7 +27,18 @@ RSpec.describe "The styleguide", type: :request do
         expect(html.css("label[for]").map { it["for"] }.uniq.reject { ids[it] == 1 }).to be_empty
       end
 
-      # What reads through SQL: the roster's rows, the said-yes line, the credits and the count tags.
+      # What reads through SQL: the roster's rows, the credits and the count tags.
+      # A table of their own under daisyUI's, so the app's tokens are never read as daisyUI's.
+      it "lists the app's own colour tokens apart from daisyUI's" do
+        plant_styleguide_group
+        sign_in_as(create(:user))
+
+        get "/styleguide"
+
+        rows = Nokogiri::HTML(response.body).css("#app_tokens_organic tr")
+        expect(rows.map { [ it.at_css("code").text, it.css("td").size ] }).to eq [ [ "icon-muted", 5 ], [ "muted", 5 ] ]
+      end
+
       it "draws the styleguide group's records" do
         plant_styleguide_group(manager: "Ana Horvat", invited: "Ivan Kovačević", said_yes: "Marija Babić")
         sign_in_as(create(:user))
@@ -36,9 +47,8 @@ RSpec.describe "The styleguide", type: :request do
 
         html = Nokogiri::HTML(response.body)
         expect(html.css("[id^='roster_registration_']").map { it.text.squish }).to include "Ivan Kovačević"
-        expect(page_text(response.body)).to include "Marija Babić said yes"
         expect(page_text(response.body)).to include "Managed by Ana H."
-        expect(html.css(".badge [aria-label='no reply']")).not_to be_empty
+        expect(html.css("[aria-label='no reply']")).not_to be_empty
       end
 
       # The owner may answer for every member and take anyone off the list, so every row draws both controls.
@@ -209,7 +219,7 @@ RSpec.describe "The styleguide", type: :request do
 
         html = Nokogiri::HTML(response.body)
         section = html.css("section").find { it.at_css("h2")&.text == "Colour tokens" }
-        light, dark = %w[ organic organic-dark ].map { |theme| section.css("[data-theme='#{theme}'] tbody tr").map { it.text.squish } }
+        light, dark = %w[ organic organic-dark ].map { |theme| section.css("#daisyui_tokens_#{theme} tr").map { it.text.squish } }
         expect([ light.size, dark.size ]).to eq [ 20, 20 ]
         expect(light).to include "primary #8c491a 6.22:1 vs primary-content 5.72:1"
         expect(dark).to include "primary #e09675 6.00:1 vs primary-content 5.90:1"
@@ -223,8 +233,8 @@ RSpec.describe "The styleguide", type: :request do
         get "/styleguide"
 
         section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Colour tokens" }
-        tagged = section.css("[data-theme='organic'] tbody tr").to_h { [ it.at_css("code").text, it.css(".badge").any? ] }
-        expect(tagged.values_at("base-200", "base-300", "warning")).to eq [ false, false, true ]
+        tagged = section.css("#daisyui_tokens_organic-dark tr").to_h { [ it.at_css("code").text, it.css(".badge").any? ] }
+        expect(tagged.values_at("base-200", "base-300", "neutral")).to eq [ false, false, true ]
       end
 
       # The switcher's commonest row is a group that is not the current one, which a switcher listing only the current group never draws.
@@ -274,8 +284,8 @@ RSpec.describe "The styleguide", type: :request do
 
         expect(Nokogiri::HTML(response.body).css("section a[href^='https://daisyui.com/']").map { it["href"] }).to contain_exactly(
           "https://daisyui.com/components/alert/", "https://daisyui.com/components/badge/", "https://daisyui.com/components/button/",
-          "https://daisyui.com/components/card/", "https://daisyui.com/components/collapse/", "https://daisyui.com/components/input/",
-          "https://daisyui.com/components/select/"
+          "https://daisyui.com/components/card/", "https://daisyui.com/components/collapse/", "https://daisyui.com/components/dropdown/",
+          "https://daisyui.com/components/input/", "https://daisyui.com/components/select/"
         )
       end
 
@@ -300,7 +310,7 @@ RSpec.describe "The styleguide", type: :request do
 
         section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Legend icons" }
         used = section.css("[data-theme=organic] tbody tr").to_h { [ it.css("td")[1].text.squish, it.css("td")[2] ] }
-        expect(used.values_at("check-circle", "calendar", "plus").map { |cell| cell.css("li code").map(&:text) }).to eq [ %w[ confirmed yes ], %w[ when events ], [] ]
+        expect(used.values_at("check-circle", "calendar", "plus").map { |cell| cell.css("li code").map(&:text) }).to eq [ %w[ yes success ], %w[ when events ], [] ]
         expect(IconsHelper::ICONS.reject { |meaning, name| used.fetch(name).text.squish.include?("#{meaning} - #{StyleguidesHelper::ICON_USES.fetch(meaning)}") }).to be_empty
       end
 
@@ -428,10 +438,10 @@ RSpec.describe "The styleguide", type: :request do
         "#{path.dirname.relative_path_from(Rails.root.join("app/views"))}/#{path.basename.to_s.delete_prefix("_").delete_suffix(".html.erb")}"
       end
       # The summary is reached only through the builder, which draws it after the fields it reads,
-      # and the confirm sheet through the event's delete partial, which is where its strings live.
+      # and the confirm sheet through the event's delete partial, which is where its strings live; its scope wraps what it is rendered around, and its trigger is passed into a form's row.
       # The address fields and the role tags are each drawn by the one partial that renders them.
-      # The header, the switcher and the tabs are drawn through the layout's own wrappers.
-      rendered_by = { "shared/errors" => "form.with_error_summary", "shared/confirm_sheet" => %(render "events/delete"), "addresses/form_fields" => %(render "events/form"), "members/roles" => %(render "members/member"), "layouts/header" => %(render "layouts/header_with_switcher"), "layouts/group_switcher" => %(render "layouts/header_with_switcher"), "layouts/group_tabs" => %(render "layouts/dock") }
+      # The switcher is drawn through the header, the tabs through the layout's own wrappers, and an alert's frame and the roster toggle each wrap what they are rendered around.
+      rendered_by = { "shared/errors" => "form.with_error_summary", "shared/confirm_sheet" => %(render "events/delete"), "shared/confirm_scope" => %(render layout: "shared/confirm_scope"), "shared/confirm_trigger" => 'render("shared/confirm_trigger"', "addresses/form_fields" => %(render "events/form"), "members/roles" => %(render "members/member"), "layouts/group_switcher" => %(render "layouts/header"), "layouts/group_tabs" => %(render "layouts/dock"), "shared/alert" => %(render layout: "shared/alert"), "events/roster_toggle" => %(render layout: "events/roster_toggle") }
 
       expect(partials).not_to be_empty
       expect((partials - %w[ layouts/head styleguides/section ]).reject { template.include?(rendered_by.fetch(it, %(render "#{it}"))) }).to be_empty

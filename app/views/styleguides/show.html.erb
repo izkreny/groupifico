@@ -34,12 +34,17 @@
 
 <div class="flex flex-col gap-8" data-controller="section-anchor" data-action="turbo:submit-start@document->section-anchor#remember turbo:morph@document->section-anchor#restore">
   <%# WHY: sticky inside the page's one column rather than fixed, so it keeps the column's width and takes the root theme rather than either twin's. %>
-  <header id="member_switcher" class="sticky top-0 z-10 bg-base-100 border-b border-base-300 py-2 text-sm">
+  <header id="member_switcher" class="sticky top-0 z-10 bg-base-100 border-b border-base-300 py-2 text-sm flex flex-wrap items-center gap-2">
     <%= form_with url: styleguide_session_path, class: "flex flex-wrap items-center gap-2", data: { controller: "form" } do |form| %>
       <%= form.label :member_id, "Signed in as", class: "label" %>
       <%# WHY: the prompt shows only while the signed-in user is no member here, so it names them rather than asking for a pick. %>
       <%= form.select :member_id, member_switch_choices(@members), { selected: @members.find { it.user_id == Current.user.id }&.id, prompt: "#{Current.user.profile.full_name} (not a member)" }, class: "select select-sm w-auto", required: true, data: { action: "change->form#submit" } %>
     <% end %>
+
+    <div class="flex gap-2 ms-auto" data-controller="fold-all">
+      <button type="button" class="btn btn-sm" data-action="fold-all#collapse">Collapse all</button>
+      <button type="button" class="btn btn-sm" data-action="fold-all#expand">Expand all</button>
+    </div>
   </header>
 
   <div>
@@ -71,24 +76,41 @@
     <%= render "styleguides/components/button" %>
   <% end %>
 
+  <%= render layout: "styleguides/section", locals: { title: "Buttons with an icon and a label" } do %>
+    <%= render "styleguides/components/labelled_buttons" %>
+  <% end %>
+
   <%= render layout: "styleguides/section", locals: { title: "Card", docs: "https://daisyui.com/components/card/" } do %>
     <%= render "styleguides/components/card" %>
   <% end %>
 
-  <%= render layout: "styleguides/section", locals: { title: "Collapse", docs: "https://daisyui.com/components/collapse/" } do |theme| %>
-    <%= render "styleguides/components/collapse", event: @next_up, theme: %>
+  <%= render layout: "styleguides/section", locals: { title: "Collapse", docs: "https://daisyui.com/components/collapse/" } do %>
+    <%= render "styleguides/components/collapse", event: @next_up %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Input", docs: "https://daisyui.com/components/input/" } do |theme| %>
     <%= render "styleguides/components/input", theme: %>
   <% end %>
 
-  <%= render layout: "styleguides/section", locals: { title: "Select", docs: "https://daisyui.com/components/select/" } do |theme| %>
-    <%= render "styleguides/components/select", theme:, group: @group %>
+  <%= render layout: "styleguides/section", locals: { title: "Dropdown", docs: "https://daisyui.com/components/dropdown/" } do |theme| %>
+    <%= render "events/scope_menu", group: @group, past: false, id: "scope_#{theme}" %>
   <% end %>
 
-  <%= render layout: "styleguides/section", locals: { title: "Page header" } do %>
+  <%= render layout: "styleguides/section", locals: { title: "Select", docs: "https://daisyui.com/components/select/" } do |theme| %>
+    <%= render "styleguides/components/select", theme: %>
+  <% end %>
+
+  <%= render layout: "styleguides/section", locals: { title: "Header on a pushed screen" } do %>
     <%= render "shared/page_header", title: "Event" %>
+    <%= render "layouts/header",
+          brand_name: Current.brand.name,
+          group: @group,
+          group_name: @group.name,
+          title: content_for(:page_title),
+          initials: @owner.initials,
+          back_path: group_events_path(@group),
+          tabs: true,
+          section: :events %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Flash, notice and alert" } do %>
@@ -135,10 +157,19 @@
     <%= render layout: "styleguides/section", locals: { title: "Confirm sheet" } do |theme| %>
       <%= render "events/delete", group: @group, event: @next_up, id: "confirm_delete_#{theme}" %>
     <% end %>
+
+    <%= render layout: "styleguides/section", locals: { title: "Edit form, Delete first in its row" } do |theme| %>
+      <% id = "confirm_delete_#{theme}_edit" %>
+      <%= render layout: "shared/confirm_scope" do %>
+        <%= render "events/form", group: @group, event: @next_up, submit: "Save changes", cancel: "#", namespace: "#{theme}_edit",
+              leading: render("shared/confirm_trigger", id:, confirm: "Delete event") %>
+        <%= render "events/delete", group: @group, event: @next_up, id:, detached: true %>
+      <% end %>
+    <% end %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Header, with the group switcher and the tabs" } do |theme| %>
-    <%= render "layouts/header_with_switcher",
+    <%= render "layouts/header",
           memberships: @memberships,
           brand_name: Current.brand.name,
           group: @group,

@@ -64,4 +64,9 @@ module ViewportHelper
       })()
     JS
   end
+
+  # An element's rendered width in whole px, for comparing a control against the column it should span.
+  def width_of(selector)
+    page.evaluate_script("Math.round(document.querySelector(arguments[0]).getBoundingClientRect().width)", selector)
+  end
 end

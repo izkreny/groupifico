@@ -86,7 +86,7 @@ RSpec.describe "The Me screen", type: :system do
       visit edit_user_profile_path
 
       expect(rendered_colour_scheme).to eq "light"
-      expect(page).to paint "input[type=submit]"
+      expect(page).to paint "button.btn-primary[type=submit]"
       expect(page).to be_accessible
     end
 
@@ -98,7 +98,7 @@ RSpec.describe "The Me screen", type: :system do
       visit edit_user_profile_path
 
       expect(rendered_colour_scheme).to eq "dark"
-      expect(page).to paint "input[type=submit]"
+      expect(page).to paint "button.btn-primary[type=submit]"
       expect(page).to be_accessible
     end
 

@@ -13,7 +13,12 @@ RSpec.describe "The sign-in page", type: :system do
   end
 
   it "paints the submit button" do
-    expect(page).to paint "input[type=submit]"
+    expect(page).to paint "button[type=submit]"
+  end
+
+  # Frame 9a's full-width button, measured against the heading, which is a block and so spans the column.
+  it "stretches the submit button across the column" do
+    expect(width_of("button[type=submit]")).to eq width_of("h1")
   end
 
   # The other half of what a browser adds, and the half `paint` cannot reach: whether the form is

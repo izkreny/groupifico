@@ -100,6 +100,7 @@ module ContrastHelper
         context.clearRect(0, 0, 1, 1);
         fill(getComputedStyle(element).color);
         const ink = Array.from(pixel());
+        alpha *= ink[3] / 255;
 
         const blended = ink.slice(0, 3).map((value, index) => value * alpha + beneath[index] * (1 - alpha));
 

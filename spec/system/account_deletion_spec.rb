@@ -29,8 +29,9 @@ RSpec.describe "Deleting my account", type: :system do
       within("##{dom_id(user, :confirm_delete)}_form") { click_button "Delete my account" }
     end
 
+    # WHY: waited until the box's fade-in finishes, because axe measures the colours it sees, and halfway through the fade the block's soft error text reads 3.95:1 against a blend of the sheet and the page behind it.
     it "has no accessibility violations with the sheet open" do
-      expect(page).to have_css "dialog[open]"
+      expect(page).to have_css "dialog[open] .modal-box", style: { opacity: "1" }
       expect(page).to be_accessible
     end
 
@@ -122,8 +123,9 @@ RSpec.describe "Deleting my account", type: :system do
       expect(page).to have_button "Delete my account", disabled: true
     end
 
+    # WHY: waited until the box's fade-in finishes, because axe measures the colours it sees, and halfway through the fade the block's soft error text reads 3.95:1 against a blend of the sheet and the page behind it.
     it "has no accessibility violations with the sheet open" do
-      expect(page).to have_css "dialog[open]"
+      expect(page).to have_css "dialog[open] .modal-box", style: { opacity: "1" }
       expect(page).to be_accessible
     end
 
