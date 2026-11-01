@@ -57,7 +57,6 @@ class Event < ApplicationRecord
     default: -> { Current.member if new_record? }
   belongs_to :manager, class_name: "Member", foreign_key: "manager_id", inverse_of: :managed_events, optional: true
   has_many :registrations, dependent: :destroy
-  has_many :attendees, through: :registrations, source: :member
 
   enum :status, %i[ unconfirmed confirmed concluded canceled ], default: :unconfirmed, validate: true
   enum :category, %i[ other rehearsal gig ], default: :other, validate: true

@@ -1054,9 +1054,9 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include %(aria-label="Duplicate"), %(aria-label="Edit")
       end
 
-      # The reader's own answer stands on the page above the attendance card, which holds the counts and the roster they unfold.
+      # The reader's own answer stands on the page above the card that holds the counts and the roster they unfold.
       # The day before `detailed_event`, since an event that has ended takes no `maybe`.
-      it "draws the answer row above the attendance card, outside it" do
+      it "draws the answer row above the roster's card, outside it" do
         travel_to Time.zone.parse("2026-09-01 12:00") do
           member = create(:member, :active)
           event = detailed_event(member, reader_status: :maybe)

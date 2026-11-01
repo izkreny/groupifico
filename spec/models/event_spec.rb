@@ -6,7 +6,6 @@ RSpec.describe Event, type: :model do
     it { is_expected.to belong_to(:creator).class_name("Member").with_foreign_key(:creator_id).inverse_of(:created_events) }
     it { is_expected.to belong_to(:manager).class_name("Member").with_foreign_key(:manager_id).inverse_of(:managed_events).optional }
     it { is_expected.to have_many(:registrations).dependent(:destroy) }
-    it { is_expected.to have_many(:attendees).through(:registrations).source(:member) }
     it { is_expected.to belong_to(:address).optional.touch(true) }
     it { is_expected.to accept_nested_attributes_for(:address) }
 
