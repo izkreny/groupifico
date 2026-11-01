@@ -12,8 +12,8 @@ class Registrations::InvitationsController < ApplicationController
     member = @registration.member
 
     if member.active?
-      @registration.invite
-      redirect_back_or_to group_event_path(@group, @registration.event), status: :see_other
+      notice = "#{member.full_name} was already asked." unless @registration.invite
+      redirect_back_or_to group_event_path(@group, @registration.event), status: :see_other, notice:
     else
       redirect_back_or_to group_event_path(@group, @registration.event), status: :see_other, alert: "#{member.full_name} is #{member.status}, so they are not asked."
     end
