@@ -1,7 +1,4 @@
-# Asking every active member nobody has asked yet, from the roster's "Ask the rest" and the Next
-# up card's "Ask everyone", which are one action. Both are the registering row, so both ask
-# `RegistrationPolicy#create?` of a registration with no member on it, exactly as the roster does
-# before drawing either button.
+# Asking every active member holding a place who has not been asked, from the roster's "Ask the rest" and the Next up card's "Ask everyone", which are one action. Both are the registering row, so both ask `RegistrationPolicy#create?` of a registration with no member on it, exactly as the roster does before drawing either button.
 class Events::ResponseRequestsController < ApplicationController
   include GroupScoped
 
