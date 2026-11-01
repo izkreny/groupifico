@@ -106,7 +106,7 @@ class Event < ApplicationRecord
   # the same five out again would keep drawing five after a sixth status arrived.
   def answer_counts
     tallies = registrations.group(:status).count
-    counted = Registration::ANSWERS + (Registration.statuses.keys - Registration::ANSWERS - [ "reserved" ]) + [ "reserved" ]
+    counted = (Registration::ANSWERS | Registration.statuses.keys).excluding("reserved") + [ "reserved" ]
 
     counted.index_with { tallies.fetch(it, 0) }
   end
