@@ -8,7 +8,7 @@ module ViewportHelper
   # State the width in the example rather than leaning on the driver reset, so a pair of examples
   # passes under the random order `spec/spec_helper.rb` configures.
   def resize_to(viewport)
-    page.driver.resize(*viewport)
+    page.current_window.resize_to(*viewport)
   end
 
   # Whether text is cut off by `truncate` is geometry rather than markup: the element carries the
