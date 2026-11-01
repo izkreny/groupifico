@@ -17,12 +17,11 @@
   to the event screen with its roster unfolded, for the next-up card. `inline` draws the tags alone,
   for the event screen's Who's coming row, whose heading already says what they count.
 %>
-<% colours = { "yes" => "text-success", "maybe" => "text-warning", "no" => "text-error", "invited" => "text-info" } %>
 <% counts = event.answer_counts %>
 <% if counts.except("reserved").values.any?(&:positive?) %>
   <% tags = capture do %>
     <% counts.each do |status, count| %>
-      <span class="inline-flex items-center gap-1 mr-1.5 <%= colours[status] %>">
+      <span class="inline-flex items-center gap-1 mr-1.5 <%= status_ink(status) %>">
         <%= icon status, label: (status == "invited" ? "no reply" : status), class: "size-4" %>
         <%= count %>
       </span>

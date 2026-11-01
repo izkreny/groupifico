@@ -5,6 +5,13 @@ module EventsHelper
   RANGE           = "–"
   DOT             = " · "
 
+  # The Who's coming? tally's colours, which the tally, the roster, the event row and the answer buttons all paint a status in. Whole class names, so Tailwind finds each one.
+  STATUS_INKS = { "yes" => "text-success", "maybe" => "text-warning", "no" => "text-error", "invited" => "text-info" }.freeze
+
+  def status_ink(status)
+    STATUS_INKS[status]
+  end
+
   # The card's own two readings of the same schedule: the range a hero card and the detail screen
   # carry, and the start alone that a compact row carries beside the place. Both print in
   # `Time.zone`, which `starts_at` already answers in.

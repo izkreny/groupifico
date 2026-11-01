@@ -37,7 +37,6 @@
 
   <%# WHY: daisyUI fills a button carrying aria-current as active, so the lit pill clears that fill at rest to stay chosen by its colour alone, and keeps the hover every button has. %>
   <%# The Who's coming? tally's colours: the chosen answer in its status colour and an invitation in info, every control not yet used in the muted icon ink, and a row's status icon drawn where no control stands, as the tally draws it. %>
-  <% chosen = { "yes" => "text-success", "maybe" => "text-warning", "no" => "text-error" } %>
   <% if roster.any? %>
     <ul class="list">
       <% roster.each do |registration| %>
@@ -60,7 +59,7 @@
             <% invitable = may_invite && !registration.answered? && registration.member.active? %>
             <% asked = registration.invited? %>
             <% if (!may_answer || answers.exclude?(registration.status)) && !(invitable && asked) %>
-              <span class="inline-flex size-8 items-center justify-center <%= { "invited" => "text-info" }.merge(chosen)[registration.status] %>" title="<%= registration_status_label(registration) %>">
+              <span class="inline-flex size-8 items-center justify-center <%= status_ink(registration.status) %>" title="<%= registration_status_label(registration) %>">
                 <%= status_icon registration, label: registration_status_label(registration), class: "size-5" %>
               </span>
             <% end %>
@@ -80,7 +79,7 @@
                 <%= button_to group_event_registration_path(event.group, event, registration),
                       method: :patch,
                       params: { registration: { status: answer } },
-                      class: "btn btn-ghost btn-sm btn-square #{current ? "#{chosen[answer]} not-hover:bg-transparent not-hover:border-transparent" : "text-icon-muted"}",
+                      class: "btn btn-ghost btn-sm btn-square #{current ? "#{status_ink(answer)} not-hover:bg-transparent not-hover:border-transparent" : "text-icon-muted"}",
                       aria: { label: "#{answer.capitalize} for #{name}", current: (current ? "true" : nil) } do %>
                   <%= icon answer, class: "size-5" %>
                 <% end %>
