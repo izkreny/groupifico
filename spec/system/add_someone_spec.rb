@@ -1,19 +1,19 @@
 require "rails_helper"
 
-# Only what a browser adds. Who reaches the screen, who is listed and which ids `create` keeps are
-# all `spec/requests/registrations_spec.rb`'s assertions, and per the duplication rule in
+# Only what a browser adds. Who reaches the screen, who is listed and which ids `update` keeps are
+# all `spec/requests/events/rosters_spec.rb`'s assertions, and per the duplication rule in
 # `.agents/testing.md` none of them comes back here. What is left is the part no request spec can
 # see: that the checkbox daisyUI draws is a box rather than a bare native tick, that the submit
-# counts what is ticked and refuses to send nothing, that a paused row without a checkbox still
+# waits for a change and goes back to waiting once the change is undone, that a paused row without a checkbox still
 # lines its name up with the rows that have one, and that submitting lands on the event.
-RSpec.describe "Adding someone to an event", type: :system do
+RSpec.describe "Editing an event's list", type: :system do
   # `.checkbox` on an input is the whole claim: the class is in the markup either way, and only the
   # browser knows whether daisyUI drew a box or left the platform's own 13px tick.
   it "paints the tick as a daisyUI checkbox rather than a bare native one" do
     event, actor, = event_with_three_members
     sign_in_as actor.user
 
-    visit new_group_event_registration_path(event.group, event)
+    visit edit_group_event_roster_path(event.group, event)
     width, height = box_of("input.checkbox")
 
     expect(width).to be > 16
@@ -21,13 +21,13 @@ RSpec.describe "Adding someone to an event", type: :system do
   end
 
   # An icon with no size class fills whatever holds it, which in a block button is the button's whole width.
-  it "draws the submit's paper plane at 20px" do
+  it "draws the submit's check at 20px" do
     event, actor, = event_with_three_members
     sign_in_as actor.user
 
-    visit new_group_event_registration_path(event.group, event)
+    visit edit_group_event_roster_path(event.group, event)
 
-    expect(box_of("[data-invite-target=submit] svg")).to eq [ 20, 20 ]
+    expect(box_of("[data-list-target=submit] svg")).to eq [ 20, 20 ]
   end
 
   # No `paint` assertion on this screen, deliberately, and the alternatives were measured rather
@@ -46,8 +46,8 @@ RSpec.describe "Adding someone to an event", type: :system do
     prefer_colour_scheme :light
     resize_to ViewportHelper::MOBILE
 
-    visit new_group_event_registration_path(event.group, event)
-    check ActionView::RecordIdentifier.dom_id(invitable, :invite)
+    visit edit_group_event_roster_path(event.group, event)
+    check ActionView::RecordIdentifier.dom_id(invitable, :tick)
 
     expect(rendered_colour_scheme).to eq "light"
     expect(text_contrast("##{ActionView::RecordIdentifier.dom_id(paused)} .list-col-grow span")).to be >= ContrastHelper::WCAG_AA
@@ -60,8 +60,8 @@ RSpec.describe "Adding someone to an event", type: :system do
     prefer_colour_scheme :dark
     resize_to ViewportHelper::MOBILE
 
-    visit new_group_event_registration_path(event.group, event)
-    check ActionView::RecordIdentifier.dom_id(invitable, :invite)
+    visit edit_group_event_roster_path(event.group, event)
+    check ActionView::RecordIdentifier.dom_id(invitable, :tick)
 
     expect(rendered_colour_scheme).to eq "dark"
     expect(text_contrast("##{ActionView::RecordIdentifier.dom_id(paused)} .list-col-grow span")).to be >= ContrastHelper::WCAG_AA
@@ -73,7 +73,7 @@ RSpec.describe "Adding someone to an event", type: :system do
     sign_in_as actor.user
     resize_to ViewportHelper::MOBILE
 
-    visit new_group_event_registration_path(event.group, event)
+    visit edit_group_event_roster_path(event.group, event)
 
     expect(horizontal_overflow).to eq 0
   end
@@ -85,40 +85,86 @@ RSpec.describe "Adding someone to an event", type: :system do
     event, actor, invitable, paused = event_with_three_members
     sign_in_as actor.user
 
-    visit new_group_event_registration_path(event.group, event)
+    visit edit_group_event_roster_path(event.group, event)
 
     expect(name_left_of(paused)).to eq name_left_of(invitable)
   end
 
-  # The count is the frame's own wording and nothing server-rendered can know it, since the ticks
-  # never reach the server until the submit.
-  it "counts the ticked members into the submit and refuses to send none" do
+  # Whether anything differs from what was drawn is nothing a server render can know, since the ticks never reach the server until the submit.
+  it "waits for a new tick, and waits again once it is taken back" do
     event, actor, invitable, = event_with_three_members
     sign_in_as actor.user
 
-    visit new_group_event_registration_path(event.group, event)
-    expect(page).to have_button "Invite", disabled: true
+    visit edit_group_event_roster_path(event.group, event)
+    expect(page).to have_button "Update the list", disabled: true
 
-    check ActionView::RecordIdentifier.dom_id(actor, :invite)
-    expect(page).to have_button "Invite 1 person"
+    check ActionView::RecordIdentifier.dom_id(invitable, :tick)
+    expect(page).to have_button "Update the list", disabled: false
 
-    check ActionView::RecordIdentifier.dom_id(invitable, :invite)
-    expect(page).to have_button "Invite 2 people"
+    uncheck ActionView::RecordIdentifier.dom_id(invitable, :tick)
+    expect(page).to have_button "Update the list", disabled: true
   end
 
-  # The landing is the browser's part; that the row was written is the request spec's.
-  it "invites the ticked members and lands on the event" do
+  it "takes an untick of a registered row as a change" do
+    event, actor, = event_with_three_members
+    create(:registration, event:, member: actor)
+    sign_in_as actor.user
+
+    visit edit_group_event_roster_path(event.group, event)
+    uncheck ActionView::RecordIdentifier.dom_id(actor, :tick)
+
+    expect(page).to have_button "Update the list", disabled: false
+  end
+
+  # The landing is the browser's part; that the rows were written is the request spec's.
+  it "reserves the ticked members and lands on the event" do
     event, actor, invitable, = event_with_three_members
     sign_in_as actor.user
 
-    visit new_group_event_registration_path(event.group, event)
-    check ActionView::RecordIdentifier.dom_id(invitable, :invite)
-    click_button "Invite 1 person"
+    visit edit_group_event_roster_path(event.group, event)
+    check ActionView::RecordIdentifier.dom_id(invitable, :tick)
+    click_button "Update the list"
 
     expect(page).to have_current_path group_event_path(event.group, event)
+    expect(page).to have_text "1 place reserved."
   end
 
-  # The one arrangement every example needs: an events administrator, a member who can be invited
+  # A disabled box is exempt from WCAG's contrast rule and axe skips it, so whether the manager can read the line beside it is measured here.
+  it "lets a manager read a registered row's caption in light" do
+    actor, event, registered = managed_event_with_a_registration
+    sign_in_as actor.user
+    prefer_colour_scheme :light
+
+    visit edit_group_event_roster_path(event.group, event)
+
+    expect(page).to have_field ActionView::RecordIdentifier.dom_id(registered, :tick), checked: true, disabled: true
+    expect(text_contrast("##{ActionView::RecordIdentifier.dom_id(registered)} label span:last-child")).to be >= ContrastHelper::WCAG_AA
+    expect(page).to be_accessible
+  end
+
+  it "lets a manager read a registered row's caption in dark" do
+    actor, event, registered = managed_event_with_a_registration
+    sign_in_as actor.user
+    prefer_colour_scheme :dark
+
+    visit edit_group_event_roster_path(event.group, event)
+
+    expect(page).to have_field ActionView::RecordIdentifier.dom_id(registered, :tick), checked: true, disabled: true
+    expect(text_contrast("##{ActionView::RecordIdentifier.dom_id(registered)} label span:last-child")).to be >= ContrastHelper::WCAG_AA
+    expect(page).to be_accessible
+  end
+
+  def managed_event_with_a_registration
+    group = create(:group)
+    actor = create(:member, :active, :with_all_attributes, group:)
+    event = create(:event, group:, creator: actor, manager: actor)
+    registered = create(:member, :active, :with_all_attributes, group:)
+    create(:registration, event:, member: registered)
+
+    [ actor, event, registered ]
+  end
+
+  # The one arrangement every example needs: an events administrator, a member who can be added
   # and one who is paused. Named profiles throughout, because every row draws a name.
   def event_with_three_members
     group = create(:group)

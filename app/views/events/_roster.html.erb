@@ -4,7 +4,7 @@
   the same order for every reader: what varies is only what a reader may do with a row.
 
   The two capabilities are the reader's rather than a row's, so each is asked once, of a
-  registration with no member on it - the record `RegistrationsController#new` asks. With no member
+  registration with no member on it - the record `Events::RostersController#edit` asks. With no member
   `own?` is false, so `update?` there is "change another member's answer" alone; asked per row it
   would hand a plain member controls on their own row. `Registration.new(event:)` rather than
   `event.registrations.new`, which would join the loaded association `events/_counts` sizes.
@@ -96,7 +96,7 @@
 
   <% if may_ask %>
     <div class="flex flex-wrap gap-2">
-      <%= link_to new_group_event_registration_path(event.group, event), class: "btn btn-sm" do %>
+      <%= link_to edit_group_event_roster_path(event.group, event), class: "btn btn-sm" do %>
         <%= icon :edit, class: "size-icon-control" %>Edit the list
       <% end %>
 

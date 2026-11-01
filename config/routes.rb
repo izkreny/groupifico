@@ -38,11 +38,10 @@ Rails.application.routes.draw do
     resources :members
     resources :events do
       get "duplicate", on: :member
-      # The list screen and the writes a roster row makes. Reading who is registered is the
-      # event's own screen rather than a list of its own, and answering on somebody's behalf or
-      # taking them off are rows on it, so `index`, `show` and `edit` have nowhere to be. Asking a
-      # held place is a resource of its own because it is the registering row, which `update` is not.
-      resources :registrations, only: %i[ new create update destroy ] do
+      # The writes a roster row makes. Reading who is registered is the event's own screen rather
+      # than a list of its own, and answering on somebody's behalf is a row on it, so `index`,
+      # `show` and `edit` have nowhere to be. Asking a held place is a resource of its own because it is the registering row, which `update` is not.
+      resources :registrations, only: %i[ update destroy ] do
         resource :response_request, only: :create, module: :registrations
       end
       # WHY: asking the whole list at once is a resource of the event's: `create` asks every active
@@ -50,6 +49,8 @@ Rails.application.routes.draw do
       resource :response_request, only: :create, module: :events
       # WHY: reserving for everyone off the list at once is a resource of the event's for the same reason: `create` holds a place for each and asks nobody.
       resource :reservation, only: :create, module: :events
+      # WHY: the list screen, one form that both reserves and removes, which is an edit of the event's list rather than a create or a delete of any one row.
+      resource :roster, only: %i[ edit update ], module: :events
     end
   end
 

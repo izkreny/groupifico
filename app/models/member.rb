@@ -52,7 +52,7 @@ class Member < ApplicationRecord
   # Members with no registration on the event, never added or taken off. The whole of what it
   # decides, so each caller states its own status rule beside it rather than inheriting one the
   # name does not mention: the list screen keeps paused members, who are listed and cannot
-  # be ticked, and the create behind it takes `active` alone.
+  # be ticked, and the update behind it takes `active` alone.
   #
   # Here rather than in `RegistrationsHelper` because both ask it, and two spellings of one rule
   # are two places a later change has to find.

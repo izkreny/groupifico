@@ -707,7 +707,7 @@ RSpec.describe "Events", type: :request do
       event = create(:event, group: owner.group, creator: owner)
       sign_in_as(owner.user)
 
-      get new_group_event_registration_path(event.group, event)
+      get edit_group_event_roster_path(event.group, event)
 
       expect(Nokogiri::HTML(response.body).at_css("header a[aria-label='Back']")&.[]("href")).to eq group_event_path(event.group, event)
     end
@@ -842,7 +842,7 @@ RSpec.describe "Events", type: :request do
 
           expect(response.body).to include "Yes for Ben Cole", "Maybe for Carla Duke", "No for Alice Bird"
           expect(response.body).to include "Take Ben Cole off the list", "Take Carla Duke off the list"
-          expect(response.body).to include new_group_event_registration_path(event.group, event)
+          expect(response.body).to include edit_group_event_roster_path(event.group, event)
         end
       end
 
@@ -1122,7 +1122,7 @@ RSpec.describe "Events", type: :request do
 
         get group_event_path(event.group, event)
 
-        expect(response.body).to include %(aria-label="Edit"), new_group_event_registration_path(event.group, event)
+        expect(response.body).to include %(aria-label="Edit"), edit_group_event_roster_path(event.group, event)
         expect(response.body).not_to include %(aria-label="Duplicate"), "Yes for Ben Cole", "Take Ben Cole off the list"
       end
 
@@ -1172,7 +1172,7 @@ RSpec.describe "Events", type: :request do
         get group_event_path(event.group, event)
 
         expect(response.body).to include "Yes for Ben Cole", "Take Ben Cole off the list"
-        expect(response.body).to include new_group_event_registration_path(event.group, event)
+        expect(response.body).to include edit_group_event_roster_path(event.group, event)
       end
 
       # The day before `detailed_event`, since an event that has ended takes no `maybe`.

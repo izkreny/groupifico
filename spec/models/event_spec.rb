@@ -468,6 +468,28 @@ RSpec.describe Event, type: :model do
     end
   end
 
+  describe "#update_roster" do
+    it "reserves the given members and removes the given registrations, and says how many of each" do
+      event = create(:event)
+      leaving = create(:registration, event:, member: create(:member, group: event.group))
+      arriving = create(:member, group: event.group)
+
+      expect(event.update_roster(arriving: [ arriving ], leaving: event.registrations.where(id: leaving.id))).to eq [ 1, 1 ]
+      expect(event.registrations.pluck(:member_id)).to eq [ arriving.id ]
+      expect(event.registrations.pluck(:status)).to eq [ "reserved" ]
+    end
+
+    # All or nothing: a reservation refused by the unique index brings the removal back with it.
+    it "removes nobody when a reservation is refused" do
+      event = create(:event)
+      listed = create(:registration, event:, member: create(:member, group: event.group))
+      leaving = create(:registration, event:, member: create(:member, group: event.group))
+
+      expect { event.update_roster(arriving: [ listed.member ], leaving: event.registrations.where(id: leaving.id)) }.to raise_error ActiveRecord::RecordNotUnique
+      expect(Registration.exists?(leaving.id)).to be true
+    end
+  end
+
   describe "#reserve_all_active_members" do
     it "reserves a place for every active member who has no registration" do
       event = create(:event)

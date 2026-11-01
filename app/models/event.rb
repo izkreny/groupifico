@@ -170,6 +170,13 @@ class Event < ApplicationRecord
     end
   end
 
+  # WHY: the list screen's one submit, all or nothing: a new tick holds a place and an untick removes one in the same transaction, so a refused reservation removes nobody either. Returns how many of each.
+  def update_roster(arriving:, leaving:)
+    transaction do
+      [ reserve(arriving).size, leaving.destroy_all.size ]
+    end
+  end
+
   # WHY: every active member off the list gets a held place, and nothing else moves. Record by record through `reserve` rather than `insert_all`, so every registration runs its callbacks. The read happens inside the transaction, which SQLite opens immediate, so no registration can land between it and the writes. Returns how many places were reserved.
   def reserve_all_active_members
     reserve(unregistered_active_members).size

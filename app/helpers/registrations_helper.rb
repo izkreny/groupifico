@@ -1,5 +1,5 @@
 module RegistrationsHelper
-  # Who the list screen lists: members with no registration on the event, `inactive` ones
+  # Who the list screen lists as off the list: members with no registration on the event, `inactive` ones
   # excluded because they have left the group, tickable ones first and paused ones after, since a
   # paused member is shown and cannot be ticked. `status` is an enum backed by its declaration
   # order, `active` before `paused`, so ordering by the column is ordering by that rule rather
