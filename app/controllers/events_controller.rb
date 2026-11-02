@@ -9,7 +9,7 @@ class EventsController < ApplicationController
   def index
     authorize! @group, to: :show?
 
-    # WHY: picked from literals rather than naming a scope from the parameter, because `params[:scope]` is a member's input, and anything built out of it and sent to the relation is a door onto every scope the model has. Anything else is `nil`, the upcoming list, so a mistyped URL degrades to the default list. The values are spelled again in `events/_scope_menu`, the only other place that knows which lists exist.
+    # WHY: picked from literals rather than naming a scope from the parameter, because `params[:scope]` is a member's input, and anything built out of it and sent to the relation is a door onto every scope the model has. Anything else is `nil`, the upcoming list, so a mistyped URL degrades to the default list. The values are spelled again in `events/_scope_menu` and in the empty text of `events/index`.
     @list = params[:scope].presence_in(%w[ past canceled ])
 
     # Preloaded because every row reads the event for the reader's own registration and its place,
