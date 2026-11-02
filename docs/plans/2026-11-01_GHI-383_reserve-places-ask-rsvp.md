@@ -163,7 +163,7 @@ A manager may press the button and cannot undo it, as with today's Invite the re
 | a registered row posted back as drawn asks for a change | the answer read from an empty tick list |
 | the helper counts a border's own alpha | dropping the alpha from `ink_contrast` |
 | the helper reads a solid border as solid | reading another property in `border_contrast` |
-| the styleguide's outline and disabled tick read at 3:1 in both twins | the section absent, its disabled box drawn live, the fade back at 20%, and the outline back at 20% |
+| the styleguide's outline and disabled tick read at 3:1, one example per twin | the section absent, its disabled box drawn live, the fade back at 20%, and the outline back at 20% |
 
 ## Verification
 

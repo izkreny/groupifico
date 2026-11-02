@@ -114,15 +114,26 @@ RSpec.describe "The styleguide", type: :system do
   end
 
   # WHY: axe measures neither a boundary nor a disabled control, so only this holds each twin's own line and tick at 3:1. The fields are what make the disabled box falsifiable, since a live tick would pass the ratio by itself.
-  it "draws a checkbox's outline and a disabled box's tick at 3:1, in both twins" do
+  it "draws a checkbox's outline and a disabled box's tick at 3:1 in the light twin" do
     plant_styleguide_group
     sign_in_as create(:user)
 
     visit styleguide_path
 
-    themes = %w[ organic organic-dark ]
-    expect(themes.map { has_field?("checkbox_disabled_#{it}", checked: true, disabled: true) }).to all be true
-    expect(themes.flat_map { [ border_contrast("#checkbox_unticked_#{it}"), text_contrast("#checkbox_disabled_#{it}") ] }).to all be >= ContrastHelper::WCAG_NON_TEXT
+    expect(page).to have_field "checkbox_disabled_organic", checked: true, disabled: true
+    expect(border_contrast("#checkbox_unticked_organic")).to be >= ContrastHelper::WCAG_NON_TEXT
+    expect(text_contrast("#checkbox_disabled_organic")).to be >= ContrastHelper::WCAG_NON_TEXT
+  end
+
+  it "draws a checkbox's outline and a disabled box's tick at 3:1 in the dark twin" do
+    plant_styleguide_group
+    sign_in_as create(:user)
+
+    visit styleguide_path
+
+    expect(page).to have_field "checkbox_disabled_organic-dark", checked: true, disabled: true
+    expect(border_contrast("#checkbox_unticked_organic-dark")).to be >= ContrastHelper::WCAG_NON_TEXT
+    expect(text_contrast("#checkbox_disabled_organic-dark")).to be >= ContrastHelper::WCAG_NON_TEXT
   end
 
   # The dismiss slot stays on an alert with nothing to dismiss, so its icon, words and slot sit in the same columns as a dismissible alert's.
