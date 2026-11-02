@@ -1,7 +1,6 @@
 class RegistrationsController < ApplicationController
-  include GroupScoped
+  include EventScoped
 
-  before_action :set_event
   before_action :set_registration
 
   # WHY: back to where the button was pressed, a row, a hero card or the event screen, so Turbo takes it as a refresh and the page morphs in place; the event is the fallback for a request that names no page of ours.
@@ -22,10 +21,6 @@ class RegistrationsController < ApplicationController
   end
 
   private
-    def set_event
-      @event = @group.events.find(params.expect(:event_id))
-    end
-
     def set_registration
       @registration = @event.registrations.find(params.expect(:id))
     end

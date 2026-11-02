@@ -1,11 +1,9 @@
 # Who is on the event's list, as one form: the new ticks reserve a place and the unticks remove one. A resource of the event's rather than `RegistrationsController#create`, because one submit both adds and removes.
 class Events::RostersController < ApplicationController
-  include GroupScoped
+  include EventScoped
 
   # One message for every way a change can stop applying while the reader was choosing - registered by somebody else, paused, gone from the group, or already removed. It names none of them, because the controller cannot tell which happened and the reader's answer is the same either way: the list moved, here it is again.
   MOVED_ON = "Nothing changed: nobody you ticked is still on offer. Here it is again.".freeze
-
-  before_action :set_event
 
   # The registering row of the events table is who this screen is for. Asked of a registration with no member on it, so `own?` is false and what is left is the three roles and the event's manager.
   def edit
@@ -41,10 +39,6 @@ class Events::RostersController < ApplicationController
   end
 
   private
-    def set_event
-      @event = @group.events.find(params.expect(:event_id))
-    end
-
     def unattached_registration = Registration.new(event: @event)
 
     # Blanks dropped, because the screen posts a hidden empty entry so each key is always there.

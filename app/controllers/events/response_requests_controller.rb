@@ -1,8 +1,6 @@
 # Asking every active member holding a place who has not been asked, from the roster's "Request the rest" and the Next up card's "Request responses", which are one action. Both are the registering row, so both ask `RegistrationPolicy#create?` of a registration with no member on it, exactly as the roster does before drawing either button.
 class Events::ResponseRequestsController < ApplicationController
-  include GroupScoped
-
-  before_action :set_event
+  include EventScoped
 
   # WHY: back to where it was pressed, because the roster, the events list and the group home all
   # offer it; the event is the fallback for a request that names no page.
@@ -13,10 +11,6 @@ class Events::ResponseRequestsController < ApplicationController
   end
 
   private
-    def set_event
-      @event = @group.events.find(params.expect(:event_id))
-    end
-
     def asked_notice(count)
       count.zero? ? "Nobody was left to request a response from." : "#{helpers.pluralize(count, "response")} requested."
     end
