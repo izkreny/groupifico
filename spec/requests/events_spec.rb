@@ -356,7 +356,7 @@ RSpec.describe "Events", type: :request do
 
           get group_events_path(owner.group)
 
-          expect(response.body).to include "Next up · in 2 days", "Nobody asked yet · 1 on the list"
+          expect(response.body).to include "Next up · in 2 days", "No responses requested yet · 1 on the list"
           expect(response.body).not_to include "no reply"
         end
       end
@@ -427,7 +427,7 @@ RSpec.describe "Events", type: :request do
 
           get group_events_path(member.group)
 
-          expect(response.body).to include "Nobody asked yet · 1 on the list"
+          expect(response.body).to include "No responses requested yet · 1 on the list"
           expect(response.body).not_to include "Request responses"
         end
       end

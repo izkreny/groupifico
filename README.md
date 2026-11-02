@@ -50,7 +50,7 @@ For more information, check out the [backlog](https://github.com/izkreny/groupif
 - Main organizational group entity
 
 #### Registration
-- A place at an Event is reserved for a Member by whoever fills the event, who may then ask the Member whether they are coming
+- A place at an Event is reserved for a Member by whoever fills the event, who may then request a response from the Member
 - The Member answers with yes, maybe or no, while the Event is still open to answers
 
 ### Other Domain Models

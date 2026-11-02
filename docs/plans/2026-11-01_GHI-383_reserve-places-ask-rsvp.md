@@ -1,10 +1,10 @@
 > 🤖 Written by AI --- read/modified by izkreny! 🤓
 
-# Plan: reserve places and ask members to respond (#383)
+# Plan: reserve places and request member responses (#383)
 
 ## The words
 
-Registering reserves a place, asking for a response is a separate later act, and "invite" stays for bringing someone into the group alone. Members may not know the word RSVP, so it leaves the screens and the code. The code takes these names:
+Registering reserves a place, requesting a response is a separate later act, and "invite" stays for bringing someone into the group alone. Members may not know the word RSVP, so it leaves the screens and the code. The code takes these names:
 
 | Now | Becomes | Why |
 |---|---|---|
