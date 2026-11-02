@@ -97,7 +97,7 @@
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Dropdown", docs: "https://daisyui.com/components/dropdown/" } do |theme| %>
-    <%= render "events/scope_menu", group: @group, past: false, id: "scope_#{theme}" %>
+    <%= render "events/scope_menu", group: @group, list: nil, id: "scope_#{theme}" %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Select", docs: "https://daisyui.com/components/select/" } do |theme| %>
