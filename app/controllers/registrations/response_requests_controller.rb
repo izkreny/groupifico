@@ -2,7 +2,7 @@
 # because asking somebody is filling the event, which the event's manager may do and `update?`
 # refuses them.
 class Registrations::ResponseRequestsController < ApplicationController
-  include GroupScoped
+  include EventScoped
 
   before_action :set_registration
 
@@ -21,6 +21,6 @@ class Registrations::ResponseRequestsController < ApplicationController
 
   private
     def set_registration
-      @registration = @group.events.find(params.expect(:event_id)).registrations.find(params.expect(:registration_id))
+      @registration = @event.registrations.find(params.expect(:registration_id))
     end
 end
