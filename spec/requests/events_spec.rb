@@ -710,8 +710,7 @@ RSpec.describe "Events", type: :request do
     context "when the group's only upcoming event has been called off" do
       it "leaves it off the list and says nothing is coming up" do
         member = create(:member, :active)
-        create(:event, group: member.group, creator: member, status: :canceled,
-          name: "Autumn gig", starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        create(:event, :from_the_future, group: member.group, creator: member, status: :canceled, name: "Autumn gig")
         sign_in_as(member.user)
 
         get group_events_path(member.group)

@@ -248,7 +248,7 @@ RSpec.describe "The events list", type: :system do
   it "lands on the canceled list from the list menu" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
     next_event_for(member)
-    create(:event, group: member.group, creator: member, name: "Autumn gig", status: :canceled, starts_at: 4.days.from_now, ends_at: 4.days.from_now + 2.hours)
+    create(:event, :from_the_future, group: member.group, creator: member, name: "Autumn gig", status: :canceled)
     sign_in_as member.user
     resize_to ViewportHelper::MOBILE
 
