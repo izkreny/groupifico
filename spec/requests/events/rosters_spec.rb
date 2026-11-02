@@ -231,6 +231,19 @@ RSpec.describe "Events::Rosters", type: :request do
         expect(event.registrations.pluck(:member_id)).to contain_exactly(arrived.id, ticked.id)
       end
 
+      # WHY: the other half of the row above. A box the form drew ticked is no request to add anybody, so somebody removed while the form sat open stays removed.
+      it "leaves a member removed while the form sat open off the list, though their box still posts" do
+        event = create(:event)
+        removed = create(:member, :active, group: event.group)
+        ticked = create(:member, :active, group: event.group)
+        sign_in_as(create(:member, :active, :events_administrator, group: event.group).user)
+
+        patch group_event_roster_path(event.group, event), params: { member_ids: [ "", removed.id, ticked.id ], listed_ids: [ "", removed.id ] }
+
+        expect(event.registrations.pluck(:member_id)).to contain_exactly(ticked.id)
+        expect(flash[:notice]).to eq "1 place reserved."
+      end
+
       it "leaves another event's registration alone, whatever is posted as listed" do
         event = create(:event)
         elsewhere = create(:registration, event: create(:event, group: event.group), member: create(:member, :active, group: event.group))

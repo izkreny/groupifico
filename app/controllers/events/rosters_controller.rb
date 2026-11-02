@@ -14,6 +14,8 @@ class Events::RostersController < ApplicationController
 
   # The statuses are written by `Event#update_roster` rather than posted, because `reserved` is the only thing a tick means here, so there is no posted status for a second question to ask about.
   #
+  # WHY: only a tick the form did not draw is an arrival, so a row removed while the form sat open stays removed however its box still posts.
+  #
   # WHY: removal is asked only when there is something to remove, of the same memberless record. A manager may reserve and may not remove, so their form posts no `listed_ids`, and a posted removal from them stops the whole request before any write rather than being dropped.
   def update
     authorize! unattached_registration, to: :create?
@@ -23,7 +25,7 @@ class Events::RostersController < ApplicationController
     leaving = @event.registrations.where(member_id: listed - ticked)
     authorize! unattached_registration, to: :destroy? if leaving.exists?
 
-    reserved, removed = @event.update_roster(arriving: available_members(ticked), leaving:)
+    reserved, removed = @event.update_roster(arriving: available_members(ticked - listed), leaving:)
 
     if reserved.positive? || removed.positive?
       redirect_to group_event_path(@group, @event), status: :see_other, notice: updated_notice(reserved, removed)
