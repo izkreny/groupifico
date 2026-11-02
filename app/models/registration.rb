@@ -88,7 +88,7 @@ class Registration < ApplicationRecord
 
   private
     def event_must_be_open_to_answers
-      errors.add(:base, "This event is over, so it no longer takes replies.") unless event&.open_to_answers?
+      errors.add(:base, "This event is concluded or canceled, so it no longer takes replies.") unless event&.open_to_answers?
     end
 
     def answer_must_be_one_the_event_takes

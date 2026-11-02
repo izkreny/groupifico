@@ -12,14 +12,14 @@ RSpec.describe Registration, type: :model do
 
   # The invariant that closes the write the screen's own guard could only hide. It is on the model
   # rather than in `RegistrationPolicy` for the reason `docs/AUTHORIZATION.md` gives for the
-  # last-active-owner guard: the tables decide who may act, and "this event is over" says nothing
+  # last-active-owner guard: the tables decide who may act, and "this event is concluded" says nothing
   # about the actor.
-  describe "(answering an event that is over)" do
+  describe "(answering a concluded or canceled event)" do
     it "refuses an answer to an event somebody has concluded" do
       registration = create(:registration, status: :response_requested, event: create(:event, status: :concluded))
 
       expect(registration.update(status: :yes)).to be false
-      expect(registration.errors[:base]).to include "This event is over, so it no longer takes replies."
+      expect(registration.errors[:base]).to include "This event is concluded or canceled, so it no longer takes replies."
     end
 
     it "refuses an answer to an event that has been called off" do
@@ -64,13 +64,13 @@ RSpec.describe Registration, type: :model do
     end
 
     # One reason is enough: an event somebody concluded takes no answer at all, so naming maybe beside that would describe a choice the member does not have.
-    it "gives only the over reason on a concluded event that has ended" do
+    it "gives only the concluded reason on a concluded event that has ended" do
       event = create(:event, status: :concluded, starts_at: 9.days.ago, ends_at: 9.days.ago + 2.hours)
       registration = create(:registration, status: :response_requested, event:)
 
       registration.update(status: :maybe)
 
-      expect(registration.errors[:base]).to eq [ "This event is over, so it no longer takes replies." ]
+      expect(registration.errors[:base]).to eq [ "This event is concluded or canceled, so it no longer takes replies." ]
     end
   end
 
