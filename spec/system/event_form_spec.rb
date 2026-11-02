@@ -132,7 +132,6 @@ RSpec.describe "The event form", type: :system do
     actor = create(:member, :active, :events_administrator)
     event = create(:event, group: actor.group)
     sign_in_as actor.user
-    resize_to ViewportHelper::MOBILE
 
     visit edit_group_event_path(event.group, event)
     choose "Reserve a place for every active member"
