@@ -30,8 +30,7 @@ RSpec.describe "Events", type: :request do
         expect(response).to have_http_status :ok
       end
 
-      # The list menu is the screen's title as well as its filter, so what proves the title is there
-      # is the menu naming the open list and linking both, rather than a heading above them.
+      # WHY: the list menu is the screen's title as well as its filter, so what proves the title is there is the menu naming the open list and linking every list, rather than a heading above them.
       it "titles the screen with the menu that links the lists, the open one marked" do
         member = create(:member, :active)
         sign_in_as(member.user)
