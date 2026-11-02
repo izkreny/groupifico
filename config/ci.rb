@@ -1,8 +1,7 @@
 # Run using bin/ci
 
-require "active_support"
-require "active_support/core_ext/integer/time"
 require "bundler/audit/database"
+require "date"
 
 CI.run do
   step "Setup", "bin/setup --skip-server"
@@ -13,10 +12,13 @@ CI.run do
   # bans those outright, so the flag is what leaves the ban no exception.
   step "Style: ERB", "node_modules/.bin/herb-lint --ignore-disable-comments"
 
-  # WHY: bundler-audit never refreshes an existing database by itself, which left this gate green over advisories `scan_ruby` already failed on; a week's grace keeps `bin/ci` working offline between refreshes.
-  advisories = Bundler::Audit::Database
-  stale      = advisories.exists? && advisories.new.last_updated_at < 7.days.ago
-  step "Security: Gem audit", "bin/bundler-audit check#{" --update" if stale}"
+  # WHY: bundler-audit never refreshes an existing database by itself, which left this gate green over advisories `scan_ruby` already failed on. The marker lives in the database's folder because every worktree shares that database, and only a refresh that succeeded writes it.
+  advisories_checked_at = File.join(Bundler::Audit::Database.path, ".advisory_database_checked_at")
+  today = Date.today.iso8601
+  unless File.exist?(advisories_checked_at) && File.read(advisories_checked_at).strip == today
+    step "Security: Refresh gem advisories", "bin/bundler-audit update && echo #{today} > '#{advisories_checked_at}'"
+  end
+  step "Security: Gem audit", "bin/bundler-audit"
   step "Security: Importmap vulnerability audit", "bin/importmap audit"
   step "Security: Brakeman code analysis", "bin/brakeman --quiet --no-pager --exit-on-warn --exit-on-error"
 
