@@ -1,4 +1,7 @@
 class EventsController < ApplicationController
+  # WHY: what the form picks for an event not yet saved, which nobody has listed anybody for. The screens set it rather than the model, so an event built anywhere else fills nothing unless asked, and a saved event's form stays on Not now.
+  RESERVED_FOR_A_NEW_EVENT = "reserve".freeze
+
   include GroupScoped
 
   before_action :set_event, only: %i[ show duplicate edit update destroy ]
@@ -37,7 +40,7 @@ class EventsController < ApplicationController
   end
 
   def new
-    @event = @group.events.new
+    @event = @group.events.new(list_filling: RESERVED_FOR_A_NEW_EVENT)
     @event.build_address
 
     authorize! @event
@@ -53,6 +56,7 @@ class EventsController < ApplicationController
 
     @original = @event
     @event = @original.duplicate.shift_by(7.days)
+    @event.list_filling = RESERVED_FOR_A_NEW_EVENT
     @event.build_address unless @event.address
   end
 

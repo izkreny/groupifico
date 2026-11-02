@@ -1247,6 +1247,15 @@ RSpec.describe "Events", type: :request do
         expect(response).to have_http_status :ok
       end
 
+      it "picks reserving a place for everyone" do
+        actor = create(:member, :active, :events_administrator)
+        sign_in_as(actor.user)
+
+        get new_group_event_path(actor.group)
+
+        expect(Nokogiri::HTML(response.body).at_css("input[name='event[list_filling]'][checked]")["value"]).to eq "reserve"
+      end
+
       # Frame 4e's names for the fields, which the locale gives the error messages too.
       it "names the fields the way the frames do, with the zone the times are typed in" do
         member = create(:member, :active, :events_administrator)
@@ -1345,6 +1354,16 @@ RSpec.describe "Events", type: :request do
       end
 
       # The app's alert kinds and nothing custom: the copy's note is an info alert, announced politely since it describes the form rather than reporting a failure.
+      it "picks reserving a place for everyone, since the copy is a new event" do
+        actor = create(:member, :active, :events_administrator)
+        event = create(:event, group: actor.group)
+        sign_in_as(actor.user)
+
+        get duplicate_group_event_path(event.group, event)
+
+        expect(Nokogiri::HTML(response.body).at_css("input[name='event[list_filling]'][checked]")["value"]).to eq "reserve"
+      end
+
       it "states what the copy changed in an info alert" do
         actor = create(:member, :active, :events_administrator)
         event = create(:event, group: actor.group)
@@ -1491,6 +1510,17 @@ RSpec.describe "Events", type: :request do
         get edit_group_event_path(event.group, event)
 
         expect(response.body).to include "Reserve a place for every active member", "Ask everyone"
+      end
+
+      # WHY: a saved event may already hold its list as somebody wants it, so saving it fills nothing unless they ask.
+      it "picks Not now" do
+        actor = create(:member, :active)
+        event = create(:event, group: actor.group, manager: actor)
+        sign_in_as(actor.user)
+
+        get edit_group_event_path(event.group, event)
+
+        expect(Nokogiri::HTML(response.body).at_css("input[name='event[list_filling]'][checked]")["value"]).to eq ""
       end
 
       # The order the fields are filled in is a decision of the owner's, and only the markup's order says it.

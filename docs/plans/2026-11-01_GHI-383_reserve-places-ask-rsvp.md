@@ -103,7 +103,7 @@ A manager may press the button and cannot undo it, as with today's Invite the re
 - What does the list screen's submit say? "Update the list", with the notice reporting what happened.
 - How does a manager's registered row look? A ticked, disabled checkbox with a caption, faded to 50% rather than daisyUI's 20%, so the tick reaches 3.11:1 in light and 4.41:1 in dark.
 - Should a box already ticked when the form opened bring back somebody removed in the meantime? No, only ticks the reader added reserve a place.
-- How does the event form fill the list, and where? One choice of Not now, Reserve a place for every active member, or Ask everyone, right after the dates, because asking already holds the place. Where moves below the Manager picker.
+- How does the event form fill the list, and where? One choice of Not now, Reserve a place for every active member, or Ask everyone, right after the dates, because asking already holds the place. Reserve is picked on a new event and its duplicate, and Not now on a saved one. Where moves below the Manager picker.
 - What do the refused-answer messages say? A concluded or canceled event refuses every reply, and an event that has only ended takes a yes or a no. The issue names both messages.
 - What draws a checkbox's and an unpicked radio's outline? The text fields' own line, the theme's ink at 50%, at 3.11:1 in light and 4.40:1 in dark where daisyUI's default is 1.5:1 and 1.84:1. A picked radio keeps daisyUI's full ink, and keyboard focus keeps its primary border.
 
@@ -141,6 +141,8 @@ A manager may press the button and cannot undo it, as with today's Invite the re
 | the event form's Ask everyone asks every active member, and leaves out a paused one | the code before the choice existed |
 | filling the list comes after the dates, and Where between the manager and the description | the fields in their old order |
 | the form takes one way of filling the list | the code before the choice existed |
+| a new event and its duplicate pick Reserve | the screens setting no default |
+| a saved event's form picks Not now | the default set on the model |
 | Ask the rest leaves an off-the-list member off | restoring the reservation inside the asking method |
 | Update the list is disabled until a tick differs from what was drawn, and again once it is put back | the Stimulus controller enabling it on any change |
 | the notice counts places reserved and removed | the notice counting ticks |
