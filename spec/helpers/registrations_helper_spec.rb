@@ -67,11 +67,11 @@ RSpec.describe RegistrationsHelper, type: :helper do
 
     # The badge is the row's only statement of where it stands, so the two unanswered statuses
     # are spelled out rather than left as the enum's own words.
-    it "reads an asked registration as a question still waiting" do
+    it "reads a requested registration as a question still waiting" do
       expect(helper.registration_status_label(build(:registration, status: :response_requested))).to eq "Response requested"
     end
 
-    it "reads a reserved registration as a place held before anybody asked" do
+    it "reads a reserved registration as a place held before any request" do
       expect(helper.registration_status_label(build(:registration, status: :reserved))).to eq "Place reserved, no response requested yet"
     end
   end

@@ -3,19 +3,19 @@ module StyleguideHelper
   #
   # WHY: the members' names are arguments, so an example asserting one passes it and its precondition sits in its own body; the defaults serve the examples that assert none.
   def plant_styleguide_group(manager: "Ana Horvat", waiting: "Ivan Kovačević", said_yes: "Marija Babić")
-    group  = create(:group, name: StyleguidesController::GROUP_NAME, address: create(:address))
-    owner  = create(:member, :active, :owner, group:, user: planted_user(manager))
-    asked  = create(:member, :active, group:, user: planted_user(waiting))
-    coming = create(:member, :active, group:, user: planted_user(said_yes))
+    group     = create(:group, name: StyleguidesController::GROUP_NAME, address: create(:address))
+    owner     = create(:member, :active, :owner, group:, user: planted_user(manager))
+    requested = create(:member, :active, group:, user: planted_user(waiting))
+    coming    = create(:member, :active, group:, user: planted_user(said_yes))
     create(:member, :paused, group:, user: planted_user("Luka Marić"))
     create(:member, :paused, group: create(:group), user: owner.user)
 
     next_up = create(:event, :from_the_future, group:, status: :confirmed, address: create(:address), creator: owner, manager: owner)
-    create(:registration, event: next_up, member: asked, status: :response_requested)
+    create(:registration, event: next_up, member: requested, status: :response_requested)
     create(:registration, event: next_up, member: coming, status: :yes)
 
     unconfirmed = create(:event, :from_the_future, group:, status: :unconfirmed, creator: owner)
-    create(:registration, event: unconfirmed, member: asked, status: :response_requested)
+    create(:registration, event: unconfirmed, member: requested, status: :response_requested)
 
     ongoing = create(:event, :ongoing, group:, creator: owner)
     create(:registration, event: ongoing, member: coming, status: :yes)

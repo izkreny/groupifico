@@ -127,7 +127,7 @@ RSpec.describe "The event form", type: :system do
     expect(event.reload.status).to eq "confirmed"
   end
 
-  # Who is reserved or asked is `spec/requests/events_spec.rb`'s. That one choice replaces the other is what only a browser's radio group does.
+  # Who is reserved or requested is `spec/requests/events_spec.rb`'s. That one choice replaces the other is what only a browser's radio group does.
   it "takes one way of filling the list, and saves with it picked" do
     actor = create(:member, :active, :events_administrator)
     event = create(:event, group: actor.group)

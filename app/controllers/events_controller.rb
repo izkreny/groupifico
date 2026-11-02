@@ -1,5 +1,5 @@
 class EventsController < ApplicationController
-  # WHY: what the form picks for an event not yet saved, which nobody has listed anybody for. The screens set it rather than the model, so an event built anywhere else fills nothing unless asked, and a saved event's form stays on Not now.
+  # WHY: what the form picks for an event not yet saved, which nobody has listed anybody for. The screens set it rather than the model, so an event built anywhere else fills nothing unless told to, and a saved event's form stays on Not now.
   RESERVED_FOR_A_NEW_EVENT = "reserve".freeze
 
   include GroupScoped
@@ -17,7 +17,7 @@ class EventsController < ApplicationController
     # place that knows these two lists exist.
     @past = params[:scope] == "past"
 
-    # Preloaded because every row asks the event for the reader's own registration and its place,
+    # Preloaded because every row reads the event for the reader's own registration and its place,
     # and `Event#registration_for` reads the loaded association: without this the list costs a
     # query per row for each.
     #
@@ -31,7 +31,7 @@ class EventsController < ApplicationController
 
     # The group decides which event the hero draws, not the list: the filter is
     # `Group#featured_event`'s, and picking it out of `@events` here would be that rule written a
-    # second time. A past list has no such event, so it is not asked for one.
+    # second time. A past list has no such event, so none is looked up.
     @featured_event = @group.featured_event unless @past
   end
 
@@ -132,11 +132,11 @@ class EventsController < ApplicationController
     #
     # `address_attributes` permits no `:id`, which is what keeps editing an address out of this
     # controller entirely. With one, `accepts_nested_attributes_for` updates the named address in
-    # place and only `EventPolicy#update?` is ever asked - so whoever may edit the event edits the
+    # place and only `EventPolicy#update?` is ever checked - so whoever may edit the event edits the
     # address too, the group's home address included, which `AddressPolicy` reserves to the `owner`.
-    # Without one, the nested attributes can only build a new address, which is what the form asks
-    # for when "New address…" is picked; a saved address is corrected at `AddressesController#edit`,
-    # where the question is asked properly.
+    # Without one, the nested attributes can only build a new address, which is what the form wants
+    # when "New address…" is picked; a saved address is corrected at `AddressesController#edit`,
+    # where the rule is checked properly.
     #
     # The form draws those fields whichever row is picked, so they arrive beside an `address_id` too,
     # and assigned after it they would build a new address that replaces the pick. A picked address
@@ -157,7 +157,7 @@ class EventsController < ApplicationController
       end
     end
 
-    # WHY: on `update` this is asked before anything is assigned, so a `manager_id` changed in the same
+    # WHY: on `update` this is checked before anything is assigned, so a `manager_id` changed in the same
     # request cannot decide whether this reader may reserve. On `create` the event is already built from
     # the params, and `EventPolicy#create?` admitting `can_manage?(:events)` alone is what keeps it safe.
     def authorize_reservation!

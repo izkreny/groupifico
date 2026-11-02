@@ -9,7 +9,7 @@
   <div class="card-body gap-card-row">
     <p class="text-xs font-semibold uppercase tracking-wider text-secondary"><%= event_kicker event %></p>
 
-    <%# Frame 4h's pencil at the end of the name's row, with Duplicate before it, each asked of the rule its action authorizes as on the event screen (`events/_event` carries why Duplicate asks `create?`), so a reader refused one gets no control. %>
+    <%# Frame 4h's pencil at the end of the name's row, with Duplicate before it, each checked against the rule its action authorizes as on the event screen (`events/_event` carries why Duplicate checks `create?`), so a reader refused one gets no control. %>
     <div class="flex items-center justify-between gap-2">
       <h2 class="card-title min-w-0 break-words">
         <%= link_to event.name, group_event_path(event.group, event), class: "link link-hover" %>
@@ -46,8 +46,8 @@
 
     <%= render "events/counts", event:, roster_link: true %>
 
-    <%# Frame 4n: an event whose every registration is a place held and nobody asked. `anyone_left_to_ask?` is what the action reads, so the card never offers a press that asks nobody, on an empty list or on a paused member's place. %>
-    <% if event.registrations.all?(&:reserved?) && event.anyone_left_to_ask? && allowed_to?(:create?, Registration.new(event: event)) %>
+    <%# Frame 4n: an event whose every registration is a place held and no response requested. `anyone_left_to_request?` is what the action reads, so the card never offers a press that moves nobody, on an empty list or on a paused member's place. %>
+    <% if event.registrations.all?(&:reserved?) && event.anyone_left_to_request? && allowed_to?(:create?, Registration.new(event: event)) %>
       <%= button_to group_event_response_request_path(event.group, event), class: "btn btn-sm self-start" do %>
         <%= icon :response_requested, class: "size-icon-control" %>Request responses
       <% end %>

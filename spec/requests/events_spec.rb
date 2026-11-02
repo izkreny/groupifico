@@ -212,7 +212,7 @@ RSpec.describe "Events", type: :request do
         end
       end
 
-      it "draws the hero card, a row beneath it and the question for an owner asked to respond" do
+      it "draws the hero card, a row beneath it and the question for an owner whose response is requested" do
         freeze_time do
           owner = create(:member, :owner)
           next_up = confirmed_event(owner, name: "Tuesday rehearsal", category: :rehearsal, days: 2)
@@ -253,13 +253,13 @@ RSpec.describe "Events", type: :request do
         end
       end
 
-      # Where the question is asked, which is the one thing about it this screen decides: inside the
-      # hero's own card, and again under any row the reader was asked to. `id="events"` is the
+      # Where the question stands, which is the one thing about it this screen decides: inside the
+      # hero's own card, and again under any row with the reader's response requested. `id="events"` is the
       # list's wrapper, so a match that crosses it has one copy on each side of the list's start.
       #
       # The count is what makes the order mean anything. Either copy alone satisfies the match on
       # its own, which is what the screen looked like when the answer row sat once below the list.
-      it "asks inside the hero card and again under an asked row" do
+      it "puts the question inside the hero card and again under a requested row" do
         owner = create(:member, :owner)
         next_up = confirmed_event(owner, days: 2, name: "Tuesday rehearsal")
         later = confirmed_event(owner, days: 5, name: "Sunday service")
@@ -280,9 +280,9 @@ RSpec.describe "Events", type: :request do
         member = create(:member, :active)
         confirmed_event(member, days: 2)
         answered_row = confirmed_event(member, days: 5)
-        asked_row = confirmed_event(member, days: 7)
+        requested_row = confirmed_event(member, days: 7)
         create(:registration, event: answered_row, member:, status: :maybe)
-        create(:registration, event: asked_row, member:, status: :response_requested)
+        create(:registration, event: requested_row, member:, status: :response_requested)
         sign_in_as(member.user)
 
         get group_events_path(member.group)
@@ -291,7 +291,7 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include "you said response_requested"
       end
 
-      # A reserved place asks nothing, so the row says where the reader stands by the icon alone.
+      # A reserved place puts no question, so the row says where the reader stands by the icon alone.
       it "shows a reserved place as an icon on a compact row, with nothing to answer" do
         member = create(:member, :active)
         confirmed_event(member, days: 2)
@@ -344,10 +344,10 @@ RSpec.describe "Events", type: :request do
         end
       end
 
-      # Both halves of the nobody-asked state in one example, because they are one behaviour: the
+      # Both halves of the no-response-requested state in one example, because they are one behaviour: the
       # tags are absent and a sentence stands where they were. The negative alone was satisfied by
       # a card that drew nothing there at all, which is what this state used to look like.
-      it "says nobody has been asked while every registration is still reserved" do
+      it "says no response is requested while every registration is still reserved" do
         freeze_time do
           owner = create(:member, :owner)
           next_up = confirmed_event(owner, days: 2)
@@ -374,7 +374,7 @@ RSpec.describe "Events", type: :request do
         end
       end
 
-      it "offers no Request responses once somebody has been asked" do
+      it "offers no Request responses once a response has been requested" do
         freeze_time do
           owner = create(:member, :owner)
           next_up = confirmed_event(owner, days: 2)
@@ -389,7 +389,7 @@ RSpec.describe "Events", type: :request do
         end
       end
 
-      # "Every registration is reserved" holds of an empty list, which has nobody to ask.
+      # "Every registration is reserved" holds of an empty list, which has nobody to request from.
       it "offers no Request responses while nobody is on the list" do
         freeze_time do
           owner = create(:member, :owner)
@@ -403,7 +403,7 @@ RSpec.describe "Events", type: :request do
         end
       end
 
-      # Asking moves active members' held places only, so a paused member's place leaves the button nothing to do.
+      # Requesting moves active members' held places only, so a paused member's place leaves the button nothing to do.
       it "offers no Request responses while the only place held is a paused member's" do
         freeze_time do
           owner = create(:member, :owner)
@@ -435,8 +435,8 @@ RSpec.describe "Events", type: :request do
 
     # A negative offset is what makes an event past: `confirmed_event` reads `days:` as a distance
     # from now in either direction, and an event that started nine days ago ended eight days and
-    # twenty-two hours ago, which is what `Event.past` asks about.
-    context "when the past list is asked for" do
+    # twenty-two hours ago, which is what `Event.past` reads.
+    context "when the past list is requested" do
       it "lists the group's past events newest first, with no hero card" do
         member = create(:member, :active)
         confirmed_event(member, days: 2, name: "Tuesday rehearsal")
@@ -451,10 +451,10 @@ RSpec.describe "Events", type: :request do
       end
 
       # An event that has ended and that nobody concluded is still worth a roster, so the question
-      # is asked here too - in the tense the event is in. Both halves in one example: the past
-      # tense present and the present tense absent, since a screen asking neither would satisfy
+      # is put here too - in the tense the event is in. Both halves in one example: the past
+      # tense present and the present tense absent, since a screen saying neither would satisfy
       # either assertion alone.
-      it "asks in the past tense under an event that has ended" do
+      it "puts the question in the past tense under an event that has ended" do
         member = create(:member, :active)
         over = confirmed_event(member, days: -9, name: "Spring concert")
         create(:registration, event: over, member:, status: :response_requested)
@@ -466,7 +466,7 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include "Are you coming?"
       end
 
-      it "does not ask at all under an event somebody has concluded" do
+      it "puts no question under an event somebody has concluded" do
         member = create(:member, :active)
         over = create(:event, group: member.group, creator: member, status: :concluded,
           name: "Summer gig", starts_at: 9.days.ago, ends_at: 9.days.ago + 2.hours)
@@ -479,13 +479,13 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include "Did you go?", "Are you coming?"
       end
 
-      # Once an event has ended, whoever has not said yes or no is asked, a held place nobody asked included.
-      it "asks a held place and a question whether they went, with yes and no only" do
+      # Once an event has ended, whoever has not said yes or no has a response due, a held place included.
+      it "puts whether they went to a held place and a question, with yes and no only" do
         member = create(:member, :active)
         held = confirmed_event(member, days: -9, name: "Spring concert")
-        asked = confirmed_event(member, days: -6, name: "Summer gig")
+        requested = confirmed_event(member, days: -6, name: "Summer gig")
         create(:registration, event: held, member:, status: :reserved)
-        create(:registration, event: asked, member:, status: :response_requested)
+        create(:registration, event: requested, member:, status: :response_requested)
         sign_in_as(member.user)
 
         get group_events_path(member.group, scope: "past")
@@ -496,7 +496,7 @@ RSpec.describe "Events", type: :request do
       end
 
       # The maybe is written the day before the event started, because an ended event takes no maybe.
-      it "asks again whoever said maybe before the event" do
+      it "puts the question again to whoever said maybe before the event" do
         member = create(:member, :active)
         unsure = confirmed_event(member, days: -3, name: "Autumn fair")
         travel_to(unsure.starts_at - 1.day) { create(:registration, event: unsure, member:, status: :maybe) }
@@ -508,7 +508,7 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include %(name="registration[status]" value="maybe")
       end
 
-      it "leaves a yes given before the event standing, without asking again" do
+      it "leaves a yes given before the event standing, with no second question" do
         member = create(:member, :active)
         over = confirmed_event(member, days: -9, name: "Spring concert")
         create(:registration, event: over, member:, status: :yes)
@@ -594,7 +594,7 @@ RSpec.describe "Events", type: :request do
     # satisfied by a screen carrying both sentences, and the negative alone by a screen carrying
     # neither. Swapping the two literals reddens both examples, which is the mutation the pair
     # exists for.
-    context "when the group has nothing on the list being asked for" do
+    context "when the group has nothing on the list being requested" do
       it "says nothing is coming up on an empty upcoming list" do
         member = create(:member, :active)
         sign_in_as(member.user)
@@ -617,11 +617,11 @@ RSpec.describe "Events", type: :request do
     end
 
     # The other half of `open_to_answers?`'s status test. An unconfirmed event is on the list and is
-    # still ahead, so it does ask: nobody has called it off, and gauging who would come is most of
+    # still ahead, so it does put the question: nobody has called it off, and gauging who would come is most of
     # what an unconfirmed event is for. Without this the `unconfirmed?` term is a one-token deletion
     # nothing catches.
-    context "when the group's only upcoming event is unconfirmed and the reader was asked" do
-      it "asks under its row" do
+    context "when the group's only upcoming event is unconfirmed and the reader's response is requested" do
+      it "puts the question under its row" do
         member = create(:member, :active)
         pencilled = create(:event, group: member.group, creator: member, status: :unconfirmed,
           name: "Extra rehearsal", starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
@@ -635,9 +635,9 @@ RSpec.describe "Events", type: :request do
     end
 
     # `Event.current_and_upcoming` filters on `ends_at` alone, so a canceled event still ahead is on
-    # the list. It draws, and it does not ask: the clock has not ruled it out but its status has.
+    # the list. It draws, and it puts no question: the clock has not ruled it out but its status has.
     context "when the group's only upcoming event has been called off" do
-      it "draws the row and does not ask under it" do
+      it "draws the row and puts no question under it" do
         member = create(:member, :active)
         called_off = create(:event, group: member.group, creator: member, status: :canceled,
           name: "Autumn gig", starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
@@ -771,7 +771,7 @@ RSpec.describe "Events", type: :request do
       end
 
       # A paused owner keeps read and loses every write, so the roles they hold must not bring the
-      # controls back: each is asked of a write rule, which the paused pre-check refuses first.
+      # controls back: each is checked against a write rule, which the paused pre-check refuses first.
       it "draws the roster with nothing to press, whatever roles they hold" do
         member = create(:member, :paused, :owner)
         event = detailed_event(member)
@@ -888,7 +888,7 @@ RSpec.describe "Events", type: :request do
         expect(response.body).to include %(title="Yes")
       end
 
-      it "puts the reserved icon and a plain paper plane on a reserved row, and the tinted plane alone on an asked row" do
+      it "puts the reserved icon and a plain paper plane on a reserved row, and the tinted plane alone on a requested row" do
         owner = create(:member, :active, :owner)
         event = detailed_event(owner)
         sign_in_as(owner.user)
@@ -964,7 +964,7 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include "Reserve a place for everyone"
       end
 
-      it "offers no Request the rest once every active member is asked" do
+      it "offers no Request the rest once every active member's response is requested" do
         owner = create(:member, :active, :owner)
         event = detailed_event(owner)
         event.registrations.reserved.update_all(status: :response_requested)
@@ -1022,7 +1022,7 @@ RSpec.describe "Events", type: :request do
       end
 
       # `detailed_event` has ended, so a place held for the reader is now a question about whether they went.
-      it "asks a held place whether they went, with yes and no only" do
+      it "puts whether they went to a held place, with yes and no only" do
         member = create(:member, :active)
         event = detailed_event(member, reader_status: :reserved)
         sign_in_as(member.user)
@@ -1045,8 +1045,8 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include %(name="registration[status]" value="maybe")
       end
 
-      # `Registration` refuses every answer on a concluded event, so its screen asks nothing.
-      it "asks nothing on an event somebody has concluded" do
+      # `Registration` refuses every answer on a concluded event, so its screen puts no question.
+      it "puts no question on an event somebody has concluded" do
         member = create(:member, :active)
         event = detailed_event(member, reader_status: :response_requested)
         event.update!(status: :concluded)
@@ -1502,7 +1502,7 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include "Delete event"
       end
 
-      it "offers filling the list, because reserving and asking are the manager's too" do
+      it "offers filling the list, because reserving and requesting are the manager's too" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, manager: actor)
         sign_in_as(actor.user)
@@ -1512,7 +1512,7 @@ RSpec.describe "Events", type: :request do
         expect(response.body).to include "Reserve a place for every active member", "Request response from all active members"
       end
 
-      # WHY: a saved event may already hold its list as somebody wants it, so saving it fills nothing unless they ask.
+      # WHY: a saved event may already hold its list as somebody wants it, so saving it fills nothing unless they say so.
       it "picks Not now" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, manager: actor)
@@ -1726,7 +1726,7 @@ RSpec.describe "Events", type: :request do
     end
 
     context "when signed in as an events administrator filling the list" do
-      it "reserves a place for every active member, asks nobody, and leaves out a paused one" do
+      it "reserves a place for every active member, requests nothing, and leaves out a paused one" do
         creator = create(:member, :active, :events_administrator)
         active = create(:member, :active, group: creator.group)
         create(:member, :paused, group: creator.group)
@@ -1738,12 +1738,12 @@ RSpec.describe "Events", type: :request do
         expect(Event.sole.registrations.reserved.pluck(:member_id)).to contain_exactly(creator.id, active.id)
       end
 
-      it "asks every active member, and leaves out a paused one" do
+      it "requests a response from every active member, and leaves out a paused one" do
         creator = create(:member, :active, :events_administrator)
         active = create(:member, :active, group: creator.group)
         create(:member, :paused, group: creator.group)
         sign_in_as(creator.user)
-        params = { name: "Rehearsal", starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour, list_filling: "ask" }
+        params = { name: "Rehearsal", starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour, list_filling: "request" }
 
         post group_events_path(creator.group), params: { event: params }
 
@@ -1859,16 +1859,16 @@ RSpec.describe "Events", type: :request do
         expect(event.registrations.reserved.pluck(:member_id)).to contain_exactly(event.creator_id, missing.id)
       end
 
-      it "asks the registering row before asking everyone" do
+      it "checks the registering row before requesting from everyone" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, manager: actor)
         sign_in_as(actor.user)
 
-        expect { patch group_event_path(event.group, event), params: { event: { list_filling: "ask" } } }
+        expect { patch group_event_path(event.group, event), params: { event: { list_filling: "request" } } }
           .to be_authorized_to(:create?, have_attributes(event_id: event.id)).with(RegistrationPolicy)
       end
 
-      # The rule is asked of the event as it was loaded, so handing it on in the same save
+      # The rule is checked against the event as it was loaded, so handing it on in the same save
       # does not take the manager's own reserving away from them.
       it "still reserves when the same save hands the event to somebody else" do
         actor = create(:member, :active)
@@ -1997,7 +1997,7 @@ RSpec.describe "Events", type: :request do
 
     # The second door onto an address, and the one the policy cannot see. `address_attributes` with
     # an `:id` would have `accepts_nested_attributes_for` update that address in place with only
-    # `EventPolicy#update?` asked, so an events_administrator edited the group's home address that
+    # `EventPolicy#update?` checked, so an events_administrator edited the group's home address that
     # `AddressPolicy` reserves to the `owner`. With no `:id` permitted the attributes build a new
     # address and the event is repointed at it, which is this actor's own to do - what they cannot
     # do is reach the address they named. Both halves are asserted: an untouched home address alone

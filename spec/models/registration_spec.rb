@@ -28,7 +28,7 @@ RSpec.describe Registration, type: :model do
       expect(registration.update(status: :yes)).to be false
     end
 
-    # The case the owner asked for: an event that has ended and that nobody concluded still takes
+    # The case the owner wanted: an event that has ended and that nobody concluded still takes
     # an answer, because the roster is what it is for.
     it "allows an answer to an event that has merely ended" do
       event = create(:event, status: :confirmed, starts_at: 9.days.ago, ends_at: 9.days.ago + 2.hours)
@@ -92,55 +92,55 @@ RSpec.describe Registration, type: :model do
 
   describe "#answered?" do
     # The three statuses are written out rather than read from `Registration::ANSWERS`, which is
-    # the constant the method asks: an example iterating it agrees with whatever it holds.
+    # the constant the method reads: an example iterating it agrees with whatever it holds.
     it "answers true for each of the three answers" do
       expect(build(:registration, status: :yes)).to be_answered
       expect(build(:registration, status: :maybe)).to be_answered
       expect(build(:registration, status: :no)).to be_answered
     end
 
-    it "answers false while the registration is reserved or asked" do
+    it "answers false while the registration is reserved or response_requested" do
       expect(build(:registration, status: :reserved)).not_to be_answered
       expect(build(:registration, status: :response_requested)).not_to be_answered
     end
   end
 
-  describe "#asked?" do
-    it "asks a question before the event ends" do
+  describe "#response_due?" do
+    it "is due on a question before the event ends" do
       freeze_time do
         ahead = build(:event, starts_at: 1.hour.from_now, ends_at: 2.hours.from_now)
 
-        expect(build(:registration, event: ahead, status: :response_requested)).to be_asked
+        expect(build(:registration, event: ahead, status: :response_requested)).to be_response_due
       end
     end
 
-    it "asks neither a held place nor an answer before the event ends" do
+    it "is due on neither a held place nor an answer before the event ends" do
       freeze_time do
         ahead = build(:event, starts_at: 1.hour.from_now, ends_at: 2.hours.from_now)
 
-        expect(build(:registration, event: ahead, status: :reserved)).not_to be_asked
-        expect(build(:registration, event: ahead, status: :yes)).not_to be_asked
-        expect(build(:registration, event: ahead, status: :maybe)).not_to be_asked
-        expect(build(:registration, event: ahead, status: :no)).not_to be_asked
+        expect(build(:registration, event: ahead, status: :reserved)).not_to be_response_due
+        expect(build(:registration, event: ahead, status: :yes)).not_to be_response_due
+        expect(build(:registration, event: ahead, status: :maybe)).not_to be_response_due
+        expect(build(:registration, event: ahead, status: :no)).not_to be_response_due
       end
     end
 
-    it "asks a held place, a question and a maybe once the event has ended" do
+    it "is due on a held place, a question and a maybe once the event has ended" do
       freeze_time do
         over = build(:event, starts_at: 2.hours.ago, ends_at: 1.hour.ago)
 
-        expect(build(:registration, event: over, status: :reserved)).to be_asked
-        expect(build(:registration, event: over, status: :response_requested)).to be_asked
-        expect(build(:registration, event: over, status: :maybe)).to be_asked
+        expect(build(:registration, event: over, status: :reserved)).to be_response_due
+        expect(build(:registration, event: over, status: :response_requested)).to be_response_due
+        expect(build(:registration, event: over, status: :maybe)).to be_response_due
       end
     end
 
-    it "asks neither a yes nor a no once the event has ended" do
+    it "is due on neither a yes nor a no once the event has ended" do
       freeze_time do
         over = build(:event, starts_at: 2.hours.ago, ends_at: 1.hour.ago)
 
-        expect(build(:registration, event: over, status: :yes)).not_to be_asked
-        expect(build(:registration, event: over, status: :no)).not_to be_asked
+        expect(build(:registration, event: over, status: :yes)).not_to be_response_due
+        expect(build(:registration, event: over, status: :no)).not_to be_response_due
       end
     end
   end
@@ -153,12 +153,12 @@ RSpec.describe Registration, type: :model do
       expect(registration.reload).to be_response_requested
     end
 
-    it "leaves an asked or answered registration as it was" do
-      asked = create(:registration, status: :response_requested)
+    it "leaves a requested or answered registration as it was" do
+      requested = create(:registration, status: :response_requested)
       answered = create(:registration, event: create(:event, status: :confirmed), status: :yes)
 
-      expect([ asked.request_response, answered.request_response ]).to eq [ false, false ]
-      expect([ asked.reload.status, answered.reload.status ]).to eq %w[ response_requested yes ]
+      expect([ requested.request_response, answered.request_response ]).to eq [ false, false ]
+      expect([ requested.reload.status, answered.reload.status ]).to eq %w[ response_requested yes ]
     end
 
     it "leaves a paused or inactive member's held place reserved" do

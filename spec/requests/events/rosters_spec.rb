@@ -163,7 +163,7 @@ RSpec.describe "Events::Rosters", type: :request do
     end
 
     context "when signed in as the event's manager" do
-      it "reserves a place for every ticked member, and asks nobody" do
+      it "reserves a place for every ticked member, and requests nothing" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, manager: actor)
         first = create(:member, :active, group: actor.group)
@@ -254,7 +254,7 @@ RSpec.describe "Events::Rosters", type: :request do
         expect(Registration.exists?(elsewhere.id)).to be true
       end
 
-      # The two ways of changing nothing, which differ only in the message: this one asked for no change.
+      # The two ways of changing nothing, which differ only in the message: this one wanted no change.
       it "re-renders the screen when nothing changed" do
         event = create(:event)
         sign_in_as(create(:member, :active, :events_administrator, group: event.group).user)
@@ -266,7 +266,7 @@ RSpec.describe "Events::Rosters", type: :request do
         expect(flash[:alert]).to include "Tick or untick"
       end
 
-      it "asks for a change when a registered row posts back as it was drawn" do
+      it "wants a change when a registered row posts back as it was drawn" do
         event = create(:event)
         listed = create(:member, :active, group: event.group)
         create(:registration, event:, member: listed)

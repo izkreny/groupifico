@@ -1,4 +1,4 @@
-# Holding a place for every active member off the list, from the roster's "Reserve a place for everyone". It asks nobody. It is the registering row, so it asks `RegistrationPolicy#create?` of a registration with no member on it, exactly as the roster does before drawing the button.
+# Holding a place for every active member off the list, from the roster's "Reserve a place for everyone". It requests no response. It is the registering row, so it checks `RegistrationPolicy#create?` against a registration with no member on it, exactly as the roster does before drawing the button.
 class Events::ReservationsController < ApplicationController
   include EventScoped
 

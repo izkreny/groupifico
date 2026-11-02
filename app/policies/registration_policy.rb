@@ -24,7 +24,7 @@ class RegistrationPolicy < ApplicationPolicy
   # them withdraws nothing: the answer to not attending is `no`, which `update?` already covers.
   def destroy? = membership.can_manage?(:events)
 
-  # Which statuses the actor may write, asked by the controller alongside the rules above, because a
+  # Which statuses the actor may write, checked by the controller alongside the rules above, because a
   # posted status is not on the record when `update?` runs. A member may say `yes`, `maybe` or `no`
   # about themselves and nothing else; `reserved` and `response_requested` belong to whoever fills the event.
   def manage_answers? = membership.can_manage?(:events) || manages_event?

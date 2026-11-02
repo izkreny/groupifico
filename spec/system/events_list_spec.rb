@@ -1,7 +1,7 @@
 require "rails_helper"
 
 # Only what a browser adds. Which pieces of the card a given reader sees - the question for an
-# asked member, the pills for nobody paused, the tags for everyone - is
+# requested member, the pills for nobody paused, the tags for everyone - is
 # `spec/requests/events_spec.rb`'s assertion, and per the duplication rule in `.agents/testing.md`
 # it does not come back here.
 #
@@ -11,7 +11,7 @@ require "rails_helper"
 # The paint targets are chosen for surfaces the matcher can judge: the hero carries a `base-200`
 # surface over the page's own `base-100`, and the pills carry theirs over the hero's.
 # `.card` rather than `.card.bg-base-200`, so the assertion reads the rendered colour rather than
-# the class that asks for it - with the class in the selector, an untinted hero fails as "does not
+# the class that requests it - with the class in the selector, an untinted hero fails as "does not
 # exist" instead of as the ratio of 1 it actually paints.
 RSpec.describe "The events list", type: :system do
   it "paints the hero card and the lit pill, with no accessibility violations" do
@@ -165,7 +165,7 @@ RSpec.describe "The events list", type: :system do
     expect(registration.reload).to be_yes
   end
 
-  # A row asks its question in place, so answering it turns the question into the answer's icon at the row's end without leaving the list.
+  # A row puts its question in place, so answering it turns the question into the answer's icon at the row's end without leaving the list.
   it "answers a row in place, its question replaced by the answer's icon" do
     member = create(:member, :owner)
     next_event_for(member)
@@ -246,7 +246,7 @@ RSpec.describe "The events list", type: :system do
   end
 
   # A list row is a grid whose cells start at its top, so the status icon would sit level with the name rather than with the name and its meta line together.
-  # A row that asks and carries the pencil, at phone width: the question has to start under the name, never in the pencil's column, which squeezed the name to a letter a line.
+  # A row that puts the question and carries the pencil, at phone width: the question has to start under the name, never in the pencil's column, which squeezed the name to a letter a line.
   it "puts a row's question under its name when the row also carries the pencil" do
     member = create(:member, :owner)
     next_event_for(member)
@@ -350,7 +350,7 @@ RSpec.describe "The events list", type: :system do
   end
 
   # The other list needs something on it, and only its name is read: a concert that ended a week
-  # ago is past by `ends_at` as well as by `starts_at`, which is the column `Event.past` asks about.
+  # ago is past by `ends_at` as well as by `starts_at`, which is the column `Event.past` reads.
   def past_event_for(member)
     create(:event,
       group: member.group,

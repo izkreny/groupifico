@@ -57,7 +57,7 @@ RSpec.describe "Events::Reservations", type: :request do
     end
 
     context "when signed in as the event's manager" do
-      it "reserves a place for every active member off the list, and asks nobody" do
+      it "reserves a place for every active member off the list, and requests nothing" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, creator: actor, manager: actor)
         create(:member, :active, group: event.group)

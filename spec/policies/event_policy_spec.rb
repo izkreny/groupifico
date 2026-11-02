@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 # A `relation_scope` is not a rule, so the membership pre-checks never run for it. Every scope on
-# this branch asked `user.groups` - every group ever joined - and a member who has gone inactive
+# this branch read `user.groups` - every group ever joined - and a member who has gone inactive
 # has left, so the list leaked what the detail page refused.
 #
 # Tested here rather than through the router, deliberately. The nested controllers call

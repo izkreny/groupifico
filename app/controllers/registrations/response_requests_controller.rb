@@ -1,5 +1,5 @@
 # A roster row's paper plane. The registering row rather than `RegistrationsController#update`,
-# because asking somebody is filling the event, which the event's manager may do and `update?`
+# because requesting a response is filling the event, which the event's manager may do and `update?`
 # refuses them.
 class Registrations::ResponseRequestsController < ApplicationController
   include EventScoped

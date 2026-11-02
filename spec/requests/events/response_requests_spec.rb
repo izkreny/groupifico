@@ -13,7 +13,7 @@ RSpec.describe "Events::ResponseRequests", type: :request do
     end
 
     context "when signed in as a non-member" do
-      it "returns 404 and asks nobody" do
+      it "returns 404 and requests nothing" do
         event = create(:event)
         sign_in_as(create(:user))
 
@@ -23,7 +23,7 @@ RSpec.describe "Events::ResponseRequests", type: :request do
     end
 
     context "when signed in as a member holding no role" do
-      it "refuses with a redirect carrying an alert, and asks nobody" do
+      it "refuses with a redirect carrying an alert, and requests nothing" do
         event = create(:event)
         member = create(:member, :active, group: event.group)
         sign_in_as(member.user)
@@ -46,7 +46,7 @@ RSpec.describe "Events::ResponseRequests", type: :request do
     end
 
     context "when signed in as a paused events administrator" do
-      it "refuses, because asking is a write" do
+      it "refuses, because requesting is a write" do
         event = create(:event)
         actor = create(:member, :paused, :events_administrator, group: event.group)
         sign_in_as(actor.user)
@@ -57,7 +57,7 @@ RSpec.describe "Events::ResponseRequests", type: :request do
     end
 
     context "when signed in as the event's manager" do
-      it "asks every active member holding a place" do
+      it "requests a response from every active member holding a place" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, creator: actor, manager: actor)
         create(:registration, event:, member: actor, status: :reserved)
@@ -87,7 +87,7 @@ RSpec.describe "Events::ResponseRequests", type: :request do
 
     context "when signed in as an events administrator" do
       # Upcoming, because an event that has ended takes no `maybe` and the factory's date is random.
-      it "asks a held place, leaves an answer as it was, and leaves a member off the list off it" do
+      it "requests a response from a held place, leaves an answer as it was, and leaves a member off the list off it" do
         actor = create(:member, :active, :events_administrator)
         event = create(:event, group: actor.group, creator: actor, status: :confirmed, starts_at: 1.day.from_now)
         held = create(:registration, event:, member: actor, status: :reserved)
@@ -102,7 +102,7 @@ RSpec.describe "Events::ResponseRequests", type: :request do
         expect(flash[:notice]).to eq "1 response requested."
       end
 
-      it "says so when nobody was left to ask" do
+      it "says so when nobody was left to request a response from" do
         actor = create(:member, :active, :events_administrator)
         event = create(:event, group: actor.group, creator: actor)
         create(:registration, event:, member: actor, status: :yes)

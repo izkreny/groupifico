@@ -9,7 +9,7 @@
   <div class="flex items-center justify-between gap-2.5">
     <%= render "events/scope_menu", group: @group, past: @past %>
 
-    <%# Asked of a new event rather than of the group, because that is the record `EventPolicy`
+    <%# Checked against a new event rather than the group, because that is the record `EventPolicy`
         writes the rule against. A refused reader gets no button rather than a disabled one. %>
     <% if allowed_to?(:create?, @group.events.new) %>
       <%= link_to new_group_event_path(@group), class: "btn btn-primary btn-sm" do %>

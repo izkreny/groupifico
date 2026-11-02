@@ -37,7 +37,7 @@ class Registration < ApplicationRecord
   # The statuses that are an answer. `reserved` and `response_requested` are the other two, and they are what
   # somebody filling the event puts you into rather than something you say about yourself. Named
   # here because the vocabulary is the model's; `RegistrationPolicy` and `RegistrationsController`
-  # both ask it rather than each holding a list.
+  # both read it rather than each holding a list.
   ANSWERS = %w[ yes maybe no ].freeze
 
   enum :status, %i[ reserved response_requested yes maybe no ], default: :reserved, validate: true
@@ -61,26 +61,26 @@ class Registration < ApplicationRecord
   # answer because a posted status is not on the record yet. A blank counts: `reserved` is the
   # model's default, so somebody answering without naming a status has claimed nothing.
   #
-  # The vocabulary is this model's, so the question is too - `RegistrationsController` asks it
+  # The vocabulary is this model's, so the question is too - `RegistrationsController` reads it
   # rather than holding a second copy of `ANSWERS`.
   def self.answer?(status)
     status.nil? || ANSWERS.include?(status)
   end
 
-  # WHY: whether this member has said anything, which the event card shows as their answer. It is a separate question from `asked?`, because once an event has ended a `maybe` is both answered and asked again. The two unanswered statuses are not a "no": `reserved` is a place held before anybody was asked and `response_requested` is a question still waiting.
+  # WHY: whether this member has said anything, which the event card shows as their answer. It is a separate question from `response_due?`, because once an event has ended a `maybe` is both answered and due again. The two unanswered statuses are not a "no": `reserved` is a place held before any response was requested and `response_requested` is a question still waiting.
   def answered?
     ANSWERS.include?(status)
   end
 
-  # WHY: whether the answer row puts the question to this member rather than showing their answer. Before the event ends that is a question still waiting, and a held place is not asked. Once it has ended it is anyone whose attendance is still unknown: a held place, a question nobody answered, and a `maybe`, none of which `Event#available_registration_answers` offers any more.
-  def asked?
+  # WHY: whether the answer row puts the question to this member rather than showing their answer. Before the event ends that is a question still waiting, and a held place has none due. Once it has ended it is anyone whose attendance is still unknown: a held place, a question nobody answered, and a `maybe`, none of which `Event#available_registration_answers` offers any more.
+  def response_due?
     event.ended? ? event.available_registration_answers.exclude?(status) : response_requested?
   end
 
-  # WHY: the one rule for asking a registration, read by the roster row's paper plane and by
+  # WHY: the one rule for requesting a response, read by the roster row's paper plane and by
   # `Event#request_all_responses` alike. Both are reachable by anyone the registering row admits,
   # the event's manager included, who may not overrule an answer; so only a held place moves, and
-  # only an active member's, since a paused or inactive one is never asked. Whether it moved is the
+  # only an active member's, since a paused or inactive one never gets a request. Whether it moved is the
   # return value.
   def request_response
     reserved? && member.active? && response_requested!

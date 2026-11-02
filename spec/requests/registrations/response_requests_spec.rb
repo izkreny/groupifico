@@ -78,7 +78,7 @@ RSpec.describe "Registrations::ResponseRequests", type: :request do
         expect(response).to redirect_to group_event_path(event.group, event)
       end
 
-      it "refuses to ask a paused member, and leaves their held place as it was" do
+      it "refuses to request a response from a paused member, and leaves their held place as it was" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, creator: actor, manager: actor)
         held = create(:registration, event:, member: create(:member, :paused, group: event.group), status: :reserved)
@@ -102,16 +102,16 @@ RSpec.describe "Registrations::ResponseRequests", type: :request do
         expect(answered.reload).to be_no
       end
 
-      # The plane stays pressable on an asked row, so a press there says why nothing changed.
-      it "says a member who has a question waiting was already asked" do
+      # The plane stays pressable on a requested row, so a press there says why nothing changed.
+      it "says a member who has a question waiting already has a request" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, creator: actor, manager: actor)
-        asked = create(:registration, event:, member: create(:member, :active, group: event.group), status: :response_requested)
+        requested = create(:registration, event:, member: create(:member, :active, group: event.group), status: :response_requested)
         sign_in_as(actor.user)
 
-        post group_event_registration_response_request_path(event.group, event, asked)
+        post group_event_registration_response_request_path(event.group, event, requested)
 
-        expect(flash[:notice]).to eq "#{asked.member.full_name}'s response was already requested."
+        expect(flash[:notice]).to eq "#{requested.member.full_name}'s response was already requested."
       end
     end
   end

@@ -5,16 +5,16 @@ class Events::RostersController < ApplicationController
   # One message for every way a change can stop applying while the reader was choosing - registered by somebody else, paused, gone from the group, or already removed. It names none of them, because the controller cannot tell which happened and the reader's answer is the same either way: the list moved, here it is again.
   MOVED_ON = "Nothing changed: nobody you ticked is still on offer. Here it is again.".freeze
 
-  # The registering row of the events table is who this screen is for. Asked of a registration with no member on it, so `own?` is false and what is left is the three roles and the event's manager.
+  # The registering row of the events table is who this screen is for. Checked against a registration with no member on it, so `own?` is false and what is left is the three roles and the event's manager.
   def edit
     authorize! unattached_registration, to: :create?
   end
 
-  # The statuses are written by `Event#update_roster` rather than posted, because `reserved` is the only thing a tick means here, so there is no posted status for a second question to ask about.
+  # The statuses are written by `Event#update_roster` rather than posted, because `reserved` is the only thing a tick means here, so no posted status needs a second check.
   #
   # WHY: only a tick the form did not draw is an arrival, so a row removed while the form sat open stays removed however its box still posts.
   #
-  # WHY: removal is asked only when there is something to remove, of the same memberless record. A manager may reserve and may not remove, so their form posts no `listed_ids`, and a posted removal from them stops the whole request before any write rather than being dropped.
+  # WHY: removal is checked only when there is something to remove, against the same memberless record. A manager may reserve and may not remove, so their form posts no `listed_ids`, and a posted removal from them stops the whole request before any write rather than being dropped.
   def update
     authorize! unattached_registration, to: :create?
 
@@ -28,7 +28,7 @@ class Events::RostersController < ApplicationController
     if reserved.positive? || removed.positive?
       redirect_to group_event_path(@group, @event), status: :see_other, notice: updated_notice(reserved, removed)
     else
-      # The two ways of changing nothing read the same to the controller and differently to the reader: one of them asked for a change, and telling them to make one sends them back to the row that moved out from under them.
+      # The two ways of changing nothing read the same to the controller and differently to the reader: one of them wanted a change, and telling them to make one sends them back to the row that moved out from under them.
       flash.now[:alert] = ticked.sort == listed.sort ? "Tick or untick somebody first." : MOVED_ON
       render :edit, status: :unprocessable_content
     end

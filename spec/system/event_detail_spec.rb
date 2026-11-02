@@ -6,22 +6,22 @@ require "rails_helper"
 #
 # What no request spec can reach: that the disclosure actually folds the roster away and unfolds it
 # when the counts are pressed, that the card and a row's lit pill paint against the surface behind
-# them in both themes, that an asked row's paper plane is tinted where a reserved row's is not,
-# that an owner's row of controls fits a phone, and where the roster's pill, its paper plane, Ask
+# them in both themes, that a requested row's paper plane is tinted where a reserved row's is not,
+# that an owner's row of controls fits a phone, and where the roster's pill, its paper plane, Request
 # the rest and the pencil land.
 #
 # Neither paper plane nor Request the rest takes a `paint` assertion, and both were measured rather
 # than assumed: the planes are ghost buttons, and Request the rest is a
 # plain `btn` whose base-200 face sits on the card's own base-200, so each scores exactly 1. A
 # face-less control is seen by its glyph and its label, so that is what they assert instead: the
-# planes against the 3:1 WCAG asks of an icon, Request the rest against the 4.5:1 it asks of text.
-# A soft primary face on the asked plane scored 1.01 in organic, which is a tint nobody can see, so
+# planes against the 3:1 WCAG requires of an icon, Request the rest against the 4.5:1 it requires of text.
+# A soft primary face on the requested plane scored 1.01 in organic, which is a tint nobody can see, so
 # the tint is the glyph's colour and is compared directly.
 #
 # `.card` rather than `.card.bg-base-200`, so the assertion reads the rendered colour rather than
-# the class that asks for it, as `spec/system/events_list_spec.rb` explains.
+# the class that requests it, as `spec/system/events_list_spec.rb` explains.
 RSpec.describe "The event detail", type: :system do
-  it "paints the card and tints the asked row's paper plane, in light" do
+  it "paints the card and tints the requested row's paper plane, in light" do
     owner, event, = rostered_event
     sign_in_as owner.user
     prefer_colour_scheme :light
@@ -45,7 +45,7 @@ RSpec.describe "The event detail", type: :system do
     expect(rendered_colour_scheme).to eq "light"
     expect(text_contrast("[aria-label='Response requested from Carla Duke']")).to be >= ContrastHelper::WCAG_NON_TEXT
     expect(text_contrast("[aria-label^='Request a response from Ben Cole']")).to be >= ContrastHelper::WCAG_NON_TEXT
-    expect(text_contrast(ask_the_rest(event))).to be >= ContrastHelper::WCAG_AA
+    expect(text_contrast(request_the_rest(event))).to be >= ContrastHelper::WCAG_AA
   end
 
   it "shows the same three in dark" do
@@ -59,7 +59,7 @@ RSpec.describe "The event detail", type: :system do
     expect(rendered_colour_scheme).to eq "dark"
     expect(text_contrast("[aria-label='Response requested from Carla Duke']")).to be >= ContrastHelper::WCAG_NON_TEXT
     expect(text_contrast("[aria-label^='Request a response from Ben Cole']")).to be >= ContrastHelper::WCAG_NON_TEXT
-    expect(text_contrast(ask_the_rest(event))).to be >= ContrastHelper::WCAG_AA
+    expect(text_contrast(request_the_rest(event))).to be >= ContrastHelper::WCAG_AA
   end
 
   it "paints the card and tints the same plane in dark" do
@@ -231,7 +231,7 @@ RSpec.describe "The event detail", type: :system do
     expect(page).to be_accessible
   end
 
-  # A plain member's rows are status icons alone, so this is the variant where the icon is the whole of what a row says, and an asked row's is drawn in the tally's info.
+  # A plain member's rows are status icons alone, so this is the variant where the icon is the whole of what a row says, and a requested row's is drawn in the tally's info.
   it "paints a plain member's status icons, with no accessibility violations" do
     owner, event, ben = rostered_event
     member = create(:member, :active, group: owner.group)
@@ -359,9 +359,9 @@ RSpec.describe "The event detail", type: :system do
     expect(page).to have_css "button[aria-label='Maybe for Ben Cole'][aria-current='true']"
   end
 
-  # That the place was asked is `spec/requests/registrations/response_requests_spec.rb`'s; the landing is
+  # That the place moved is `spec/requests/registrations/response_requests_spec.rb`'s; the landing is
   # what a browser adds.
-  it "asks a reserved member from their row's paper plane and lands back on the event" do
+  it "requests a response from a reserved member through their row's paper plane and lands back on the event" do
     owner, event, = rostered_event
     sign_in_as owner.user
 
@@ -373,7 +373,7 @@ RSpec.describe "The event detail", type: :system do
     expect(page).to have_css "button[aria-label='Response requested from Ben Cole']"
   end
 
-  it "asks the rest and lands back on the event" do
+  it "requests the rest and lands back on the event" do
     owner, event, = rostered_event
     sign_in_as owner.user
 
@@ -381,7 +381,7 @@ RSpec.describe "The event detail", type: :system do
     open_roster
     click_button "Request the rest"
 
-    # WHY: Ben's held place is asked, and the member off the list stays off it.
+    # WHY: Ben's held place moves, and the member off the list stays off it.
     expect(page).to have_current_path group_event_path(event.group, event)
     expect(page).to have_text "1 response requested."
   end
@@ -478,7 +478,7 @@ RSpec.describe "The event detail", type: :system do
     find("summary", text: "Who’s coming").click
   end
 
-  def ask_the_rest(event)
+  def request_the_rest(event)
     "form[action='#{group_event_response_request_path(event.group, event)}'] .btn"
   end
 
@@ -491,7 +491,7 @@ RSpec.describe "The event detail", type: :system do
     ActionView::RecordIdentifier.dom_id(member.registrations.sole, :roster)
   end
 
-  # An owner who has answered, Ben, whose place is reserved, Carla, who is asked, and an active
+  # An owner who has answered, Ben, whose place is reserved, Carla, whose response is requested, and an active
   # member off the list: a row with a lit pill, a plain member's badge on Ben's row, the tinted
   # paper plane on Carla's, Request the rest for Ben, and Reserve a place for everyone for the member off the list. Named, because every row
   # draws a name and the pills and planes are pressed by it.

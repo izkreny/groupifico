@@ -21,7 +21,7 @@ module RegistrationsHelper
   end
 
   # What a roster row's badge says to a screen reader, and on hover. An answer is its own word; the
-  # two unanswered statuses are not, because "asked" and "reserved" read as facts about the
+  # two unanswered statuses are not, because "response requested" and "reserved" read as facts about the
   # member rather than as where the question stands.
   def registration_status_label(registration)
     if registration.response_requested?

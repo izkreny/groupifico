@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 # A `relation_scope` is not a rule, so the membership pre-checks never run for it. Every scope on
-# this branch asked `user.groups` - every group ever joined - and a member who has gone inactive
+# this branch read `user.groups` - every group ever joined - and a member who has gone inactive
 # has left, so the list leaked what the detail page refused.
 #
 # Tested here rather than through the router, deliberately. The nested controllers call
@@ -92,7 +92,7 @@ RSpec.describe RegistrationPolicy, type: :policy do
       let(:actor) { create(:member, :events_administrator, group:) }
     end
 
-    failed "for the event's manager, who asks and does not overrule" do
+    failed "for the event's manager, who requests and does not overrule" do
       let(:event) { create(:event, group:, manager: actor) }
     end
 
@@ -140,7 +140,7 @@ RSpec.describe RegistrationPolicy, type: :policy do
     end
   end
 
-  # Which statuses the actor may write, asked by the controller because a posted status is not on
+  # Which statuses the actor may write, checked by the controller because a posted status is not on
   # the record when update? runs. `reserved` and `response_requested` are what somebody else puts you into.
   describe_rule :manage_answers? do
     let(:group)   { create(:group) }
