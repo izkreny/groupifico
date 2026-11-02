@@ -43,10 +43,13 @@ RSpec.describe SignUp, type: :model do
       expect(user.current_groups.map(&:name)).to include("Chamber Choir")
     end
 
+    # WHY: `travel_to` drops the fraction of a second, so a running clock can land just past an expiry minted a moment earlier.
     it "signs in on the last second of the window" do
-      token = described_class.mint(email: "starter@example.com", group_name: "Chamber Choir")
+      freeze_time do
+        token = described_class.mint(email: "starter@example.com", group_name: "Chamber Choir")
 
-      travel_to described_class::EXPIRES_IN.from_now do
+        travel described_class::EXPIRES_IN
+
         expect(described_class.redeem!(token).group.name).to eq("Chamber Choir")
       end
     end
