@@ -214,7 +214,7 @@ RSpec.describe "Groups", type: :request do
       # `spec/requests/events_spec.rb`'s question. What belongs here is that this screen hands the
       # partial the reader's own registration at all: without `@membership`, `registration_for`
       # gets nil and a reader whose response is requested never sees the question.
-      it "requests the reader's own answer" do
+      it "draws the question for the reader's own registration" do
         member = create(:member, group: create(:group))
         event = create(:event, group: member.group, creator: member, status: :confirmed,
           starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
@@ -553,7 +553,7 @@ RSpec.describe "Groups", type: :request do
         expect(document.css("[id^='group_address_attributes_']")).to be_empty
       end
 
-      # The three the block requires and no more: starting a group is not the moment to require a
+      # The three the block offers and no more: starting a group is not the moment to collect a
       # state code or a pair of coordinates, and #255 finishes the address screens.
       it "writes the address inline for a group that never named a place" do
         member = create(:member, :active, :owner)
