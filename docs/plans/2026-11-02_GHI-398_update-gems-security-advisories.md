@@ -43,3 +43,4 @@ None.
 ## Settled
 
 - **Should the audit backport edge Rails' `--update`, or refresh once a day behind a marker file?** The owner chose the backport, after the measurements showed a refresh costs under a second, so `bin/ci` needs the network on every run.
+- **Should `net-scp` 4.2.1, published after #398 was filed, move on this branch?** The owner chose to bump it here, so the round leaves only the gems held upstream.
