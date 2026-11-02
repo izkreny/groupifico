@@ -33,20 +33,20 @@ What stays: `app/views/members/new.html.erb`, `app/views/members/index.html.erb`
 | events list row label | your answer: yes | you said yes |
 | roster heading | Who's invited | Who's on the list |
 | both tallies | 3 of 5 invited | 3 of 5 on the list |
-| paper plane, unasked | Invite Ana | Ask Ana if they're coming |
-| paper plane, asked | Ana is invited, no reply yet | Ana was asked, no reply yet |
-| status label | Invited, no reply yet | Asked, no reply yet |
-| roster button | Invite the rest | Ask the rest |
+| paper plane, unasked | Invite Ana | Request a response from Ana |
+| paper plane, asked | Ana is invited, no reply yet | Response requested from Ana |
+| status label | Invited, no reply yet | Response requested |
+| roster button | Invite the rest | Request the rest |
 | roster button, new | | Reserve a place for everyone |
-| next-up button | Invite everyone | Ask everyone |
-| notices | 2 members invited. / Nobody was left to invite. | 2 members asked. / Nobody was left to ask. |
+| next-up button | Invite everyone | Request responses |
+| notices | 2 members invited. / Nobody was left to invite. | 2 responses requested. / Nobody was left to request a response from. |
 | event form choice | Invite all active members | Fill the list: Not now, Reserve a place for every active member, Request response from all active members |
 | list screen and its roster button | Add someone | Edit the list |
 | list screen, paused row | paused · can't be invited | paused · can't be added |
 | list screen, submit | Invite 2 people | Update the list |
 | list screen, notice | 2 members invited. | 2 places reserved, 1 removed. |
 | list screen, moved on | Nobody was invited: nobody you ticked is still on the list. | Nothing changed: nobody you ticked is still on offer. |
-| group home, empty | Add your first rehearsal and everyone gets asked whether they're coming. | Add your first rehearsal, then ask everyone whether they're coming. |
+| group home, empty | Add your first rehearsal and everyone gets asked whether they're coming. | Add your first rehearsal, then request a response from everyone. |
 | refused answer, event concluded or canceled | Status cannot be answered once the event is over | This event is concluded or canceled, so it no longer takes replies. |
 | refused answer, event ended | Status cannot be maybe once the event has ended | This event has ended, so it is a yes or a no. |
 
@@ -94,16 +94,17 @@ A manager may press the button and cannot undo it, as with today's Invite the re
 
 - What should the status be called? `response_requested`, with `request_response` as the method that sets it. "RSVP" is used nowhere, screens or code.
 - What replaces "Your answer:" once a member has replied? The question stays, "Are you coming?" or "Did you go?", and the lit button is the answer.
-- What do we call a member who was asked and has not replied? "Asked, no reply yet".
-- What does the button that asks people say? "Ask the rest", "Ask everyone", and "Ask Ana if they're coming" on the paper plane.
+- What do we call a member who was asked and has not replied? "Response requested".
+- What does the button that asks people say? "Request the rest", "Request responses", and "Request a response from Ana" on the paper plane.
 - What replaces "Who's invited" above the roster? "Who's on the list".
-- Should Ask the rest also put active members who are off the list onto it? No, it asks held places only, and a new button reserves.
+- Should Request the rest also put active members who are off the list onto it? No, it asks held places only, and a new button reserves.
 - What do the screen and its roster button say, now this is the only way to remove someone? "Edit the list".
 - How do we offer reserving a place for everyone? "Reserve a place for everyone" on the roster, with no select-all on the list screen, so the issue's criterion moves to the roster.
 - What does the list screen's submit say? "Update the list", with the notice reporting what happened.
 - How does a manager's registered row look? A ticked, disabled checkbox with a caption, faded to 50% rather than daisyUI's 20%, so the tick reaches 3.11:1 in light and 4.41:1 in dark.
 - Should a box already ticked when the form opened bring back somebody removed in the meantime? No, only ticks the reader added reserve a place.
 - How does the event form fill the list, and where? One choice of Not now, Reserve a place for every active member, or Request response from all active members, right after the dates, because asking already holds the place. Reserve is picked on a new event and its duplicate, and Not now on a saved one. Where moves below the Manager picker.
+- Which word does a member read for the act of asking? "Request", because it is stronger and a member must respond. The code's own `asked?` and `anyone_left_to_ask?` keep their names.
 - What do the refused-answer messages say? A concluded or canceled event refuses every reply, and an event that has only ended takes a yes or a no. The issue names both messages.
 - What draws a checkbox's and an unpicked radio's outline? The text fields' own line, the theme's ink at 50%, at 3.11:1 in light and 4.40:1 in dark where daisyUI's default is 1.5:1 and 1.84:1. A picked radio keeps daisyUI's full ink, and keyboard focus keeps its primary border.
 
@@ -122,6 +123,7 @@ A manager may press the button and cannot undo it, as with today's Invite the re
 - `fix:` draw checkbox and radio outlines with the text fields' line.
 - `feat:` draw a Checkbox section in the styleguide, unticked, ticked and disabled, in both themes.
 - `feat:` let the event form reserve or ask everyone, and reorder its fields.
+- `feat:` say request instead of ask on every screen.
 - Watch every new example go red per "Seen red".
 
 ## Seen red
@@ -143,7 +145,7 @@ A manager may press the button and cannot undo it, as with today's Invite the re
 | the form takes one way of filling the list | the code before the choice existed |
 | a new event and its duplicate pick Reserve | the screens setting no default |
 | a saved event's form picks Not now | the default set on the model |
-| Ask the rest leaves an off-the-list member off | restoring the reservation inside the asking method |
+| Request the rest leaves an off-the-list member off | restoring the reservation inside the asking method |
 | Update the list is disabled until a tick differs from what was drawn, and again once it is put back | the Stimulus controller enabling it on any change |
 | the notice counts places reserved and removed | the notice counting ticks |
 | an answered member's row still asks the question | restoring the "Your answer:" branch |
@@ -155,7 +157,7 @@ A manager may press the button and cannot undo it, as with today's Invite the re
 | another event's registration is left alone, whatever is posted as listed | reading the removal from every event's registrations |
 | a refused reservation removes nobody | removing first, outside one transaction |
 | a manager can read a registered row's caption, in light and in dark | fading the caption, and drawing the box enabled |
-| the next-up card offers no Ask everyone while the only place held is a paused member's | the card's condition without `anyone_left_to_ask?` |
+| the next-up card offers no Request responses while the only place held is a paused member's | the card's condition without `anyone_left_to_ask?` |
 | a member removed while the form sat open stays off the list | arrivals read from every tick |
 | the helper counts a border's own alpha | dropping the alpha from `ink_contrast` |
 | the helper reads a solid border as solid | reading another property in `border_contrast` |

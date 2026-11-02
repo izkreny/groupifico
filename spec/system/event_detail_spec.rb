@@ -10,11 +10,11 @@ require "rails_helper"
 # that an owner's row of controls fits a phone, and where the roster's pill, its paper plane, Ask
 # the rest and the pencil land.
 #
-# Neither paper plane nor Ask the rest takes a `paint` assertion, and both were measured rather
-# than assumed: the planes are ghost buttons, and Ask the rest is a
+# Neither paper plane nor Request the rest takes a `paint` assertion, and both were measured rather
+# than assumed: the planes are ghost buttons, and Request the rest is a
 # plain `btn` whose base-200 face sits on the card's own base-200, so each scores exactly 1. A
 # face-less control is seen by its glyph and its label, so that is what they assert instead: the
-# planes against the 3:1 WCAG asks of an icon, Ask the rest against the 4.5:1 it asks of text.
+# planes against the 3:1 WCAG asks of an icon, Request the rest against the 4.5:1 it asks of text.
 # A soft primary face on the asked plane scored 1.01 in organic, which is a tint nobody can see, so
 # the tint is the glyph's colour and is compared directly.
 #
@@ -31,10 +31,10 @@ RSpec.describe "The event detail", type: :system do
 
     expect(rendered_colour_scheme).to eq "light"
     expect(page).to paint ".card"
-    expect(colour_of("Carla Duke was asked, no reply yet")).not_to eq colour_of("Ask Ben Cole")
+    expect(colour_of("Response requested from Carla Duke")).not_to eq colour_of("Request a response from Ben Cole")
   end
 
-  it "shows the planes and Ask the rest by their glyphs and label in light" do
+  it "shows the planes and Request the rest by their glyphs and label in light" do
     owner, event, = rostered_event
     sign_in_as owner.user
     prefer_colour_scheme :light
@@ -43,8 +43,8 @@ RSpec.describe "The event detail", type: :system do
     open_roster
 
     expect(rendered_colour_scheme).to eq "light"
-    expect(text_contrast("[aria-label='Carla Duke was asked, no reply yet']")).to be >= ContrastHelper::WCAG_NON_TEXT
-    expect(text_contrast("[aria-label^='Ask Ben Cole']")).to be >= ContrastHelper::WCAG_NON_TEXT
+    expect(text_contrast("[aria-label='Response requested from Carla Duke']")).to be >= ContrastHelper::WCAG_NON_TEXT
+    expect(text_contrast("[aria-label^='Request a response from Ben Cole']")).to be >= ContrastHelper::WCAG_NON_TEXT
     expect(text_contrast(ask_the_rest(event))).to be >= ContrastHelper::WCAG_AA
   end
 
@@ -57,8 +57,8 @@ RSpec.describe "The event detail", type: :system do
     open_roster
 
     expect(rendered_colour_scheme).to eq "dark"
-    expect(text_contrast("[aria-label='Carla Duke was asked, no reply yet']")).to be >= ContrastHelper::WCAG_NON_TEXT
-    expect(text_contrast("[aria-label^='Ask Ben Cole']")).to be >= ContrastHelper::WCAG_NON_TEXT
+    expect(text_contrast("[aria-label='Response requested from Carla Duke']")).to be >= ContrastHelper::WCAG_NON_TEXT
+    expect(text_contrast("[aria-label^='Request a response from Ben Cole']")).to be >= ContrastHelper::WCAG_NON_TEXT
     expect(text_contrast(ask_the_rest(event))).to be >= ContrastHelper::WCAG_AA
   end
 
@@ -72,7 +72,7 @@ RSpec.describe "The event detail", type: :system do
 
     expect(rendered_colour_scheme).to eq "dark"
     expect(page).to paint ".card"
-    expect(colour_of("Carla Duke was asked, no reply yet")).not_to eq colour_of("Ask Ben Cole")
+    expect(colour_of("Response requested from Carla Duke")).not_to eq colour_of("Request a response from Ben Cole")
   end
 
   # WHY: the glyph rather than the pill, so the surface measured against is the pill's own face.
@@ -367,10 +367,10 @@ RSpec.describe "The event detail", type: :system do
 
     visit group_event_path(event.group, event)
     open_roster
-    click_button "Ask Ben Cole if they're coming"
+    click_button "Request a response from Ben Cole"
 
     expect(page).to have_current_path group_event_path(event.group, event)
-    expect(page).to have_css "button[aria-label='Ben Cole was asked, no reply yet']"
+    expect(page).to have_css "button[aria-label='Response requested from Ben Cole']"
   end
 
   it "asks the rest and lands back on the event" do
@@ -379,11 +379,11 @@ RSpec.describe "The event detail", type: :system do
 
     visit group_event_path(event.group, event)
     open_roster
-    click_button "Ask the rest"
+    click_button "Request the rest"
 
     # WHY: Ben's held place is asked, and the member off the list stays off it.
     expect(page).to have_current_path group_event_path(event.group, event)
-    expect(page).to have_text "1 member asked."
+    expect(page).to have_text "1 response requested."
   end
 
   it "reserves a place for everyone off the list and lands back on the event" do
@@ -493,7 +493,7 @@ RSpec.describe "The event detail", type: :system do
 
   # An owner who has answered, Ben, whose place is reserved, Carla, who is asked, and an active
   # member off the list: a row with a lit pill, a plain member's badge on Ben's row, the tinted
-  # paper plane on Carla's, Ask the rest for Ben, and Reserve a place for everyone for the member off the list. Named, because every row
+  # paper plane on Carla's, Request the rest for Ben, and Reserve a place for everyone for the member off the list. Named, because every row
   # draws a name and the pills and planes are pressed by it.
   def rostered_event
     group = create(:group)

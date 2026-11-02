@@ -68,7 +68,7 @@ RSpec.describe "Events::ResponseRequests", type: :request do
 
         expect(event.registrations.response_requested.count).to eq 2
         expect(response).to redirect_to group_event_path(event.group, event)
-        expect(flash[:notice]).to eq "2 members asked."
+        expect(flash[:notice]).to eq "2 responses requested."
       end
 
       # The events list and the group home draw the same Next up card, so pressing it there lands
@@ -99,7 +99,7 @@ RSpec.describe "Events::ResponseRequests", type: :request do
 
         expect([ held.reload.status, answered.reload.status ]).to eq %w[ response_requested maybe ]
         expect(event.registrations.where(member: off_the_list)).to be_empty
-        expect(flash[:notice]).to eq "1 member asked."
+        expect(flash[:notice]).to eq "1 response requested."
       end
 
       it "says so when nobody was left to ask" do
@@ -110,7 +110,7 @@ RSpec.describe "Events::ResponseRequests", type: :request do
 
         post group_event_response_request_path(event.group, event)
 
-        expect(flash[:notice]).to eq "Nobody was left to ask."
+        expect(flash[:notice]).to eq "Nobody was left to request a response from."
       end
     end
   end

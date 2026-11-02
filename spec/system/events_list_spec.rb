@@ -185,7 +185,7 @@ RSpec.describe "The events list", type: :system do
   # where pressing it lands is what a browser adds. No `paint` assertion, measured rather than
   # assumed: it is a plain `btn`, whose base-200 face sits on the hero's own base-200 and scores
   # exactly 1, as `Edit the list` does on the event's roster, so its label carries the claim instead.
-  it "shows Ask everyone by its label, and lands back on the list" do
+  it "shows Request responses by its label, and lands back on the list" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
     create(:registration, event: next_event_for(member), member:, status: :reserved)
     sign_in_as member.user
@@ -195,13 +195,13 @@ RSpec.describe "The events list", type: :system do
 
     expect(text_contrast("form[action$='/response_request'] .btn")).to be >= ContrastHelper::WCAG_AA
     expect(page).to be_accessible
-    click_button "Ask everyone"
+    click_button "Request responses"
 
     expect(page).to have_current_path group_events_path(member.group)
-    expect(page).to have_text "1 member asked."
+    expect(page).to have_text "1 response requested."
   end
 
-  it "shows Ask everyone by its label in dark" do
+  it "shows Request responses by its label in dark" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
     create(:registration, event: next_event_for(member), member:, status: :reserved)
     sign_in_as member.user

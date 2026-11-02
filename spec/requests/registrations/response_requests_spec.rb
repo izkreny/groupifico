@@ -88,7 +88,7 @@ RSpec.describe "Registrations::ResponseRequests", type: :request do
 
         expect(held.reload).to be_reserved
         expect(response).to redirect_to group_event_path(event.group, event)
-        expect(flash[:alert]).to end_with "is paused, so they are not asked."
+        expect(flash[:alert]).to end_with "is paused, so no response was requested."
       end
 
       it "leaves an answer as it was, because a manager does not overrule one" do
@@ -111,7 +111,7 @@ RSpec.describe "Registrations::ResponseRequests", type: :request do
 
         post group_event_registration_response_request_path(event.group, event, asked)
 
-        expect(flash[:notice]).to eq "#{asked.member.full_name} was already asked."
+        expect(flash[:notice]).to eq "#{asked.member.full_name}'s response was already requested."
       end
     end
   end

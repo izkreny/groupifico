@@ -12,10 +12,10 @@ class Registrations::ResponseRequestsController < ApplicationController
     member = @registration.member
 
     if member.active?
-      notice = "#{member.full_name} was already asked." unless @registration.request_response
+      notice = "#{member.full_name}'s response was already requested." unless @registration.request_response
       redirect_back_or_to group_event_path(@group, @registration.event), status: :see_other, notice:
     else
-      redirect_back_or_to group_event_path(@group, @registration.event), status: :see_other, alert: "#{member.full_name} is #{member.status}, so they are not asked."
+      redirect_back_or_to group_event_path(@group, @registration.event), status: :see_other, alert: "#{member.full_name} is #{member.status}, so no response was requested."
     end
   end
 

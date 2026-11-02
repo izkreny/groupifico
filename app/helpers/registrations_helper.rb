@@ -25,9 +25,9 @@ module RegistrationsHelper
   # member rather than as where the question stands.
   def registration_status_label(registration)
     if registration.response_requested?
-      "Asked, no reply yet"
+      "Response requested"
     elsif registration.reserved?
-      "Place reserved, not asked yet"
+      "Place reserved, no response requested yet"
     else
       registration.status.capitalize
     end

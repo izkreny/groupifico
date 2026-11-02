@@ -1,4 +1,4 @@
-# Asking every active member holding a place who has not been asked, from the roster's "Ask the rest" and the Next up card's "Ask everyone", which are one action. Both are the registering row, so both ask `RegistrationPolicy#create?` of a registration with no member on it, exactly as the roster does before drawing either button.
+# Asking every active member holding a place who has not been asked, from the roster's "Request the rest" and the Next up card's "Request responses", which are one action. Both are the registering row, so both ask `RegistrationPolicy#create?` of a registration with no member on it, exactly as the roster does before drawing either button.
 class Events::ResponseRequestsController < ApplicationController
   include GroupScoped
 
@@ -18,6 +18,6 @@ class Events::ResponseRequestsController < ApplicationController
     end
 
     def asked_notice(count)
-      count.zero? ? "Nobody was left to ask." : "#{helpers.pluralize(count, "member")} asked."
+      count.zero? ? "Nobody was left to request a response from." : "#{helpers.pluralize(count, "response")} requested."
     end
 end

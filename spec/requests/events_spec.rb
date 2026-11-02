@@ -302,7 +302,7 @@ RSpec.describe "Events", type: :request do
         get group_events_path(member.group)
 
         row = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(reserved_row)}")
-        expect([ row.css("svg[aria-label='Place reserved, not asked yet']").size, row.css("form").size ]).to eq [ 1, 0 ]
+        expect([ row.css("svg[aria-label='Place reserved, no response requested yet']").size, row.css("form").size ]).to eq [ 1, 0 ]
       end
 
       # The pills themselves rather than the copy above them: three forms, one target, one value
@@ -361,7 +361,7 @@ RSpec.describe "Events", type: :request do
         end
       end
 
-      it "offers Ask everyone while every registration is still reserved" do
+      it "offers Request responses while every registration is still reserved" do
         freeze_time do
           owner = create(:member, :owner)
           next_up = confirmed_event(owner, days: 2)
@@ -370,11 +370,11 @@ RSpec.describe "Events", type: :request do
 
           get group_events_path(owner.group)
 
-          expect(response.body).to include "Ask everyone", group_event_response_request_path(owner.group, next_up)
+          expect(response.body).to include "Request responses", group_event_response_request_path(owner.group, next_up)
         end
       end
 
-      it "offers no Ask everyone once somebody has been asked" do
+      it "offers no Request responses once somebody has been asked" do
         freeze_time do
           owner = create(:member, :owner)
           next_up = confirmed_event(owner, days: 2)
@@ -385,12 +385,12 @@ RSpec.describe "Events", type: :request do
           get group_events_path(owner.group)
 
           expect(response.body).to include "Next up · in 2 days"
-          expect(response.body).not_to include "Ask everyone"
+          expect(response.body).not_to include "Request responses"
         end
       end
 
       # "Every registration is reserved" holds of an empty list, which has nobody to ask.
-      it "offers no Ask everyone while nobody is on the list" do
+      it "offers no Request responses while nobody is on the list" do
         freeze_time do
           owner = create(:member, :owner)
           confirmed_event(owner, days: 2)
@@ -399,12 +399,12 @@ RSpec.describe "Events", type: :request do
           get group_events_path(owner.group)
 
           expect(response.body).to include "Next up · in 2 days"
-          expect(response.body).not_to include "Ask everyone"
+          expect(response.body).not_to include "Request responses"
         end
       end
 
       # Asking moves active members' held places only, so a paused member's place leaves the button nothing to do.
-      it "offers no Ask everyone while the only place held is a paused member's" do
+      it "offers no Request responses while the only place held is a paused member's" do
         freeze_time do
           owner = create(:member, :owner)
           next_up = confirmed_event(owner, days: 2)
@@ -414,11 +414,11 @@ RSpec.describe "Events", type: :request do
           get group_events_path(owner.group)
 
           expect(response.body).to include "Next up · in 2 days"
-          expect(response.body).not_to include "Ask everyone"
+          expect(response.body).not_to include "Request responses"
         end
       end
 
-      it "offers a plain member no Ask everyone" do
+      it "offers a plain member no Request responses" do
         freeze_time do
           member = create(:member, :active)
           next_up = confirmed_event(member, days: 2)
@@ -428,7 +428,7 @@ RSpec.describe "Events", type: :request do
           get group_events_path(member.group)
 
           expect(response.body).to include "Nobody asked yet · 1 on the list"
-          expect(response.body).not_to include "Ask everyone"
+          expect(response.body).not_to include "Request responses"
         end
       end
     end
@@ -781,7 +781,7 @@ RSpec.describe "Events", type: :request do
 
         expect(page_text(response.body)).to include "Ben Cole"
         expect(response.body).not_to include "Yes for Ben Cole", "Edit the list"
-        expect(response.body).not_to include "Ask Ben Cole if they&#39;re coming", "Ask the rest"
+        expect(response.body).not_to include "Request a response from Ben Cole", "Request the rest"
       end
 
       it "offers neither Duplicate nor Edit" do
@@ -882,7 +882,7 @@ RSpec.describe "Events", type: :request do
 
         get group_event_path(event.group, event)
 
-        expect(response.body).to include "Place reserved, not asked yet"
+        expect(response.body).to include "Place reserved, no response requested yet"
         expect(response.body).not_to include "Yes for Ben Cole"
         # With no pill lit to say where an answered row stands, the status icon says it instead.
         expect(response.body).to include %(title="Yes")
@@ -897,10 +897,10 @@ RSpec.describe "Events", type: :request do
 
         fragment = Nokogiri::HTML(response.body)
         ben, carla = [ "Ben Cole", "Carla Duke" ].map { fragment.at_xpath("//li[span[text()='#{it}']]") }
-        expect(ben.css("span[title]").map { it["title"] }).to eq [ "Place reserved, not asked yet" ]
-        expect(ben.at_css("button[aria-label^='Ask Ben Cole']")["class"]).to include "text-icon-muted"
+        expect(ben.css("span[title]").map { it["title"] }).to eq [ "Place reserved, no response requested yet" ]
+        expect(ben.at_css("button[aria-label^='Request a response from Ben Cole']")["class"]).to include "text-icon-muted"
         expect(carla.css("span[title]")).to be_empty
-        expect(carla.at_css("button[aria-label='Carla Duke was asked, no reply yet']")["class"]).to include "text-info"
+        expect(carla.at_css("button[aria-label='Response requested from Carla Duke']")["class"]).to include "text-info"
       end
 
       # The tally's colours: the chosen answer in its status colour, every control not yet used in the muted icon ink.
@@ -928,18 +928,18 @@ RSpec.describe "Events", type: :request do
         get group_event_path(event.group, event)
 
         expect(page_text(response.body)).to include "Dan Ellis"
-        expect(response.body).to include "Ask Ben Cole if they&#39;re coming"
-        expect(response.body).not_to include "Ask Dan Ellis if they&#39;re coming"
+        expect(response.body).to include "Request a response from Ben Cole"
+        expect(response.body).not_to include "Request a response from Dan Ellis"
       end
 
-      it "offers Ask the rest while an active member's place is only held" do
+      it "offers Request the rest while an active member's place is only held" do
         owner = create(:member, :active, :owner)
         event = detailed_event(owner)
         sign_in_as(owner.user)
 
         get group_event_path(event.group, event)
 
-        expect(response.body).to include "Ask the rest", group_event_response_request_path(event.group, event)
+        expect(response.body).to include "Request the rest", group_event_response_request_path(event.group, event)
       end
 
       it "offers Reserve a place for everyone while an active member is off the list" do
@@ -964,7 +964,7 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include "Reserve a place for everyone"
       end
 
-      it "offers no Ask the rest once every active member is asked" do
+      it "offers no Request the rest once every active member is asked" do
         owner = create(:member, :active, :owner)
         event = detailed_event(owner)
         event.registrations.reserved.update_all(status: :response_requested)
@@ -973,7 +973,7 @@ RSpec.describe "Events", type: :request do
         get group_event_path(event.group, event)
 
         expect(response.body).to include "Edit the list"
-        expect(response.body).not_to include "Ask the rest"
+        expect(response.body).not_to include "Request the rest"
       end
 
       it "names a paused member with no registration as left out above the rows" do
@@ -1016,9 +1016,9 @@ RSpec.describe "Events", type: :request do
         get group_event_path(event.group, event)
 
         expect(page_text(response.body)).to match(/Alice Bird.*Carla Duke.*Ben Cole/)
-        expect(response.body).to include "Place reserved, not asked yet", "Asked, no reply yet"
+        expect(response.body).to include "Place reserved, no response requested yet", "Response requested"
         expect(response.body).not_to include "Yes for Ben Cole", "Edit the list"
-        expect(response.body).not_to include "Yes for #{member.full_name}", "Ask Ben Cole if they&#39;re coming", "Ask the rest", "Reserve a place for everyone"
+        expect(response.body).not_to include "Yes for #{member.full_name}", "Request a response from Ben Cole", "Request the rest", "Reserve a place for everyone"
       end
 
       # `detailed_event` has ended, so a place held for the reader is now a question about whether they went.
@@ -1140,7 +1140,7 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include %(aria-label="Duplicate"), "Yes for Ben Cole"
       end
 
-      it "offers the paper plane and Ask the rest, because filling the event is the manager's job" do
+      it "offers the paper plane and Request the rest, because filling the event is the manager's job" do
         manager = create(:member, :active)
         event = detailed_event(manager)
         event.update!(manager:)
@@ -1149,7 +1149,7 @@ RSpec.describe "Events", type: :request do
 
         get group_event_path(event.group, event)
 
-        expect(response.body).to include "Ask Ben Cole if they&#39;re coming", "Ask the rest"
+        expect(response.body).to include "Request a response from Ben Cole", "Request the rest"
       end
     end
 

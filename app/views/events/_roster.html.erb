@@ -58,7 +58,7 @@
               <%= button_to group_event_registration_response_request_path(event.group, event, registration),
                     class: "btn btn-ghost btn-sm btn-square #{asked ? "text-info" : "text-icon-muted"}",
                     title: registration_status_label(registration),
-                    aria: { label: asked ? "#{name} was asked, no reply yet" : "Ask #{name} if they're coming" } do %>
+                    aria: { label: asked ? "Response requested from #{name}" : "Request a response from #{name}" } do %>
                 <%= icon :response_requested, class: "size-icon-control" %>
               <% end %>
             <% end %>
@@ -98,7 +98,7 @@
 
       <% if anyone_to_ask %>
         <%= button_to group_event_response_request_path(event.group, event), class: "btn btn-sm" do %>
-          <%= icon :response_requested, class: "size-icon-control" %>Ask the rest
+          <%= icon :response_requested, class: "size-icon-control" %>Request the rest
         <% end %>
       <% end %>
     </div>
