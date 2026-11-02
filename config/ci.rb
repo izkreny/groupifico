@@ -1,5 +1,9 @@
 # Run using bin/ci
 
+require "active_support"
+require "active_support/core_ext/integer/time"
+require "bundler/audit/database"
+
 CI.run do
   step "Setup", "bin/setup --skip-server"
 
@@ -9,7 +13,10 @@ CI.run do
   # bans those outright, so the flag is what leaves the ban no exception.
   step "Style: ERB", "node_modules/.bin/herb-lint --ignore-disable-comments"
 
-  step "Security: Gem audit", "bin/bundler-audit"
+  # WHY: bundler-audit never refreshes an existing database by itself, which left this gate green over advisories `scan_ruby` already failed on; a week's grace keeps `bin/ci` working offline between refreshes.
+  advisories = Bundler::Audit::Database
+  stale      = advisories.exists? && advisories.new.last_updated_at < 7.days.ago
+  step "Security: Gem audit", "bin/bundler-audit check#{" --update" if stale}"
   step "Security: Importmap vulnerability audit", "bin/importmap audit"
   step "Security: Brakeman code analysis", "bin/brakeman --quiet --no-pager --exit-on-warn --exit-on-error"
 
