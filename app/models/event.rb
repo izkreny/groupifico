@@ -184,8 +184,20 @@ class Event < ApplicationRecord
   # Whether `reserve_all_active_members` would add anybody, asked by the roster before it offers the button.
   def anyone_left_to_reserve? = unregistered_active_members.exists?
 
-  # WHY: the form's "Reserve a place for every active member" box is a request to act after the save, not a fact about the event, so it is a virtual attribute `EventsController` reads rather than a column.
-  attribute :reserve_active_members, :boolean, default: false
+  # WHY: the form's choice of how to fill the list is a request to act after the save, not a fact about the event, so it is a virtual attribute `EventsController` passes on rather than a column.
+  attribute :list_filling, :string
+
+  # WHY: asking moves held places only, so asking everyone holds their places first, and both land or neither does. Anything else fills nothing, which is what the form's Not now posts.
+  def fill_list
+    case list_filling
+    when "reserve" then reserve_all_active_members
+    when "ask"
+      transaction do
+        reserve_all_active_members
+        request_all_responses
+      end
+    end
+  end
 
   # WHY: asks every active member holding a place, in one transaction. Being off the list is a choice, so nobody joins it by being asked. An answer is the member's own and is never overruled, and a paused or inactive member is never asked. Record by record rather than `update_all`, so every registration runs its callbacks, which a notification will hang off. The read and the writes share one transaction, which SQLite opens immediate, so no registration can land between them. Returns how many were asked.
   def request_all_responses

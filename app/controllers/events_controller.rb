@@ -69,7 +69,7 @@ class EventsController < ApplicationController
     authorize_reservation!
 
     if @event.save
-      @event.reserve_all_active_members if @event.reserve_active_members?
+      @event.fill_list
 
       redirect_to group_event_path(@group, @event),
         notice: "Event was successfully created."
@@ -90,7 +90,7 @@ class EventsController < ApplicationController
     authorize_reservation!
 
     if @event.update(event_params)
-      @event.reserve_all_active_members if @event.reserve_active_members?
+      @event.fill_list
 
       redirect_to group_event_path(@group, @event),
         notice: "Event was successfully updated.",
@@ -141,7 +141,7 @@ class EventsController < ApplicationController
     def event_params
       params.expect(
         event: [ :name, :description, :starts_at, :ends_at, :status, :category,
-          :manager_id, :address_id, :reserve_active_members,
+          :manager_id, :address_id, :list_filling,
           address_attributes: [
             :name, :street_name, :building_number, :city, :postal_code, :state_code, :country_code, :latitude, :longitude
           ]
@@ -157,7 +157,7 @@ class EventsController < ApplicationController
     # request cannot decide whether this reader may reserve. On `create` the event is already built from
     # the params, and `EventPolicy#create?` admitting `can_manage?(:events)` alone is what keeps it safe.
     def authorize_reservation!
-      authorize! Registration.new(event: @event), to: :create? if ActiveModel::Type::Boolean.new.cast(params.dig(:event, :reserve_active_members))
+      authorize! Registration.new(event: @event), to: :create? if params.dig(:event, :list_filling).present?
     end
 
     # Present and not ours. A blank passes straight through so the model decides what it means:

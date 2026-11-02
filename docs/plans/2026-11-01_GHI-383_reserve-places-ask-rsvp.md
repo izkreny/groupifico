@@ -13,7 +13,7 @@ Registering reserves a place, asking for a response is a separate later act, and
 | `Event#invite_all_active_members` | `Event#request_all_responses` | |
 | `Event#anyone_left_to_invite?` | `Event#anyone_left_to_ask?` | |
 | `Event#invite(members)` | `Event#reserve(members)` | replaced by the step that makes it write `reserved` |
-| `Event#invite_active_members` | `Event#reserve_active_members` | the form's box, which now reserves |
+| `Event#invite_active_members` | `Event#list_filling` and `Event#fill_list` | the form's choice, which reserves or asks |
 | `resource :invitation`, twice | `resource :response_request`, twice | the noun for what the POST creates |
 | `Events::InvitationsController`, `Registrations::InvitationsController` | `Events::ResponseRequestsController`, `Registrations::ResponseRequestsController` | |
 | `invited_tally` | `list_tally` | it counts places, not questions |
@@ -40,7 +40,7 @@ What stays: `app/views/members/new.html.erb`, `app/views/members/index.html.erb`
 | roster button, new | | Reserve a place for everyone |
 | next-up button | Invite everyone | Ask everyone |
 | notices | 2 members invited. / Nobody was left to invite. | 2 members asked. / Nobody was left to ask. |
-| event form box | Invite all active members | Reserve a place for every active member |
+| event form choice | Invite all active members | Fill the list: Not now, Reserve a place for every active member, Ask everyone |
 | list screen and its roster button | Add someone | Edit the list |
 | list screen, paused row | paused · can't be invited | paused · can't be added |
 | list screen, submit | Invite 2 people | Update the list |
@@ -77,7 +77,7 @@ The screen goes through the daisyUI Blueprint MCP server, with the `daisyui-blue
 `Event#reserve_all_active_members` gives every active member with no registration a `reserved` one and touches nothing else, so an answer or a held place is never overruled. Paused members are skipped, and the roster's existing line names them as left out. These call it:
 
 - The roster's "Reserve a place for everyone" button, through `resource :reservation, only: :create, module: :events`, drawn only while somebody active is off the list. Its notice is "3 places reserved."
-- The event form's box, read after the save. The box stays on the edit form too, since `app/views/events/_form.html.erb` is shared, what it does there is equally true, and the issue does not ask for its removal.
+- The event form's choice, through `Event#fill_list` after the save. The choice stays on the edit form too, since `app/views/events/_form.html.erb` is shared, what it does there is equally true, and the issue does not ask for its removal.
 
 A manager may press the button and cannot undo it, as with today's Invite the rest. An administrator cleans up, and `docs/AUTHORIZATION.md` says so.
 
@@ -103,6 +103,7 @@ A manager may press the button and cannot undo it, as with today's Invite the re
 - What does the list screen's submit say? "Update the list", with the notice reporting what happened.
 - How does a manager's registered row look? A ticked, disabled checkbox with a caption, faded to 50% rather than daisyUI's 20%, so the tick reaches 3.11:1 in light and 4.41:1 in dark.
 - Should a box already ticked when the form opened bring back somebody removed in the meantime? No, only ticks the reader added reserve a place.
+- How does the event form fill the list, and where? One choice of Not now, Reserve a place for every active member, or Ask everyone, right after the dates, because asking already holds the place. Where moves below the Manager picker.
 - What do the refused-answer messages say? A concluded or canceled event refuses every reply, and an event that has only ended takes a yes or a no. The issue names both messages.
 - What draws a checkbox's and an unpicked radio's outline? The text fields' own line, the theme's ink at 50%, at 3.11:1 in light and 4.40:1 in dark where daisyUI's default is 1.5:1 and 1.84:1. A picked radio keeps daisyUI's full ink, and keyboard focus keeps its primary border.
 
@@ -120,6 +121,7 @@ A manager may press the button and cannot undo it, as with today's Invite the re
 - `fix:` fade a manager's disabled tick to 50%.
 - `fix:` draw checkbox and radio outlines with the text fields' line.
 - `feat:` draw a Checkbox section in the styleguide, unticked, ticked and disabled, in both themes.
+- `feat:` let the event form reserve or ask everyone, and reorder its fields.
 - Watch every new example go red per "Seen red".
 
 ## Seen red
@@ -135,7 +137,10 @@ A manager may press the button and cannot undo it, as with today's Invite the re
 | a paused member's registration can be removed | listing active registrations only |
 | reserving everyone skips paused members and leaves answers alone | dropping `.active`, and writing over existing rows |
 | the roster's reserve button is absent once everyone active is listed | drawing it unconditionally |
-| the event form's box reserves rather than asks | the box calling the asking method |
+| the event form's Reserve choice reserves rather than asks | the choice calling the asking method |
+| the event form's Ask everyone asks every active member, and leaves out a paused one | the code before the choice existed |
+| filling the list comes after the dates, and Where between the manager and the description | the fields in their old order |
+| the form takes one way of filling the list | the code before the choice existed |
 | Ask the rest leaves an off-the-list member off | restoring the reservation inside the asking method |
 | Update the list is disabled until a tick differs from what was drawn, and again once it is put back | the Stimulus controller enabling it on any change |
 | the notice counts places reserved and removed | the notice counting ticks |

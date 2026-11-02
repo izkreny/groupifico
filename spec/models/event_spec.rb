@@ -520,6 +520,35 @@ RSpec.describe Event, type: :model do
     end
   end
 
+  describe "#fill_list" do
+    it "reserves a place and asks nobody when asked to reserve" do
+      event = create(:event, list_filling: "reserve")
+
+      event.fill_list
+
+      expect(event.registrations.pluck(:status)).to eq %w[ reserved ]
+    end
+
+    # WHY: asking moves held places only, so asking everyone has to hold their places first. An answer is the member's own, so it stays.
+    it "holds a place for everyone and asks them, leaving an answer alone" do
+      event = create(:event, list_filling: "ask")
+      answered = create(:registration, event:, member: create(:member, :active, group: event.group), status: :no)
+
+      event.fill_list
+
+      expect(event.registrations.reload.map(&:status)).to contain_exactly("no", "response_requested")
+      expect(answered.reload).to be_no
+    end
+
+    it "fills nothing with no choice made" do
+      event = create(:event)
+
+      event.fill_list
+
+      expect(event.registrations).to be_empty
+    end
+  end
+
   describe "#anyone_left_to_reserve?" do
     it "answers true while an active member has no registration" do
       event = create(:event)
