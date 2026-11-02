@@ -142,6 +142,21 @@ RSpec.describe "The event form", type: :system do
     click_button "Save changes"
 
     expect(page).to have_current_path group_event_path(event.group, event)
+    expect(event.registrations.pluck(:status).uniq).to eq %w[ response_requested ]
+  end
+
+  # WHY: the only place the label a reader picks meets the status it writes, since the request specs post the value themselves.
+  it "reserves a place when Reserve is the pick" do
+    actor = create(:member, :active, :events_administrator)
+    event = create(:event, group: actor.group)
+    sign_in_as actor.user
+
+    visit edit_group_event_path(event.group, event)
+    choose "Reserve a place for every active member"
+    click_button "Save changes"
+
+    expect(page).to have_current_path group_event_path(event.group, event)
+    expect(event.registrations.pluck(:status).uniq).to eq %w[ reserved ]
   end
 
   # WHY: axe does not measure a boundary, and an unpicked radio is nothing but its outline.

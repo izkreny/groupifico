@@ -142,7 +142,8 @@ A manager may press the button and cannot undo it, as with today's Invite the re
 | the event form's Reserve choice reserves rather than asks | the choice calling the asking method |
 | the event form's request asks every active member, and leaves out a paused one | the code before the choice existed |
 | filling the list comes after the dates, and Where between the manager and the description | the fields in their old order |
-| the form takes one way of filling the list | the code before the choice existed |
+| the form takes one way of filling the list, and its label writes the response request | the form's value renamed |
+| the form's Reserve pick writes a held place | the form's value renamed |
 | a new event and its duplicate pick Reserve | the screens setting no default |
 | a saved event's form picks Not now | the default set on the model |
 | Request the rest leaves an off-the-list member off | restoring the reservation inside the asking method |
