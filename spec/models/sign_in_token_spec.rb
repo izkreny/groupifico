@@ -39,11 +39,14 @@ RSpec.describe SignInToken, type: :model do
       expect(described_class.redeem!(token)).to eq(minted_for)
     end
 
+    # WHY: `travel_to` drops the fraction of a second, so a running clock can land just past an expiry minted a moment earlier.
     it "signs in on the last second of the window" do
-      user = create(:user)
-      token = described_class.mint(user)
+      freeze_time do
+        user = create(:user)
+        token = described_class.mint(user)
 
-      travel_to described_class::EXPIRES_IN.from_now do
+        travel described_class::EXPIRES_IN
+
         expect(described_class.redeem!(token)).to eq(user)
       end
     end
