@@ -266,6 +266,17 @@ RSpec.describe "Events::Rosters", type: :request do
         expect(flash[:alert]).to include "Tick or untick"
       end
 
+      it "asks for a change when a registered row posts back as it was drawn" do
+        event = create(:event)
+        listed = create(:member, :active, group: event.group)
+        create(:registration, event:, member: listed)
+        sign_in_as(create(:member, :active, :events_administrator, group: event.group).user)
+
+        patch group_event_roster_path(event.group, event), params: { member_ids: [ "", listed.id ], listed_ids: [ "", listed.id ] }
+
+        expect(flash[:alert]).to include "Tick or untick"
+      end
+
       it "ignores a ticked member who is paused, inactive or already registered" do
         event = create(:event)
         paused = create(:member, :paused, group: event.group)

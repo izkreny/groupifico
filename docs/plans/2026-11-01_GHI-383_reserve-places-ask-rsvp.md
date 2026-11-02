@@ -160,6 +160,7 @@ A manager may press the button and cannot undo it, as with today's Invite the re
 | a manager can read a registered row's caption, in light and in dark | fading the caption, and drawing the box enabled |
 | the next-up card offers no Request responses while the only place held is a paused member's | the card's condition without `anyone_left_to_ask?` |
 | a member removed while the form sat open stays off the list | arrivals read from every tick |
+| a registered row posted back as drawn asks for a change | the answer read from an empty tick list |
 | the helper counts a border's own alpha | dropping the alpha from `ink_contrast` |
 | the helper reads a solid border as solid | reading another property in `border_contrast` |
 | the styleguide's outline and disabled tick read at 3:1 in both twins | the section absent, its disabled box drawn live, the fade back at 20%, and the outline back at 20% |
