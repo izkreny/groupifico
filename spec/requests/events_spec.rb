@@ -1509,7 +1509,7 @@ RSpec.describe "Events", type: :request do
 
         get edit_group_event_path(event.group, event)
 
-        expect(response.body).to include "Reserve a place for every active member", "Ask everyone"
+        expect(response.body).to include "Reserve a place for every active member", "Request response from all active members"
       end
 
       # WHY: a saved event may already hold its list as somebody wants it, so saving it fills nothing unless they ask.

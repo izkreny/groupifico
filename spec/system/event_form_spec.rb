@@ -136,7 +136,7 @@ RSpec.describe "The event form", type: :system do
 
     visit edit_group_event_path(event.group, event)
     choose "Reserve a place for every active member"
-    choose "Ask everyone"
+    choose "Request response from all active members"
 
     expect(page).to have_unchecked_field "Reserve a place for every active member"
     click_button "Save changes"

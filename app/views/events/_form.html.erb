@@ -21,7 +21,7 @@
       <fieldset class="fieldset">
         <legend class="label">Fill the list</legend>
 
-        <% [ [ "", "Not now" ], [ "reserve", "Reserve a place for every active member" ], [ "ask", "Ask everyone" ] ].each do |value, text| %>
+        <% [ [ "", "Not now" ], [ "reserve", "Reserve a place for every active member" ], [ "ask", "Request response from all active members" ] ].each do |value, text| %>
           <div class="flex items-center gap-2">
             <%= form.radio_button :list_filling, value, class: "radio radio-sm" %>
             <%= form.label :list_filling, text, value: %>

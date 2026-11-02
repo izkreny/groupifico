@@ -40,7 +40,7 @@ What stays: `app/views/members/new.html.erb`, `app/views/members/index.html.erb`
 | roster button, new | | Reserve a place for everyone |
 | next-up button | Invite everyone | Ask everyone |
 | notices | 2 members invited. / Nobody was left to invite. | 2 members asked. / Nobody was left to ask. |
-| event form choice | Invite all active members | Fill the list: Not now, Reserve a place for every active member, Ask everyone |
+| event form choice | Invite all active members | Fill the list: Not now, Reserve a place for every active member, Request response from all active members |
 | list screen and its roster button | Add someone | Edit the list |
 | list screen, paused row | paused · can't be invited | paused · can't be added |
 | list screen, submit | Invite 2 people | Update the list |
@@ -103,7 +103,7 @@ A manager may press the button and cannot undo it, as with today's Invite the re
 - What does the list screen's submit say? "Update the list", with the notice reporting what happened.
 - How does a manager's registered row look? A ticked, disabled checkbox with a caption, faded to 50% rather than daisyUI's 20%, so the tick reaches 3.11:1 in light and 4.41:1 in dark.
 - Should a box already ticked when the form opened bring back somebody removed in the meantime? No, only ticks the reader added reserve a place.
-- How does the event form fill the list, and where? One choice of Not now, Reserve a place for every active member, or Ask everyone, right after the dates, because asking already holds the place. Reserve is picked on a new event and its duplicate, and Not now on a saved one. Where moves below the Manager picker.
+- How does the event form fill the list, and where? One choice of Not now, Reserve a place for every active member, or Request response from all active members, right after the dates, because asking already holds the place. Reserve is picked on a new event and its duplicate, and Not now on a saved one. Where moves below the Manager picker.
 - What do the refused-answer messages say? A concluded or canceled event refuses every reply, and an event that has only ended takes a yes or a no. The issue names both messages.
 - What draws a checkbox's and an unpicked radio's outline? The text fields' own line, the theme's ink at 50%, at 3.11:1 in light and 4.40:1 in dark where daisyUI's default is 1.5:1 and 1.84:1. A picked radio keeps daisyUI's full ink, and keyboard focus keeps its primary border.
 
@@ -138,7 +138,7 @@ A manager may press the button and cannot undo it, as with today's Invite the re
 | reserving everyone skips paused members and leaves answers alone | dropping `.active`, and writing over existing rows |
 | the roster's reserve button is absent once everyone active is listed | drawing it unconditionally |
 | the event form's Reserve choice reserves rather than asks | the choice calling the asking method |
-| the event form's Ask everyone asks every active member, and leaves out a paused one | the code before the choice existed |
+| the event form's request asks every active member, and leaves out a paused one | the code before the choice existed |
 | filling the list comes after the dates, and Where between the manager and the description | the fields in their old order |
 | the form takes one way of filling the list | the code before the choice existed |
 | a new event and its duplicate pick Reserve | the screens setting no default |
