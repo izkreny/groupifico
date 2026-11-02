@@ -16,9 +16,9 @@
   <div class="flex flex-col items-start gap-3 py-10">
     <h2 class="text-record">Nothing in the diary</h2>
 
-    <%# Asked here rather than at the top of the template, so the populated branch pays for neither
-        the built event nor the policy resolution behind it. `EventPolicy#create?` is asked of a new
-        event rather than of the group, because that is the record the rule is written against; a
+    <%# Checked here rather than at the top of the template, so the populated branch pays for neither
+        the built event nor the policy resolution behind it. `EventPolicy#create?` is checked against a new
+        event rather than the group, because that is the record the rule is written against; a
         refused reader gets no control rather than a disabled one. %>
     <% if allowed_to?(:create?, @group.events.new) %>
       <p>Add your first rehearsal, then request a response from everyone.</p>
@@ -29,7 +29,7 @@
     <% end %>
 
     <%# The invite route arrives with #208, so the call to action is text until it exists: a link
-        that lands nowhere is worse than a sentence that asks for one. %>
+        that lands nowhere is worse than a sentence that requests one. %>
     <% if @group.current_members.one? %>
       <p class="mt-4 rounded-box bg-base-200 p-4 text-meta">It&rsquo;s just you in here so far. Invite the others</p>
     <% end %>
