@@ -581,7 +581,7 @@ RSpec.describe "Events", type: :request do
         expect(response.body).to include "Spring concert", "you said yes"
       end
 
-      it "puts no question to a member asked for a response" do
+      it "puts no question on an ended event to a member asked for a response" do
         member = create(:member, :active)
         asked = confirmed_event(member, days: -9, name: "Spring concert")
         create(:registration, event: asked, member:, status: :response_requested)
@@ -591,7 +591,20 @@ RSpec.describe "Events", type: :request do
         get group_events_path(member.group, scope: "canceled")
 
         expect(response.body).to include "Spring concert"
-        expect(response.body).not_to include "Did you go?", "Are you coming?"
+        expect(response.body).not_to include "Did you go?"
+      end
+
+      it "puts no question on an event still ahead to a member asked for a response" do
+        member = create(:member, :active)
+        asked = confirmed_event(member, days: 9, name: "Autumn gig")
+        create(:registration, event: asked, member:, status: :response_requested)
+        asked.update!(status: :canceled)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group, scope: "canceled")
+
+        expect(response.body).to include "Autumn gig"
+        expect(response.body).not_to include "Are you coming?"
       end
     end
 
