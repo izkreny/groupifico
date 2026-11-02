@@ -2,7 +2,7 @@
 
 <%#
   The group's events. The shell's header already carries the group's name, so this screen's own
-  title is which of the two lists is open - and because that is also the choice on offer, the title
+  title is which of the lists is open - and because that is also the choice on offer, the title
   is the list menu rather than a heading above one.
 %>
 <div class="flex flex-col gap-3">
@@ -32,7 +32,7 @@
         <% end %>
       </ul>
     <% elsif @featured_event.nil? %>
-      <p class="text-meta"><%= @list == "past" ? "No past events." : "Nothing coming up." %></p>
+      <p class="text-meta"><%= { "past" => "No past events.", "canceled" => "No canceled events." }.fetch(@list, "Nothing coming up.") %></p>
     <% end %>
   </div>
 </div>

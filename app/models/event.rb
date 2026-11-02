@@ -83,17 +83,13 @@ class Event < ApplicationRecord
   validates :description, length: { maximum: 25_000 }
   validates :ends_at, comparison: { greater_than: :starts_at }
 
-  # The two lists the events screen offers, and between them every event a group has: an event is
-  # current or upcoming exactly when it is not past, so nothing falls through the pair and nothing
-  # is on both. One predicate each, on `ends_at`, which is what makes that true rather than nearly
-  # true - a union of "has not started" and "has started but not ended" reads the clock three times
-  # and leaves a gap between the readings.
+  # WHY: with the enum's `canceled`, the three lists the events screen offers, and between them every event a group has: a canceled event is on that list whatever its dates, and any other is current or upcoming exactly when it is not past, so nothing falls through and nothing is on two. One predicate each, on `ends_at`, which is what makes that true rather than nearly true - a union of "has not started" and "has started but not ended" reads the clock three times and leaves a gap between the readings.
   #
   # `Time.current` rather than `Time.now`: both serialize to the same UTC instant, so the rows are
   # the same either way, but the system zone is not this application's and the first derivation
   # off a boundary - `.beginning_of_day`, `.to_date` - is where that stops being harmless.
-  scope :current_and_upcoming, -> { where(ends_at: Time.current..) }
-  scope :past,                 -> { where(ends_at: ...Time.current) }
+  scope :current_and_upcoming, -> { not_canceled.where(ends_at: Time.current..) }
+  scope :past,                 -> { not_canceled.where(ends_at: ...Time.current) }
 
   scope :preloaded, -> { includes(:address, :group, :registrations, creator: :profile, manager: :profile) }
 

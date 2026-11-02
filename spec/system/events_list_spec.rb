@@ -245,6 +245,21 @@ RSpec.describe "The events list", type: :system do
     expect(page).to have_text("Spring concert").and be_accessible
   end
 
+  it "lands on the canceled list from the list menu" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    next_event_for(member)
+    create(:event, group: member.group, creator: member, name: "Autumn gig", status: :canceled, starts_at: 4.days.from_now, ends_at: 4.days.from_now + 2.hours)
+    sign_in_as member.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_events_path(member.group)
+    find("#scope summary").click
+    within("#scope") { click_link "Canceled events" }
+
+    expect(page).to have_current_path group_events_path(member.group, scope: "canceled")
+    expect(page).to have_text("Autumn gig").and be_accessible
+  end
+
   # A list row is a grid whose cells start at its top, so the status icon would sit level with the name rather than with the name and its meta line together.
   # A row that puts the question and carries the pencil, at phone width: the question has to start under the name, never in the pencil's column, which squeezed the name to a letter a line.
   it "puts a row's question under its name when the row also carries the pencil" do

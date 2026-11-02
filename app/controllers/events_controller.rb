@@ -10,7 +10,7 @@ class EventsController < ApplicationController
     authorize! @group, to: :show?
 
     # WHY: picked from literals rather than naming a scope from the parameter, because `params[:scope]` is a member's input, and anything built out of it and sent to the relation is a door onto every scope the model has. Anything else is `nil`, the upcoming list, so a mistyped URL degrades to the default list. The values are spelled again in `events/_scope_menu`, the only other place that knows which lists exist.
-    @list = params[:scope].presence_in(%w[ past ])
+    @list = params[:scope].presence_in(%w[ past canceled ])
 
     # Preloaded because every row reads the event for the reader's own registration and its place,
     # and `Event#registration_for` reads the loaded association: without this the list costs a
@@ -19,14 +19,17 @@ class EventsController < ApplicationController
     # Ordered here because the list had no order at all: the rows were whatever the database
     # happened to return, which is the same list in a different sequence on a different day.
     #
-    # The two scopes partition the group's events between them, so an event it is in the middle of
-    # is on the upcoming list rather than on neither: still ahead of its members, not behind them.
+    # The scopes partition the group's events between them, so an event it is in the middle of is on the upcoming list rather than on none: still ahead of its members, not behind them.
     events = authorized_scope(@group.events).preloaded
-    @events = @list == "past" ? events.past.order(starts_at: :desc) : events.current_and_upcoming.order(:starts_at)
+    @events = case @list
+    when "past" then events.past.order(starts_at: :desc)
+    when "canceled" then events.canceled.order(starts_at: :desc)
+    else events.current_and_upcoming.order(:starts_at)
+    end
 
     # The group decides which event the hero draws, not the list: the filter is
     # `Group#featured_event`'s, and picking it out of `@events` here would be that rule written a
-    # second time. A past list has no such event, so none is looked up.
+    # second time. Only the upcoming list has such an event, so no other looks one up.
     @featured_event = @group.featured_event unless @list
   end
 

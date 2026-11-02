@@ -32,7 +32,7 @@ RSpec.describe "Events", type: :request do
 
       # The list menu is the screen's title as well as its filter, so what proves the title is there
       # is the menu naming the open list and linking both, rather than a heading above them.
-      it "titles the screen with the menu that links the two lists, the open one marked" do
+      it "titles the screen with the menu that links the lists, the open one marked" do
         member = create(:member, :active)
         sign_in_as(member.user)
 
@@ -40,7 +40,7 @@ RSpec.describe "Events", type: :request do
 
         menu = Nokogiri::HTML(response.body).at_css("details#scope")
         expect(menu.at_css("summary").text.squish).to eq "Upcoming events"
-        expect(menu.css("a").map { [ it.text, it[:href], it["aria-current"] ] }).to eq [ [ "Upcoming events", group_events_path(member.group), "true" ], [ "Past events", group_events_path(member.group, scope: "past"), nil ] ]
+        expect(menu.css("a").map { [ it.text, it[:href], it["aria-current"] ] }).to eq [ [ "Upcoming events", group_events_path(member.group), "true" ], [ "Past events", group_events_path(member.group, scope: "past"), nil ], [ "Canceled events", group_events_path(member.group, scope: "canceled"), nil ] ]
       end
 
       # Who may create an event is `EventPolicy#create?`, and a refused reader gets no control
@@ -532,8 +532,7 @@ RSpec.describe "Events", type: :request do
         expect([ menu.at_css("summary").text.squish, menu.at_css("a[aria-current]").text ]).to eq [ "Past events", "Past events" ]
       end
 
-      # Anything that is not "past" is the upcoming list, which is what keeps a mistyped URL a
-      # screen rather than an error.
+      # WHY: a scope naming no list is the upcoming list, which is what keeps a mistyped URL a screen rather than an error, with the pill agreeing with what is under it.
       it "reads an unknown scope as the upcoming list" do
         member = create(:member, :active)
         confirmed_event(member, days: -2, name: "Summer gig")
@@ -541,7 +540,59 @@ RSpec.describe "Events", type: :request do
 
         get group_events_path(member.group, scope: "sideways")
 
+        expect(Nokogiri::HTML(response.body).at_css("details#scope summary").text.squish).to eq "Upcoming events"
         expect(response.body).not_to include "Summer gig"
+      end
+    end
+
+    # WHY: `confirmed_event` and then the status, because a registration takes an answer only while its event is open to answers, so a member answers before the event is called off.
+    context "when the canceled list is requested" do
+      it "lists the group's canceled events newest first, whatever their dates, with no hero card" do
+        member = create(:member, :active)
+        confirmed_event(member, days: 2, name: "Tuesday rehearsal")
+        confirmed_event(member, days: -9, name: "Spring concert").update!(status: :canceled)
+        confirmed_event(member, days: 4, name: "Autumn gig").update!(status: :canceled)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group, scope: "canceled")
+
+        expect(response.body).to match(/Autumn gig.*Spring concert/m)
+        expect(response.body).not_to include "Next up", "Tuesday rehearsal"
+      end
+
+      it "names the canceled list in the list menu and marks its link" do
+        member = create(:member, :active)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group, scope: "canceled")
+
+        menu = Nokogiri::HTML(response.body).at_css("details#scope")
+        expect([ menu.at_css("summary").text.squish, menu.at_css("a[aria-current]").text ]).to eq [ "Canceled events", "Canceled events" ]
+      end
+
+      it "shows the answer a member gave" do
+        member = create(:member, :active)
+        answered = confirmed_event(member, days: -9, name: "Spring concert")
+        create(:registration, event: answered, member:, status: :yes)
+        answered.update!(status: :canceled)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group, scope: "canceled")
+
+        expect(response.body).to include "Spring concert", "you said yes"
+      end
+
+      it "puts no question to a member asked for a response" do
+        member = create(:member, :active)
+        asked = confirmed_event(member, days: -9, name: "Spring concert")
+        create(:registration, event: asked, member:, status: :response_requested)
+        asked.update!(status: :canceled)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group, scope: "canceled")
+
+        expect(response.body).to include "Spring concert"
+        expect(response.body).not_to include "Did you go?", "Are you coming?"
       end
     end
 
@@ -614,6 +665,16 @@ RSpec.describe "Events", type: :request do
         expect(response.body).to include "No past events."
         expect(response.body).not_to include "Nothing coming up."
       end
+
+      it "says there are no canceled events on an empty canceled list" do
+        member = create(:member, :active)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group, scope: "canceled")
+
+        expect(response.body).to include "No canceled events."
+        expect(response.body).not_to include "Nothing coming up."
+      end
     end
 
     # The other half of `open_to_answers?`'s status test. An unconfirmed event is on the list and is
@@ -634,20 +695,17 @@ RSpec.describe "Events", type: :request do
       end
     end
 
-    # `Event.current_and_upcoming` filters on `ends_at` alone, so a canceled event still ahead is on
-    # the list. It draws, and it puts no question: the clock has not ruled it out but its status has.
     context "when the group's only upcoming event has been called off" do
-      it "draws the row and puts no question under it" do
+      it "leaves it off the list and says nothing is coming up" do
         member = create(:member, :active)
-        called_off = create(:event, group: member.group, creator: member, status: :canceled,
+        create(:event, group: member.group, creator: member, status: :canceled,
           name: "Autumn gig", starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
-        create(:registration, event: called_off, member:, status: :response_requested)
         sign_in_as(member.user)
 
         get group_events_path(member.group)
 
-        expect(response.body).to include "Autumn gig"
-        expect(response.body).not_to include "Are you coming?"
+        expect(response.body).to include "Nothing coming up."
+        expect(response.body).not_to include "Autumn gig"
       end
     end
 
