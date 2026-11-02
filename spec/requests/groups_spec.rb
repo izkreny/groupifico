@@ -210,15 +210,15 @@ RSpec.describe "Groups", type: :request do
         end
       end
 
-      # The answer row is `events/_rsvp`'s, and which of its states it draws is
+      # The answer row is `events/_response`'s, and which of its states it draws is
       # `spec/requests/events_spec.rb`'s question. What belongs here is that this screen hands the
       # partial the reader's own registration at all: without `@membership`, `registration_for`
-      # gets nil and an invited reader is never asked.
-      it "asks the reader for their own answer" do
+      # gets nil and a reader whose response is requested never sees the question.
+      it "draws the question for the reader's own registration" do
         member = create(:member, group: create(:group))
         event = create(:event, group: member.group, creator: member, status: :confirmed,
           starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
-        create(:registration, event:, member:, status: :invited)
+        create(:registration, event:, member:, status: :response_requested)
         sign_in_as(member.user)
 
         get group_path(member.group)
@@ -388,7 +388,7 @@ RSpec.describe "Groups", type: :request do
 
       # A group they have left is not a group they can switch to, so it must not raise the count
       # that decides whether the switcher appears either. Same leak `user.current_groups` closes for
-      # the index, asked of the shell instead.
+      # the index, read from the shell instead.
       it "offers no switcher for a group the reader has left" do
         member = create(:member)
         create(:member, :inactive, user: member.user, group: create(:group))
@@ -553,7 +553,7 @@ RSpec.describe "Groups", type: :request do
         expect(document.css("[id^='group_address_attributes_']")).to be_empty
       end
 
-      # The three the block asks for and no more: starting a group is not the moment to ask for a
+      # The three the block offers and no more: starting a group is not the moment to collect a
       # state code or a pair of coordinates, and #255 finishes the address screens.
       it "writes the address inline for a group that never named a place" do
         member = create(:member, :active, :owner)
@@ -968,7 +968,7 @@ RSpec.describe "Groups", type: :request do
   end
 
 
-  # A relation_scope is not a rule, so the pre-checks never run for it: every scope asked
+  # A relation_scope is not a rule, so the pre-checks never run for it: every scope read
   # `user.groups`, which is every group ever joined. The list leaked what the detail page refused.
   describe "an inactive member's group list" do
     it "does not include the group they left" do

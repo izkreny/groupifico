@@ -1,0 +1,88 @@
+<% content_for :title, "Edit the list" %>
+
+<%= render "shared/page_header", title: "Edit the list", back: group_event_path(@group, @event) %>
+
+<%# The event this is filling, stated before the list: the reader arrives here from the event and
+    the tally is the one number that says whether the job is done. %>
+<div class="w-full">
+  <div class="mb-2">
+    <p class="text-lg"><%= @event.name %></p>
+    <p class="text-xs"><%= event_schedule_range(@event) %> · <%= list_tally(@group, @event) %></p>
+  </div>
+
+  <% listed = @event.roster.map(&:member) %>
+  <% may_remove = allowed_to?(:destroy?, Registration.new(event: @event)) %>
+  <%# Loaded once and split here rather than queried twice: `members_available` orders the tickable
+      members ahead of the paused ones, so the partition keeps that order in both halves. %>
+  <% tickable, paused = members_available(@group, @event).partition(&:active?) %>
+
+  <%= form_with url: group_event_roster_path(@group, @event), method: :patch, data: { controller: "list" } do %>
+    <%# Both always posted, so a submission with nothing ticked or nothing listed still carries the key and reaches the controller's own answer rather than a 400 from the strong parameters. `listed_ids` is what the form drew ticked, so a row registered while it sat open is not removed unseen; a reader who may not remove posts none. %>
+    <%= hidden_field_tag "member_ids[]", "", id: nil %>
+    <%= hidden_field_tag "listed_ids[]", "", id: nil %>
+    <% if may_remove %>
+      <% listed.each do |member| %>
+        <%= hidden_field_tag "listed_ids[]", member.id, id: nil %>
+      <% end %>
+    <% end %>
+
+    <ul class="list">
+      <% if listed.any? %>
+        <li class="p-4 pb-2 text-xs tracking-wide">On the list</li>
+
+        <%# WHY: a reader who may not remove sees the box ticked and disabled rather than no box, because a registered row reads as ticked for every reader, and the line beneath the name says why it stays. %>
+        <% listed.each do |member| %>
+          <li id="<%= dom_id member %>" class="list-row">
+            <%= check_box_tag "member_ids[]", member.id, true,
+                  id: dom_id(member, :tick),
+                  class: "checkbox",
+                  disabled: !may_remove,
+                  data: { list_target: "tick", action: "list#update" } %>
+
+            <label for="<%= dom_id(member, :tick) %>" class="list-col-grow <%= "cursor-pointer" if may_remove %>">
+              <span class="block"><%= member.full_name %></span>
+              <span class="block text-xs"><%= may_remove ? member.status : "only an administrator can remove" %></span>
+            </label>
+          </li>
+        <% end %>
+      <% end %>
+
+      <% if tickable.any? || paused.any? %>
+        <li class="p-4 pb-2 text-xs tracking-wide">Not on the list</li>
+
+        <% tickable.each do |member| %>
+          <li id="<%= dom_id member %>" class="list-row">
+            <%= check_box_tag "member_ids[]", member.id, false,
+                  id: dom_id(member, :tick),
+                  class: "checkbox",
+                  data: { list_target: "tick", action: "list#update" } %>
+
+            <label for="<%= dom_id(member, :tick) %>" class="list-col-grow cursor-pointer">
+              <span class="block"><%= member.full_name %></span>
+              <span class="block text-xs"><%= member.status %></span>
+            </label>
+          </li>
+        <% end %>
+
+        <%# No checkbox at all rather than a disabled one: a paused member has nothing a box could show, and the line beneath the name is what says why. The empty cell keeps the name in the same column as the rows above. %>
+        <% paused.each do |member| %>
+          <li id="<%= dom_id member %>" class="list-row opacity-65">
+            <span class="checkbox invisible" aria-hidden="true"></span>
+
+            <div class="list-col-grow">
+              <span class="block"><%= member.full_name %></span>
+              <span class="block text-xs">paused · can't be added</span>
+            </div>
+          </li>
+        <% end %>
+      <% end %>
+    </ul>
+
+    <div class="mt-4">
+      <%= render "shared/block_button", data: { list_target: "submit" } do %>
+        <%= icon :save, class: "size-icon-control" %>
+        Update the list
+      <% end %>
+    </div>
+  <% end %>
+</div>

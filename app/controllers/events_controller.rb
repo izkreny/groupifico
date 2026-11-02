@@ -1,4 +1,7 @@
 class EventsController < ApplicationController
+  # WHY: what the form picks for an event not yet saved, which nobody has listed anybody for. The screens set it rather than the model, so an event built anywhere else fills nothing unless told to, and a saved event's form stays on Not now.
+  RESERVED_FOR_A_NEW_EVENT = "reserve".freeze
+
   include GroupScoped
 
   before_action :set_event, only: %i[ show duplicate edit update destroy ]
@@ -14,7 +17,7 @@ class EventsController < ApplicationController
     # place that knows these two lists exist.
     @past = params[:scope] == "past"
 
-    # Preloaded because every row asks the event for the reader's own registration and its place,
+    # Preloaded because every row reads the event for the reader's own registration and its place,
     # and `Event#registration_for` reads the loaded association: without this the list costs a
     # query per row for each.
     #
@@ -28,7 +31,7 @@ class EventsController < ApplicationController
 
     # The group decides which event the hero draws, not the list: the filter is
     # `Group#featured_event`'s, and picking it out of `@events` here would be that rule written a
-    # second time. A past list has no such event, so it is not asked for one.
+    # second time. A past list has no such event, so none is looked up.
     @featured_event = @group.featured_event unless @past
   end
 
@@ -37,7 +40,7 @@ class EventsController < ApplicationController
   end
 
   def new
-    @event = @group.events.new
+    @event = @group.events.new(list_filling: RESERVED_FOR_A_NEW_EVENT)
     @event.build_address
 
     authorize! @event
@@ -53,6 +56,7 @@ class EventsController < ApplicationController
 
     @original = @event
     @event = @original.duplicate.shift_by(7.days)
+    @event.list_filling = RESERVED_FOR_A_NEW_EVENT
     @event.build_address unless @event.address
   end
 
@@ -66,10 +70,10 @@ class EventsController < ApplicationController
     @event = @group.events.new(event_params)
 
     authorize! @event
-    authorize_invitation!
+    authorize_reservation!
 
     if @event.save
-      @event.invite_all_active_members if @event.invite_active_members?
+      @event.fill_list
 
       redirect_to group_event_path(@group, @event),
         notice: "Event was successfully created."
@@ -87,10 +91,10 @@ class EventsController < ApplicationController
 
   def update
     authorize! @event
-    authorize_invitation!
+    authorize_reservation!
 
     if @event.update(event_params)
-      @event.invite_all_active_members if @event.invite_active_members?
+      @event.fill_list
 
       redirect_to group_event_path(@group, @event),
         notice: "Event was successfully updated.",
@@ -128,11 +132,11 @@ class EventsController < ApplicationController
     #
     # `address_attributes` permits no `:id`, which is what keeps editing an address out of this
     # controller entirely. With one, `accepts_nested_attributes_for` updates the named address in
-    # place and only `EventPolicy#update?` is ever asked - so whoever may edit the event edits the
+    # place and only `EventPolicy#update?` is ever checked - so whoever may edit the event edits the
     # address too, the group's home address included, which `AddressPolicy` reserves to the `owner`.
-    # Without one, the nested attributes can only build a new address, which is what the form asks
-    # for when "New address…" is picked; a saved address is corrected at `AddressesController#edit`,
-    # where the question is asked properly.
+    # Without one, the nested attributes can only build a new address, which is what the form wants
+    # when "New address…" is picked; a saved address is corrected at `AddressesController#edit`,
+    # where the rule is checked properly.
     #
     # The form draws those fields whichever row is picked, so they arrive beside an `address_id` too,
     # and assigned after it they would build a new address that replaces the pick. A picked address
@@ -141,7 +145,7 @@ class EventsController < ApplicationController
     def event_params
       params.expect(
         event: [ :name, :description, :starts_at, :ends_at, :status, :category,
-          :manager_id, :address_id, :invite_active_members,
+          :manager_id, :address_id, :list_filling,
           address_attributes: [
             :name, :street_name, :building_number, :city, :postal_code, :state_code, :country_code, :latitude, :longitude
           ]
@@ -153,11 +157,11 @@ class EventsController < ApplicationController
       end
     end
 
-    # WHY: on `update` this is asked before anything is assigned, so a `manager_id` changed in the same
-    # request cannot decide whether this reader may invite. On `create` the event is already built from
+    # WHY: on `update` this is checked before anything is assigned, so a `manager_id` changed in the same
+    # request cannot decide whether this reader may reserve. On `create` the event is already built from
     # the params, and `EventPolicy#create?` admitting `can_manage?(:events)` alone is what keeps it safe.
-    def authorize_invitation!
-      authorize! Registration.new(event: @event), to: :create? if ActiveModel::Type::Boolean.new.cast(params.dig(:event, :invite_active_members))
+    def authorize_reservation!
+      authorize! Registration.new(event: @event), to: :create? if params.dig(:event, :list_filling).present?
     end
 
     # Present and not ours. A blank passes straight through so the model decides what it means:

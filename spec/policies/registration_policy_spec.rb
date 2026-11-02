@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 # A `relation_scope` is not a rule, so the membership pre-checks never run for it. Every scope on
-# this branch asked `user.groups` - every group ever joined - and a member who has gone inactive
+# this branch read `user.groups` - every group ever joined - and a member who has gone inactive
 # has left, so the list leaked what the detail page refused.
 #
 # Tested here rather than through the router, deliberately. The nested controllers call
@@ -47,7 +47,7 @@ RSpec.describe RegistrationPolicy, type: :policy do
       let(:actor) { create(:member, :events_administrator, group:) }
     end
 
-    succeed "for the event's manager, which is the invitation row" do
+    succeed "for the event's manager, which is the registering row" do
       let(:event) { create(:event, group:, manager: actor) }
     end
 
@@ -55,13 +55,13 @@ RSpec.describe RegistrationPolicy, type: :policy do
       let(:actor) { create(:member, :members_administrator, group:) }
     end
 
-    # The record the invitation screen authorizes, built before any member is chosen. Nobody owns
-    # it, so `own?` is false and what is left is the invitation row.
-    failed "for a member holding no role, on the registration the invitation screen builds" do
+    # The record the list screen authorizes, built before any member is chosen. Nobody owns
+    # it, so `own?` is false and what is left is the registering row.
+    failed "for a member holding no role, on the registration the list screen builds" do
       let(:record) { build(:registration, event:, member: nil) }
     end
 
-    succeed "for the event's manager, on the registration the invitation screen builds" do
+    succeed "for the event's manager, on the registration the list screen builds" do
       let(:event)  { create(:event, group:, manager: actor) }
       let(:record) { build(:registration, event:, member: nil) }
     end
@@ -92,7 +92,7 @@ RSpec.describe RegistrationPolicy, type: :policy do
       let(:actor) { create(:member, :events_administrator, group:) }
     end
 
-    failed "for the event's manager, who invites and does not overrule" do
+    failed "for the event's manager, who requests and does not overrule" do
       let(:event) { create(:event, group:, manager: actor) }
     end
 
@@ -140,8 +140,8 @@ RSpec.describe RegistrationPolicy, type: :policy do
     end
   end
 
-  # Which statuses the actor may write, asked by the controller because a posted status is not on
-  # the record when update? runs. `reserved` and `invited` are what somebody else puts you into.
+  # Which statuses the actor may write, checked by the controller because a posted status is not on
+  # the record when update? runs. `reserved` and `response_requested` are what somebody else puts you into.
   describe_rule :manage_answers? do
     let(:group)   { create(:group) }
     let(:actor)   { create(:member, group:) }

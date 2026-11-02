@@ -10,7 +10,7 @@ module IconsHelper
 
     # Registration.statuses
     reserved: "bookmark",
-    invited: "paper-airplane",
+    response_requested: "paper-airplane",
     yes: "check-circle",
     maybe: "clock",
     no: "minus-circle",
@@ -46,6 +46,7 @@ module IconsHelper
     call: "phone",
     email: "envelope",
     add_member: "user-plus",
+    send_invite: "paper-airplane",
     invite_link: "link",
 
     # States the reader is told about. The four alert kinds are named as daisyUI names them, so `shared/_alert` draws the kind it colours.

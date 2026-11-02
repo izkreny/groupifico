@@ -1,12 +1,12 @@
 require 'rails_helper'
 
-RSpec.describe "Registrations::Invitations", type: :request do
-  describe "POST /groups/:group_id/events/:event_id/registrations/:registration_id/invitation" do
+RSpec.describe "Registrations::ResponseRequests", type: :request do
+  describe "POST /groups/:group_id/events/:event_id/registrations/:registration_id/response_request" do
     context "when not signed in" do
       it "redirects to the sign-in page" do
         registration = create(:registration)
 
-        post group_event_registration_invitation_path(registration.event.group, registration.event, registration)
+        post group_event_registration_response_request_path(registration.event.group, registration.event, registration)
 
         expect(response).to redirect_to new_session_path
       end
@@ -17,7 +17,7 @@ RSpec.describe "Registrations::Invitations", type: :request do
         registration = create(:registration)
         sign_in_as(create(:user))
 
-        post group_event_registration_invitation_path(registration.event.group, registration.event, registration)
+        post group_event_registration_response_request_path(registration.event.group, registration.event, registration)
 
         expect(response).to have_http_status :not_found
       end
@@ -30,7 +30,7 @@ RSpec.describe "Registrations::Invitations", type: :request do
         elsewhere = create(:registration, status: :reserved)
         sign_in_as(actor.user)
 
-        post group_event_registration_invitation_path(event.group, event, elsewhere)
+        post group_event_registration_response_request_path(event.group, event, elsewhere)
 
         expect(response).to have_http_status :not_found
         expect(elsewhere.reload).to be_reserved
@@ -44,7 +44,7 @@ RSpec.describe "Registrations::Invitations", type: :request do
         held = create(:registration, event:, member:, status: :reserved)
         sign_in_as(member.user)
 
-        post group_event_registration_invitation_path(event.group, event, held)
+        post group_event_registration_response_request_path(event.group, event, held)
 
         expect(held.reload).to be_reserved
         expect(response).to redirect_to root_path
@@ -58,7 +58,7 @@ RSpec.describe "Registrations::Invitations", type: :request do
         held = create(:registration, event:, member: actor, status: :reserved)
         sign_in_as(actor.user)
 
-        post group_event_registration_invitation_path(event.group, event, held)
+        post group_event_registration_response_request_path(event.group, event, held)
 
         expect(held.reload).to be_reserved
         expect(response).to redirect_to root_path
@@ -66,29 +66,29 @@ RSpec.describe "Registrations::Invitations", type: :request do
     end
 
     context "when signed in as the event's manager" do
-      it "moves a held place to invited" do
+      it "moves a held place to response_requested" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, creator: actor, manager: actor)
         held = create(:registration, event:, member: create(:member, group: event.group), status: :reserved)
         sign_in_as(actor.user)
 
-        post group_event_registration_invitation_path(event.group, event, held)
+        post group_event_registration_response_request_path(event.group, event, held)
 
-        expect(held.reload).to be_invited
+        expect(held.reload).to be_response_requested
         expect(response).to redirect_to group_event_path(event.group, event)
       end
 
-      it "refuses to ask a paused member, and leaves their held place as it was" do
+      it "refuses to request a response from a paused member, and leaves their held place as it was" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, creator: actor, manager: actor)
         held = create(:registration, event:, member: create(:member, :paused, group: event.group), status: :reserved)
         sign_in_as(actor.user)
 
-        post group_event_registration_invitation_path(event.group, event, held)
+        post group_event_registration_response_request_path(event.group, event, held)
 
         expect(held.reload).to be_reserved
         expect(response).to redirect_to group_event_path(event.group, event)
-        expect(flash[:alert]).to end_with "is paused, so they are not asked."
+        expect(flash[:alert]).to end_with "is paused, so no response was requested."
       end
 
       it "leaves an answer as it was, because a manager does not overrule one" do
@@ -97,21 +97,21 @@ RSpec.describe "Registrations::Invitations", type: :request do
         answered = create(:registration, event:, member: create(:member, group: event.group), status: :no)
         sign_in_as(actor.user)
 
-        post group_event_registration_invitation_path(event.group, event, answered)
+        post group_event_registration_response_request_path(event.group, event, answered)
 
         expect(answered.reload).to be_no
       end
 
-      # The plane stays pressable on an invited row, so a press there says why nothing changed.
-      it "says a member already invited was already asked" do
+      # The plane stays pressable on a requested row, so a press there says why nothing changed.
+      it "says a member who has a question waiting already has a request" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, creator: actor, manager: actor)
-        asked = create(:registration, event:, member: create(:member, :active, group: event.group), status: :invited)
+        requested = create(:registration, event:, member: create(:member, :active, group: event.group), status: :response_requested)
         sign_in_as(actor.user)
 
-        post group_event_registration_invitation_path(event.group, event, asked)
+        post group_event_registration_response_request_path(event.group, event, requested)
 
-        expect(flash[:notice]).to eq "#{asked.member.full_name} was already asked."
+        expect(flash[:notice]).to eq "#{requested.member.full_name}'s response was already requested."
       end
     end
   end

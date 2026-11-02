@@ -40,7 +40,7 @@ RSpec.describe "The styleguide", type: :request do
       end
 
       it "draws the styleguide group's records" do
-        plant_styleguide_group(manager: "Ana Horvat", invited: "Ivan Kovačević", said_yes: "Marija Babić")
+        plant_styleguide_group(manager: "Ana Horvat", waiting: "Ivan Kovačević", said_yes: "Marija Babić")
         sign_in_as(create(:user))
 
         get "/styleguide"
@@ -51,28 +51,28 @@ RSpec.describe "The styleguide", type: :request do
         expect(html.css("[aria-label='no reply']")).not_to be_empty
       end
 
-      # The owner may answer for every member and take anyone off the list, so every row draws both controls.
+      # The owner may answer for every member.
       it "draws the roster's controls on every row for the owner" do
-        plant_styleguide_group(manager: "Ana Horvat", invited: "Ivan Kovačević", said_yes: "Marija Babić")
+        plant_styleguide_group(manager: "Ana Horvat", waiting: "Ivan Kovačević", said_yes: "Marija Babić")
         sign_in_as(planted_member("Ana Horvat").user)
 
         get "/styleguide"
 
         html = Nokogiri::HTML(response.body)
         expect(html.css("button[aria-label='Yes for Ivan Kovačević']")).not_to be_empty
-        expect(html.css("button[aria-label='Take Marija Babić off the list']")).not_to be_empty
+        expect(html.css("button[aria-label='Yes for Marija Babić']")).not_to be_empty
       end
 
       # The page asks the signed-in user's own policies, so a user outside the group is offered nothing they could not do.
       it "draws none of the roster's controls for a user outside the group" do
-        plant_styleguide_group(invited: "Ivan Kovačević", said_yes: "Marija Babić")
+        plant_styleguide_group(waiting: "Ivan Kovačević", said_yes: "Marija Babić")
         sign_in_as(create(:user))
 
         get "/styleguide"
 
         html = Nokogiri::HTML(response.body)
         expect(html.css("button[aria-label='Yes for Ivan Kovačević']")).to be_empty
-        expect(html.css("button[aria-label='Take Marija Babić off the list']")).to be_empty
+        expect(html.css("button[aria-label='Yes for Marija Babić']")).to be_empty
       end
 
       it "draws the member rows' Edit pencils for the owner" do
@@ -85,7 +85,7 @@ RSpec.describe "The styleguide", type: :request do
       end
 
       it "draws no Edit pencil on the member rows for a member who may not manage members" do
-        plant_styleguide_group(invited: "Ivan Kovačević")
+        plant_styleguide_group(waiting: "Ivan Kovačević")
         sign_in_as(planted_member("Ivan Kovačević").user)
 
         get "/styleguide"
@@ -105,7 +105,7 @@ RSpec.describe "The styleguide", type: :request do
       end
 
       it "draws no not-signed-in mark on the member rows for a member who does not oversee the list" do
-        plant_styleguide_group(invited: "Ivan Kovačević")
+        plant_styleguide_group(waiting: "Ivan Kovačević")
         sign_in_as(planted_member("Ivan Kovačević").user)
 
         get "/styleguide"
@@ -135,7 +135,7 @@ RSpec.describe "The styleguide", type: :request do
       end
 
       it "draws none of the gated screens' sections for a member who may reach none of them" do
-        plant_styleguide_group(invited: "Ivan Kovačević")
+        plant_styleguide_group(waiting: "Ivan Kovačević")
         sign_in_as(planted_member("Ivan Kovačević").user)
 
         get "/styleguide"
@@ -144,7 +144,7 @@ RSpec.describe "The styleguide", type: :request do
       end
 
       it "draws the signed-in member's own profile" do
-        plant_styleguide_group(manager: "Ana Horvat", invited: "Ivan Kovačević")
+        plant_styleguide_group(manager: "Ana Horvat", waiting: "Ivan Kovačević")
         sign_in_as(planted_member("Ivan Kovačević").user)
 
         get "/styleguide"
@@ -163,7 +163,7 @@ RSpec.describe "The styleguide", type: :request do
       end
 
       it "draws no Edit group link for a member who is not an owner" do
-        plant_styleguide_group(invited: "Ivan Kovačević")
+        plant_styleguide_group(waiting: "Ivan Kovačević")
         sign_in_as(planted_member("Ivan Kovačević").user)
 
         get "/styleguide"
@@ -173,7 +173,7 @@ RSpec.describe "The styleguide", type: :request do
 
       # Which members, in the order they joined; how each is labelled is the helper spec's.
       it "lists every member of the group in the switcher, in the order they joined" do
-        plant_styleguide_group(manager: "Ana Horvat", invited: "Ivan Kovačević", said_yes: "Marija Babić")
+        plant_styleguide_group(manager: "Ana Horvat", waiting: "Ivan Kovačević", said_yes: "Marija Babić")
         sign_in_as(create(:user))
 
         get "/styleguide"
@@ -202,7 +202,7 @@ RSpec.describe "The styleguide", type: :request do
       end
 
       it "selects the signed-in member in the switcher" do
-        plant_styleguide_group(invited: "Ivan Kovačević")
+        plant_styleguide_group(waiting: "Ivan Kovačević")
         sign_in_as(planted_member("Ivan Kovačević").user)
 
         get "/styleguide"
@@ -284,8 +284,8 @@ RSpec.describe "The styleguide", type: :request do
 
         expect(Nokogiri::HTML(response.body).css("section a[href^='https://daisyui.com/']").map { it["href"] }).to contain_exactly(
           "https://daisyui.com/components/alert/", "https://daisyui.com/components/badge/", "https://daisyui.com/components/button/",
-          "https://daisyui.com/components/card/", "https://daisyui.com/components/collapse/", "https://daisyui.com/components/dropdown/",
-          "https://daisyui.com/components/input/", "https://daisyui.com/components/select/"
+          "https://daisyui.com/components/card/", "https://daisyui.com/components/checkbox/", "https://daisyui.com/components/collapse/",
+          "https://daisyui.com/components/dropdown/", "https://daisyui.com/components/input/", "https://daisyui.com/components/select/"
         )
       end
 

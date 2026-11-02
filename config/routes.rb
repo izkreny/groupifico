@@ -5,7 +5,7 @@ Rails.application.routes.draw do
   # sign anybody in. The token rides the query string, never a path segment, since `filtered_path`
   # filters only the query string - both decisions are ADR 0004's.
   resource :sign_in, only: %i[ show create ]
-  # Two singular resources mirroring the sign-in pair, and split for the same reason: asking for a
+  # Two singular resources mirroring the sign-in pair, and split for the same reason: requesting a
   # link and redeeming one are different actions with different guards. `resource :sign_up` is the
   # counterpart of `resource :session`, and `resource :sign_up_confirmation` of `resource :sign_in`.
   resource :sign_up, only: %i[ new create ]
@@ -20,8 +20,8 @@ Rails.application.routes.draw do
   # a place is reached from the group or event that uses it, and nothing draws one - #255.
   resources :addresses, only: %i[ show edit update ]
 
-  # No `new` and no `create`: signing up and being invited are the two ways to become a user, and
-  # neither of them is a signed-in visitor asking for a second account. Reading and editing the
+  # No `new` and no `create`: signing up and being added to a group are the two ways to become a user, and
+  # neither of them is a signed-in visitor requesting a second account. Reading and editing the
   # account is the Me screen's, which one Save writes through the profile, so the account keeps only
   # its deletion and its two old screens redirect there. `as: nil` so a retired path mints no
   # `user_edit_path` helper for anything to link to.
@@ -38,16 +38,19 @@ Rails.application.routes.draw do
     resources :members
     resources :events do
       get "duplicate", on: :member
-      # The invitation screen and the writes a roster row makes. Reading who is registered is the
-      # event's own screen rather than a list of its own, and answering on somebody's behalf or
-      # taking them off are rows on it, so `index`, `show` and `edit` have nowhere to be. Asking a
-      # held place is a resource of its own because it is the invitation row, which `update` is not.
-      resources :registrations, only: %i[ new create update destroy ] do
-        resource :invitation, only: :create, module: :registrations
+      # The writes a roster row makes. Reading who is registered is the event's own screen rather
+      # than a list of its own, and answering on somebody's behalf is a row on it, so `index`,
+      # `show` and `edit` have nowhere to be. Requesting a response from a held place is a resource of its own because it is the registering row, which `update` is not.
+      resources :registrations, only: :update do
+        resource :response_request, only: :create, module: :registrations
       end
-      # WHY: asking the whole list at once is a resource of the event's: `create` asks every active
-      # member nobody has asked yet, whether their place is held or they have none.
-      resource :invitation, only: :create, module: :events
+      # WHY: requesting from the whole list at once is a resource of the event's: `create` requests a response from every active
+      # member holding a place, and adds nobody to the list.
+      resource :response_request, only: :create, module: :events
+      # WHY: reserving for everyone off the list at once is a resource of the event's for the same reason: `create` holds a place for each and requests nothing.
+      resource :reservation, only: :create, module: :events
+      # WHY: the list screen, one form that both reserves and removes, which is an edit of the event's list rather than a create or a delete of any one row.
+      resource :roster, only: %i[ edit update ], module: :events
     end
   end
 

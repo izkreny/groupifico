@@ -16,8 +16,26 @@
       <%= form.field :ends_at, as: :datetime_field, hint: "Typed and shown in #{Time.zone.tzinfo.name}" %>
     </div>
 
+    <%# Frames 4e, 4f and 4k: fills the list once the event is saved, by holding a place for everyone active and not yet on it, or by requesting their responses too. One choice, because requesting already holds the place. Drawn for a reader the registering row admits, the check `EventsController` makes. %>
+    <% if allowed_to?(:create?, Registration.new(event: event)) %>
+      <fieldset class="fieldset">
+        <legend class="label">Fill the list</legend>
+
+        <% [ [ "", "Not now" ], [ "reserve", "Reserve a place for every active member" ], [ "request", "Request response from all active members" ] ].each do |value, text| %>
+          <div class="flex items-center gap-2">
+            <%= form.radio_button :list_filling, value, class: "radio radio-sm" %>
+            <%= form.label :list_filling, text, value: %>
+          </div>
+        <% end %>
+      </fieldset>
+    <% end %>
+
+    <div class="fieldset">
+      <%= form.field :manager_id, as: :select, choices: manager_choices(event) %>
+    </div>
+
     <%# Frames 4e, 4f and 4k: this group's addresses, each used as it is, and a new one written
-        here. A picked row offers the one screen that corrects it, where `AddressPolicy` asks its
+        here. A picked row offers the one screen that corrects it, where `AddressPolicy` puts its
         own question - which for the group's home address is the owner's alone.
 
         The new-address fields are always in the page, so they post whichever row is picked;
@@ -54,20 +72,8 @@
     </fieldset>
 
     <div class="fieldset">
-      <%= form.field :manager_id, as: :select, choices: manager_choices(event) %>
       <%= form.field :description, as: :text_area %>
     </div>
-
-    <%# Frames 4e, 4f and 4k: asks everyone who is active and not yet on the list, once the event is
-        saved. Drawn for a reader the invitation row admits, the question `EventsController` asks. %>
-    <% if allowed_to?(:create?, Registration.new(event: event)) %>
-      <fieldset class="fieldset">
-        <label class="label">
-          <%= form.check_box :invite_active_members, class: "checkbox" %>
-          Invite all active members
-        </label>
-      </fieldset>
-    <% end %>
   <% end %>
 
   <div class="flex flex-wrap items-center gap-2 mt-4">

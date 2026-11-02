@@ -84,7 +84,7 @@ RSpec.describe "The group home", type: :system do
   end
 
   # Whether the hero fits at either width is `spec/system/events_list_spec.rb`'s assertion about
-  # the same partial, so it is not asked again here.
+  # the same partial, so it is not repeated here.
   #
   # Copied from `spec/system/events_list_spec.rb`, where the same hero needs the same event: a
   # confirmed one, upcoming, with the times frozen out of Faker's reach so `Group#featured_event`

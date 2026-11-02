@@ -6,7 +6,7 @@ module EventsHelper
   DOT             = " · "
 
   # The Who's coming? tally's colours, which the tally, the roster, the event row and the answer buttons all paint a status in. Whole class names, so Tailwind finds each one.
-  STATUS_INKS = { "yes" => "text-success", "maybe" => "text-warning", "no" => "text-error", "invited" => "text-info" }.freeze
+  STATUS_INKS = { "yes" => "text-success", "maybe" => "text-warning", "no" => "text-error", "response_requested" => "text-info" }.freeze
 
   def status_ink(status)
     STATUS_INKS[status]
@@ -52,7 +52,7 @@ module EventsHelper
 
   # The question in the tense the event is in. An event that has ended and that nobody has
   # concluded is still worth a roster - who actually turned up is the thing worth knowing - and
-  # asking a reader whether they are coming to something that finished last week reads as a screen
+  # "Are you coming?" about something that finished last week reads as a screen
   # that has not noticed.
   def answer_prompt(event)
     event.ended? ? "Did you go?" : "Are you coming?"

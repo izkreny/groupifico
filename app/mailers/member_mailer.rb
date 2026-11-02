@@ -1,6 +1,6 @@
 # Its own mailer rather than a third method on an existing one, for the reason `SignUpMailer` gives:
 # a different recipient, a different link and different copy. Named for the member rather than for
-# an invitation, because an invitation in this application is a `Registration` status.
+# an invitation, because what a member gets is a welcome and a sign-in link, nothing to accept.
 class MemberMailer < ApplicationMailer
   # Mints nothing. The link is the ordinary sign-in form with the address in its query string,
   # which ADR 0004's `The invitation link is not a credential` records as no credential at all, so

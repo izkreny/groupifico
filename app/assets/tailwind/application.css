@@ -191,7 +191,7 @@
 
   --spacing-tally: 0.75rem;           /* 12px: the Who's coming? tally, tag → tag */
   --spacing-card-row: 0.5rem;         /* 8px: the hero card, row → row */
-  --spacing-card-break: 0.875rem;     /* 14px: the hero card, its last fact → Your answer: */
+  --spacing-card-break: 0.875rem;     /* 14px: the hero card, its last fact → Are you coming? */
 
   /* WHY: derived, so each follows the tokens it is worked out from. */
   --spacing-control-inset: calc((var(--spacing-control) - var(--spacing-icon-control)) / 2);  /* 6px: a glyph inside its icon button */
@@ -246,6 +246,11 @@
   --input-color: color-mix(in oklab, var(--color-base-content) 50%, #0000);
 }
 
+/* WHY: the fields' own line, because daisyUI's 20% is 1.5:1 in light and 1.84:1 in dark where a control's boundary needs 3:1; this is 3.11:1 and 4.40:1. On the border alone, because daisyUI also fills a ticked checkbox with `--input-color`. A picked radio keeps daisyUI's full ink, which ties its ring to its dot. `:where` so the focus rules below still win. */
+:where(.checkbox, .radio:not(:checked)) {
+  border-color: color-mix(in oklab, var(--color-base-content) 50%, #0000);
+}
+
 /* WHY: spelled out rather than read from `--color-muted`, whose variable resolves at the root and would carry the light ink into the styleguide's dark twin; the 70% is that token's. The label mixes `currentcolor`, so it follows the text around it. */
 ::placeholder {
   color: color-mix(in oklab, var(--color-base-content) 70%, #0000);
@@ -280,4 +285,9 @@
 .checkbox:focus-visible {
   outline: none;
   border: 2px solid var(--color-primary);
+}
+
+/* WHY: daisyUI fades a disabled checkbox to 20%, which leaves a manager's tick at 1.49:1 in light and 1.85:1 in dark. At 50% it reaches 3.11:1 and 4.41:1 and still reads weaker than a live tick. Unlayered, so it beats daisyUI's layered rule. */
+.checkbox:disabled {
+  opacity: 50%;
 }

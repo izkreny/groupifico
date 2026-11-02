@@ -79,8 +79,18 @@ module ContrastHelper
   # `PaintMatcher::SCRIPT` passes its own: interpolation closes the JavaScript string literal on the
   # first double quote a selector carries, which every attribute selector does.
   def text_contrast(selector)
-    page.evaluate_script(<<~JAVASCRIPT, selector)
-      (function(selector) {
+    ink_contrast(selector, "color")
+  end
+
+  # WHY: axe does not measure a control's boundary, and on an unticked box that line is all SC 1.4.11's 3:1 can be asked of. The top edge stands for the whole border, which is one colour on every control this suite measures.
+  def border_contrast(selector)
+    ink_contrast(selector, "borderTopColor")
+  end
+
+  # The property travels as an argument for the reason the selector does.
+  def ink_contrast(selector, property)
+    page.evaluate_script(<<~JAVASCRIPT, selector, property)
+      (function(selector, property) {
         const element = document.querySelector(selector);
         if (!element) return null;
 
@@ -98,14 +108,14 @@ module ContrastHelper
         const beneath = Array.from(pixel());
 
         context.clearRect(0, 0, 1, 1);
-        fill(getComputedStyle(element).color);
+        fill(getComputedStyle(element)[property]);
         const ink = Array.from(pixel());
         alpha *= ink[3] / 255;
 
         const blended = ink.slice(0, 3).map((value, index) => value * alpha + beneath[index] * (1 - alpha));
 
         return ratio(blended, beneath);
-      })(arguments[0])
+      })(arguments[0], arguments[1])
     JAVASCRIPT
   end
 

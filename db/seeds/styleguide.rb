@@ -56,7 +56,7 @@ sign_in(User.where(id: (members - never_signed_in).map(&:user_id)))
 ].each_with_index do |attributes, index|
   event = FactoryBot.create(:event, attributes[:tense], group:, creator: owner, manager: co_owner, **attributes.except(:tense))
 
-  # WHY: every status on every event, shifted by one per event so each member answers differently from one event to the next. `reserved` and `invited` on an event that is over are what nobody answering leaves behind, which `Registration` allows.
+  # WHY: every status on every event, shifted by one per event so each member answers differently from one event to the next. `reserved` and `response_requested` on an event that is over are what nobody answering leaves behind, which `Registration` allows.
   statuses = Registration.statuses.keys.rotate(index)
   answer_then_settle(event, members.each_with_index.to_h { |member, position| [ member, statuses[position % statuses.size] ] })
 end
