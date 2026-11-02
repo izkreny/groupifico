@@ -47,7 +47,7 @@ What stays: `app/views/members/new.html.erb`, `app/views/members/index.html.erb`
 | list screen, notice | 2 members invited. | 2 places reserved, 1 removed. |
 | list screen, moved on | Nobody was invited: nobody you ticked is still on the list. | Nothing changed: nobody you ticked is still on offer. |
 | group home, empty | Add your first rehearsal and everyone gets asked whether they're coming. | Add your first rehearsal, then ask everyone whether they're coming. |
-| refused answer, event over | Status cannot be answered once the event is over | This event is over, so it no longer takes replies. |
+| refused answer, event concluded or canceled | Status cannot be answered once the event is over | This event is concluded or canceled, so it no longer takes replies. |
 | refused answer, event ended | Status cannot be maybe once the event has ended | This event has ended, so it is a yes or a no. |
 
 The frames still say "invited" in these places, and the issue overrides them. Yes, Maybe and No stay, because they answer the question directly. On Mobbin no app says "Your answer", and [Apple Invites](https://mobbin.com/screens/5a5a0fdb-b99a-4352-bd57-80680ca6862d) and [Google Calendar](https://mobbin.com/screens/cf44569a-9d69-403a-b292-f60e8b6e8299) never show the word RSVP.
@@ -61,7 +61,7 @@ The screen's sections:
 - **On the list**: every registered member, ticked, whatever their membership status. A paused or inactive member's registration can only be removed here once the roster loses its take-off, so they have to be drawn.
 - **Not on the list**: active members unticked, then paused members with no checkbox, as today.
 
-The form posts `member_ids[]`, the ticks, and a hidden `listed_ids[]`, the rows it drew ticked. Removal is `listed_ids` minus `member_ids`, never "everyone not ticked", so somebody registered while the form sat open is not removed unseen. Reservation stays `@group.members.active.without_registration_for(@event)` intersected with the ticks, which keeps the guard against an id from another group. Both go in one transaction in a new `Event#update_roster`, and the `RecordNotUnique` rescue stays.
+The form posts `member_ids[]`, the ticks, and a hidden `listed_ids[]`, the rows it drew ticked. Removal is `listed_ids` minus `member_ids`, never "everyone not ticked", so somebody registered while the form sat open is not removed unseen. Reservation stays `@group.members.active.without_registration_for(@event)` intersected with the ticks minus `listed_ids`, which keeps the guard against an id from another group, and so somebody removed while the form sat open stays removed. Both go in one transaction in a new `Event#update_roster`, and the `RecordNotUnique` rescue stays.
 
 Unticking somebody who answered removes the answer with the place, as the take-off does today.
 
@@ -102,6 +102,8 @@ A manager may press the button and cannot undo it, as with today's Invite the re
 - How do we offer reserving a place for everyone? "Reserve a place for everyone" on the roster, with no select-all on the list screen, so the issue's criterion moves to the roster.
 - What does the list screen's submit say? "Update the list", with the notice reporting what happened.
 - How does a manager's registered row look? A ticked, disabled checkbox with a caption, faded to 50% rather than daisyUI's 20%, so the tick reaches 3.11:1 in light and 4.41:1 in dark.
+- Should a box already ticked when the form opened bring back somebody removed in the meantime? No, only ticks the reader added reserve a place.
+- What do the refused-answer messages say? A concluded or canceled event refuses every reply, and an event that has only ended takes a yes or a no. The issue names both messages.
 - What draws a checkbox's and an unpicked radio's outline? The text fields' own line, the theme's ink at 50%, at 3.11:1 in light and 4.40:1 in dark where daisyUI's default is 1.5:1 and 1.84:1. A picked radio keeps daisyUI's full ink, and keyboard focus keeps its primary border.
 
 ## Steps
@@ -147,6 +149,7 @@ A manager may press the button and cannot undo it, as with today's Invite the re
 | a refused reservation removes nobody | removing first, outside one transaction |
 | a manager can read a registered row's caption, in light and in dark | fading the caption, and drawing the box enabled |
 | the next-up card offers no Ask everyone while the only place held is a paused member's | the card's condition without `anyone_left_to_ask?` |
+| a member removed while the form sat open stays off the list | arrivals read from every tick |
 | the helper counts a border's own alpha | dropping the alpha from `ink_contrast` |
 | the helper reads a solid border as solid | reading another property in `border_contrast` |
 | the styleguide's outline and disabled tick read at 3:1 in both twins | the section absent, its disabled box drawn live, the fade back at 20%, and the outline back at 20% |
