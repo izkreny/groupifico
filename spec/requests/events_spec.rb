@@ -1602,7 +1602,7 @@ RSpec.describe "Events", type: :request do
         expect(fragment.at_css("input[name='adding_ids[]'][value='#{missing.id}']")).to be_present
       end
 
-      it "puts no button on a paused member off the list, and says why" do
+      it "puts a disabled add on a paused member off the list" do
         actor = create(:member, :active, :events_administrator)
         event = create(:event, group: actor.group)
         paused = create(:member, :paused, group: event.group)
@@ -1610,8 +1610,7 @@ RSpec.describe "Events", type: :request do
 
         get edit_group_event_path(event.group, event)
 
-        expect(Nokogiri::HTML(response.body).css("input[value='#{paused.id}']")).to be_empty
-        expect(page_text(response.body)).to include "#{paused.full_name} paused can't be added"
+        expect(Nokogiri::HTML(response.body).at_css("input[name='adding_ids[]'][value='#{paused.id}']")["disabled"]).to eq "disabled"
       end
 
       # A paused or inactive member's registration has no other way off the list.
