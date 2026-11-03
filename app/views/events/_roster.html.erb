@@ -3,7 +3,7 @@
   Who is on the event's list, one row per registration in the `Event#roster` order the reader last chose, the same rows for every reader: what varies is only the order and what a reader may do with a row.
 
   The two capabilities are the reader's rather than a row's, so each is checked once, against a
-  registration with no member on it - the record `Events::RostersController#edit` checks. With no member
+  registration with no member on it - the record `EventsController#update` checks before changing the list. With no member
   `own?` is false, so `update?` there is "change another member's answer" alone; checked per row it
   would hand a plain member controls on their own row. `Registration.new(event:)` rather than
   `event.registrations.new`, which would join the loaded association `events/_counts` sizes.
@@ -103,12 +103,8 @@
     <p class="text-sm">Nobody is on the list yet.</p>
   <% end %>
 
-  <% if may_fill %>
+  <% if anyone_to_reserve || anyone_to_request %>
     <div class="flex flex-wrap gap-2">
-      <%= link_to edit_group_event_roster_path(event.group, event), class: "btn btn-sm" do %>
-        <%= icon :edit, class: "size-icon-control" %>Edit the list
-      <% end %>
-
       <%# Each only while it can do something: every active member already listed, or already requested, leaves it nothing. %>
       <% if anyone_to_reserve %>
         <%= button_to group_event_reservation_path(event.group, event), class: "btn btn-sm" do %>

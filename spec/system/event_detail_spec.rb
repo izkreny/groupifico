@@ -108,7 +108,7 @@ RSpec.describe "The event detail", type: :system do
 
     visit group_event_path(event.group, event, responses: "show")
 
-    measures = [ "Yes", "Maybe", "No", "Edit the list" ].map { |label| find(".btn", exact_text: label).evaluate_script(<<~JS) }
+    measures = [ "Yes", "Maybe", "No", "Request the rest" ].map { |label| find(".btn", exact_text: label).evaluate_script(<<~JS) }
       ((icon, label) => [ icon.width, Math.round(label.left - icon.right) ])(this.querySelector("svg").getBoundingClientRect(), (range => { range.selectNodeContents([ ...this.childNodes ].findLast(node => node.textContent.trim())); return range.getBoundingClientRect() })(document.createRange()))
     JS
     expect(measures).to all eq [ 20, 8 ]

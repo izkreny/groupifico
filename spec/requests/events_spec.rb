@@ -786,16 +786,6 @@ RSpec.describe "Events", type: :request do
       expect(Nokogiri::HTML(response.body).at_css("header a[aria-label='Back']")&.[]("href")).to eq group_event_path(event.group, event)
     end
 
-    it "takes the back chevron from Edit the list back to the event" do
-      owner = create(:member, :active, :owner)
-      event = create(:event, group: owner.group, creator: owner)
-      sign_in_as(owner.user)
-
-      get edit_group_event_roster_path(event.group, event)
-
-      expect(Nokogiri::HTML(response.body).at_css("header a[aria-label='Back']")&.[]("href")).to eq group_event_path(event.group, event)
-    end
-
     context "when not signed in" do
       it "redirects to the sign-in page" do
         event = create(:event)
@@ -849,7 +839,7 @@ RSpec.describe "Events", type: :request do
         get group_event_path(event.group, event)
 
         expect(page_text(response.body)).to include "Ben Cole"
-        expect(response.body).not_to include "Yes for Ben Cole", "Edit the list"
+        expect(response.body).not_to include "Yes for Ben Cole"
         expect(response.body).not_to include "Request a response from Ben Cole", "Request the rest"
       end
 
@@ -916,7 +906,7 @@ RSpec.describe "Events", type: :request do
       end
 
       # The day before `detailed_event`, since an event that has ended offers no Maybe pill.
-      it "draws the answer pills on every roster row, and Edit the list" do
+      it "draws the answer pills on every roster row" do
         travel_to Time.zone.parse("2026-09-01 12:00") do
           owner = create(:member, :active, :owner)
           event = detailed_event(owner)
@@ -925,7 +915,6 @@ RSpec.describe "Events", type: :request do
           get group_event_path(event.group, event)
 
           expect(response.body).to include "Yes for Ben Cole", "Maybe for Carla Duke", "No for Alice Bird"
-          expect(response.body).to include edit_group_event_roster_path(event.group, event)
         end
       end
 
@@ -1041,7 +1030,7 @@ RSpec.describe "Events", type: :request do
 
         get group_event_path(event.group, event)
 
-        expect(response.body).to include "Edit the list"
+        expect(response.body).to include %(aria-label="Edit")
         expect(response.body).not_to include "Request the rest"
       end
 
@@ -1086,7 +1075,7 @@ RSpec.describe "Events", type: :request do
 
         expect(page_text(response.body)).to match(/Alice Bird.*Ben Cole.*Carla Duke/)
         expect(response.body).to include "Place reserved, no response requested yet", "Response requested"
-        expect(response.body).not_to include "Yes for Ben Cole", "Edit the list"
+        expect(response.body).not_to include "Yes for Ben Cole"
         expect(response.body).not_to include "Yes for #{member.full_name}", "Request a response from Ben Cole", "Request the rest", "Reserve a place for everyone"
       end
 
@@ -1221,7 +1210,7 @@ RSpec.describe "Events", type: :request do
     # three roles keep for themselves - copying it, deleting it, overruling an answer, taking
     # somebody off the list.
     context "when signed in as the event's manager" do
-      it "offers Edit and Edit the list, and nothing the roles keep for themselves" do
+      it "offers Edit, and nothing the roles keep for themselves" do
         manager = create(:member, :active)
         event = detailed_event(manager)
         event.update!(manager:)
@@ -1229,7 +1218,7 @@ RSpec.describe "Events", type: :request do
 
         get group_event_path(event.group, event)
 
-        expect(response.body).to include %(aria-label="Edit"), edit_group_event_roster_path(event.group, event)
+        expect(response.body).to include %(aria-label="Edit")
         expect(response.body).not_to include %(aria-label="Duplicate"), "Yes for Ben Cole"
       end
 
@@ -1271,7 +1260,7 @@ RSpec.describe "Events", type: :request do
         expect(response.body).to include %(aria-label="Duplicate"), %(aria-label="Edit")
       end
 
-      it "draws the answer pills on another member's row, and Edit the list" do
+      it "draws the answer pills on another member's row" do
         actor = create(:member, :active, :events_administrator)
         event = detailed_event(actor)
         sign_in_as(actor.user)
@@ -1279,7 +1268,6 @@ RSpec.describe "Events", type: :request do
         get group_event_path(event.group, event)
 
         expect(response.body).to include "Yes for Ben Cole"
-        expect(response.body).to include edit_group_event_roster_path(event.group, event)
       end
 
       # The day before `detailed_event`, since an event that has ended takes no `maybe`.
@@ -1306,7 +1294,7 @@ RSpec.describe "Events", type: :request do
 
         expect(page_text(response.body)).to include "Tuesday rehearsal"
         expect(response.body).not_to include %(aria-label="Duplicate"), %(aria-label="Edit")
-        expect(response.body).not_to include "Yes for Ben Cole", "Edit the list"
+        expect(response.body).not_to include "Yes for Ben Cole"
       end
     end
   end
