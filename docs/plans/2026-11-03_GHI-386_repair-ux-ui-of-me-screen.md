@@ -4,7 +4,7 @@
 
 ## How this branch was worked
 
-This plan is written after the work, on purpose, as #386 asks: it is worked as #364 was, each acceptance criterion collected as it was solved, one signed commit per AC, and the plan and the pull request last. The ACs below are the commits in order.
+This plan is written after the work, on purpose, as #386 asks: it is worked as #364 was, each acceptance criterion collected as it was solved, one signed commit per AC, and the plan and the pull request last. The ACs below are the commits in order; one test-only commit, `cd5a14d`, which points the switcher's specs at the switcher now that the Me menu is a second `<details>` in the header, carries no AC number of its own.
 
 The owner asked for the avatar to open a dropdown like the group switcher and the events list menu, with no separate profile screen. The options were drawn side by side after a Mobbin search of how shipped apps open an account menu, and the owner chose the one where the menu leads to the existing edit screen. The menu was built through the daisyUI Blueprint MCP server and checked in headless Chromium in both themes.
 
@@ -13,6 +13,8 @@ The owner asked for the avatar to open a dropdown like the group switcher and th
 - AC 1 · feat(fullstack): open a Me menu from the avatar
 - AC 2 · feat(frontend): draw icons on the Me menu rows
 - AC 3 · fix(frontend): name the Me menu rows for what they hold
+- AC 4 · fix(frontend): quiet the Me menu icons, a person for profile
+- AC 5 · fix(frontend): the Me menu's email in secondary
 
 ## Verification
 
@@ -30,4 +32,4 @@ Decisions the owner made along the way that have no commit of their own:
 2. The row and the screen are both called Edit profile, not a list of the fields, because notifications and settings will join it.
 3. Delete my account leads Edit profile's button row, as a delete does on every edit screen, rather than sitting in the menu; Back, Cancel and Save go home.
 4. The menu stays a `<details>` like the switcher and the events list, against the daisyUI MCP's popover rule: Chromium shows no accessibility difference, and about 6% of the browsers the app admits would open a popover menu mid-screen or not at all. Moving all three menus is #400, marked someday.
-5. The rows carry icons, unlike the switcher and the events list, as most account menus on Mobbin do: `user-circle` for Edit profile, since a pencil would not tell its future siblings apart, the legend's `new` for New group, and Heroicons' sign-out arrow; at 20px, 8px from the label, in the label's ink, as every other icon-and-label control.
+5. The rows carry icons, unlike the switcher and the events list, as most account menus on Mobbin do: Heroicons' `user` for Edit profile, since a pencil would not tell its future siblings apart, the legend's `new` for New group, and Heroicons' sign-out arrow. They sit at 20px, 8px from the label, as every icon-and-label control does, in the muted icon ink the event screen gives the icons beside its facts.
