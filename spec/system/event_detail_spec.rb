@@ -366,7 +366,7 @@ RSpec.describe "The event detail", type: :system do
     visit group_event_path(event.group, event)
     open_roster(sorted_by: "Status")
 
-    expect(page).to have_css "th[aria-sort='ascending']", text: "Status"
+    expect(page).to have_css "th[aria-sort='ascending']", text: "STATUS"
     expect(roster_names.index("Carla Duke")).to be < roster_names.index("Ben Cole")
     expect(page).to be_accessible
   end
@@ -390,7 +390,7 @@ RSpec.describe "The event detail", type: :system do
     visit group_event_path(event.group, event)
     open_roster(sorted_by: "Member")
 
-    expect(page).to have_css "th[aria-sort='descending']", text: "Member"
+    expect(page).to have_css "th[aria-sort='descending']", text: "MEMBER"
     expect(roster_names.index("Carla Duke")).to be < roster_names.index("Ben Cole")
     expect(page).to be_accessible
   end
