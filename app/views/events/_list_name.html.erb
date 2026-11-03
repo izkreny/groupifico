@@ -1,5 +1,5 @@
 <%# locals: (member:, mark:) %>
-<div class="flex flex-wrap items-center gap-1">
+<div class="flex flex-wrap items-center gap-icon-label">
   <span class="<%= mark %>"><%= member.full_name %></span>
   <% unless member.active? %>
     <span class="badge badge-sm badge-ghost"><%= member.status %></span>

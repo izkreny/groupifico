@@ -186,6 +186,18 @@ RSpec.describe "The event form", type: :system do
     expect([ leaving, arriving ].map { |member| name_decoration(member) }).to eq %w[ line-through underline ]
   end
 
+  it "sets a status badge 8px from the name" do
+    actor = create(:member, :active, :events_administrator)
+    paused = create(:member, :paused, group: actor.group)
+    event = create(:event, group: actor.group)
+    sign_in_as actor.user
+
+    visit edit_group_event_path(event.group, event)
+
+    name = find("#event_list span", exact_text: paused.full_name)
+    expect(evaluate_script("arguments[0].nextElementSibling.getBoundingClientRect().left - arguments[0].getBoundingClientRect().right", name)).to eq 8
+  end
+
   it "saves what is marked with the event" do
     actor = create(:member, :active, :events_administrator)
     event, leaving, arriving = event_to_edit_the_list_of(actor)
