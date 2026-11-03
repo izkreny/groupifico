@@ -1,0 +1,45 @@
+<%# locals: (event:, namespace: nil) %>
+<%#
+  WHY: who is on the list is edited inside the event's own form, so each button is a checkbox drawn as one: it posts with the event's Save rather than acting on its own, and a refused save draws it again pressed, read back from what was posted. A pressed `+` is `adding_ids`, a pressed trash `removing_ids`, beside the event rather than in it, as `EventsController#update` reads them.
+
+  WHY: a trash a reader may not press is drawn disabled rather than left out, so every row on the list keeps the same column, and the line beneath the name says why it stays. A paused member gets no button at all, because there is nothing a press could do.
+%>
+<% may_remove = allowed_to?(:destroy?, Registration.new(event: event)) %>
+<% listed = event.roster.map(&:member) %>
+<% addable, paused = members_available(event.group, event).partition(&:active?) %>
+<% adding = Array(params[:adding_ids]).map(&:to_s) %>
+<% removing = Array(params[:removing_ids]).map(&:to_s) %>
+
+<fieldset class="fieldset" id="<%= [ namespace, "event_list" ].compact.join("_") %>">
+  <legend class="label">Who&rsquo;s on the list</legend>
+
+  <ul class="list">
+    <% [ [ listed, "removing_ids[]", :delete, "Remove", removing ], [ addable, "adding_ids[]", :new, "Add", adding ] ].each do |members, name, glyph, verb, pressed| %>
+      <% members.each do |member| %>
+        <% id = [ namespace, dom_id(member, name.delete_suffix("_ids[]")) ].compact.join("_") %>
+        <% disabled = glyph == :delete && !may_remove %>
+        <li class="list-row group items-center px-0 <%= glyph == :delete ? "has-checked:bg-error/10" : "has-checked:bg-success/10" %>">
+          <div class="list-col-grow">
+            <span class="block <%= "group-has-checked:line-through" if glyph == :delete %>"><%= member.full_name %></span>
+            <span class="block text-xs group-has-checked:hidden"><%= disabled ? "only an administrator can remove" : member.status %></span>
+            <span class="hidden text-xs group-has-checked:block"><%= glyph == :delete ? "will be removed" : "will be added" %></span>
+          </div>
+
+          <label class="btn btn-sm btn-square <%= glyph == :delete ? "has-checked:btn-error" : "has-checked:btn-success" %> has-focus-visible:outline-2 has-focus-visible:outline-offset-2 <%= "btn-disabled" if disabled %>">
+            <%= check_box_tag name, member.id, pressed.include?(member.id.to_s), id:, class: "sr-only", disabled:, aria: { label: "#{verb} #{member.full_name}" } %>
+            <%= icon glyph, class: "size-icon-control" %>
+          </label>
+        </li>
+      <% end %>
+    <% end %>
+
+    <% paused.each do |member| %>
+      <li class="list-row items-center px-0 text-muted">
+        <div class="list-col-grow">
+          <span class="block"><%= member.full_name %></span>
+          <span class="block text-xs">paused · can't be added</span>
+        </div>
+      </li>
+    <% end %>
+  </ul>
+</fieldset>

@@ -17,7 +17,11 @@
     </div>
 
     <%# Frames 4e, 4f and 4k: fills the list once the event is saved, by holding a place for everyone active and not yet on it, or by requesting their responses too. One choice, because requesting already holds the place. Drawn for a reader the registering row admits, the check `EventsController` makes. %>
-    <% if allowed_to?(:create?, Registration.new(event: event)) %>
+    <%# WHY: a saved event already has a list, so its form edits that list member by member instead, and the roster's own buttons cover filling it at once. %>
+    <% may_fill = allowed_to?(:create?, Registration.new(event: event)) %>
+    <% if may_fill && event.persisted? %>
+      <%= render "events/list_fields", event:, namespace: %>
+    <% elsif may_fill %>
       <fieldset class="fieldset">
         <legend class="label">Fill the list</legend>
 

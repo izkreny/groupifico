@@ -7,7 +7,7 @@ require "rails_helper"
 # picked, who is offered Correct it and Delete, what a refused save keeps and what the duplicate
 # note says are all `spec/requests/events_spec.rb`'s assertions, and per the duplication rule in
 # `.agents/testing.md` none of them comes back here. What is left: that the status icons paint as
-# one control whose picked segment names itself, that New address unfolds its fields, that filling the list lands its save, and that Correct it, Cancel and Delete land where they say.
+# one control whose picked segment names itself, that New address unfolds its fields, that filling the list and marking who is on it land their save, and that Correct it, Cancel and Delete land where they say.
 RSpec.describe "The event form", type: :system do
   include ActionView::RecordIdentifier
 
@@ -127,21 +127,21 @@ RSpec.describe "The event form", type: :system do
     expect(event.reload.status).to eq "confirmed"
   end
 
-  # Who is reserved or requested is `spec/requests/events_spec.rb`'s. That one choice replaces the other is what only a browser's radio group does.
+  # Who is reserved or requested is `spec/requests/events_spec.rb`'s. That one choice replaces the other is what only a browser's radio group does. The duplicate screen, because filling the list is a new event's choice and the copy arrives with its dates already filled.
   it "takes one way of filling the list, and saves with it picked" do
     actor = create(:member, :active, :events_administrator)
     event = create(:event, group: actor.group)
     sign_in_as actor.user
 
-    visit edit_group_event_path(event.group, event)
+    visit duplicate_group_event_path(event.group, event)
     choose "Reserve a place for every active member"
     choose "Request response from all active members"
 
     expect(page).to have_unchecked_field "Reserve a place for every active member"
-    click_button "Save changes"
+    click_button "Create copy"
 
-    expect(page).to have_current_path group_event_path(event.group, event)
-    expect(event.registrations.pluck(:status).uniq).to eq %w[ response_requested ]
+    expect(page).to have_text "Event was successfully created."
+    expect(Registration.where(event: actor.group.events.where.not(id: event.id)).pluck(:status).uniq).to eq %w[ response_requested ]
   end
 
   # WHY: the only place the label a reader picks meets the status it writes, since the request specs post the value themselves.
@@ -150,12 +150,72 @@ RSpec.describe "The event form", type: :system do
     event = create(:event, group: actor.group)
     sign_in_as actor.user
 
-    visit edit_group_event_path(event.group, event)
+    visit duplicate_group_event_path(event.group, event)
+    choose "Not now"
     choose "Reserve a place for every active member"
+    click_button "Create copy"
+
+    expect(page).to have_text "Event was successfully created."
+    expect(Registration.where(event: actor.group.events.where.not(id: event.id)).pluck(:status).uniq).to eq %w[ reserved ]
+  end
+
+  # Who lands on the list is `spec/requests/events_spec.rb`'s. That a press marks a row without saving and a second press unmarks it is what only a browser does.
+  it "marks a member taken off without saving, and unmarks them on a second press" do
+    actor = create(:member, :active, :events_administrator)
+    event, leaving, = event_to_edit_the_list_of(actor)
+    sign_in_as actor.user
+
+    visit edit_group_event_path(event.group, event)
+    press "Remove", leaving
+
+    expect(page).to have_text "will be removed"
+    expect(event.registrations.pluck(:member_id)).to eq [ leaving.id ]
+    press "Remove", leaving
+    expect(page).to have_no_text "will be removed"
+  end
+
+  it "saves what is marked with the event" do
+    actor = create(:member, :active, :events_administrator)
+    event, leaving, arriving = event_to_edit_the_list_of(actor)
+    sign_in_as actor.user
+
+    visit edit_group_event_path(event.group, event)
+    press "Remove", leaving
+    press "Add", arriving
     click_button "Save changes"
 
-    expect(page).to have_current_path group_event_path(event.group, event)
-    expect(event.registrations.pluck(:status).uniq).to eq %w[ reserved ]
+    expect(page).to have_text "Event was successfully updated."
+    expect(event.registrations.pluck(:member_id)).to eq [ arriving.id ]
+  end
+
+  it "paints a pressed + and a pressed trash, with no accessibility violations, in light" do
+    actor = create(:member, :active, :events_administrator)
+    event, leaving, arriving = event_to_edit_the_list_of(actor)
+    sign_in_as actor.user
+    prefer_colour_scheme :light
+
+    visit edit_group_event_path(event.group, event)
+    press "Remove", leaving
+    press "Add", arriving
+
+    expect(page).to paint "label.btn:has(input[name='removing_ids[]']:checked)"
+    expect(page).to paint "label.btn:has(input[name='adding_ids[]']:checked)"
+    expect(page).to be_accessible
+  end
+
+  it "paints a pressed + and a pressed trash, with no accessibility violations, in dark" do
+    actor = create(:member, :active, :events_administrator)
+    event, leaving, arriving = event_to_edit_the_list_of(actor)
+    sign_in_as actor.user
+    prefer_colour_scheme :dark
+
+    visit edit_group_event_path(event.group, event)
+    press "Remove", leaving
+    press "Add", arriving
+
+    expect(page).to paint "label.btn:has(input[name='removing_ids[]']:checked)"
+    expect(page).to paint "label.btn:has(input[name='adding_ids[]']:checked)"
+    expect(page).to be_accessible
   end
 
   # WHY: axe does not measure a boundary, and an unpicked radio is nothing but its outline.
@@ -279,6 +339,18 @@ RSpec.describe "The event form", type: :system do
   end
 
   private
+    # An event with one member on its list and one active member off it, in the actor's group.
+    def event_to_edit_the_list_of(actor)
+      event = create(:event, group: actor.group)
+      leaving = create(:registration, event:, member: create(:member, :active, group: event.group)).member
+      [ event, leaving, create(:member, :active, group: event.group) ]
+    end
+
+    # The list's buttons are labels around a visually hidden checkbox, which carries the name.
+    def press(verb, member)
+      find("label:has(input[aria-label='#{verb} #{member.full_name}'])").click
+    end
+
     def event_at_a_saved_address
       actor = create(:member, :active, :events_administrator)
 

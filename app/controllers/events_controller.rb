@@ -2,6 +2,8 @@ class EventsController < ApplicationController
   # WHY: what the form picks for an event not yet saved, which nobody has listed anybody for. The screens set it rather than the model, so an event built anywhere else fills nothing unless told to, and a saved event's form stays on Not now.
   RESERVED_FOR_A_NEW_EVENT = "reserve".freeze
 
+  MOVED_ON = "Nothing was saved: somebody changed the list while you were editing it. Here it is again.".freeze
+
   include GroupScoped
 
   before_action :set_event, only: %i[ show duplicate edit update destroy ]
@@ -87,13 +89,18 @@ class EventsController < ApplicationController
     end
   end
 
+  # WHY: who is on the list saves with the event, all or nothing, so a refused save leaves the list as it was and the form draws the posted marks again. Both rules are checked against the event as it was loaded, before anything is assigned, so handing it on in the same save decides nothing about this reader's own changes.
   def update
     authorize! @event
-    authorize_reservation!
+    authorize_list_changes!
 
-    if @event.update(event_params)
-      @event.fill_list
+    saved = @event.transaction do
+      @event.update(event_params).tap do |updated|
+        @event.update_roster(arriving: arriving_members, leaving: leaving_registrations) if updated
+      end
+    end
 
+    if saved
       redirect_to group_event_path(@group, @event),
         notice: "Event was successfully updated.",
         status: :see_other
@@ -102,6 +109,12 @@ class EventsController < ApplicationController
 
       render :edit, status: :unprocessable_content
     end
+  rescue ActiveRecord::RecordNotUnique
+    # WHY: a member added here landed on the list from somewhere else while this request was writing; the transaction has rolled the whole save back, so the form is drawn again as it was posted.
+    flash.now[:alert] = MOVED_ON
+    @event.build_address unless @event.address
+
+    render :edit, status: :unprocessable_content
   end
 
   def destroy
@@ -155,11 +168,27 @@ class EventsController < ApplicationController
       end
     end
 
-    # WHY: on `update` this is checked before anything is assigned, so a `manager_id` changed in the same
-    # request cannot decide whether this reader may reserve. On `create` the event is already built from
-    # the params, and `EventPolicy#create?` admitting `can_manage?(:events)` alone is what keeps it safe.
+    # WHY: the event is already built from the params here, and `EventPolicy#create?` admitting `can_manage?(:events)` alone is what keeps that safe.
     def authorize_reservation!
       authorize! Registration.new(event: @event), to: :create? if params.dig(:event, :list_filling).present?
+    end
+
+    def authorize_list_changes!
+      authorize! Registration.new(event: @event), to: :create? if posted_ids(:adding_ids).any?
+      authorize! Registration.new(event: @event), to: :destroy? if posted_ids(:removing_ids).any?
+    end
+
+    # WHY: only those the form would still offer, rather than the ids as posted: one naming somebody from another group would publish their name through the event's list, and one already registered while the form sat open is dropped here rather than reaching the unique index.
+    def arriving_members
+      @group.members.active.without_registration_for(@event).where(id: posted_ids(:adding_ids))
+    end
+
+    def leaving_registrations
+      @event.registrations.where(member_id: posted_ids(:removing_ids))
+    end
+
+    def posted_ids(key)
+      params.key?(key) ? params.expect(key => []).compact_blank : []
     end
 
     # Present and not ours. A blank passes straight through so the model decides what it means:

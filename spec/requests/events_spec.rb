@@ -1549,6 +1549,49 @@ RSpec.describe "Events", type: :request do
       end
     end
 
+    context "when signed in as an events administrator, editing who is on the list" do
+      it "puts a trash on each member on the list and a + on each active member off it" do
+        actor = create(:member, :active, :events_administrator)
+        event = create(:event, group: actor.group)
+        listed = create(:registration, event:, member: create(:member, :active, group: event.group)).member
+        missing = create(:member, :active, group: event.group)
+        sign_in_as(actor.user)
+
+        get edit_group_event_path(event.group, event)
+
+        fragment = Nokogiri::HTML(response.body)
+        expect(fragment.at_css("input[name='removing_ids[]'][value='#{listed.id}']")["disabled"]).to be_nil
+        expect(fragment.at_css("input[name='adding_ids[]'][value='#{missing.id}']")).to be_present
+      end
+
+      it "puts no button on a paused member off the list, and says why" do
+        actor = create(:member, :active, :events_administrator)
+        event = create(:event, group: actor.group)
+        paused = create(:member, :paused, group: event.group)
+        sign_in_as(actor.user)
+
+        get edit_group_event_path(event.group, event)
+
+        expect(Nokogiri::HTML(response.body).css("input[value='#{paused.id}']")).to be_empty
+        expect(page_text(response.body)).to include "#{paused.full_name} paused · can't be added"
+      end
+
+      # A paused or inactive member's registration has no other way off the list.
+      it "puts a trash on a paused and an inactive member's registration, and lists no inactive member off the list" do
+        actor = create(:member, :active, :events_administrator)
+        event = create(:event, group: actor.group)
+        paused = create(:registration, event:, member: create(:member, :paused, group: event.group)).member
+        gone = create(:registration, event:, member: create(:member, :inactive, group: event.group)).member
+        unlisted = create(:member, :inactive, group: event.group)
+        sign_in_as(actor.user)
+
+        get edit_group_event_path(event.group, event)
+
+        expect(Nokogiri::HTML(response.body).css("input[name='removing_ids[]']").map { it["value"] }).to contain_exactly paused.id.to_s, gone.id.to_s
+        expect(page_text(response.body)).not_to include unlisted.full_name
+      end
+    end
+
     context "when signed in as the event's manager" do
       it "shows the edit event page, holding no role at all" do
         actor = create(:member, :active)
@@ -1571,36 +1614,27 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include "Delete event"
       end
 
-      it "offers filling the list, because reserving and requesting are the manager's too" do
+      it "puts the trash on a member on the list disabled, because removing is not the manager's" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, manager: actor)
+        listed = create(:registration, event:, member: create(:member, :active, group: event.group)).member
         sign_in_as(actor.user)
 
         get edit_group_event_path(event.group, event)
 
-        expect(response.body).to include "Reserve a place for every active member", "Request response from all active members"
-      end
-
-      # WHY: a saved event may already hold its list as somebody wants it, so saving it fills nothing unless they say so.
-      it "picks Not now" do
-        actor = create(:member, :active)
-        event = create(:event, group: actor.group, manager: actor)
-        sign_in_as(actor.user)
-
-        get edit_group_event_path(event.group, event)
-
-        expect(Nokogiri::HTML(response.body).at_css("input[name='event[list_filling]'][checked]")["value"]).to eq ""
+        expect(Nokogiri::HTML(response.body).at_css("input[name='removing_ids[]'][value='#{listed.id}']")["disabled"]).to eq "disabled"
+        expect(page_text(response.body)).to include "#{listed.full_name} only an administrator can remove"
       end
 
       # The order the fields are filled in is a decision of the owner's, and only the markup's order says it.
-      it "draws filling the list after the dates, and Where between the manager and the description" do
+      it "draws who is on the list after the dates, and Where between the manager and the description" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, manager: actor)
         sign_in_as(actor.user)
 
         get edit_group_event_path(event.group, event)
 
-        fields = %w[ event_ends_at event_list_filling_reserve event_manager_id event_address_id_ event_description ]
+        fields = %w[ event_ends_at event_list event_manager_id event_address_id_ event_description ]
         expect(fields.map { response.body.index(%(id="#{it}")) }).to eq fields.map { response.body.index(%(id="#{it}")) }.sort
       end
     end
@@ -1902,6 +1936,32 @@ RSpec.describe "Events", type: :request do
         expect(response.body).to include edit_address_path(event.address)
       end
 
+      it "reserves a place for each member added and removes each member taken off, saving the event with them" do
+        actor = create(:member, :active, :events_administrator)
+        event = create(:event, group: actor.group)
+        leaving = create(:registration, event:, member: create(:member, :active, group: event.group))
+        arriving = create(:member, :active, group: event.group)
+        sign_in_as(actor.user)
+
+        patch group_event_path(event.group, event), params: { event: { name: "Renamed" }, adding_ids: [ arriving.id ], removing_ids: [ leaving.member_id ] }
+
+        expect(response).to redirect_to group_event_path(event.group, event)
+        expect(event.reload.name).to eq "Renamed"
+        expect(event.registrations.pluck(:member_id, :status)).to contain_exactly [ arriving.id, "reserved" ]
+      end
+
+      it "changes nobody on the list when the event is invalid, and keeps the member added marked" do
+        actor = create(:member, :active, :events_administrator)
+        event = create(:event, group: actor.group)
+        arriving = create(:member, :active, group: event.group)
+        sign_in_as(actor.user)
+
+        expect { patch group_event_path(event.group, event), params: { event: { name: "" }, adding_ids: [ arriving.id ] } }
+          .not_to change(Registration, :count)
+        expect(response).to have_http_status :unprocessable_content
+        expect(Nokogiri::HTML(response.body).at_css("input[name='adding_ids[]'][value='#{arriving.id}']")["checked"]).to eq "checked"
+      end
+
       it "ignores a posted group_id, leaving the event in its own group" do
         actor = create(:member, :active, :events_administrator)
         event = create(:event, group: actor.group)
@@ -1914,26 +1974,54 @@ RSpec.describe "Events", type: :request do
       end
     end
 
-    context "when signed in as the event's manager filling the list" do
-      it "reserves for the members still missing and touches no existing registration" do
-        actor = create(:member, :active)
-        event = create(:event, group: actor.group, manager: actor, status: :confirmed)
-        answered = create(:registration, event:, member: actor, status: :no)
-        missing = create(:member, :active, group: event.group)
-        sign_in_as(actor.user)
+    context "when signed in as an events administrator, with a list that moved or a forged post" do
+      it "leaves another event's registration alone, whatever is posted for removal" do
+        event = create(:event)
+        elsewhere = create(:registration, event: create(:event, group: event.group), member: create(:member, :active, group: event.group))
+        sign_in_as(create(:member, :active, :events_administrator, group: event.group).user)
 
-        patch group_event_path(event.group, event), params: { event: { list_filling: "reserve" } }
+        patch group_event_path(event.group, event), params: { event: { name: "Renamed" }, removing_ids: [ elsewhere.member_id ] }
 
-        expect(answered.reload).to be_no
-        expect(event.registrations.reserved.pluck(:member_id)).to contain_exactly(event.creator_id, missing.id)
+        expect(Registration.exists?(elsewhere.id)).to be true
       end
 
-      it "checks the registering row before requesting from everyone" do
+      it "adds nobody who is paused, inactive, already on the list or from another group, and still saves the event" do
+        event = create(:event)
+        paused = create(:member, :paused, group: event.group)
+        gone = create(:member, :inactive, group: event.group)
+        registered = create(:registration, event:, member: create(:member, :active, group: event.group)).member
+        outsider = create(:member, :active)
+        sign_in_as(create(:member, :active, :events_administrator, group: event.group).user)
+
+        expect { patch group_event_path(event.group, event), params: { event: { name: "Renamed" }, adding_ids: [ paused.id, gone.id, registered.id, outsider.id ] } }
+          .not_to change(Registration, :count)
+        expect(event.reload.name).to eq "Renamed"
+      end
+
+      # The row the intersection cannot see: it lands after `arriving_members` has read the set and reaches the unique index instead. The racing row rolls back with the rest here, where a real one on another connection would not, so what this proves is the answer rather than the row count.
+      it "draws the form again, saving nothing, when somebody is added to the list mid-request" do
+        event = create(:event, name: "Original")
+        available = create(:member, :active, group: event.group)
+        sign_in_as(create(:member, :active, :events_administrator, group: event.group).user)
+
+        racing_on(event) do
+          patch group_event_path(event.group, event), params: { event: { name: "Renamed" }, adding_ids: [ available.id ] }
+        end
+
+        expect(response).to have_http_status :unprocessable_content
+        expect(flash[:alert]).to include "somebody changed the list"
+        expect(event.reload.name).to eq "Original"
+      end
+    end
+
+    context "when signed in as the event's manager editing who is on the list" do
+      it "checks the registering row before reserving" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, manager: actor)
+        arriving = create(:member, :active, group: event.group)
         sign_in_as(actor.user)
 
-        expect { patch group_event_path(event.group, event), params: { event: { list_filling: "request" } } }
+        expect { patch group_event_path(event.group, event), params: { event: { name: "Renamed" }, adding_ids: [ arriving.id ] } }
           .to be_authorized_to(:create?, have_attributes(event_id: event.id)).with(RegistrationPolicy)
       end
 
@@ -1945,10 +2033,23 @@ RSpec.describe "Events", type: :request do
         successor = create(:member, :active, group: event.group)
         sign_in_as(actor.user)
 
-        patch group_event_path(event.group, event), params: { event: { manager_id: successor.id, list_filling: "reserve" } }
+        patch group_event_path(event.group, event), params: { event: { manager_id: successor.id }, adding_ids: [ successor.id ] }
 
         expect(event.reload.manager).to eq successor
-        expect(event.registrations.reserved.count).to eq 3
+        expect(event.registrations.reserved.pluck(:member_id)).to eq [ successor.id ]
+      end
+
+      it "refuses a removal and saves nothing, because removing is not the manager's" do
+        actor = create(:member, :active)
+        event = create(:event, group: actor.group, manager: actor, name: "Original")
+        listed = create(:registration, event:, member: create(:member, :active, group: event.group))
+        sign_in_as(actor.user)
+
+        patch group_event_path(event.group, event), params: { event: { name: "Renamed" }, removing_ids: [ listed.member_id ] }
+
+        expect(response).to redirect_to root_path
+        expect(listed.reload).to be_persisted
+        expect(event.reload.name).to eq "Original"
       end
     end
 
@@ -2129,6 +2230,19 @@ RSpec.describe "Events", type: :request do
   # named members in three states, so every row an example reads has a name to find it by. The
   # reader is registered too, with `reader_status:`, and the date is fixed because the schedule
   # line is copy the examples read.
+  # Runs the block with the row the request is about to write already landing from inside the request, after `arriving_members` has read the set, which is the only place a spec can reach that window. The lambda is held in a local so `skip_callback` is handed the object `set_callback` was given.
+  def racing_on(event)
+    insert = ->(registration) {
+      Registration.insert_all!([ { event_id: event.id, member_id: registration.member_id,
+        status: Registration.statuses[:reserved], created_at: Time.current, updated_at: Time.current } ])
+    }
+
+    Registration.set_callback(:create, :before, insert)
+    yield
+  ensure
+    Registration.skip_callback(:create, :before, insert)
+  end
+
   def detailed_event(reader, reader_status: :yes)
     group = reader.group
     alice = create(:member, :active, group:, user: create(:user, :with_full_profile, first_name: "Alice", last_name: "Bird"))
