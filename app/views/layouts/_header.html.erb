@@ -1,4 +1,4 @@
-<%# locals: (brand_name:, group: nil, group_name: nil, title: nil, initials: nil, editable: false, switcher_id: nil, memberships: nil, back_path: nil, tabs: false, section: nil) %>
+<%# locals: (brand_name:, group: nil, group_name: nil, title: nil, profile: nil, me_menu_id: "me-menu", editable: false, switcher_id: nil, memberships: nil, back_path: nil, tabs: false, section: nil) %>
 <%# The leading 20px slot is present whether it holds the group mark or a back chevron: that is what makes every title start at the same x. %>
 <header class="navbar bg-base-100 border-b border-base-content/5 min-h-0 gap-2.5 px-4 py-3">
   <span class="flex-none grid size-icon-control place-items-center">
@@ -52,15 +52,8 @@
       </span>
     <% end %>
 
-    <% if initials %>
-      <%# A `div` rather than a `span`, because `.avatar > div` and `.avatar-placeholder > div`
-          are how daisyUI names the box: the first gives it `aspect-ratio: 1/1` and the second
-          centres what is inside it, and neither selector matches anything else. %>
-      <%= link_to user_profile_path, class: "avatar avatar-placeholder", aria: { label: "#{initials}, me" } do %>
-        <div class="bg-base-300 text-base-content w-8 rounded-full">
-          <span class="text-card-fact"><%= initials %></span>
-        </div>
-      <% end %>
+    <% if profile %>
+      <%= render "layouts/me_menu", profile:, id: me_menu_id %>
     <% end %>
   </span>
 </header>

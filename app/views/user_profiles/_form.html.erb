@@ -1,4 +1,4 @@
-<%# locals: (user_profile:, namespace: nil) %>
+<%# locals: (user_profile:, namespace: nil, leading: nil) %>
 <%# `namespace` is the styleguide's, which draws this form once per theme; every screen leaves it out and keeps its ids. %>
 <%#
   Name and mobile are the profile, the email is the account, and one Save writes both. No hint on
@@ -19,7 +19,8 @@
   <% end %>
 
   <div class="flex flex-wrap items-center gap-2 mt-4">
-    <%= link_to user_profile_path, class: "btn btn-ghost" do %><%= icon :cancel, class: "size-icon-control" %>Cancel<% end %>
+    <%= leading %>
+    <%= link_to root_path, class: "btn btn-ghost" do %><%= icon :cancel, class: "size-icon-control" %>Cancel<% end %>
     <%= form.button class: "btn btn-primary" do %><%= icon :save, class: "size-icon-control" %>Save<% end %>
   </div>
 <% end %>

@@ -309,7 +309,7 @@ RSpec.describe "The event detail", type: :system do
     owner, event, = rostered_event
     sign_in_as owner.user
     tags_below = <<~JS
-      (summary => [...summary.querySelectorAll("svg")].every(icon => icon.getBoundingClientRect().top >= summary.querySelector(".font-heading").getBoundingClientRect().bottom))(document.querySelector("summary"))
+      (summary => [...summary.querySelectorAll("svg")].every(icon => icon.getBoundingClientRect().top >= summary.querySelector(".font-heading").getBoundingClientRect().bottom))(document.querySelector("main summary"))
     JS
 
     resize_to ViewportHelper::MOBILE

@@ -55,7 +55,11 @@ module IconsHelper
     warning: "exclamation-triangle",
     error: "no-symbol",
     signed_out: "lock-closed",
-    resend: "arrow-path"
+    resend: "arrow-path",
+
+    # WHY: the legend draws neither of the Me menu's own rows, so both are Heroicons' own; `profile` is not `edit` because the menu will hold more than one thing a member edits about themselves.
+    profile: "user",
+    sign_out: "arrow-right-start-on-rectangle"
   }.freeze
 
   # Heroicons' filled set for each size class the app draws: solid, mini and micro are drawn on their own 24, 20 and 16px grids, where its outline set exists at 24px alone.

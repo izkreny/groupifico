@@ -25,8 +25,8 @@ RSpec.describe "Deleting my account", type: :system do
     before do
       sign_in_as user
 
-      visit user_profile_path
-      within("##{dom_id(user, :confirm_delete)}_form") { click_button "Delete my account" }
+      visit edit_user_profile_path
+      find("button[form='#{dom_id(user, :confirm_delete)}_form']").click
     end
 
     # WHY: waited until the box's fade-in finishes, because axe measures the colours it sees, and halfway through the fade the block's soft error text reads 3.95:1 against a blend of the sheet and the page behind it.
@@ -74,7 +74,7 @@ RSpec.describe "Deleting my account", type: :system do
       within(".modal-action") { click_button "Keep my account" }
       expect(page).to have_no_css "dialog[open]"
 
-      within("##{dom_id(user, :confirm_delete)}_form") { click_button "Delete my account" }
+      find("button[form='#{dom_id(user, :confirm_delete)}_form']").click
 
       expect(page).to have_field "Type DELETE to confirm", with: ""
       expect(page).to have_button "Delete my account", disabled: true
@@ -112,8 +112,8 @@ RSpec.describe "Deleting my account", type: :system do
     before do
       sign_in_as member.user
 
-      visit user_profile_path
-      within("##{dom_id(member.user, :confirm_delete)}_form") { click_button "Delete my account" }
+      visit edit_user_profile_path
+      find("button[form='#{dom_id(member.user, :confirm_delete)}_form']").click
     end
 
     it "paints the block and keeps the primary disabled whatever is typed" do
@@ -147,8 +147,8 @@ RSpec.describe "Deleting my account", type: :system do
     member = create(:member, :owner)
     co_owner = create(:member, :owner, group: member.group)
     sign_in_as member.user
-    visit user_profile_path
-    within("##{dom_id(member.user, :confirm_delete)}_form") { click_button "Delete my account" }
+    visit edit_user_profile_path
+    find("button[form='#{dom_id(member.user, :confirm_delete)}_form']").click
     fill_in "Type DELETE to confirm", with: "DELETE"
 
     co_owner.inactive!

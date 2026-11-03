@@ -20,16 +20,13 @@ Rails.application.routes.draw do
   # a place is reached from the group or event that uses it, and nothing draws one - #255.
   resources :addresses, only: %i[ show edit update ]
 
-  # No `new` and no `create`: signing up and being added to a group are the two ways to become a user, and
-  # neither of them is a signed-in visitor requesting a second account. Reading and editing the
-  # account is the Me screen's, which one Save writes through the profile, so the account keeps only
-  # its deletion and its two old screens redirect there. `as: nil` so a retired path mints no
-  # `user_edit_path` helper for anything to link to.
+  # No `new` and no `create`: signing up and being added to a group are the two ways to become a user, and neither of them is a signed-in visitor requesting a second account. Editing the account is Edit profile's, which one Save writes through the profile, so the account keeps only its deletion and its retired screens redirect there. The profile has no screen of its own to read, so its GET redirects too: it was the Me screen's URL, which old links and bookmarks still name, and without JavaScript a refused save leaves it in the address bar, where Enter sends a GET that would otherwise answer 404. `as: nil` so a retired path mints no `user_edit_path` helper for anything to link to.
   resource :user, only: %i[ destroy ] do
-    resource :profile, controller: "user_profiles", only: %i[ show edit update ]
+    resource :profile, controller: "user_profiles", only: %i[ edit update ]
   end
-  get "user", to: redirect("/user/profile"), as: nil
+  get "user", to: redirect("/user/profile/edit"), as: nil
   get "user/edit", to: redirect("/user/profile/edit"), as: nil
+  get "user/profile", to: redirect("/user/profile/edit"), as: nil
   resolve("User")        { [ :user         ] }
   resolve("UserProfile") { [ :user_profile ] }
 

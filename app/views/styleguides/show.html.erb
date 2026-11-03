@@ -111,7 +111,8 @@
           group: @group,
           group_name: @group.name,
           title: content_for(:page_title),
-          initials: @owner.initials,
+          profile: @owner.profile,
+          me_menu_id: "me_menu_pushed",
           back_path: group_events_path(@group),
           tabs: true,
           section: :events %>
@@ -178,7 +179,8 @@
           brand_name: Current.brand.name,
           group: @group,
           group_name: @group.name,
-          initials: @owner.initials,
+          profile: @owner.profile,
+          me_menu_id: "me_menu_#{theme}",
           editable: allowed_to?(:edit?, @group),
           switcher_id: "group_switcher_#{theme}",
           tabs: true,
@@ -219,7 +221,7 @@
     <% end %>
   <% end %>
 
-  <%# WHY: the signed-in user's own profile, the one the Me screen lets anybody reach, rather than a sample's nobody else could open. %>
+  <%# WHY: the signed-in user's own profile, the one Edit profile lets anybody reach, rather than a sample's nobody else could open. %>
   <%= render layout: "styleguides/section", locals: { title: "Profile" } do %>
     <%= render "user_profiles/user_profile", user_profile: Current.user.profile %>
   <% end %>

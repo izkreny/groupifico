@@ -15,10 +15,7 @@
 %>
 <%= render layout: "shared/confirm_scope", locals: { enabled: !detached } do %>
   <% if detached %>
-    <form id="<%= id %>_form" action="<%= url %>" method="post" class="hidden">
-      <%= hidden_field_tag :_method, "delete", id: nil %>
-      <%= hidden_field_tag :authenticity_token, form_authenticity_token, id: nil %>
-    </form>
+    <%= render "shared/detached_delete_form", id: "#{id}_form", url: %>
   <% else %>
     <%= button_to safe_join([ icon(:delete, class: "size-icon-control"), confirm ]), url, method: :delete, class: "btn btn-error",
           form: { id: "#{id}_form" }, data: { dialog_target: "trigger" } %>
