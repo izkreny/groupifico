@@ -57,7 +57,8 @@ module IconsHelper
     signed_out: "lock-closed",
     resend: "arrow-path",
 
-    # The Me menu's way out. The legend draws no sign-out, so this is Heroicons' own.
+    # WHY: the legend draws neither of the Me menu's own rows, so both are Heroicons' own; `profile` is not `edit` because the menu will hold more than one thing a member edits about themselves.
+    profile: "user-circle",
     sign_out: "arrow-right-start-on-rectangle"
   }.freeze
 

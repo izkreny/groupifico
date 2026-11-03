@@ -58,12 +58,12 @@ RSpec.describe "The Me menu", type: :system do
     expect(page).to have_current_path edit_user_profile_path
   end
 
-  it "lands on the new group screen from Create group" do
+  it "lands on the new group screen from New group" do
     sign_in_as create(:user)
 
     visit root_path
     open_me_menu
-    click_link "Create group"
+    within("#me-menu") { click_link "New group" }
 
     expect(page).to have_current_path new_group_path
   end
