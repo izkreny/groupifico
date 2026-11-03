@@ -167,10 +167,11 @@ class Event < ApplicationRecord
     end
   end
 
-  # WHY: the list screen's one submit, all or nothing: a new tick holds a place and an untick removes one in the same transaction, so a refused reservation removes nobody either. Returns how many of each.
+  # WHY: the event form's list, saved with the event, all or nothing: a member added holds a place and a member taken off loses theirs in the same transaction, so a refused reservation removes nobody either.
   def update_roster(arriving:, leaving:)
     transaction do
-      [ reserve(arriving).size, leaving.destroy_all.size ]
+      reserve(arriving)
+      leaving.destroy_all
     end
   end
 
