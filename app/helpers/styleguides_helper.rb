@@ -22,7 +22,7 @@ module StyleguidesHelper
     save: "Saving a form: its submit button, such as Save changes, Create event or Send invite.",
     cancel: "Leaving without a change: Cancel in every form's button row, and the keep button on every confirm sheet.",
     dismiss: "Dismissing a flash notice or alert: the x at its end.",
-    sort_ascending: "The Member and Status headers of an event's list, as one icon with the down arrow: inked in primary while the list runs A to Z or answers first.",
+    sort_ascending: "The Name and Response headers of an event's list, as one icon with the down arrow: inked in primary while the list runs A to Z or answers first.",
     sort_descending: "The same pair, inked in primary while the list runs the other way after a second press.",
     confirm: "Spending an emailed link: the button on the sign-in link and sign-up confirmation pages.",
     back: "Going back: the Back link in the header of a pushed screen.",
