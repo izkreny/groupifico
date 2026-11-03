@@ -48,7 +48,7 @@ RSpec.describe RegistrationsHelper, type: :helper do
       create(:member, :active, group: event.group)
       create(:registration, event:, member: event.creator)
 
-      expect(helper.list_tally(event.group, event)).to eq "1 of 2 on the list"
+      expect(helper.list_tally(event.group, event)).to eq "1 of 2 active members are on the list."
     end
 
     it "counts neither a paused nor an inactive member on either side" do
@@ -56,7 +56,33 @@ RSpec.describe RegistrationsHelper, type: :helper do
       create(:registration, event:, member: create(:member, :paused, group: event.group))
       create(:registration, event:, member: create(:member, :inactive, group: event.group))
 
-      expect(helper.list_tally(event.group, event)).to eq "0 of 1 on the list"
+      expect(helper.list_tally(event.group, event)).to eq "0 of 1 active members are on the list."
+    end
+  end
+
+  describe "#not_active_on_list_line" do
+    it "counts the paused and the inactive members on the list in one sentence" do
+      event = create(:event)
+      2.times { create(:registration, event:, member: create(:member, :paused, group: event.group)) }
+      create(:registration, event:, member: create(:member, :inactive, group: event.group))
+
+      expect(helper.not_active_on_list_line(event)).to eq "2 paused, and 1 inactive members are on the list too."
+    end
+
+    it "names only the kind the list holds, in the singular for one" do
+      event = create(:event)
+      create(:registration, event:, member: create(:member, :paused, group: event.group))
+
+      expect(helper.not_active_on_list_line(event)).to eq "1 paused member is on the list too."
+    end
+
+    # A paused member off the list is not on it, so nothing is said about them here.
+    it "is nil when everybody on the list is active" do
+      event = create(:event)
+      create(:registration, event:, member: create(:member, :active, group: event.group))
+      create(:member, :paused, group: event.group)
+
+      expect(helper.not_active_on_list_line(event)).to be_nil
     end
   end
 
@@ -73,43 +99,6 @@ RSpec.describe RegistrationsHelper, type: :helper do
 
     it "reads a reserved registration as a place held before any request" do
       expect(helper.registration_status_label(build(:registration, status: :reserved))).to eq "Place reserved, no response requested yet"
-    end
-  end
-
-  describe "#left_out_line" do
-    it "names the paused member who has no registration on the event" do
-      event = create(:event)
-      create(:member, :paused, group: event.group, user: create(:user, email: "dan@example.com"))
-
-      expect(helper.left_out_line(event.group, event)).to eq "dan is paused, left out"
-    end
-
-    it "names several paused members in one sentence, by name" do
-      event = create(:event)
-      create(:member, :paused, group: event.group, user: create(:user, email: "fay@example.com"))
-      create(:member, :paused, group: event.group, user: create(:user, email: "dan@example.com"))
-
-      expect(helper.left_out_line(event.group, event)).to eq "dan and fay are paused, left out"
-    end
-
-    # A member with no profile name is named by their email's local part, which is lower case, and
-    # sorting by byte would put every such name after every capitalised one.
-    it "orders the names whatever case they are in, as the roster below them does" do
-      event = create(:event)
-      create(:member, :paused, group: event.group, user: create(:user, :with_full_profile, first_name: "Bob", last_name: "Ray"))
-      create(:member, :paused, group: event.group, user: create(:user, email: "adam@example.com"))
-
-      expect(helper.left_out_line(event.group, event)).to eq "adam and Bob Ray are paused, left out"
-    end
-
-    # A paused member already on the list has a row of their own, and an inactive one has left the
-    # group, so neither is somebody the roster leaves out.
-    it "is nil when no paused member is missing from the list" do
-      event = create(:event)
-      create(:registration, event:, member: create(:member, :paused, group: event.group))
-      create(:member, :inactive, group: event.group)
-
-      expect(helper.left_out_line(event.group, event)).to be_nil
     end
   end
 end

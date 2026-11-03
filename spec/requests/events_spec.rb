@@ -1034,15 +1034,16 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include "Request the rest"
       end
 
-      it "names a paused member with no registration as left out above the rows" do
+      it "states the tally in one line under the rows, above the buttons, with the paused and inactive members on the list" do
         owner = create(:member, :active, :owner)
         event = detailed_event(owner)
-        create(:member, :paused, group: owner.group, user: create(:user, :with_full_profile, first_name: "Dan", last_name: "Ellis"))
+        create(:registration, event:, member: create(:member, :paused, group: owner.group))
+        create(:member, :active, group: owner.group)
         sign_in_as(owner.user)
 
         get group_event_path(event.group, event)
 
-        expect(page_text(response.body)).to match(/Dan Ellis is paused, left out.*Alice Bird/)
+        expect(page_text(response.body)).to match(/Carla Duke.*4 of 5 active members are on the list\. 1 paused member is on the list too\..*Reserve a place for everyone/)
       end
     end
 
@@ -1186,7 +1187,7 @@ RSpec.describe "Events", type: :request do
 
           get group_event_path(event.group, event)
 
-          expect(page_text(response.body)).to match(/Are you coming\?.*Who’s coming.*Who’s on the list/)
+          expect(page_text(response.body)).to match(/Are you coming\?.*Who’s coming.*active members are on the list/)
           expect(Nokogiri::HTML(response.body).css(".card").map(&:text).join).not_to include "Are you coming?"
         end
       end
