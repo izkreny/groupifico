@@ -1080,7 +1080,7 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include "Yes for #{member.full_name}", "Request a response from Ben Cole", "Request the rest", "Reserve a place for everyone"
       end
 
-      it "draws the list by status when the reader last chose it, with the Status header marked sorted" do
+      it "draws the list by status when the reader last chose it, with the Response header marked sorted" do
         member = create(:member, :active)
         event = detailed_event(member)
         sign_in_as(member.user)
@@ -1089,7 +1089,7 @@ RSpec.describe "Events", type: :request do
         get group_event_path(event.group, event)
 
         expect(page_text(response.body)).to match(/Alice Bird.*Carla Duke.*Ben Cole/)
-        expect(Nokogiri::HTML(response.body).css("th[aria-sort='ascending']").map { it.text.strip }).to eq [ "Status" ]
+        expect(Nokogiri::HTML(response.body).css("th[aria-sort='ascending']").map { it.text.strip }).to eq [ "Response" ]
       end
 
       it "draws the list in reverse when the reader last chose descending, with the header marked so, and offers ascending on its next press" do
@@ -1103,7 +1103,7 @@ RSpec.describe "Events", type: :request do
 
         fragment = Nokogiri::HTML(response.body)
         expect(page_text(response.body)).to match(/Carla Duke.*Ben Cole.*Alice Bird/)
-        expect(fragment.css("th[aria-sort='descending']").map { it.text.strip }).to eq [ "Member" ]
+        expect(fragment.css("th[aria-sort='descending']").map { it.text.strip }).to eq [ "Name" ]
         expect(fragment.css("th[aria-sort] input[name='descending']").map { it["value"] }).to eq [ "false" ]
       end
 
@@ -1117,7 +1117,7 @@ RSpec.describe "Events", type: :request do
         expect(Nokogiri::HTML(response.body).css("th input[name='descending']").map { it["value"] }).to eq %w[ true false ]
       end
 
-      it "draws the list by name for an order the list does not offer, with the Member header marked sorted" do
+      it "draws the list by name for an order the list does not offer, with the Name header marked sorted" do
         member = create(:member, :active)
         event = detailed_event(member)
         sign_in_as(member.user)
@@ -1126,7 +1126,7 @@ RSpec.describe "Events", type: :request do
         get group_event_path(event.group, event)
 
         expect(page_text(response.body)).to match(/Alice Bird.*Ben Cole.*Carla Duke/)
-        expect(Nokogiri::HTML(response.body).css("th[aria-sort='ascending']").map { it.text.strip }).to eq [ "Member" ]
+        expect(Nokogiri::HTML(response.body).css("th[aria-sort='ascending']").map { it.text.strip }).to eq [ "Name" ]
       end
 
       # `detailed_event` has ended, so a place held for the reader is now a question about whether they went.

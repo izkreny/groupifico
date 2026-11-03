@@ -145,7 +145,7 @@ RSpec.describe "The event detail", type: :system do
     page.driver.resize(1280, 700)
 
     visit group_event_path(event.group, event)
-    open_roster(sorted_by: "Status")
+    open_roster(sorted_by: "Response")
     page.execute_script("document.querySelector(`[aria-label='Yes for Mlex Mox']`).scrollIntoView({ block: 'center' }); document.addEventListener('turbo:submit-start', () => window.held = scrollY, { once: true })")
     click_button "Yes for Mlex Mox"
 
@@ -364,9 +364,9 @@ RSpec.describe "The event detail", type: :system do
     sign_in_as owner.user
 
     visit group_event_path(event.group, event)
-    open_roster(sorted_by: "Status")
+    open_roster(sorted_by: "Response")
 
-    expect(page).to have_css "th[aria-sort='ascending']", text: "STATUS"
+    expect(page).to have_css "th[aria-sort='ascending']", text: "RESPONSE"
     expect(roster_names.index("Carla Duke")).to be < roster_names.index("Ben Cole")
     expect(page).to be_accessible
   end
@@ -401,9 +401,9 @@ RSpec.describe "The event detail", type: :system do
     sign_in_as owner.user
 
     visit group_event_path(event.group, event)
-    open_roster(sorted_by: "Member")
+    open_roster(sorted_by: "Name")
 
-    expect(page).to have_css "th[aria-sort='descending']", text: "MEMBER"
+    expect(page).to have_css "th[aria-sort='descending']", text: "NAME"
     expect(roster_names.index("Carla Duke")).to be < roster_names.index("Ben Cole")
     expect(page).to be_accessible
   end
@@ -414,7 +414,7 @@ RSpec.describe "The event detail", type: :system do
     sign_in_as owner.user
 
     visit group_event_path(event.group, event)
-    open_roster(sorted_by: "Status")
+    open_roster(sorted_by: "Response")
     click_button "No for Carla Duke"
 
     expect(page).to have_css "button[aria-label='No for Carla Duke'][aria-current='true']"

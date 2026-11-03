@@ -36,7 +36,7 @@
       <thead>
         <tr>
           <%# WHY: each header is a form rather than a link, because choosing an order stores it, and a GET writes nothing. Both draw the up and down arrows as one icon; the sorted header inks in primary the one the list runs by and turns the list round on its next press, and the other mutes its name and both arrows and starts its order from the top. %>
-          <% { "name" => "Member", "status" => "Status" }.each do |value, heading| %>
+          <% { "name" => "Name", "status" => "Response" }.each do |value, heading| %>
             <% sorted = order == value %>
             <% running = (descending ? :sort_descending : :sort_ascending) if sorted %>
             <% arrows = %i[ sort_ascending sort_descending ].map { |glyph| icon(glyph, class: [ "size-icon-inline", (glyph == running ? "text-primary" : "text-icon-muted"), ("-ms-icon-pair" if glyph == :sort_descending) ].compact.join(" ")) } %>
