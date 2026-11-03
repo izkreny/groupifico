@@ -51,7 +51,8 @@
         </tr>
       </thead>
 
-      <tbody>
+      <%# WHY: daisyUI draws no divider under a table's last row; the list closes on the same one as its other rows, written as daisyUI mixes it, in oklch, so it is the same colour rather than a near one. %>
+      <tbody class="[&>tr:last-child>td]:border-b [&>tr:last-child>td]:border-[color:color-mix(in_oklch,var(--color-base-content)_5%,transparent)]">
         <% roster.each do |registration| %>
           <% name = registration.member.full_name %>
           <tr id="<%= dom_id registration, :roster %>">

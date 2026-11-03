@@ -382,6 +382,19 @@ RSpec.describe "The event detail", type: :system do
     expect(roster_header_reading).to eq("running" => true, "muted" => true, "names" => [ true, true ], "pair_closer" => true)
   end
 
+  # daisyUI's table leaves its last row without the divider the others carry; the list closes on one too, so the line under it starts from a rule.
+  it "draws the same divider under the last row as under the others" do
+    owner, event, = rostered_event
+    sign_in_as owner.user
+
+    visit group_event_path(event.group, event)
+    open_roster
+
+    dividers = page.evaluate_script(%([ ...document.querySelectorAll("tbody tr") ].map(tr => { const s = getComputedStyle(tr.cells[0]); return [ s.borderBottomWidth, s.borderBottomStyle, s.borderBottomColor ].join(" ") })))
+    expect(dividers.uniq).to eq [ dividers.first ]
+    expect(dividers.first).to start_with "1px solid"
+  end
+
   # A second press of the sorted header is what reverses it, and its glyph is what says which way the list now runs.
   it "reverses the list on a second press of the sorted header, and turns its arrow" do
     owner, event, = rostered_event
