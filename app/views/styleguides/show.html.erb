@@ -221,7 +221,7 @@
     <% end %>
   <% end %>
 
-  <%# WHY: the signed-in user's own profile, the one the Me screen lets anybody reach, rather than a sample's nobody else could open. %>
+  <%# WHY: the signed-in user's own profile, the one Edit profile lets anybody reach, rather than a sample's nobody else could open. %>
   <%= render layout: "styleguides/section", locals: { title: "Profile" } do %>
     <%= render "user_profiles/user_profile", user_profile: Current.user.profile %>
   <% end %>
