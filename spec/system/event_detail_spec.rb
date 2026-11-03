@@ -276,6 +276,19 @@ RSpec.describe "The event detail", type: :system do
     expect(gap_to_row_end("##{roster_row(ben)} [aria-label='No for Ben Cole']", ".card-body")).to be >= 0
   end
 
+  # A member with no profile is drawn by their email, one word a table cell will not break by itself, so it would widen the list past the card. The row with the most controls is the one that would leave it.
+  it "fits the list inside the card on a phone when a name is one long word" do
+    owner, event, ben = rostered_event
+    create(:registration, event:, status: :yes, member: create(:member, :active, group: event.group, user: create(:user, email: "bartholomew.featherstonehaugh.maximilian@example.com")))
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_event_path(event.group, event)
+    open_roster
+
+    expect(gap_to_row_end("##{roster_row(ben)} [aria-label='No for Ben Cole']", ".card-body")).to be >= 0
+  end
+
   # Ben's row is the fullest an owner gets, the status, the paper plane and the pills, so it is the one where the status icons would fall into groups, and a phone is where they would wrap.
   it "spaces a roster row's status icons evenly on a phone" do
     owner, event, ben = rostered_event

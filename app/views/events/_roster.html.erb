@@ -59,7 +59,7 @@
         <% roster.each do |registration| %>
           <% name = registration.member.full_name %>
           <tr id="<%= dom_id registration, :roster %>">
-            <td class="px-0 py-2"><%= name %></td>
+            <td class="px-0 py-2 wrap-anywhere"><%= name %></td>
 
             <td class="px-0 py-2">
               <%# WHY: one strip at one gap, so every status icon on the row sits the same distance from its neighbours whichever controls the reader gets. %>
