@@ -24,6 +24,16 @@ RSpec.describe "UserProfiles", type: :request do
       expect(menu.css("li a").map { [ it.text.squish, it["href"] ] }).to eq [ [ "Edit profile", edit_user_profile_path ], [ "Create group", new_group_path ] ]
     end
 
+    it "leads each row with its legend glyph" do
+      sign_in_as(create(:user))
+
+      get groups_path
+      menu = Nokogiri::HTML(response.body).at_css("header details#me-menu")
+
+      drawing = ->(name) { File.read(Rails.root.join("app/assets/svg/icons/heroicons/mini/#{name}.svg"))[/ d="([^"]+)"/, 1] }
+      expect(menu.css("li").map { it.at_css("svg.size-icon-control path")&.[]("d") }).to eq %w[ pencil-square plus arrow-right-start-on-rectangle ].map(&drawing)
+    end
+
     it "signs out through a delete form the Sign out button names" do
       sign_in_as(create(:user))
 

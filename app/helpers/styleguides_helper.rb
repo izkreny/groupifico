@@ -15,8 +15,8 @@ module StyleguidesHelper
     no: "An answer: the reply button and badge on a roster row, its count in Who's coming and on the next-up card, and the reader's own answer on the events list.",
     when: "When an event happens: the time line on the next-up card and on the event screen.",
     where: "Where an event happens: the address line on the next-up card and on the event screen.",
-    new: "Creating a record: New on the events list, New event on an empty Home, New group, Invite on the members list, and Create group on the account screen.",
-    edit: "Editing a record: the group's name in the header, the event screen, Edit the list under the roster, a member's row and screen, the address on the group form, and Correct on the address screen.",
+    new: "Creating a record: New on the events list, New event on an empty Home, New group, Invite on the members list, and Create group in the Me menu.",
+    edit: "Editing a record: the group's name in the header, the event screen, Edit the list under the roster, a member's row and screen, the address on the group form, Correct on the address screen, and Edit profile in the Me menu.",
     duplicate: "Copying an event: Duplicate on the event screen.",
     delete: "Removing a registration, an event, a group, a member or an account: Delete or Remove first in an edit form's button row, Delete my account, and the primary on every confirm sheet.",
     save: "Saving a form: its submit button, such as Save changes, Create event, Update the list or Send invite.",
@@ -24,7 +24,7 @@ module StyleguidesHelper
     dismiss: "Dismissing a flash notice or alert: the x at its end.",
     confirm: "Spending an emailed link: the button on the sign-in link and sign-up confirmation pages.",
     back: "Going back: the Back link in the header of a pushed screen.",
-    go_to: "Going further: See all events on Home, and the name, mobile and email row on the account screen.",
+    go_to: "Going further: See all events on Home.",
     disclose: "Opening the group switcher in the header.",
     close_panel: "Closing the group switcher in the header.",
     home: "The Home tab, in the header and in the bottom dock.",
@@ -40,7 +40,8 @@ module StyleguidesHelper
     warning: "Not drawn yet: the legend's warning alert.",
     error: "An error alert: the flash alert, the error summary atop a form, and the block on the account-deletion sheet.",
     signed_out: "Not drawn yet: the legend's signed-out state.",
-    resend: "Not drawn yet: the legend's resend action."
+    resend: "Not drawn yet: the legend's resend action.",
+    sign_out: "Signing out: Sign out in the Me menu."
   }.freeze
 
   # The named theme's daisyUI colour tokens, name to hex, in the order the stylesheet lists them.

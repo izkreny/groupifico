@@ -20,9 +20,9 @@
     </div>
 
     <ul class="menu w-full p-0 gap-2">
-      <li><%= link_to "Edit profile", edit_user_profile_path %></li>
-      <li><%= link_to "Create group", new_group_path %></li>
-      <li><%= tag.button "Sign out", type: "submit", form: "#{id}_sign_out" %></li>
+      <li><%= link_to edit_user_profile_path do %><%= icon :edit, class: "size-icon-control" %>Edit profile<% end %></li>
+      <li><%= link_to new_group_path do %><%= icon :new, class: "size-icon-control" %>Create group<% end %></li>
+      <li><%= tag.button type: "submit", form: "#{id}_sign_out" do %><%= icon :sign_out, class: "size-icon-control" %>Sign out<% end %></li>
     </ul>
 
     <form id="<%= id %>_sign_out" action="<%= session_path %>" method="post" class="hidden">

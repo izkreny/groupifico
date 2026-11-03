@@ -55,7 +55,10 @@ module IconsHelper
     warning: "exclamation-triangle",
     error: "no-symbol",
     signed_out: "lock-closed",
-    resend: "arrow-path"
+    resend: "arrow-path",
+
+    # The Me menu's way out. The legend draws no sign-out, so this is Heroicons' own.
+    sign_out: "arrow-right-start-on-rectangle"
   }.freeze
 
   # Heroicons' filled set for each size class the app draws: solid, mini and micro are drawn on their own 24, 20 and 16px grids, where its outline set exists at 24px alone.
