@@ -36,7 +36,7 @@ class UsersController < ApplicationController
     end
 
     def refuse_ownerless_groups
-      redirect_to user_profile_path,
+      redirect_to edit_user_profile_path,
         alert: "Your account was not deleted.",
         status: :see_other
     end

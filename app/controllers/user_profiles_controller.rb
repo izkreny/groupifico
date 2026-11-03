@@ -1,10 +1,6 @@
 class UserProfilesController < ApplicationController
   before_action :set_user_profile
 
-  def show
-    authorize! @user_profile
-  end
-
   def edit
     authorize! @user_profile
   end
@@ -13,7 +9,7 @@ class UserProfilesController < ApplicationController
     authorize! @user_profile
 
     if @user_profile.update(user_profile_params)
-      redirect_to user_profile_path,
+      redirect_to root_path,
         notice: "User profile was successfully updated.",
         status: :see_other
     else

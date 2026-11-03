@@ -5,15 +5,15 @@ RSpec.describe "User", type: :request do
   # signed-out pair to assert: no action sits behind either path to be signed in to. A signed-out
   # visitor reaches the sign-in page one hop later, from the profile's own guard.
   describe "GET /user" do
-    it "redirects to the Me screen" do
+    it "redirects to Edit profile" do
       get "/user"
 
-      expect(response).to redirect_to user_profile_path
+      expect(response).to redirect_to edit_user_profile_path
     end
   end
 
   describe "GET /user/edit" do
-    it "redirects to the Edit me screen" do
+    it "redirects to Edit profile" do
       get "/user/edit"
 
       expect(response).to redirect_to edit_user_profile_path
@@ -50,7 +50,7 @@ RSpec.describe "User", type: :request do
         expect { delete user_path }
           .not_to change(User, :count)
 
-        expect(response).to redirect_to user_profile_path
+        expect(response).to redirect_to edit_user_profile_path
         expect(flash[:alert]).to eq "Your account was not deleted."
       end
 

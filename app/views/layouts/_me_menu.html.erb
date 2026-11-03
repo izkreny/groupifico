@@ -1,0 +1,33 @@
+<%# locals: (profile:, id:) %>
+<%#
+  The avatar opens the member's own account menu, built as the group switcher is: a `<details>` whose menu holds every account action as a link or a button, closed by the `dropdown` controller on a click elsewhere or Escape. Deleting the account is not here: it leads Edit profile's button row, as a delete does on every edit screen.
+
+  Sign out submits a form standing outside the menu, through `form`, so the button is the `<li>`'s own child and draws as a menu row.
+
+  The avatar's box is a `div` rather than a `span`, because `.avatar > div` and `.avatar-placeholder > div` are how daisyUI names the box: the first gives it `aspect-ratio: 1/1` and the second centres what is inside it, and neither selector matches anything else.
+%>
+<details id="<%= id %>" class="dropdown dropdown-end" data-controller="dropdown" data-action="click@document->dropdown#close keydown@document->dropdown#close">
+  <summary class="avatar avatar-placeholder cursor-pointer list-none rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" aria-label="<%= profile.initials %>, me">
+    <div class="bg-base-300 text-base-content w-8 rounded-full">
+      <span class="text-card-fact"><%= profile.initials %></span>
+    </div>
+  </summary>
+
+  <div class="dropdown-content bg-base-100 rounded-box border border-base-300 z-10 mt-2 w-64 p-2 shadow-sm">
+    <div class="px-3 pt-1 pb-2 border-b border-base-300 mb-2 min-w-0">
+      <p class="font-heading text-row-title truncate"><%= profile.full_name %></p>
+      <p class="text-meta truncate"><%= profile.user.email %></p>
+    </div>
+
+    <ul class="menu w-full p-0 gap-2">
+      <li><%= link_to "Edit profile", edit_user_profile_path %></li>
+      <li><%= link_to "Create group", new_group_path %></li>
+      <li><%= tag.button "Sign out", type: "submit", form: "#{id}_sign_out" %></li>
+    </ul>
+
+    <form id="<%= id %>_sign_out" action="<%= session_path %>" method="post" class="hidden">
+      <%= hidden_field_tag :_method, "delete", id: nil %>
+      <%= hidden_field_tag :authenticity_token, form_authenticity_token, id: nil %>
+    </form>
+  </div>
+</details>

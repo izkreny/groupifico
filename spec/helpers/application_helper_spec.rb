@@ -48,7 +48,7 @@ RSpec.describe ApplicationHelper, type: :helper do
     end
 
     it "is false outside a group entirely" do
-      allow(helper).to receive_messages(controller_name: "user_profiles", action_name: "show")
+      allow(helper).to receive_messages(controller_name: "user_profiles", action_name: "edit")
 
       expect(helper.shell_header_tabs?(nil)).to be false
     end
@@ -137,7 +137,7 @@ RSpec.describe ApplicationHelper, type: :helper do
     end
 
     it "is false outside a group, where there is no section to be pushed from" do
-      allow(helper).to receive_messages(controller_name: "user_profiles", action_name: "show")
+      allow(helper).to receive_messages(controller_name: "user_profiles", action_name: "edit")
 
       expect(helper.pushed_screen?(build_stubbed(:group))).to be false
     end

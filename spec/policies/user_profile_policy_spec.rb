@@ -5,7 +5,7 @@ RSpec.describe UserProfilePolicy, type: :policy do
   let(:record)  { user.profile }
   let(:context) { { user: user } }
 
-  describe_rule :show? do
+  describe_rule :edit? do
     succeed "when the profile belongs to the user"
 
     failed "when the profile belongs to someone else" do
@@ -13,13 +13,12 @@ RSpec.describe UserProfilePolicy, type: :policy do
     end
   end
 
-  # Declared aliases rather than rules that repeat show?. Action Policy drops an alias the moment a
-  # real method of that name is defined, so the day edit? or update? grows its own body these
-  # examples fail and force it a describe_rule of its own.
+  # A declared alias rather than a rule that repeats edit?. Action Policy drops an alias the moment a
+  # real method of that name is defined, so the day update? grows its own body this example fails
+  # and forces it a describe_rule of its own.
   describe "rule aliases" do
     subject(:policy) { described_class.new(record, **context) }
 
-    it { expect(:edit?).to be_an_alias_of(policy, :show?) }
-    it { expect(:update?).to be_an_alias_of(policy, :show?) }
+    it { expect(:update?).to be_an_alias_of(policy, :edit?) }
   end
 end

@@ -1,7 +1,30 @@
-<% content_for :title, "Edit me" %>
+<% content_for :title, "Edit profile" %>
 
-<%= render "shared/page_header", title: "Edit me", back: user_profile_path %>
+<%= render "shared/page_header", title: "Edit profile", back: root_path %>
 
-<div class="w-full">
-  <%= render "user_profiles/form", user_profile: @user_profile %>
-</div>
+<%#
+  The avatar's menu leads here, and there is no profile screen to go back to, so Back, Cancel and Save all return home.
+
+  The delete leads the form's button row, as on every edit screen, with its sheet detached below the form, since a form cannot hold the sheet's own. The groups that would be left ownerless are named inside the sheet, which every member has to open to delete at all, so that is where they learn why the button will not enable; the refusal's flash says only that nothing happened.
+%>
+<% user = Current.user %>
+<% solely_owned_groups = user.solely_owned_groups %>
+<% id = dom_id(user, :confirm_delete) %>
+<%= render layout: "shared/confirm_scope", locals: { classes: "w-full" } do %>
+  <%# `Current.user.profile` rather than `@user_profile`, for the reason the controller gives: a refused save leaves the typed values assigned, and this heading names the saved ones. %>
+  <%= render "user_profiles/user_profile", user_profile: user.profile %>
+
+  <%= render "user_profiles/form", user_profile: @user_profile, leading: render("shared/confirm_trigger", id:, confirm: "Delete my account") %>
+  <p class="text-meta mt-1">Delete my account removes you from every group. Groups you own need another owner first.</p>
+
+  <%= render "shared/confirm_sheet",
+        id:,
+        url: user_path,
+        confirm: "Delete my account",
+        title: "Delete your account?",
+        body: account_deletion_message(user.groups_left_on_deletion),
+        dismiss: "Keep my account",
+        word: "DELETE",
+        block: (solely_owned_groups_message(solely_owned_groups) if solely_owned_groups.any?),
+        detached: true %>
+<% end %>

@@ -31,7 +31,7 @@
             group: group,
             group_name: group_name,
             title: content_for(:page_title),
-            initials: (Current.user.profile.initials if authenticated?),
+            profile: (Current.user.profile if authenticated?),
             editable: (group.present? && allowed_to?(:edit?, group)),
             switcher_id: switcher_id,
             back_path: content_for(:back_path) || (section_root_path(group) if pushed_screen?(group)),
