@@ -17,6 +17,11 @@ module EventsHelper
     cookies[:roster_order].presence_in(Event::ROSTER_ORDERS) || Event::ROSTER_ORDERS.first
   end
 
+  # Whether that order runs backwards, which a second press of its header chose.
+  def roster_descending?
+    cookies[:roster_descending] == "true"
+  end
+
   # The card's own two readings of the same schedule: the range a hero card and the detail screen
   # carry, and the start alone that a compact row carries beside the place. Both print in
   # `Time.zone`, which `starts_at` already answers in.

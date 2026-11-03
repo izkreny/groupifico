@@ -37,6 +37,16 @@ RSpec.describe "Events::RosterOrders", type: :request do
         expect(cookies[:roster_order]).to eq "status"
       end
 
+      it "keeps the direction chosen with the order" do
+        event = create(:event)
+        member = create(:member, :active, group: event.group)
+        sign_in_as(member.user)
+
+        patch group_event_roster_order_path(event.group, event, order: "name", descending: true)
+
+        expect([ cookies[:roster_order], cookies[:roster_descending] ]).to eq %w[ name true ]
+      end
+
       it "keeps nothing for an order the list does not offer" do
         event = create(:event)
         member = create(:member, :active, group: event.group)

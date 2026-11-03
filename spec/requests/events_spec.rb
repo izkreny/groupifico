@@ -1091,6 +1091,31 @@ RSpec.describe "Events", type: :request do
         expect(Nokogiri::HTML(response.body).css("th[aria-sort='ascending']").map { it.text.strip }).to eq [ "Status" ]
       end
 
+      it "draws the list in reverse when the reader last chose descending, with the header marked so, and offers ascending on its next press" do
+        member = create(:member, :active)
+        event = detailed_event(member)
+        sign_in_as(member.user)
+        cookies[:roster_order] = "name"
+        cookies[:roster_descending] = "true"
+
+        get group_event_path(event.group, event)
+
+        fragment = Nokogiri::HTML(response.body)
+        expect(page_text(response.body)).to match(/Carla Duke.*Ben Cole.*Alice Bird/)
+        expect(fragment.css("th[aria-sort='descending']").map { it.text.strip }).to eq [ "Member" ]
+        expect(fragment.css("th[aria-sort] input[name='descending']").map { it["value"] }).to eq [ "false" ]
+      end
+
+      it "offers descending on the next press of the sorted header, and ascending on the other" do
+        member = create(:member, :active)
+        event = detailed_event(member)
+        sign_in_as(member.user)
+
+        get group_event_path(event.group, event)
+
+        expect(Nokogiri::HTML(response.body).css("th input[name='descending']").map { it["value"] }).to eq %w[ true false ]
+      end
+
       it "draws the list by name for an order the list does not offer, with the Member header marked sorted" do
         member = create(:member, :active)
         event = detailed_event(member)

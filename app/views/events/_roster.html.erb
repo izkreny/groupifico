@@ -25,7 +25,8 @@
 <% anyone_to_request = may_fill && event.anyone_left_to_request? %>
 <% anyone_to_reserve = may_fill && event.anyone_left_to_reserve? %>
 <% order = roster_order %>
-<% roster = event.roster(order:) %>
+<% descending = roster_descending? %>
+<% roster = event.roster(order:, descending:) %>
 
 <div class="flex flex-col gap-2">
   <div>
@@ -41,14 +42,15 @@
     <table class="table">
       <thead>
         <tr>
-          <%# WHY: each header is a form rather than a link, because choosing an order stores it, and a GET writes nothing. The same glyph on both, inked on the one the list is in, because neither order reverses on a second press. %>
+          <%# WHY: each header is a form rather than a link, because choosing an order stores it, and a GET writes nothing. The sorted header turns the list round on its next press and draws the way it runs now, inked; the other starts its order from the top and draws both ways, muted. %>
           <% { "name" => "Member", "status" => "Status" }.each do |value, heading| %>
             <% sorted = order == value %>
-            <%= tag.th scope: "col", class: [ "px-0", ("text-end" if value == "status") ], aria: { sort: ("ascending" if sorted) } do %>
-              <%= button_to safe_join([ heading, icon(:sort, class: "size-icon-inline #{"text-icon-muted" unless sorted}") ]),
+            <% glyph = sorted ? (descending ? :sort_descending : :sort_ascending) : :sort %>
+            <%= tag.th scope: "col", class: [ "px-0", ("text-end" if value == "status") ], aria: { sort: ((descending ? "descending" : "ascending") if sorted) } do %>
+              <%= button_to safe_join([ heading, icon(glyph, class: "size-icon-inline #{"text-icon-muted" unless sorted}") ]),
                     group_event_roster_order_path(event.group, event),
                     method: :patch,
-                    params: { order: value },
+                    params: { order: value, descending: sorted && !descending },
                     class: "btn btn-ghost btn-sm gap-x-icon-text px-1" %>
             <% end %>
           <% end %>

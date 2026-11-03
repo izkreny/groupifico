@@ -449,6 +449,16 @@ RSpec.describe Event, type: :model do
       expect(event.roster).to eq [ reserved, coming, unsure ]
     end
 
+    it "lists everyone in the reverse of the order asked for when descending" do
+      event = create(:event, starts_at: 1.day.from_now)
+      reserved = registration_named("Adam", on: event, status: :reserved)
+      coming = registration_named("bea", on: event, status: :yes)
+      unsure = registration_named("Carl", on: event, status: :maybe)
+
+      expect(event.roster(descending: true)).to eq [ unsure, coming, reserved ]
+      expect(event.roster(order: "status", descending: true)).to eq [ reserved, unsure, coming ]
+    end
+
     # Upcoming, because an event that has ended takes no `maybe` and the factory's date is random.
     it "lists the answers first, then the requested, then the reserved, when ordered by status" do
       event = create(:event, starts_at: 1.day.from_now)

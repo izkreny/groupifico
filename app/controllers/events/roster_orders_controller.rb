@@ -8,6 +8,7 @@ class Events::RosterOrdersController < ApplicationController
 
     if order = params[:order].presence_in(Event::ROSTER_ORDERS)
       cookies.permanent[:roster_order] = order
+      cookies.permanent[:roster_descending] = (params[:descending] == "true").to_s
     end
 
     redirect_back_or_to group_event_path(@group, @event), status: :see_other

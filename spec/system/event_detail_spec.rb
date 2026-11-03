@@ -371,6 +371,19 @@ RSpec.describe "The event detail", type: :system do
     expect(page).to be_accessible
   end
 
+  # A second press of the sorted header is what reverses it, and its glyph is what says which way the list now runs.
+  it "reverses the list on a second press of the sorted header, and turns its arrow" do
+    owner, event, = rostered_event
+    sign_in_as owner.user
+
+    visit group_event_path(event.group, event)
+    open_roster(sorted_by: "Member")
+
+    expect(page).to have_css "th[aria-sort='descending']", text: "Member"
+    expect(roster_names.index("Carla Duke")).to be < roster_names.index("Ben Cole")
+    expect(page).to be_accessible
+  end
+
   # A no sorts Carla among the answers, still ahead of Ben by status, where by name she would follow him.
   it "keeps the order the reader chose when an answer is given from the list" do
     owner, event, = rostered_event
