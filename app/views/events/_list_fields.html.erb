@@ -14,23 +14,36 @@
   <legend class="label">Who&rsquo;s on the list</legend>
 
   <ul class="list">
-    <% [ [ listed, "removing_ids[]", :delete, "Remove", removing ], [ addable, "adding_ids[]", :new, "Add", adding ] ].each do |members, name, glyph, verb, pressed| %>
-      <% members.each do |member| %>
-        <% id = [ namespace, dom_id(member, name.delete_suffix("_ids[]")) ].compact.join("_") %>
-        <% disabled = glyph == :delete && !may_remove %>
-        <li class="list-row group items-center px-0 <%= glyph == :delete ? "has-checked:bg-error/10" : "has-checked:bg-success/10" %>">
-          <div class="list-col-grow">
-            <span class="block <%= "group-has-checked:line-through" if glyph == :delete %>"><%= member.full_name %></span>
-            <span class="block text-xs group-has-checked:hidden"><%= disabled ? "only an administrator can remove" : member.status %></span>
-            <span class="hidden text-xs group-has-checked:block"><%= glyph == :delete ? "will be removed" : "will be added" %></span>
-          </div>
+    <% listed.each do |member| %>
+      <% id = [ namespace, dom_id(member, :removing) ].compact.join("_") %>
+      <li class="list-row group items-center px-0 has-checked:bg-error/10">
+        <div class="list-col-grow">
+          <span class="block group-has-checked:line-through"><%= member.full_name %></span>
+          <span class="block text-xs group-has-checked:hidden"><%= may_remove ? member.status : "only an administrator can remove" %></span>
+          <span class="hidden text-xs group-has-checked:block">will be removed</span>
+        </div>
 
-          <label class="btn btn-sm btn-square <%= glyph == :delete ? "has-checked:btn-error" : "has-checked:btn-success" %> has-focus-visible:outline-2 has-focus-visible:outline-offset-2 <%= "btn-disabled" if disabled %>">
-            <%= check_box_tag name, member.id, pressed.include?(member.id.to_s), id:, class: "sr-only", disabled:, aria: { label: "#{verb} #{member.full_name}" } %>
-            <%= icon glyph, class: "size-icon-control" %>
-          </label>
-        </li>
-      <% end %>
+        <label class="btn btn-sm btn-square has-checked:btn-error has-focus-visible:outline-2 has-focus-visible:outline-offset-2 <%= "btn-disabled" unless may_remove %>">
+          <%= check_box_tag "removing_ids[]", member.id, removing.include?(member.id.to_s), id:, class: "sr-only", disabled: !may_remove, aria: { label: "Remove #{member.full_name}" } %>
+          <%= icon :delete, class: "size-icon-control" %>
+        </label>
+      </li>
+    <% end %>
+
+    <% addable.each do |member| %>
+      <% id = [ namespace, dom_id(member, :adding) ].compact.join("_") %>
+      <li class="list-row group items-center px-0 has-checked:bg-success/10">
+        <div class="list-col-grow">
+          <span class="block"><%= member.full_name %></span>
+          <span class="block text-xs group-has-checked:hidden"><%= member.status %></span>
+          <span class="hidden text-xs group-has-checked:block">will be added</span>
+        </div>
+
+        <label class="btn btn-sm btn-square has-checked:btn-success has-focus-visible:outline-2 has-focus-visible:outline-offset-2">
+          <%= check_box_tag "adding_ids[]", member.id, adding.include?(member.id.to_s), id:, class: "sr-only", aria: { label: "Add #{member.full_name}" } %>
+          <%= icon :new, class: "size-icon-control" %>
+        </label>
+      </li>
     <% end %>
 
     <% paused.each do |member| %>
