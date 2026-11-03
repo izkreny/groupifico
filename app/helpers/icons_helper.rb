@@ -30,8 +30,8 @@ module IconsHelper
 
     # WHY: a header the list is not sorted by draws both ways, because its first press could only be described as either; the sorted one draws the way the list runs now.
     sort: "arrows-up-down",
-    sort_ascending: "arrow-up",
-    sort_descending: "arrow-down",
+    sort_ascending: "arrow-long-up",
+    sort_descending: "arrow-long-down",
 
     # The emailed-link pages' one button, which spends the link. The same glyph as `save` because frames 10a and 10b draw the check on it.
     confirm: "check",
