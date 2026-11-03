@@ -1602,6 +1602,16 @@ RSpec.describe "Events", type: :request do
         expect(fragment.at_css("input[name='adding_ids[]'][value='#{missing.id}']")).to be_present
       end
 
+      it "folds who is on the list shut on the edit page" do
+        actor = create(:member, :active, :events_administrator)
+        event = create(:event, group: actor.group)
+        sign_in_as(actor.user)
+
+        get edit_group_event_path(event.group, event)
+
+        expect(Nokogiri::HTML(response.body).at_css("#event_list details")["open"]).to be_nil
+      end
+
       it "puts a disabled add on a paused member off the list" do
         actor = create(:member, :active, :events_administrator)
         event = create(:event, group: actor.group)
@@ -2008,6 +2018,17 @@ RSpec.describe "Events", type: :request do
           .not_to change(Registration, :count)
         expect(response).to have_http_status :unprocessable_content
         expect(Nokogiri::HTML(response.body).at_css("input[name='adding_ids[]'][value='#{arriving.id}']")["checked"]).to eq "checked"
+      end
+
+      it "draws who is on the list open when a refused save keeps rows marked" do
+        actor = create(:member, :active, :events_administrator)
+        event = create(:event, group: actor.group)
+        arriving = create(:member, :active, group: event.group)
+        sign_in_as(actor.user)
+
+        patch group_event_path(event.group, event), params: { event: { name: "" }, adding_ids: [ arriving.id ] }
+
+        expect(Nokogiri::HTML(response.body).at_css("#event_list details")["open"]).to eq "open"
       end
 
       it "ignores a posted group_id, leaving the event in its own group" do

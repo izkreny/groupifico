@@ -165,7 +165,7 @@ RSpec.describe "The event form", type: :system do
     event, leaving, = event_to_edit_the_list_of(actor)
     sign_in_as actor.user
 
-    visit edit_group_event_path(event.group, event)
+    visit_list_of event
     press "Remove", leaving
 
     expect(page).to have_checked_field "Remove #{leaving.full_name}", visible: :all
@@ -179,7 +179,7 @@ RSpec.describe "The event form", type: :system do
     event, leaving, arriving = event_to_edit_the_list_of(actor)
     sign_in_as actor.user
 
-    visit edit_group_event_path(event.group, event)
+    visit_list_of event
     press "Remove", leaving
     press "Add", arriving
 
@@ -192,7 +192,7 @@ RSpec.describe "The event form", type: :system do
     event = create(:event, group: actor.group)
     sign_in_as actor.user
 
-    visit edit_group_event_path(event.group, event)
+    visit_list_of event
 
     name = find("#event_list span", exact_text: paused.full_name)
     expect(evaluate_script("arguments[0].nextElementSibling.getBoundingClientRect().left - arguments[0].getBoundingClientRect().right", name)).to eq 8
@@ -203,7 +203,7 @@ RSpec.describe "The event form", type: :system do
     event, leaving, arriving = event_to_edit_the_list_of(actor)
     sign_in_as actor.user
 
-    visit edit_group_event_path(event.group, event)
+    visit_list_of event
     press "Remove", leaving
     press "Add", arriving
     click_button "Save changes"
@@ -218,7 +218,7 @@ RSpec.describe "The event form", type: :system do
     sign_in_as actor.user
     prefer_colour_scheme :light
 
-    visit edit_group_event_path(event.group, event)
+    visit_list_of event
     press "Remove", leaving
     press "Add", arriving
 
@@ -233,7 +233,7 @@ RSpec.describe "The event form", type: :system do
     sign_in_as actor.user
     prefer_colour_scheme :dark
 
-    visit edit_group_event_path(event.group, event)
+    visit_list_of event
     press "Remove", leaving
     press "Add", arriving
 
@@ -371,6 +371,11 @@ RSpec.describe "The event form", type: :system do
     end
 
     # The list's buttons are labels around a visually hidden checkbox, which carries the name.
+    def visit_list_of(event)
+      visit edit_group_event_path(event.group, event)
+      find("summary", text: "Who’s on the list").click
+    end
+
     def press(verb, member)
       find("label:has(input[aria-label='#{verb} #{member.full_name}'])").click
     end
