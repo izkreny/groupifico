@@ -371,6 +371,17 @@ RSpec.describe "The event detail", type: :system do
     expect(page).to be_accessible
   end
 
+  # Which header is sorted is `spec/requests/events_spec.rb`'s; what only a browser shows is the colour each name and arrow resolves to, against probes carrying the classes the app uses elsewhere, and that the two arrows sit closer to each other than to their name.
+  it "inks the running arrow in primary, mutes the other arrows and the unsorted name, and joins each pair of arrows into one icon" do
+    owner, event, = rostered_event
+    sign_in_as owner.user
+
+    visit group_event_path(event.group, event)
+    open_roster
+
+    expect(roster_header_reading).to eq("running" => true, "muted" => true, "names" => [ true, true ], "pair_closer" => true)
+  end
+
   # A second press of the sorted header is what reverses it, and its glyph is what says which way the list now runs.
   it "reverses the list on a second press of the sorted header, and turns its arrow" do
     owner, event, = rostered_event
@@ -529,6 +540,26 @@ RSpec.describe "The event detail", type: :system do
   def open_roster(sorted_by: nil)
     find("summary", text: "Who’s coming").click
     click_button sorted_by if sorted_by
+  end
+
+  # Each sorted-header colour against a probe carrying the class the app uses for it elsewhere, and whether the two arrows sit closer to each other than to their name.
+  def roster_header_reading
+    page.evaluate_script(<<~JS)
+      (() => {
+        const probe = cls => { const s = document.createElement("span"); s.className = cls; document.body.append(s); const c = getComputedStyle(s).color; s.remove(); return c }
+        const colour = el => getComputedStyle(el).color
+        const glyph = svg => svg.querySelector("path").getBoundingClientRect()
+        const [member, status] = document.querySelectorAll("thead th button")
+        const [up, down] = member.querySelectorAll("svg")
+        const range = document.createRange(); range.selectNodeContents(member.firstChild)
+        return {
+          running: colour(up) == probe("text-primary"),
+          muted: [ down, ...status.querySelectorAll("svg") ].every(a => colour(a) == probe("text-icon-muted")),
+          names: [ colour(member) == colour(document.querySelector("tbody td")), colour(status) == probe("text-muted") ],
+          pair_closer: glyph(down).left - glyph(up).right < glyph(up).left - range.getBoundingClientRect().right
+        }
+      })()
+    JS
   end
 
   def roster_names

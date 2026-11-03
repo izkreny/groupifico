@@ -188,6 +188,7 @@
 
   --spacing-icon-label: 0.5rem;       /* 8px: a button's icon → its label, through the `.btn` rule */
   --spacing-icon-text: 0.375rem;      /* 6px: a fact line's icon → its text */
+  --spacing-icon-pair: 0.375rem;      /* 6px: how far the second of two inline glyphs drawn as one icon overlaps the first, closing their insets to 4px */
 
   --spacing-tally: 0.75rem;           /* 12px: the Who's coming? tally, tag → tag */
   --spacing-card-row: 0.5rem;         /* 8px: the hero card, row → row */

@@ -42,16 +42,17 @@
     <table class="table">
       <thead>
         <tr>
-          <%# WHY: each header is a form rather than a link, because choosing an order stores it, and a GET writes nothing. The sorted header turns the list round on its next press and draws the way it runs now, inked; the other starts its order from the top and draws both ways, muted. %>
+          <%# WHY: each header is a form rather than a link, because choosing an order stores it, and a GET writes nothing. Both draw the up and down arrows as one icon; the sorted header inks in primary the one the list runs by and turns the list round on its next press, and the other mutes its name and both arrows and starts its order from the top. %>
           <% { "name" => "Member", "status" => "Status" }.each do |value, heading| %>
             <% sorted = order == value %>
-            <% glyph = sorted ? (descending ? :sort_descending : :sort_ascending) : :sort %>
+            <% running = (descending ? :sort_descending : :sort_ascending) if sorted %>
+            <% arrows = %i[ sort_ascending sort_descending ].map { |glyph| icon(glyph, class: [ "size-icon-inline", (glyph == running ? "text-primary" : "text-icon-muted"), ("-ms-icon-pair" if glyph == :sort_descending) ].compact.join(" ")) } %>
             <%= tag.th scope: "col", class: [ "px-0", ("text-end" if value == "status") ], aria: { sort: ((descending ? "descending" : "ascending") if sorted) } do %>
-              <%= button_to safe_join([ heading, icon(glyph, class: "size-icon-inline #{"text-icon-muted" unless sorted}") ]),
+              <%= button_to safe_join([ heading, tag.span(safe_join(arrows), class: "inline-flex") ]),
                     group_event_roster_order_path(event.group, event),
                     method: :patch,
                     params: { order: value, descending: sorted && !descending },
-                    class: "btn btn-ghost btn-sm gap-x-icon-text px-1" %>
+                    class: "btn btn-ghost btn-sm gap-x-icon-text px-1 text-xs font-semibold uppercase tracking-wider #{"text-muted" unless sorted}" %>
             <% end %>
           <% end %>
         </tr>

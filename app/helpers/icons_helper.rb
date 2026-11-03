@@ -28,8 +28,7 @@ module IconsHelper
     cancel: "x-mark",
     dismiss: "x-mark",
 
-    # WHY: a header the list is not sorted by draws both ways, because its first press could only be described as either; the sorted one draws the way the list runs now.
-    sort: "arrows-up-down",
+    # WHY: a sortable header draws both, as one icon, and inks the one the list runs by, so an unsorted header reads as not sorted rather than as a direction.
     sort_ascending: "arrow-long-up",
     sort_descending: "arrow-long-down",
 
