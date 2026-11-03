@@ -168,10 +168,10 @@ RSpec.describe "The event form", type: :system do
     visit edit_group_event_path(event.group, event)
     press "Remove", leaving
 
-    expect(page).to have_text "will be removed"
+    expect(page).to have_checked_field "Remove #{leaving.full_name}", visible: :all
     expect(event.registrations.pluck(:member_id)).to eq [ leaving.id ]
     press "Remove", leaving
-    expect(page).to have_no_text "will be removed"
+    expect(page).to have_unchecked_field "Remove #{leaving.full_name}", visible: :all
   end
 
   it "saves what is marked with the event" do

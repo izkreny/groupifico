@@ -16,11 +16,10 @@
   <ul class="list">
     <% listed.each do |member| %>
       <% id = [ namespace, dom_id(member, :removing) ].compact.join("_") %>
-      <li class="list-row group items-center px-0 has-checked:bg-error/10">
+      <li class="list-row group items-center px-0">
         <div class="list-col-grow">
           <span class="block group-has-checked:line-through"><%= member.full_name %></span>
-          <span class="block text-xs group-has-checked:hidden"><%= may_remove ? member.status : "only an administrator can remove" %></span>
-          <span class="hidden text-xs group-has-checked:block">will be removed</span>
+          <span class="block text-xs"><%= may_remove ? member.status : "only an administrator can remove" %></span>
         </div>
 
         <label class="btn btn-sm btn-square has-checked:btn-error has-focus-visible:outline-2 has-focus-visible:outline-offset-2 <%= "btn-disabled" unless may_remove %>">
@@ -32,11 +31,10 @@
 
     <% addable.each do |member| %>
       <% id = [ namespace, dom_id(member, :adding) ].compact.join("_") %>
-      <li class="list-row group items-center px-0 has-checked:bg-success/10">
+      <li class="list-row items-center px-0">
         <div class="list-col-grow">
           <span class="block"><%= member.full_name %></span>
-          <span class="block text-xs group-has-checked:hidden"><%= member.status %></span>
-          <span class="hidden text-xs group-has-checked:block">will be added</span>
+          <span class="block text-xs"><%= member.status %></span>
         </div>
 
         <label class="btn btn-sm btn-square has-checked:btn-success has-focus-visible:outline-2 has-focus-visible:outline-offset-2">
