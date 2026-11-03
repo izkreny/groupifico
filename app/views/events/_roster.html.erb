@@ -41,11 +41,12 @@
             <% running = (descending ? :sort_descending : :sort_ascending) if sorted %>
             <% arrows = %i[ sort_ascending sort_descending ].map { |glyph| icon(glyph, class: [ "size-icon-inline", (glyph == running ? "text-primary" : "text-icon-muted"), ("-ms-icon-pair" if glyph == :sort_descending) ].compact.join(" ")) } %>
             <%= tag.th scope: "col", class: [ "px-0", ("text-end" if value == "status") ], aria: { sort: ((descending ? "descending" : "ascending") if sorted) } do %>
-              <%= button_to safe_join([ heading, tag.span(safe_join(arrows), class: "inline-flex") ]),
+              <%# WHY: the `.btn` rule sets the arrows' box `icon-label` from the name, and pulling the box back by the arrow's own inset makes that the gap you see. %>
+              <%= button_to safe_join([ heading, tag.span(safe_join(arrows), class: "inline-flex -ms-arrow-inset") ]),
                     group_event_roster_order_path(event.group, event),
                     method: :patch,
                     params: { order: value, descending: sorted && !descending },
-                    class: "btn btn-ghost btn-sm gap-x-icon-text px-1 text-xs font-semibold uppercase tracking-wider #{"text-muted" unless sorted}" %>
+                    class: "btn btn-ghost btn-sm px-1 text-xs font-semibold uppercase tracking-wider #{"text-muted" unless sorted}" %>
             <% end %>
           <% end %>
         </tr>

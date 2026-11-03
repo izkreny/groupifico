@@ -372,14 +372,14 @@ RSpec.describe "The event detail", type: :system do
   end
 
   # Which header is sorted is `spec/requests/events_spec.rb`'s; what only a browser shows is the colour each name and arrow resolves to, against probes carrying the classes the app uses elsewhere, and that the two arrows sit closer to each other than to their name.
-  it "inks the running arrow in primary, mutes the other arrows and the unsorted name, and joins each pair of arrows into one icon" do
+  it "inks the running arrow in primary, mutes the other arrows and the unsorted name, and sets the arrows 8px from the name and 2px apart" do
     owner, event, = rostered_event
     sign_in_as owner.user
 
     visit group_event_path(event.group, event)
     open_roster
 
-    expect(roster_header_reading).to eq("running" => true, "muted" => true, "names" => [ true, true ], "pair_closer" => true)
+    expect(roster_header_reading).to eq("running" => true, "muted" => true, "names" => [ true, true ], "gaps" => [ 8, 2 ])
   end
 
   # daisyUI's table leaves its last row without the divider the others carry; the list closes on one too, so the line under it starts from a rule.
@@ -555,7 +555,7 @@ RSpec.describe "The event detail", type: :system do
     click_button sorted_by if sorted_by
   end
 
-  # Each sorted-header colour against a probe carrying the class the app uses for it elsewhere, and whether the two arrows sit closer to each other than to their name.
+  # Each sorted-header colour against a probe carrying the class the app uses for it elsewhere, and the gaps you see, name to up arrow and up arrow to down arrow, glyph to glyph and rounded to the pixel.
   def roster_header_reading
     page.evaluate_script(<<~JS)
       (() => {
@@ -569,7 +569,7 @@ RSpec.describe "The event detail", type: :system do
           running: colour(up) == probe("text-primary"),
           muted: [ down, ...status.querySelectorAll("svg") ].every(a => colour(a) == probe("text-icon-muted")),
           names: [ colour(member) == colour(document.querySelector("tbody td")), colour(status) == probe("text-muted") ],
-          pair_closer: glyph(down).left - glyph(up).right < glyph(up).left - range.getBoundingClientRect().right
+          gaps: [ Math.round(glyph(up).left - range.getBoundingClientRect().right), Math.round(glyph(down).left - glyph(up).right) ]
         }
       })()
     JS

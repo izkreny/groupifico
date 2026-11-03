@@ -188,7 +188,8 @@
 
   --spacing-icon-label: 0.5rem;       /* 8px: a button's icon → its label, through the `.btn` rule */
   --spacing-icon-text: 0.375rem;      /* 6px: a fact line's icon → its text */
-  --spacing-icon-pair: 0.375rem;      /* 6px: how far the second of two inline glyphs drawn as one icon overlaps the first, closing their insets to 4px */
+  --spacing-icons-micro: 0.125rem;    /* 2px: glyph to glyph between micro icons drawn as one icon */
+  --spacing-arrow-inset: 0.296875rem; /* 4.75px: the empty space either side of a micro long arrow inside its 16px box, measured on the rendered glyph */
 
   --spacing-tally: 0.75rem;           /* 12px: the Who's coming? tally, tag → tag */
   --spacing-card-row: 0.5rem;         /* 8px: the hero card, row → row */
@@ -198,6 +199,7 @@
   --spacing-control-inset: calc((var(--spacing-control) - var(--spacing-icon-control)) / 2);  /* 6px: a glyph inside its icon button */
   --spacing-label-control: calc(var(--spacing-icon-label) - var(--spacing-control-inset));    /* 2px: the box gap that sets a label `icon-label` from a button's glyph */
   --spacing-tally-rest: calc(var(--spacing-tally) - var(--spacing-icon-text));                /* 6px: a tag's margin, beside a row whose own gap is `icon-text` */
+  --spacing-icon-pair: calc(2 * var(--spacing-arrow-inset) - var(--spacing-icons-micro));     /* 7.5px: how far the second of two long arrows drawn as one icon overlaps the first */
 }
 
 /* WHY: the page's ink dimmed, named once so every use matches. `icon-muted`, 60%, is 4.1:1 on the light page: enough for an icon at 3:1 and not for text at 4.5:1, which is why its name says icon. `muted`, 70%, is the quieter text that still passes AA, placeholders included. `inline` so each utility mixes the ink where it is used, since the styleguide sets a theme per section inside a page with its own, and a variable resolved at the root would carry the root's ink into every twin. */
