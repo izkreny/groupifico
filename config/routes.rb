@@ -48,6 +48,8 @@ Rails.application.routes.draw do
       resource :reservation, only: :create, module: :events
       # WHY: the list screen, one form that both reserves and removes, which is an edit of the event's list rather than a create or a delete of any one row.
       resource :roster, only: %i[ edit update ], module: :events
+      # WHY: the order the list is drawn in is a setting the reader changes rather than a record, so it is one singular resource with `update` alone.
+      resource :roster_order, only: :update, module: :events
     end
   end
 
