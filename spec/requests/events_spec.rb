@@ -1672,7 +1672,6 @@ RSpec.describe "Events", type: :request do
         get edit_group_event_path(event.group, event)
 
         expect(Nokogiri::HTML(response.body).at_css("input[name='removing_ids[]'][value='#{listed.id}']")["disabled"]).to eq "disabled"
-        expect(page_text(response.body)).to include "#{listed.full_name} only an administrator can remove"
       end
 
       # The order the fields are filled in is a decision of the owner's, and only the markup's order says it.

@@ -2,7 +2,7 @@
 <%#
   WHY: who is on the list is edited inside the event's own form, so each button is a checkbox drawn as one: it posts with the event's Save rather than acting on its own, and a refused save draws it again pressed, read back from what was posted. A pressed `+` is `adding_ids`, a pressed trash `removing_ids`, beside the event rather than in it, as `EventsController#update` reads them.
 
-  WHY: a trash a reader may not press is drawn disabled rather than left out, so every row on the list keeps the same column, and the line beneath the name says why it stays. A paused member's `+` is drawn disabled for the same column, and their badge says why.
+  WHY: a button a reader may not press is drawn disabled rather than left out, so every row keeps the same column, and no line beneath the name says why, so every row reads alike.
 
   WHY: a status badge sits beside the name only when the member is not active, as in the members list, so the badges stand out on a list that is mostly active members.
 %>
@@ -21,9 +21,6 @@
       <li class="list-row group items-center px-0">
         <div class="list-col-grow">
           <%= render "events/list_name", member:, mark: "group-has-checked:line-through" %>
-          <% unless may_remove %>
-            <span class="block text-xs">only an administrator can remove</span>
-          <% end %>
         </div>
 
         <label class="btn btn-sm btn-square has-checked:btn-error has-focus-visible:outline-2 has-focus-visible:outline-offset-2 <%= "btn-disabled" unless may_remove %>">
