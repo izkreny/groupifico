@@ -174,6 +174,18 @@ RSpec.describe "The event form", type: :system do
     expect(page).to have_unchecked_field "Remove #{leaving.full_name}", visible: :all
   end
 
+  it "strikes through a name marked to leave and underlines one marked to arrive" do
+    actor = create(:member, :active, :events_administrator)
+    event, leaving, arriving = event_to_edit_the_list_of(actor)
+    sign_in_as actor.user
+
+    visit edit_group_event_path(event.group, event)
+    press "Remove", leaving
+    press "Add", arriving
+
+    expect([ leaving, arriving ].map { |member| name_decoration(member) }).to eq %w[ line-through underline ]
+  end
+
   it "saves what is marked with the event" do
     actor = create(:member, :active, :events_administrator)
     event, leaving, arriving = event_to_edit_the_list_of(actor)
@@ -349,6 +361,10 @@ RSpec.describe "The event form", type: :system do
     # The list's buttons are labels around a visually hidden checkbox, which carries the name.
     def press(verb, member)
       find("label:has(input[aria-label='#{verb} #{member.full_name}'])").click
+    end
+
+    def name_decoration(member)
+      evaluate_script("getComputedStyle(arguments[0]).textDecorationLine", find("#event_list span", exact_text: member.full_name))
     end
 
     def event_at_a_saved_address

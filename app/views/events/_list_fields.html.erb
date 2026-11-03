@@ -31,9 +31,9 @@
 
     <% addable.each do |member| %>
       <% id = [ namespace, dom_id(member, :adding) ].compact.join("_") %>
-      <li class="list-row items-center px-0">
+      <li class="list-row group items-center px-0">
         <div class="list-col-grow">
-          <span class="block"><%= member.full_name %></span>
+          <span class="block group-has-checked:underline"><%= member.full_name %></span>
           <span class="block text-xs"><%= member.status %></span>
         </div>
 
