@@ -25,9 +25,6 @@
       <li><%= tag.button type: "submit", form: "#{id}_sign_out" do %><%= icon :sign_out, class: "size-icon-control text-icon-muted" %>Sign out<% end %></li>
     </ul>
 
-    <form id="<%= id %>_sign_out" action="<%= session_path %>" method="post" class="hidden">
-      <%= hidden_field_tag :_method, "delete", id: nil %>
-      <%= hidden_field_tag :authenticity_token, form_authenticity_token, id: nil %>
-    </form>
+    <%= render "shared/detached_delete_form", id: "#{id}_sign_out", url: session_path %>
   </div>
 </details>
