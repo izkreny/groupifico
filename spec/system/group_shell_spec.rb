@@ -142,7 +142,7 @@ RSpec.describe "The group shell", type: :system do
     resize_to ViewportHelper::MOBILE
 
     visit group_path(member.group)
-    find("header summary").click
+    find("#group-switcher summary").click
     within("#group-switcher") { click_link "Harbour Band" }
 
     expect(page).to have_current_path group_path(other.group)
@@ -170,11 +170,11 @@ RSpec.describe "The group shell", type: :system do
     create(:member, user: member.user, group: create(:group, name: "Harbour Band"))
     sign_in_as member.user
     resize_to ViewportHelper::MOBILE
-    shown = "[ ...document.querySelectorAll('header summary svg') ].map(icon => getComputedStyle(icon).display != 'none')"
+    shown = "[ ...document.querySelectorAll('#group-switcher summary svg') ].map(icon => getComputedStyle(icon).display != 'none')"
 
     visit group_path(member.group)
     closed = page.evaluate_script(shown)
-    find("header summary").click
+    find("#group-switcher summary").click
 
     expect([ closed, page.evaluate_script(shown) ]).to eq [ [ true, false ], [ false, true ] ]
   end
@@ -186,7 +186,7 @@ RSpec.describe "The group shell", type: :system do
     sign_in_as member.user
 
     visit group_path(member.group)
-    find("header summary").click
+    find("#group-switcher summary").click
 
     expect(page.evaluate_script("(rows => Math.round(rows[1].getBoundingClientRect().top - rows[0].getBoundingClientRect().bottom))([ ...document.querySelectorAll('#group-switcher li a') ])")).to eq 8
   end
@@ -198,7 +198,7 @@ RSpec.describe "The group shell", type: :system do
     sign_in_as member.user
 
     visit group_path(member.group)
-    find("header summary").click
+    find("#group-switcher summary").click
     find("main").click
 
     expect(page.evaluate_script("document.getElementById('group-switcher').open")).to be false
@@ -211,7 +211,7 @@ RSpec.describe "The group shell", type: :system do
     sign_in_as member.user
 
     visit group_path(member.group)
-    find("header summary").click
+    find("#group-switcher summary").click
     page.driver.browser.keyboard.type(:Escape)
 
     expect(page.evaluate_script("[ document.getElementById('group-switcher').open, document.activeElement.tagName ]")).to eq [ false, "SUMMARY" ]
@@ -232,8 +232,8 @@ RSpec.describe "The group shell", type: :system do
 
     visit group_path(member.group)
 
-    expect(gap_after_text("header h1", "header summary svg")).to eq 8
-    expect(gap_to_row_end("header a.avatar", "header")).to eq 0
+    expect(gap_after_text("header h1", "#group-switcher summary svg")).to eq 8
+    expect(gap_to_row_end("#me-menu summary", "header")).to eq 0
   end
 
   it "draws the header's chevron and pencil at 20px, 16px apart" do
@@ -244,7 +244,7 @@ RSpec.describe "The group shell", type: :system do
     visit group_path(member.group)
 
     expect(page.evaluate_script(<<~JS)).to eq [ 20, 20, 16 ]
-      ((chevron, pencil) => [ chevron.width, pencil.width, Math.round(pencil.left - chevron.right) ])(...["header summary svg", "header [aria-label='Edit group'] svg"].map(selector => document.querySelector(selector).getBoundingClientRect()))
+      ((chevron, pencil) => [ chevron.width, pencil.width, Math.round(pencil.left - chevron.right) ])(...["#group-switcher summary svg", "header [aria-label='Edit group'] svg"].map(selector => document.querySelector(selector).getBoundingClientRect()))
     JS
   end
 
@@ -346,7 +346,7 @@ RSpec.describe "The group shell", type: :system do
     visit group_path(member.group)
     page.driver.browser.keyboard.type(:Tab)
 
-    expect(page).to have_css "header summary:focus-visible", style: { "outline-style" => "solid", "outline-color" => "rgb(140, 73, 26)" }
+    expect(page).to have_css "#group-switcher summary:focus-visible", style: { "outline-style" => "solid", "outline-color" => "rgb(140, 73, 26)" }
   end
 
   # `document.fonts.load` rather than `document.fonts.check`, which answers true for a family no

@@ -336,7 +336,7 @@ RSpec.describe "Groups", type: :request do
 
         get group_path(member.group)
 
-        expect(Nokogiri::HTML(response.body).css("header details.dropdown")).to be_present
+        expect(Nokogiri::HTML(response.body).css("header details#group-switcher")).to be_present
       end
 
       it "offers no switcher to a reader with one group" do
@@ -345,7 +345,7 @@ RSpec.describe "Groups", type: :request do
 
         get group_path(member.group)
 
-        expect(Nokogiri::HTML(response.body).css("header details.dropdown")).to be_empty
+        expect(Nokogiri::HTML(response.body).css("header details#group-switcher")).to be_empty
       end
 
       it "heads the screen with the group's name for a member of one group" do
@@ -396,7 +396,7 @@ RSpec.describe "Groups", type: :request do
 
         get group_path(member.group)
 
-        expect(Nokogiri::HTML(response.body).css("header details.dropdown")).to be_empty
+        expect(Nokogiri::HTML(response.body).css("header details#group-switcher")).to be_empty
       end
     end
   end
