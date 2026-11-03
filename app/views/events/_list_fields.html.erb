@@ -3,6 +3,8 @@
   WHY: who is on the list is edited inside the event's own form, so each button is a checkbox drawn as one: it posts with the event's Save rather than acting on its own, and a refused save draws it again pressed, read back from what was posted. A pressed `+` is `adding_ids`, a pressed trash `removing_ids`, beside the event rather than in it, as `EventsController#update` reads them.
 
   WHY: a trash a reader may not press is drawn disabled rather than left out, so every row on the list keeps the same column, and the line beneath the name says why it stays. A paused member gets no button at all, because there is nothing a press could do.
+
+  WHY: a status badge sits beside the name only when the member is not active, as in the members list, so the badges stand out on a list that is mostly active members.
 %>
 <% may_remove = allowed_to?(:destroy?, Registration.new(event: event)) %>
 <% listed = event.roster.map(&:member) %>
@@ -18,8 +20,10 @@
       <% id = [ namespace, dom_id(member, :removing) ].compact.join("_") %>
       <li class="list-row group items-center px-0">
         <div class="list-col-grow">
-          <span class="block group-has-checked:line-through"><%= member.full_name %></span>
-          <span class="block text-xs"><%= may_remove ? member.status : "only an administrator can remove" %></span>
+          <%= render "events/list_name", member:, mark: "group-has-checked:line-through" %>
+          <% unless may_remove %>
+            <span class="block text-xs">only an administrator can remove</span>
+          <% end %>
         </div>
 
         <label class="btn btn-sm btn-square has-checked:btn-error has-focus-visible:outline-2 has-focus-visible:outline-offset-2 <%= "btn-disabled" unless may_remove %>">
@@ -33,8 +37,7 @@
       <% id = [ namespace, dom_id(member, :adding) ].compact.join("_") %>
       <li class="list-row group items-center px-0">
         <div class="list-col-grow">
-          <span class="block group-has-checked:underline"><%= member.full_name %></span>
-          <span class="block text-xs"><%= member.status %></span>
+          <%= render "events/list_name", member:, mark: "group-has-checked:underline" %>
         </div>
 
         <label class="btn btn-sm btn-square has-checked:btn-success has-focus-visible:outline-2 has-focus-visible:outline-offset-2">
@@ -47,8 +50,8 @@
     <% paused.each do |member| %>
       <li class="list-row items-center px-0 text-muted">
         <div class="list-col-grow">
-          <span class="block"><%= member.full_name %></span>
-          <span class="block text-xs">paused · can't be added</span>
+          <%= render "events/list_name", member:, mark: nil %>
+          <span class="block text-xs">can't be added</span>
         </div>
       </li>
     <% end %>

@@ -1611,7 +1611,7 @@ RSpec.describe "Events", type: :request do
         get edit_group_event_path(event.group, event)
 
         expect(Nokogiri::HTML(response.body).css("input[value='#{paused.id}']")).to be_empty
-        expect(page_text(response.body)).to include "#{paused.full_name} paused · can't be added"
+        expect(page_text(response.body)).to include "#{paused.full_name} paused can't be added"
       end
 
       # A paused or inactive member's registration has no other way off the list.
@@ -1627,6 +1627,18 @@ RSpec.describe "Events", type: :request do
 
         expect(Nokogiri::HTML(response.body).css("input[name='removing_ids[]']").map { it["value"] }).to contain_exactly paused.id.to_s, gone.id.to_s
         expect(page_text(response.body)).not_to include unlisted.full_name
+      end
+
+      it "badges a member on the list who is not active with their status, beside the name, and an active one with nothing" do
+        actor = create(:member, :active, :events_administrator)
+        event = create(:event, group: actor.group)
+        listed = [ :active, :paused, :inactive ].map { create(:registration, event:, member: create(:member, it, group: event.group)).member }
+        sign_in_as(actor.user)
+
+        get edit_group_event_path(event.group, event)
+
+        badges = listed.map { |member| Nokogiri::HTML(response.body).xpath("//div[span[normalize-space()='#{member.full_name}']]/span[contains(@class, 'badge')]").map(&:text) }
+        expect(badges).to eq [ [], [ "paused" ], [ "inactive" ] ]
       end
     end
 
