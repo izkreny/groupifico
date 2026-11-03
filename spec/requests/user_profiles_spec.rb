@@ -19,7 +19,7 @@ RSpec.describe "UserProfiles", type: :request do
       menu = Nokogiri::HTML(response.body).at_css("header details#me-menu")
 
       expect(menu.at_css("summary")["aria-label"]).to eq "AL, me"
-      expect(menu.css(".dropdown-content p").map { it.text.squish }).to eq [ "Ada Lovelace", "ada@example.com" ]
+      expect(menu.css(".dropdown-content p").map { [ it.text.squish, it.classes.include?("text-secondary") ] }).to eq [ [ "Ada Lovelace", false ], [ "ada@example.com", true ] ]
       expect(menu.css("li").map { it.text.squish }).to eq [ "Edit profile", "New group", "Sign out" ]
       expect(menu.css("li a").map { [ it.text.squish, it["href"] ] }).to eq [ [ "Edit profile", edit_user_profile_path ], [ "New group", new_group_path ] ]
     end
