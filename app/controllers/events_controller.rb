@@ -93,6 +93,7 @@ class EventsController < ApplicationController
   def update
     authorize! @event
     authorize_list_changes!
+    @list_editable = allowed_to?(:create?, Registration.new(event: @event))
 
     saved = @event.transaction do
       @event.update(event_params).tap do |updated|

@@ -2051,6 +2051,19 @@ RSpec.describe "Events", type: :request do
         expect(event.registrations.reserved.pluck(:member_id)).to eq [ successor.id ]
       end
 
+      # The form drawn again after a refused save asks the same question the save did, of the event as it was loaded, so the manager's marks survive a hand-on typed in the same go.
+      it "keeps the member added marked when a save that hands the event on is refused" do
+        actor = create(:member, :active)
+        event = create(:event, group: actor.group, manager: actor)
+        successor = create(:member, :active, group: event.group)
+        sign_in_as(actor.user)
+
+        patch group_event_path(event.group, event), params: { event: { name: "", manager_id: successor.id }, adding_ids: [ successor.id ] }
+
+        expect(response).to have_http_status :unprocessable_content
+        expect(Nokogiri::HTML(response.body).at_css("input[name='adding_ids[]'][value='#{successor.id}']")&.[]("checked")).to eq "checked"
+      end
+
       it "refuses a removal and saves nothing, because removing is not the manager's" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, manager: actor, name: "Original")
