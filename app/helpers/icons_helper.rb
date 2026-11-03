@@ -58,7 +58,7 @@ module IconsHelper
     resend: "arrow-path",
 
     # WHY: the legend draws neither of the Me menu's own rows, so both are Heroicons' own; `profile` is not `edit` because the menu will hold more than one thing a member edits about themselves.
-    profile: "user-circle",
+    profile: "user",
     sign_out: "arrow-right-start-on-rectangle"
   }.freeze
 
