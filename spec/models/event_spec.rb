@@ -440,8 +440,17 @@ RSpec.describe Event, type: :model do
   end
 
   describe "#roster" do
+    it "lists everyone by name, whatever their status or the case the name was typed in" do
+      event = create(:event, starts_at: 1.day.from_now)
+      reserved = registration_named("Adam", on: event, status: :reserved)
+      coming = registration_named("bea", on: event, status: :yes)
+      unsure = registration_named("Carl", on: event, status: :maybe)
+
+      expect(event.roster).to eq [ reserved, coming, unsure ]
+    end
+
     # Upcoming, because an event that has ended takes no `maybe` and the factory's date is random.
-    it "lists the answers first, then the requested, then the reserved, reserved ones included" do
+    it "lists the answers first, then the requested, then the reserved, when ordered by status" do
       event = create(:event, starts_at: 1.day.from_now)
       reserved = registration_named("Adam", on: event, status: :reserved)
       requested = registration_named("Bea", on: event, status: :response_requested)
@@ -449,17 +458,17 @@ RSpec.describe Event, type: :model do
       unsure = registration_named("Dora", on: event, status: :maybe)
       coming = registration_named("Emil", on: event, status: :yes)
 
-      expect(event.roster).to eq [ coming, unsure, declined, requested, reserved ]
+      expect(event.roster(order: "status")).to eq [ coming, unsure, declined, requested, reserved ]
     end
 
     # A name typed in lower case is still the same name to somebody scanning the list for it.
-    it "orders the members who share a status by name, whatever case it was typed in" do
+    it "orders the members who share a status by name when ordered by status, whatever case it was typed in" do
       event = create(:event)
       lower = registration_named("bea", on: event, status: :yes)
       upper = registration_named("Carl", on: event, status: :yes)
       first = registration_named("Adam", on: event, status: :yes)
 
-      expect(event.roster).to eq [ first, lower, upper ]
+      expect(event.roster(order: "status")).to eq [ first, lower, upper ]
     end
 
     # The roster reads the name each row draws, so the order is only visible through a named profile.

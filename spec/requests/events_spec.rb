@@ -1084,7 +1084,7 @@ RSpec.describe "Events", type: :request do
 
         get group_event_path(event.group, event)
 
-        expect(page_text(response.body)).to match(/Alice Bird.*Carla Duke.*Ben Cole/)
+        expect(page_text(response.body)).to match(/Alice Bird.*Ben Cole.*Carla Duke/)
         expect(response.body).to include "Place reserved, no response requested yet", "Response requested"
         expect(response.body).not_to include "Yes for Ben Cole", "Edit the list"
         expect(response.body).not_to include "Yes for #{member.full_name}", "Request a response from Ben Cole", "Request the rest", "Reserve a place for everyone"
