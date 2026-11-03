@@ -358,8 +358,6 @@ RSpec.describe "The event detail", type: :system do
     JS
   end
 
-  # That the row was written is `spec/requests/registrations_spec.rb`'s; the landing is the part a
-  # browser adds.
   # Which order the list is drawn in is `spec/requests/events_spec.rb`'s; that the header's press lands with the list still open is what a browser adds. Carla's requested place sorts ahead of Ben's reserved one by status, and behind it by name.
   it "sorts the list by status from its header, the list still open, with no accessibility violations" do
     owner, event, = rostered_event
@@ -386,6 +384,8 @@ RSpec.describe "The event detail", type: :system do
     expect(roster_names.index("Carla Duke")).to be < roster_names.index("Ben Cole")
   end
 
+  # That the row was written is `spec/requests/registrations_spec.rb`'s; the landing is the part a
+  # browser adds.
   it "answers for somebody from their row and lands back on the event" do
     owner, event, = rostered_event
     sign_in_as owner.user

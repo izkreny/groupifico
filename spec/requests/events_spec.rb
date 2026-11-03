@@ -2251,10 +2251,6 @@ RSpec.describe "Events", type: :request do
     end
   end
 
-  # The screen the frames draw: a named creator and manager, a place, notes, and a roster of three
-  # named members in three states, so every row an example reads has a name to find it by. The
-  # reader is registered too, with `reader_status:`, and the date is fixed because the schedule
-  # line is copy the examples read.
   # Runs the block with the row the request is about to write already landing from inside the request, after `arriving_members` has read the set, which is the only place a spec can reach that window. The lambda is held in a local so `skip_callback` is handed the object `set_callback` was given.
   def racing_on(event)
     insert = ->(registration) {
@@ -2268,6 +2264,10 @@ RSpec.describe "Events", type: :request do
     Registration.skip_callback(:create, :before, insert)
   end
 
+  # The screen the frames draw: a named creator and manager, a place, notes, and a roster of three
+  # named members in three states, so every row an example reads has a name to find it by. The
+  # reader is registered too, with `reader_status:`, and the date is fixed because the schedule
+  # line is copy the examples read.
   def detailed_event(reader, reader_status: :yes)
     group = reader.group
     alice = create(:member, :active, group:, user: create(:user, :with_full_profile, first_name: "Alice", last_name: "Bird"))
