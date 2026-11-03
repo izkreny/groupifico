@@ -965,7 +965,7 @@ RSpec.describe "Events", type: :request do
         get group_event_path(event.group, event)
 
         fragment = Nokogiri::HTML(response.body)
-        ben, carla = [ "Ben Cole", "Carla Duke" ].map { fragment.at_xpath("//li[span[text()='#{it}']]") }
+        ben, carla = [ "Ben Cole", "Carla Duke" ].map { fragment.at_xpath("//tr[td[text()='#{it}']]") }
         expect(ben.css("span[title]").map { it["title"] }).to eq [ "Place reserved, no response requested yet" ]
         expect(ben.at_css("button[aria-label^='Request a response from Ben Cole']")["class"]).to include "text-icon-muted"
         expect(carla.css("span[title]")).to be_empty
@@ -1088,6 +1088,30 @@ RSpec.describe "Events", type: :request do
         expect(response.body).to include "Place reserved, no response requested yet", "Response requested"
         expect(response.body).not_to include "Yes for Ben Cole", "Edit the list"
         expect(response.body).not_to include "Yes for #{member.full_name}", "Request a response from Ben Cole", "Request the rest", "Reserve a place for everyone"
+      end
+
+      it "draws the list by status when the reader last chose it, with the Status header marked sorted" do
+        member = create(:member, :active)
+        event = detailed_event(member)
+        sign_in_as(member.user)
+        cookies[:roster_order] = "status"
+
+        get group_event_path(event.group, event)
+
+        expect(page_text(response.body)).to match(/Alice Bird.*Carla Duke.*Ben Cole/)
+        expect(Nokogiri::HTML(response.body).css("th[aria-sort='ascending']").map { it.text.strip }).to eq [ "Status" ]
+      end
+
+      it "draws the list by name for an order the list does not offer, with the Member header marked sorted" do
+        member = create(:member, :active)
+        event = detailed_event(member)
+        sign_in_as(member.user)
+        cookies[:roster_order] = "created_at"
+
+        get group_event_path(event.group, event)
+
+        expect(page_text(response.body)).to match(/Alice Bird.*Ben Cole.*Carla Duke/)
+        expect(Nokogiri::HTML(response.body).css("th[aria-sort='ascending']").map { it.text.strip }).to eq [ "Member" ]
       end
 
       # `detailed_event` has ended, so a place held for the reader is now a question about whether they went.

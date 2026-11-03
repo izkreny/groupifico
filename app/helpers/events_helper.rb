@@ -12,6 +12,11 @@ module EventsHelper
     STATUS_INKS[status]
   end
 
+  # The order the reader last chose for an event's list, kept by `Events::RosterOrdersController`, or the one the list starts in.
+  def roster_order
+    cookies[:roster_order].presence_in(Event::ROSTER_ORDERS) || Event::ROSTER_ORDERS.first
+  end
+
   # The card's own two readings of the same schedule: the range a hero card and the detail screen
   # carry, and the start alone that a compact row carries beside the place. Both print in
   # `Time.zone`, which `starts_at` already answers in.

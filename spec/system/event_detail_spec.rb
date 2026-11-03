@@ -145,7 +145,7 @@ RSpec.describe "The event detail", type: :system do
     page.driver.resize(1280, 700)
 
     visit group_event_path(event.group, event)
-    open_roster
+    open_roster(sorted_by: "Status")
     page.execute_script("document.querySelector(`[aria-label='Yes for Mlex Mox']`).scrollIntoView({ block: 'center' }); document.addEventListener('turbo:submit-start', () => window.held = scrollY, { once: true })")
     click_button "Yes for Mlex Mox"
 
@@ -168,15 +168,15 @@ RSpec.describe "The event detail", type: :system do
     expect(ben.registrations.sole.reload).to be_yes
   end
 
-  # daisyUI pads a list row by 1rem, which leaves a long roster 64px a row; 8px above and below its 32px buttons makes it 48px.
-  it "draws an owner's roster rows 48px tall" do
+  # 8px above and below a row's 32px buttons, in place of daisyUI's own cell padding, makes it 48px, and the table's own 1px divider 49.
+  it "draws an owner's roster rows 49px tall, divider included" do
     owner, event, ben = rostered_event
     sign_in_as owner.user
 
     visit group_event_path(event.group, event)
     open_roster
 
-    expect(find_by_id(roster_row(ben)).evaluate_script("this.getBoundingClientRect().height")).to eq 48
+    expect(find_by_id(roster_row(ben)).evaluate_script("this.getBoundingClientRect().height")).to eq 49
   end
 
   # daisyUI fills a button carrying aria-current, so the lit pill would stand out by a fill its unlit neighbours lack.
@@ -347,6 +347,32 @@ RSpec.describe "The event detail", type: :system do
 
   # That the row was written is `spec/requests/registrations_spec.rb`'s; the landing is the part a
   # browser adds.
+  # Which order the list is drawn in is `spec/requests/events_spec.rb`'s; that the header's press lands with the list still open is what a browser adds. Carla's requested place sorts ahead of Ben's reserved one by status, and behind it by name.
+  it "sorts the list by status from its header, the list still open, with no accessibility violations" do
+    owner, event, = rostered_event
+    sign_in_as owner.user
+
+    visit group_event_path(event.group, event)
+    open_roster(sorted_by: "Status")
+
+    expect(page).to have_css "th[aria-sort='ascending']", text: "Status"
+    expect(roster_names.index("Carla Duke")).to be < roster_names.index("Ben Cole")
+    expect(page).to be_accessible
+  end
+
+  # A no sorts Carla among the answers, still ahead of Ben by status, where by name she would follow him.
+  it "keeps the order the reader chose when an answer is given from the list" do
+    owner, event, = rostered_event
+    sign_in_as owner.user
+
+    visit group_event_path(event.group, event)
+    open_roster(sorted_by: "Status")
+    click_button "No for Carla Duke"
+
+    expect(page).to have_css "button[aria-label='No for Carla Duke'][aria-current='true']"
+    expect(roster_names.index("Carla Duke")).to be < roster_names.index("Ben Cole")
+  end
+
   it "answers for somebody from their row and lands back on the event" do
     owner, event, = rostered_event
     sign_in_as owner.user
@@ -474,8 +500,13 @@ RSpec.describe "The event detail", type: :system do
     expect(page).to have_current_path edit_group_event_path(event.group, event)
   end
 
-  def open_roster
+  def open_roster(sorted_by: nil)
     find("summary", text: "Who’s coming").click
+    click_button sorted_by if sorted_by
+  end
+
+  def roster_names
+    all("tbody tr td:first-child").map(&:text)
   end
 
   def request_the_rest(event)

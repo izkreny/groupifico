@@ -22,6 +22,7 @@ module StyleguidesHelper
     save: "Saving a form: its submit button, such as Save changes, Create event, Update the list or Send invite.",
     cancel: "Leaving without a change: Cancel in every form's button row, and the keep button on every confirm sheet.",
     dismiss: "Dismissing a flash notice or alert: the x at its end.",
+    sort: "Choosing the order a list is drawn in: the Member and Status headers of an event's list.",
     confirm: "Spending an emailed link: the button on the sign-in link and sign-up confirmation pages.",
     back: "Going back: the Back link in the header of a pushed screen.",
     go_to: "Going further: See all events on Home.",
