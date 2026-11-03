@@ -171,8 +171,7 @@ RSpec.describe Event, type: :model do
     end
   end
 
-  # The complement of `.past`, so the pair is asserted as a partition rather than as two lists that
-  # happen to look right: every event the group has falls in exactly one of them.
+  # WHY: with `.past` and the enum's `.canceled`, asserted as a partition rather than as three lists that happen to look right: every event the group has falls in exactly one of them.
   describe ".current_and_upcoming" do
     it "returns the events that start in the future and the ones already running" do
       create(:event, :from_the_past)
@@ -188,13 +187,31 @@ RSpec.describe Event, type: :model do
       expect(described_class.current_and_upcoming).to be_empty
     end
 
-    it "leaves no event on neither list, and none on both" do
+    it "leaves out a canceled event that has not ended" do
+      create(:event, :from_the_future, status: :canceled)
+
+      expect(described_class.current_and_upcoming).to be_empty
+    end
+
+    it "leaves no event on no list, and none on two" do
       create(:event, :from_the_past)
       create(:event, :from_the_future)
       create(:event, :ongoing)
+      create(:event, :from_the_past, status: :canceled)
+      create(:event, :from_the_future, status: :canceled)
 
-      expect(described_class.current_and_upcoming.ids + described_class.past.ids).to match_array described_class.ids
-      expect(described_class.current_and_upcoming.ids & described_class.past.ids).to be_empty
+      expect(described_class.current_and_upcoming.ids + described_class.past.ids + described_class.canceled.ids).to match_array described_class.ids
+    end
+
+    it "returns an event to the list its dates name once it is no longer canceled" do
+      ahead = create(:event, :from_the_future, status: :canceled)
+      over = create(:event, :from_the_past, status: :canceled)
+
+      ahead.update!(status: :confirmed)
+      over.update!(status: :concluded)
+
+      expect(described_class.current_and_upcoming).to contain_exactly(ahead)
+      expect(described_class.past).to contain_exactly(over)
     end
   end
 
@@ -216,6 +233,14 @@ RSpec.describe Event, type: :model do
         past_event = create(:event, :from_the_past)
 
         expect(described_class.past).to contain_exactly(past_event)
+      end
+    end
+
+    context "when an event that has ended was canceled" do
+      it "leaves it out" do
+        create(:event, :from_the_past, status: :canceled)
+
+        expect(described_class.past).to be_empty
       end
     end
   end
