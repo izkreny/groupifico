@@ -1,10 +1,9 @@
 <%# locals: (event:) %>
 <%#
-  Who is on the event's list, one row per registration in `Event#roster` order, the same rows in
-  the same order for every reader: what varies is only what a reader may do with a row.
+  Who is on the event's list, one row per registration in the `Event#roster` order the reader last chose, the same rows for every reader: what varies is only the order and what a reader may do with a row.
 
   The two capabilities are the reader's rather than a row's, so each is checked once, against a
-  registration with no member on it - the record `Events::RostersController#edit` checks. With no member
+  registration with no member on it - the record `EventsController#update` checks before changing the list. With no member
   `own?` is false, so `update?` there is "change another member's answer" alone; checked per row it
   would hand a plain member controls on their own row. `Registration.new(event:)` rather than
   `event.registrations.new`, which would join the loaded association `events/_counts` sizes.
@@ -25,70 +24,87 @@
 <% answers = event.available_registration_answers %>
 <% anyone_to_request = may_fill && event.anyone_left_to_request? %>
 <% anyone_to_reserve = may_fill && event.anyone_left_to_reserve? %>
-<% roster = event.roster %>
+<% order = roster_order %>
+<% descending = roster_descending? %>
+<% roster = event.roster(order:, descending:) %>
 
 <div class="flex flex-col gap-2">
-  <div>
-    <h3 class="font-semibold">Who&rsquo;s on the list</h3>
-    <p class="text-xs">
-      <%= list_tally(event.group, event) %><% if (left_out = left_out_line(event.group, event)) %> · <%= left_out %><% end %>
-    </p>
-  </div>
-
   <%# WHY: daisyUI fills a button carrying aria-current as active, so the lit pill clears that fill at rest to stay chosen by its colour alone, and keeps the hover every button has. %>
   <%# The Who's coming? tally's colours: the chosen answer in its status colour and a question in info, every control not yet used in the muted icon ink, and a row's status icon drawn where no control stands, as the tally draws it. %>
   <% if roster.any? %>
-    <ul class="list">
-      <% roster.each do |registration| %>
-        <% name = registration.member.full_name %>
-        <li id="<%= dom_id registration, :roster %>" class="list-row items-center px-0 py-2">
-          <span class="list-col-grow"><%= name %></span>
-
-          <%# WHY: one strip at one gap, so every status icon on the row sits the same distance from its neighbours whichever controls the reader gets. %>
-          <div class="flex items-center gap-controls">
-            <% requestable = may_fill && !registration.answered? && registration.member.active? %>
-            <% requested = registration.response_requested? %>
-            <% if (!may_answer || answers.exclude?(registration.status)) && !(requestable && requested) %>
-              <span class="inline-flex size-control items-center justify-center <%= status_ink(registration.status) %>" title="<%= registration_status_label(registration) %>">
-                <%= status_icon registration, label: registration_status_label(registration), class: "size-icon-control" %>
-              </span>
+    <table class="table">
+      <thead>
+        <tr>
+          <%# WHY: each header is a form rather than a link, because choosing an order stores it, and a GET writes nothing. Both draw the up and down arrows as one icon; the sorted header inks in primary the one the list runs by and turns the list round on its next press, and the other mutes its name and both arrows and starts its order from the top. %>
+          <% { "name" => "Name", "status" => "Response" }.each do |value, heading| %>
+            <% sorted = order == value %>
+            <% running = (descending ? :sort_descending : :sort_ascending) if sorted %>
+            <% arrows = %i[ sort_ascending sort_descending ].map { |glyph| icon(glyph, class: [ "size-icon-inline", (glyph == running ? "text-primary" : "text-icon-muted"), ("-ms-icon-pair" if glyph == :sort_descending) ].compact.join(" ")) } %>
+            <%= tag.th scope: "col", class: [ "px-0", ("text-end" if value == "status") ], aria: { sort: ((descending ? "descending" : "ascending") if sorted) } do %>
+              <%# WHY: the `.btn` rule sets the arrows' box `icon-label` from the name, and pulling the box back by the arrow's own inset makes that the gap you see. %>
+              <%= button_to safe_join([ heading, tag.span(safe_join(arrows), class: "inline-flex -ms-arrow-inset") ]),
+                    group_event_roster_order_path(event.group, event),
+                    method: :patch,
+                    params: { order: value, descending: sorted && !descending },
+                    class: "btn btn-ghost btn-sm px-1 text-xs font-semibold uppercase tracking-wider #{"text-muted" unless sorted}" %>
             <% end %>
+          <% end %>
+        </tr>
+      </thead>
 
-            <% if requestable %>
-              <%= button_to group_event_registration_response_request_path(event.group, event, registration),
-                    class: "btn btn-ghost btn-sm btn-square #{requested ? "text-info" : "text-icon-muted"}",
-                    title: registration_status_label(registration),
-                    aria: { label: requested ? "Response requested from #{name}" : "Request a response from #{name}" } do %>
-                <%= icon :response_requested, class: "size-icon-control" %>
-              <% end %>
-            <% end %>
+      <%# WHY: daisyUI draws no divider under a table's last row; the list closes on the same one as its other rows, written as daisyUI mixes it, in oklch, so it is the same colour rather than a near one. %>
+      <tbody class="[&>tr:last-child>td]:border-b [&>tr:last-child>td]:border-[color:color-mix(in_oklch,var(--color-base-content)_5%,transparent)]">
+        <% roster.each do |registration| %>
+          <% name = registration.member.full_name %>
+          <tr id="<%= dom_id registration, :roster %>">
+            <td class="px-0 py-2 wrap-anywhere"><%= name %></td>
 
-            <% if may_answer %>
-              <% answers.each do |answer| %>
-                <% current = registration.status == answer %>
-                <%= button_to group_event_registration_path(event.group, event, registration),
-                      method: :patch,
-                      params: { registration: { status: answer } },
-                      class: "btn btn-ghost btn-sm btn-square #{current ? "#{status_ink(answer)} not-hover:bg-transparent not-hover:border-transparent" : "text-icon-muted"}",
-                      aria: { label: "#{answer.capitalize} for #{name}", current: (current ? "true" : nil) } do %>
-                  <%= icon answer, class: "size-icon-control" %>
+            <td class="px-0 py-2">
+              <%# WHY: one strip at one gap, so every status icon on the row sits the same distance from its neighbours whichever controls the reader gets. %>
+              <div class="flex items-center justify-end gap-controls">
+                <% requestable = may_fill && !registration.answered? && registration.member.active? %>
+                <% requested = registration.response_requested? %>
+                <% if (!may_answer || answers.exclude?(registration.status)) && !(requestable && requested) %>
+                  <span class="inline-flex size-control items-center justify-center <%= status_ink(registration.status) %>" title="<%= registration_status_label(registration) %>">
+                    <%= status_icon registration, label: registration_status_label(registration), class: "size-icon-control" %>
+                  </span>
                 <% end %>
-              <% end %>
-            <% end %>
-          </div>
-        </li>
-      <% end %>
-    </ul>
+
+                <% if requestable %>
+                  <%= button_to group_event_registration_response_request_path(event.group, event, registration),
+                        class: "btn btn-ghost btn-sm btn-square #{requested ? "text-info" : "text-icon-muted"}",
+                        title: registration_status_label(registration),
+                        aria: { label: requested ? "Response requested from #{name}" : "Request a response from #{name}" } do %>
+                    <%= icon :response_requested, class: "size-icon-control" %>
+                  <% end %>
+                <% end %>
+
+                <% if may_answer %>
+                  <% answers.each do |answer| %>
+                    <% current = registration.status == answer %>
+                    <%= button_to group_event_registration_path(event.group, event, registration),
+                          method: :patch,
+                          params: { registration: { status: answer } },
+                          class: "btn btn-ghost btn-sm btn-square #{current ? "#{status_ink(answer)} not-hover:bg-transparent not-hover:border-transparent" : "text-icon-muted"}",
+                          aria: { label: "#{answer.capitalize} for #{name}", current: (current ? "true" : nil) } do %>
+                      <%= icon answer, class: "size-icon-control" %>
+                    <% end %>
+                  <% end %>
+                <% end %>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
   <% else %>
     <p class="text-sm">Nobody is on the list yet.</p>
   <% end %>
 
-  <% if may_fill %>
-    <div class="flex flex-wrap gap-2">
-      <%= link_to edit_group_event_roster_path(event.group, event), class: "btn btn-sm" do %>
-        <%= icon :edit, class: "size-icon-control" %>Edit the list
-      <% end %>
+  <p class="text-meta"><%= safe_join([ list_tally(event.group, event), not_active_on_list_line(event) ].compact, " ") %></p>
 
+  <% if anyone_to_reserve || anyone_to_request %>
+    <div class="flex flex-wrap gap-2">
       <%# Each only while it can do something: every active member already listed, or already requested, leaves it nothing. %>
       <% if anyone_to_reserve %>
         <%= button_to group_event_reservation_path(event.group, event), class: "btn btn-sm" do %>

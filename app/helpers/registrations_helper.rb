@@ -11,13 +11,22 @@ module RegistrationsHelper
     group.members.without_registration_for(event).where.not(status: :inactive).preloaded.order(:status)
   end
 
-  # The screen's header line. Both numbers count active members alone: a paused member cannot be
+  # The roster's line under its rows. Both numbers count active members alone: a paused member cannot be
   # added, so counting them would state a shortfall nobody can close, and an inactive one has
-  # left the group entirely.
+  # left the group entirely. Those of them still on the list are `not_active_on_list_line`'s.
   def list_tally(group, event)
     active = group.members.active
 
-    "#{active.where(id: event.registrations.select(:member_id)).count} of #{active.count} on the list"
+    "#{active.where(id: event.registrations.select(:member_id)).count} of #{active.count} active members are on the list."
+  end
+
+  # WHY: the rows the tally leaves out of its numbers, stated only while the list holds any, and naming only the kinds it holds.
+  def not_active_on_list_line(event)
+    counts = Member.where(id: event.registrations.select(:member_id)).where(status: %i[ paused inactive ]).group(:status).count
+    parts = %w[ paused inactive ].filter_map { |status| "#{counts[status]} #{status}" if counts[status].to_i.positive? }
+    total = counts.values.sum
+
+    "#{parts.join(", and ")} #{total == 1 ? "member is" : "members are"} on the list too." if parts.any?
   end
 
   # What a roster row's badge says to a screen reader, and on hover. An answer is its own word; the
@@ -31,14 +40,5 @@ module RegistrationsHelper
     else
       registration.status.capitalize
     end
-  end
-
-  # The event roster's line above its rows, naming whoever the tally leaves out for being paused: a
-  # paused member cannot be added, so without the line they are missing from both the numbers
-  # and the rows with nothing saying why. One who is already registered has a row of their own.
-  def left_out_line(group, event)
-    names = group.members.paused.without_registration_for(event).preloaded.map(&:full_name).sort_by(&:downcase)
-
-    "#{names.to_sentence} #{names.one? ? "is" : "are"} paused, left out" if names.any?
   end
 end

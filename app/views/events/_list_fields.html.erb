@@ -1,0 +1,70 @@
+<%# locals: (event:, namespace: nil) %>
+<%#
+  WHY: who is on the list is edited inside the event's own form, so each button is a checkbox drawn as one: it posts with the event's Save rather than acting on its own, and a refused save draws it again pressed, read back from what was posted. A pressed `+` is `adding_ids`, a pressed trash `removing_ids`, beside the event rather than in it, as `EventsController#update` reads them.
+
+  WHY: a button a reader may not press is drawn disabled rather than left out, so every row keeps the same column, and no line beneath the name says why, so every row reads alike.
+
+  WHY: the list folds like the event page's Who's coming?, shut by default since most saves leave it alone, and open when a refused save draws it again with rows still marked, so the marks are not hidden. The summary names the fieldset, so the group is not announced twice.
+
+  WHY: a status badge sits beside the name only when the member is not active, as in the members list, so the badges stand out on a list that is mostly active members.
+%>
+<% may_remove = allowed_to?(:destroy?, Registration.new(event: event)) %>
+<% listed = event.roster.map(&:member) %>
+<% addable, paused = members_available(event.group, event).partition(&:active?) %>
+<% adding = Array(params[:adding_ids]).map(&:to_s) %>
+<% removing = Array(params[:removing_ids]).map(&:to_s) %>
+
+<% list_id = [ namespace, "event_list" ].compact.join("_") %>
+
+<fieldset class="fieldset" id="<%= list_id %>" aria-labelledby="<%= list_id %>_title">
+  <%= tag.details class: "collapse collapse-arrow", open: (adding + removing).any? do %>
+    <summary class="collapse-title ps-0">
+      <span class="label" id="<%= list_id %>_title">Who&rsquo;s on the list</span>
+    </summary>
+
+    <div class="collapse-content px-0 pb-0">
+      <ul class="list">
+        <% listed.each do |member| %>
+          <% id = [ namespace, dom_id(member, :removing) ].compact.join("_") %>
+          <li class="list-row group items-center px-0">
+            <div class="list-col-grow">
+              <%= render "events/list_name", member:, mark: "group-has-checked:line-through" %>
+            </div>
+
+            <label class="btn btn-sm btn-square has-checked:btn-error has-focus-visible:outline-2 has-focus-visible:outline-offset-2 <%= "btn-disabled" unless may_remove %>">
+              <%= check_box_tag "removing_ids[]", member.id, removing.include?(member.id.to_s), id:, class: "sr-only", disabled: !may_remove, aria: { label: "Remove #{member.full_name}" } %>
+              <%= icon :delete, class: "size-icon-control" %>
+            </label>
+          </li>
+        <% end %>
+
+        <% addable.each do |member| %>
+          <% id = [ namespace, dom_id(member, :adding) ].compact.join("_") %>
+          <li class="list-row group items-center px-0">
+            <div class="list-col-grow">
+              <%= render "events/list_name", member:, mark: "group-has-checked:underline" %>
+            </div>
+
+            <label class="btn btn-sm btn-square has-checked:btn-success has-focus-visible:outline-2 has-focus-visible:outline-offset-2">
+              <%= check_box_tag "adding_ids[]", member.id, adding.include?(member.id.to_s), id:, class: "sr-only", aria: { label: "Add #{member.full_name}" } %>
+              <%= icon :new, class: "size-icon-control" %>
+            </label>
+          </li>
+        <% end %>
+
+        <% paused.each do |member| %>
+          <li class="list-row items-center px-0 text-muted">
+            <div class="list-col-grow">
+              <%= render "events/list_name", member:, mark: nil %>
+            </div>
+
+            <label class="btn btn-sm btn-square btn-disabled">
+              <%= check_box_tag "adding_ids[]", member.id, false, id: [ namespace, dom_id(member, :adding) ].compact.join("_"), class: "sr-only", disabled: true, aria: { label: "Add #{member.full_name}" } %>
+              <%= icon :new, class: "size-icon-control" %>
+            </label>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+</fieldset>

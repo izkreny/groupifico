@@ -137,19 +137,22 @@ class Event < ApplicationRecord
     ended? ? Registration::ANSWERS.excluding("maybe") : Registration::ANSWERS
   end
 
-  # Everyone on the list, in the order the event screen draws them: grouped by where each stands,
-  # the answers first in the order the answer row offers them, then the two unanswered statuses from
-  # the one nearest an answer - the enum declares them in the order a registration moves through, so
-  # that is their declaration reversed. Within a status, by the name each row carries, whatever case
-  # it was typed in.
+  # The orders the event screen offers its list in, the first being the one it starts in.
+  ROSTER_ORDERS = %w[ name status ].freeze
+
+  # Everyone on the list, by the name each row carries, whatever case it was typed in. By `status`, grouped by where each stands first: the answers in the order the answer row offers them, then the two unanswered statuses from the one nearest an answer - the enum declares them in the order a registration moves through, so that is their declaration reversed. `descending` turns either order round whole.
   #
   # Sorted after loading rather than by the database because the name is not a column -
   # `UserProfile#full_name` falls back to the email - and the profile is preloaded because every row
   # reads it through `user`.
-  def roster
-    order = Registration::ANSWERS + (Registration.statuses.keys - Registration::ANSWERS).reverse
+  def roster(order: ROSTER_ORDERS.first, descending: false)
+    statuses = Registration::ANSWERS + (Registration.statuses.keys - Registration::ANSWERS).reverse
 
-    registrations.preloaded.sort_by { [ order.index(it.status), it.member.full_name.downcase ] }
+    sorted = registrations.preloaded.sort_by do |registration|
+      name = registration.member.full_name.downcase
+      order == "status" ? [ statuses.index(registration.status), name ] : [ name ]
+    end
+    descending ? sorted.reverse : sorted
   end
 
   # Filling the event, all or nothing: a set refused part way through leaves nobody half-listed.
@@ -165,10 +168,11 @@ class Event < ApplicationRecord
     end
   end
 
-  # WHY: the list screen's one submit, all or nothing: a new tick holds a place and an untick removes one in the same transaction, so a refused reservation removes nobody either. Returns how many of each.
+  # WHY: the event form's list, saved with the event, all or nothing: a member added holds a place and a member taken off loses theirs in the same transaction, so a refused reservation removes nobody either.
   def update_roster(arriving:, leaving:)
     transaction do
-      [ reserve(arriving).size, leaving.destroy_all.size ]
+      reserve(arriving)
+      leaving.destroy_all
     end
   end
 

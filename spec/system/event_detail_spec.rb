@@ -108,7 +108,7 @@ RSpec.describe "The event detail", type: :system do
 
     visit group_event_path(event.group, event, responses: "show")
 
-    measures = [ "Yes", "Maybe", "No", "Edit the list" ].map { |label| find(".btn", exact_text: label).evaluate_script(<<~JS) }
+    measures = [ "Yes", "Maybe", "No", "Request the rest" ].map { |label| find(".btn", exact_text: label).evaluate_script(<<~JS) }
       ((icon, label) => [ icon.width, Math.round(label.left - icon.right) ])(this.querySelector("svg").getBoundingClientRect(), (range => { range.selectNodeContents([ ...this.childNodes ].findLast(node => node.textContent.trim())); return range.getBoundingClientRect() })(document.createRange()))
     JS
     expect(measures).to all eq [ 20, 8 ]
@@ -145,7 +145,7 @@ RSpec.describe "The event detail", type: :system do
     page.driver.resize(1280, 700)
 
     visit group_event_path(event.group, event)
-    open_roster
+    open_roster(sorted_by: "Response")
     page.execute_script("document.querySelector(`[aria-label='Yes for Mlex Mox']`).scrollIntoView({ block: 'center' }); document.addEventListener('turbo:submit-start', () => window.held = scrollY, { once: true })")
     click_button "Yes for Mlex Mox"
 
@@ -168,15 +168,15 @@ RSpec.describe "The event detail", type: :system do
     expect(ben.registrations.sole.reload).to be_yes
   end
 
-  # daisyUI pads a list row by 1rem, which leaves a long roster 64px a row; 8px above and below its 32px buttons makes it 48px.
-  it "draws an owner's roster rows 48px tall" do
+  # 8px above and below a row's 32px buttons, in place of daisyUI's own cell padding, makes it 48px, and the table's own 1px divider 49.
+  it "draws an owner's roster rows 49px tall, divider included" do
     owner, event, ben = rostered_event
     sign_in_as owner.user
 
     visit group_event_path(event.group, event)
     open_roster
 
-    expect(find_by_id(roster_row(ben)).evaluate_script("this.getBoundingClientRect().height")).to eq 48
+    expect(find_by_id(roster_row(ben)).evaluate_script("this.getBoundingClientRect().height")).to eq 49
   end
 
   # daisyUI fills a button carrying aria-current, so the lit pill would stand out by a fill its unlit neighbours lack.
@@ -276,6 +276,19 @@ RSpec.describe "The event detail", type: :system do
     expect(gap_to_row_end("##{roster_row(ben)} [aria-label='No for Ben Cole']", ".card-body")).to be >= 0
   end
 
+  # A member with no profile is drawn by their email, one word a table cell will not break by itself, so it would widen the list past the card. The row with the most controls is the one that would leave it.
+  it "fits the list inside the card on a phone when a name is one long word" do
+    owner, event, ben = rostered_event
+    create(:registration, event:, status: :yes, member: create(:member, :active, group: event.group, user: create(:user, email: "bartholomew.featherstonehaugh.maximilian@example.com")))
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_event_path(event.group, event)
+    open_roster
+
+    expect(gap_to_row_end("##{roster_row(ben)} [aria-label='No for Ben Cole']", ".card-body")).to be >= 0
+  end
+
   # Ben's row is the fullest an owner gets, the status, the paper plane and the pills, so it is the one where the status icons would fall into groups, and a phone is where they would wrap.
   it "spaces a roster row's status icons evenly on a phone" do
     owner, event, ben = rostered_event
@@ -343,6 +356,69 @@ RSpec.describe "The event detail", type: :system do
     expect(page.evaluate_script(<<~JS)).to eq [ 20, 20, 20 ]
       ((duplicate, edit) => [ duplicate.width, edit.width, Math.round(edit.left - duplicate.right) ])(...[ "Duplicate", "Edit" ].map(label => document.querySelector(`main a[aria-label='${label}'] svg`).getBoundingClientRect()))
     JS
+  end
+
+  # Which order the list is drawn in is `spec/requests/events_spec.rb`'s; that the header's press lands with the list still open is what a browser adds. Carla's requested place sorts ahead of Ben's reserved one by status, and behind it by name.
+  it "sorts the list by status from its header, the list still open, with no accessibility violations" do
+    owner, event, = rostered_event
+    sign_in_as owner.user
+
+    visit group_event_path(event.group, event)
+    open_roster(sorted_by: "Response")
+
+    expect(page).to have_css "th[aria-sort='ascending']", text: "RESPONSE"
+    expect(roster_names.index("Carla Duke")).to be < roster_names.index("Ben Cole")
+    expect(page).to be_accessible
+  end
+
+  # Which header is sorted is `spec/requests/events_spec.rb`'s; what only a browser shows is the colour each name and arrow resolves to, against probes carrying the classes the app uses elsewhere, and that the two arrows sit closer to each other than to their name.
+  it "inks the running arrow in primary, mutes the other arrows and the unsorted name, and sets the arrows 8px from the name and 2px apart" do
+    owner, event, = rostered_event
+    sign_in_as owner.user
+
+    visit group_event_path(event.group, event)
+    open_roster
+
+    expect(roster_header_reading).to eq("running" => true, "muted" => true, "names" => [ true, true ], "gaps" => [ 8, 2 ])
+  end
+
+  # daisyUI's table leaves its last row without the divider the others carry; the list closes on one too, so the line under it starts from a rule.
+  it "draws the same divider under the last row as under the others" do
+    owner, event, = rostered_event
+    sign_in_as owner.user
+
+    visit group_event_path(event.group, event)
+    open_roster
+
+    dividers = page.evaluate_script(%([ ...document.querySelectorAll("tbody tr") ].map(tr => { const s = getComputedStyle(tr.cells[0]); return [ s.borderBottomWidth, s.borderBottomStyle, s.borderBottomColor ].join(" ") })))
+    expect(dividers.uniq).to eq [ dividers.first ]
+    expect(dividers.first).to start_with "1px solid"
+  end
+
+  # A second press of the sorted header is what reverses it, and its glyph is what says which way the list now runs.
+  it "reverses the list on a second press of the sorted header, and turns its arrow" do
+    owner, event, = rostered_event
+    sign_in_as owner.user
+
+    visit group_event_path(event.group, event)
+    open_roster(sorted_by: "Name")
+
+    expect(page).to have_css "th[aria-sort='descending']", text: "NAME"
+    expect(roster_names.index("Carla Duke")).to be < roster_names.index("Ben Cole")
+    expect(page).to be_accessible
+  end
+
+  # A no sorts Carla among the answers, still ahead of Ben by status, where by name she would follow him.
+  it "keeps the order the reader chose when an answer is given from the list" do
+    owner, event, = rostered_event
+    sign_in_as owner.user
+
+    visit group_event_path(event.group, event)
+    open_roster(sorted_by: "Response")
+    click_button "No for Carla Duke"
+
+    expect(page).to have_css "button[aria-label='No for Carla Duke'][aria-current='true']"
+    expect(roster_names.index("Carla Duke")).to be < roster_names.index("Ben Cole")
   end
 
   # That the row was written is `spec/requests/registrations_spec.rb`'s; the landing is the part a
@@ -474,8 +550,33 @@ RSpec.describe "The event detail", type: :system do
     expect(page).to have_current_path edit_group_event_path(event.group, event)
   end
 
-  def open_roster
+  def open_roster(sorted_by: nil)
     find("summary", text: "Who’s coming").click
+    click_button sorted_by if sorted_by
+  end
+
+  # Each sorted-header colour against a probe carrying the class the app uses for it elsewhere, and the gaps you see, name to up arrow and up arrow to down arrow, glyph to glyph and rounded to the pixel.
+  def roster_header_reading
+    page.evaluate_script(<<~JS)
+      (() => {
+        const probe = cls => { const s = document.createElement("span"); s.className = cls; document.body.append(s); const c = getComputedStyle(s).color; s.remove(); return c }
+        const colour = el => getComputedStyle(el).color
+        const glyph = svg => svg.querySelector("path").getBoundingClientRect()
+        const [member, status] = document.querySelectorAll("thead th button")
+        const [up, down] = member.querySelectorAll("svg")
+        const range = document.createRange(); range.selectNodeContents(member.firstChild)
+        return {
+          running: colour(up) == probe("text-primary"),
+          muted: [ down, ...status.querySelectorAll("svg") ].every(a => colour(a) == probe("text-icon-muted")),
+          names: [ colour(member) == colour(document.querySelector("tbody td")), colour(status) == probe("text-muted") ],
+          gaps: [ Math.round(glyph(up).left - range.getBoundingClientRect().right), Math.round(glyph(down).left - glyph(up).right) ]
+        }
+      })()
+    JS
+  end
+
+  def roster_names
+    all("tbody tr td:first-child").map(&:text)
   end
 
   def request_the_rest(event)

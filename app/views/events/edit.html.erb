@@ -6,7 +6,7 @@
 <% deletable = allowed_to?(:destroy?, @event) %>
 <% id = dom_id(@event, :confirm_delete) %>
 <%= render layout: "shared/confirm_scope", locals: { enabled: deletable, classes: "w-full" } do %>
-  <%= render "events/form", group: @group, event: @event, submit: "Save changes", cancel: group_event_path(@group, @event),
+  <%= render "events/form", group: @group, event: @event, submit: "Save changes", cancel: group_event_path(@group, @event), may_fill: @list_editable,
         leading: (render("shared/confirm_trigger", id:, confirm: "Delete event") if deletable) %>
 
   <% if deletable %>

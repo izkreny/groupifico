@@ -184,7 +184,7 @@ RSpec.describe "The events list", type: :system do
   # Frame 4n. Which reader is offered it is `spec/requests/events_spec.rb`'s; that its label shows and
   # where pressing it lands is what a browser adds. No `paint` assertion, measured rather than
   # assumed: it is a plain `btn`, whose base-200 face sits on the hero's own base-200 and scores
-  # exactly 1, as `Edit the list` does on the event's roster, so its label carries the claim instead.
+  # exactly 1, as Request the rest does on the event's roster, so its label carries the claim instead.
   it "shows Request responses by its label, and lands back on the list" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
     create(:registration, event: next_event_for(member), member:, status: :reserved)

@@ -28,6 +28,10 @@ module IconsHelper
     cancel: "x-mark",
     dismiss: "x-mark",
 
+    # WHY: a sortable header draws both, as one icon, and inks the one the list runs by, so an unsorted header reads as not sorted rather than as a direction.
+    sort_ascending: "arrow-long-up",
+    sort_descending: "arrow-long-down",
+
     # The emailed-link pages' one button, which spends the link. The same glyph as `save` because frames 10a and 10b draw the check on it.
     confirm: "check",
 
