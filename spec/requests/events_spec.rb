@@ -2054,17 +2054,30 @@ RSpec.describe "Events", type: :request do
         expect(Registration.exists?(elsewhere.id)).to be true
       end
 
-      it "adds nobody who is paused, inactive, already on the list or from another group, and still saves the event" do
-        event = create(:event)
-        paused = create(:member, :paused, group: event.group)
-        gone = create(:member, :inactive, group: event.group)
+      # One member a post, so each guard in `arriving_members` is what refuses its own case.
+      it "refuses the save, adding nobody, when a member marked to add is paused, inactive, already on the list or from another group" do
+        event = create(:event, name: "Original")
         registered = create(:registration, event:, member: create(:member, :active, group: event.group)).member
-        outsider = create(:member, :active)
+        unoffered = [ create(:member, :paused, group: event.group), create(:member, :inactive, group: event.group), registered, create(:member, :active) ]
         sign_in_as(create(:member, :active, :events_administrator, group: event.group).user)
 
-        expect { patch group_event_path(event.group, event), params: { event: { name: "Renamed" }, adding_ids: [ paused.id, gone.id, registered.id, outsider.id ] } }
-          .not_to change(Registration, :count)
-        expect(event.reload.name).to eq "Renamed"
+        statuses = unoffered.map { |member| patch(group_event_path(event.group, event), params: { event: { name: "Renamed" }, adding_ids: [ member.id ] }) }
+
+        expect(statuses).to all eq 422
+        expect([ Registration.count, event.reload.name ]).to eq [ 1, "Original" ]
+      end
+
+      it "draws the form again after that refusal, with the typed values and the other marks kept and the paused member's add disabled" do
+        event = create(:event, name: "Original")
+        arriving, paused = create_list(:member, 2, :active, group: event.group)
+        sign_in_as(create(:member, :active, :events_administrator, group: event.group).user)
+        paused.update!(status: :paused)
+
+        patch group_event_path(event.group, event), params: { event: { name: "Renamed" }, adding_ids: [ arriving.id, paused.id ] }
+
+        form = Nokogiri::HTML(response.body)
+        expect([ flash[:alert], form.at_css("input[name='event[name]']")["value"] ]).to eq [ EventsController::MOVED_ON, "Renamed" ]
+        expect([ arriving, paused ].map { |member| form.at_css("input[name='adding_ids[]'][value='#{member.id}']").to_h.slice("checked", "disabled") }).to eq [ { "checked" => "checked" }, { "disabled" => "disabled" } ]
       end
 
       # The row the intersection cannot see: it lands after `arriving_members` has read the set and reaches the unique index instead. The racing row rolls back with the rest here, where a real one on another connection would not, so what this proves is the answer rather than the row count.

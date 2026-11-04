@@ -95,27 +95,29 @@ class EventsController < ApplicationController
     authorize_list_changes!
     @list_editable = allowed_to?(:create?, Registration.new(event: @event))
 
-    saved = @event.transaction do
-      @event.update(event_params).tap do |updated|
-        @event.update_roster(arriving: arriving_members, leaving: leaving_registrations) if updated
-      end
-    end
-
-    if saved
-      redirect_to group_event_path(@group, @event),
-        notice: "Event was successfully updated.",
-        status: :see_other
+    if list_moved_on?
+      @event.assign_attributes(event_params)
+      draw_moved_on
     else
-      @event.build_address unless @event.address
+      saved = @event.transaction do
+        @event.update(event_params).tap do |updated|
+          @event.update_roster(arriving: arriving_members, leaving: leaving_registrations) if updated
+        end
+      end
 
-      render :edit, status: :unprocessable_content
+      if saved
+        redirect_to group_event_path(@group, @event),
+          notice: "Event was successfully updated.",
+          status: :see_other
+      else
+        @event.build_address unless @event.address
+
+        render :edit, status: :unprocessable_content
+      end
     end
   rescue ActiveRecord::RecordNotUnique
     # WHY: a member added here landed on the list from somewhere else while this request was writing; the transaction has rolled the whole save back, so the form is drawn again as it was posted.
-    flash.now[:alert] = MOVED_ON
-    @event.build_address unless @event.address
-
-    render :edit, status: :unprocessable_content
+    draw_moved_on
   end
 
   def destroy
@@ -182,6 +184,18 @@ class EventsController < ApplicationController
     # WHY: only those the form would still offer, rather than the ids as posted: one naming somebody from another group would publish their name through the event's list, and one already registered while the form sat open is dropped here rather than reaching the unique index.
     def arriving_members
       @group.members.active.without_registration_for(@event).where(id: posted_ids(:adding_ids))
+    end
+
+    # WHY: a member marked with `+` the form no longer offers was paused, deactivated or listed while it sat open, and saving without them would report success for a list the reader did not ask for, so the whole save is refused.
+    def list_moved_on?
+      arriving_members.count < posted_ids(:adding_ids).uniq.size
+    end
+
+    def draw_moved_on
+      flash.now[:alert] = MOVED_ON
+      @event.build_address unless @event.address
+
+      render :edit, status: :unprocessable_content
     end
 
     def leaving_registrations
