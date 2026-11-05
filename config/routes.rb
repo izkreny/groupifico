@@ -27,6 +27,7 @@ Rails.application.routes.draw do
   get "user", to: redirect("/user/profile/edit"), as: nil
   get "user/edit", to: redirect("/user/profile/edit"), as: nil
   get "user/profile", to: redirect("/user/profile/edit"), as: nil
+  resources :feedbacks, only: %i[ new create show ]
   resolve("User")        { [ :user         ] }
   resolve("UserProfile") { [ :user_profile ] }
 

@@ -64,6 +64,12 @@ RSpec.describe Feedback, type: :model do
       expect(feedback.page).to eq "/sign_in/abc"
     end
 
+    it "stores nothing for a path that would lead to another site" do
+      feedback = described_class.new(page: "https://groupifico.test//evil.example/sign_in")
+
+      expect(feedback.page).to be_nil
+    end
+
     it "stores nothing for a page that is not a URL" do
       feedback = described_class.new(page: "http://exa mple.com")
 

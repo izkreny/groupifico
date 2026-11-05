@@ -63,7 +63,12 @@ module IconsHelper
 
     # WHY: the legend draws neither of the Me menu's own rows, so both are Heroicons' own; `profile` is not `edit` because the menu will hold more than one thing a member edits about themselves.
     profile: "user",
-    sign_out: "arrow-right-start-on-rectangle"
+    sign_out: "arrow-right-start-on-rectangle",
+
+    # WHY: the legend draws none of the feedback screens' glyphs, so they are Heroicons' own, as design C on #405 draws them.
+    send: "paper-airplane",
+    remove: "x-mark",
+    return: "arrow-uturn-left"
   }.freeze
 
   # Heroicons' filled set for each size class the app draws: solid, mini and micro are drawn on their own 24, 20 and 16px grids, where its outline set exists at 24px alone.

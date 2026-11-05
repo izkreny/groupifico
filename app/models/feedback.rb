@@ -41,7 +41,7 @@ class Feedback < ApplicationRecord
     :time_zone, :language, :connection
 
   validates :description, presence: true, length: { maximum: 5_000 }
-  validates :page, format: { with: %r{\A/} }, length: { maximum: 2_000 }, allow_blank: true
+  validates :page, length: { maximum: 2_000 }
   validates :user_agent, length: { maximum: 1_000 }
   validates :revision, length: { maximum: 100 }
   validates :viewport_width, :viewport_height, :screen_width, :screen_height,
@@ -58,8 +58,10 @@ class Feedback < ApplicationRecord
   validate :screenshots_are_allowed_images
 
   # WHY: `normalizes` never runs on a `store_accessor` key, which is no attribute of its own; the path alone keeps a sign-in link's token out of the issue.
+  # WHY: a path opening with two slashes is a link to another site, and the thank-you page links back to this one.
   def page=(url)
-    super(URI.parse(url.to_s).path.presence)
+    path = URI.parse(url.to_s).path
+    super(path.match?(%r{\A/(?![/\\])}) ? path : nil)
   rescue URI::InvalidURIError
     super(nil)
   end
