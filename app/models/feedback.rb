@@ -32,6 +32,9 @@ class Feedback < ApplicationRecord
   belongs_to :user
   has_many_attached :screenshots
 
+  # WHY: after `has_many_attached`, because commit callbacks run in the order defined and the screenshots must be uploaded before the filing job can read them.
+  include Filing
+
   store_accessor :context, :page, :user_agent, :revision,
     :viewport_width, :viewport_height, :screen_width, :screen_height, :pixel_ratio,
     :orientation, :color_scheme, :reduced_motion, :pointer, :display_mode,
