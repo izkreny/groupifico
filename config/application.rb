@@ -31,6 +31,9 @@ module Groupifico
     # :vips and install libvips in CI on the day variants are actually used.
     config.active_storage.variant_processor = :disabled
 
+    # WHY: the engine's direct-upload and disk routes answer without sign-in, and the app serves no blob URL: screenshots leave only through the filing job.
+    config.active_storage.draw_routes = false
+
     # Every member is in one time zone today, so times render where the members
     # are rather than where the server is. Storage is untouched: this sets only
     # Time.zone, which is what a time-zone-aware attribute is read in, what a
