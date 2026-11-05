@@ -20,8 +20,8 @@ RSpec.describe "UserProfiles", type: :request do
 
       expect(menu.at_css("summary")["aria-label"]).to eq "AL, me"
       expect(menu.css(".dropdown-content p").map { [ it.text.squish, it.classes.include?("text-secondary") ] }).to eq [ [ "Ada Lovelace", false ], [ "ada@example.com", true ] ]
-      expect(menu.css("li").map { it.text.squish }).to eq [ "Edit profile", "New group", "Sign out" ]
-      expect(menu.css("li a").map { [ it.text.squish, it["href"] ] }).to eq [ [ "Edit profile", edit_user_profile_path ], [ "New group", new_group_path ] ]
+      expect(menu.css("li").map { it.text.squish }).to eq [ "Edit profile", "Send feedback", "New group", "Sign out" ]
+      expect(menu.css("li a").map { [ it.text.squish, it["href"] ] }).to eq [ [ "Edit profile", edit_user_profile_path ], [ "Send feedback", new_feedback_path ], [ "New group", new_group_path ] ]
     end
 
     it "leads each row with its legend glyph, in the muted icon ink" do
@@ -31,7 +31,7 @@ RSpec.describe "UserProfiles", type: :request do
       menu = Nokogiri::HTML(response.body).at_css("header details#me-menu")
 
       drawing = ->(name) { File.read(Rails.root.join("app/assets/svg/icons/heroicons/mini/#{name}.svg"))[/ d="([^"]+)"/, 1] }
-      expect(menu.css("li").map { it.at_css("svg.size-icon-control.text-icon-muted path")&.[]("d") }).to eq %w[ user plus arrow-right-start-on-rectangle ].map(&drawing)
+      expect(menu.css("li").map { it.at_css("svg.size-icon-control.text-icon-muted path")&.[]("d") }).to eq %w[ user chat-bubble-left-ellipsis plus arrow-right-start-on-rectangle ].map(&drawing)
     end
 
     it "signs out through a delete form the Sign out button names" do

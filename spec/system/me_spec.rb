@@ -58,6 +58,16 @@ RSpec.describe "The Me menu", type: :system do
     expect(page).to have_current_path edit_user_profile_path
   end
 
+  it "lands on the feedback form from Send feedback" do
+    sign_in_as create(:user)
+
+    visit root_path
+    open_me_menu
+    click_link "Send feedback"
+
+    expect(page).to have_current_path new_feedback_path
+  end
+
   it "lands on the new group screen from New group" do
     sign_in_as create(:user)
 

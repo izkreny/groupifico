@@ -31,6 +31,9 @@ module Groupifico
     # :vips and install libvips in CI on the day variants are actually used.
     config.active_storage.variant_processor = :disabled
 
+    # WHY: the engine's direct-upload and disk routes answer without sign-in, and the app serves no blob URL: screenshots leave only through the filing job.
+    config.active_storage.draw_routes = false
+
     # Every member is in one time zone today, so times render where the members
     # are rather than where the server is. Storage is untouched: this sets only
     # Time.zone, which is what a time-zone-aware attribute is read in, what a
@@ -38,6 +41,12 @@ module Groupifico
     # ActiveRecord.default_timezone stays :utc. #135 and #89 are the multi-zone
     # answer for the day one zone stops being true.
     config.time_zone = "Europe/Zagreb"
+
+    # WHY: Kamal sets `KAMAL_VERSION` in the app container to the deployed commit, so feedback can name the revision it was sent from; blank in development.
+    config.x.revision = ENV["KAMAL_VERSION"]
+
+    # WHY: development and production would share the private feedback repository and its `[F<id>]` markers while numbering feedback apart, so only production and test file issues; `production.rb` and `test.rb` turn it on.
+    config.x.file_feedback = false
 
     # WHY: an unset `config.x` key answers an empty, truthy options hash rather than nil, so the element picker's switch is declared off here and `config/environments/development.rb` alone turns it on.
     config.x.picks_file = nil

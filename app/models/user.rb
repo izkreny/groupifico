@@ -23,6 +23,7 @@ class User < ApplicationRecord
   has_one :profile, class_name: "UserProfile", dependent: :destroy
   has_many :members, dependent: :destroy
   has_many :groups, through: :members
+  has_many :feedbacks, dependent: :destroy
 
   # `groups` is every group ever joined. A member whose status is `inactive` has left and is
   # refused exactly like a non-member, so the set anything may be authorized against is this one -

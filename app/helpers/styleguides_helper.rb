@@ -15,7 +15,7 @@ module StyleguidesHelper
     no: "An answer: the reply button and badge on a roster row, its count in Who's coming and on the next-up card, and the reader's own answer on the events list.",
     when: "When an event happens: the time line on the next-up card and on the event screen.",
     where: "Where an event happens: the address line on the next-up card and on the event screen.",
-    new: "Creating a record: New on the events list, New event on an empty Home, New group on the groups list and in the Me menu, and Invite on the members list.",
+    new: "Creating a record: New on the events list, New event on an empty Home, New group on the groups list and in the Me menu, Invite on the members list, and Add screenshot on the feedback form.",
     edit: "Editing a record: the group's name in the header, the event screen, a member's row and screen, the address on the group form, and Correct on the address screen.",
     duplicate: "Copying an event: Duplicate on the event screen.",
     delete: "Removing a registration, an event, a group, a member or an account: Delete or Remove first in an edit form's button row, Delete my account, and the primary on every confirm sheet.",
@@ -38,13 +38,17 @@ module StyleguidesHelper
     send_invite: "Bringing someone into the group: Send invite on the new member form.",
     invite_link: "Not drawn yet: the legend's link for joining the group.",
     success: "A success alert: the flash notice after an action.",
-    info: "An info alert: the note atop the duplicate screen saying what the copy changed.",
+    info: "An info alert: the note atop the duplicate screen saying what the copy changed, and the hint atop the feedback form.",
     warning: "Not drawn yet: the legend's warning alert.",
     error: "An error alert: the flash alert, the error summary atop a form, and the block on the account-deletion sheet.",
     signed_out: "Not drawn yet: the legend's signed-out state.",
     resend: "Not drawn yet: the legend's resend action.",
     profile: "The member's own profile: Edit profile in the Me menu.",
-    sign_out: "Signing out: Sign out in the Me menu."
+    sign_out: "Signing out: Sign out in the Me menu.",
+    feedback: "Telling us what broke or what you would like: Send feedback in the Me menu.",
+    send: "Sending feedback: Send on the feedback form.",
+    remove: "Taking a picked screenshot off the feedback form: the x on its thumbnail.",
+    return: "Going back to the page the feedback was sent from: Back to where you were on the thank-you page."
   }.freeze
 
   # The named theme's daisyUI colour tokens, name to hex, in the order the stylesheet lists them.
