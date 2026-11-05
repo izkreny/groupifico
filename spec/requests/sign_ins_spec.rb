@@ -75,6 +75,15 @@ RSpec.describe "SignIns", type: :request do
         expect(response).to redirect_to root_url
       end
 
+      it "sets the session cookie out of reach of scripts and cross-site requests" do
+        get sign_in_path(token: SignInToken.mint(create(:user)))
+
+        post sign_in_path
+
+        session_cookie = Array(response.headers["set-cookie"]).join("\n").lines.grep(/\Asession_id=/).sole
+        expect(session_cookie).to match(/;\s*httponly/i).and match(/;\s*samesite=lax/i)
+      end
+
       # Signed out in between, because a second attempt while still signed in is refused by the
       # already-authenticated guard instead, which would pass this example without the link ever
       # having been spent. The refusal now lands on the second GET rather than the POST: a spent
