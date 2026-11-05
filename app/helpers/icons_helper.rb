@@ -66,6 +66,7 @@ module IconsHelper
     sign_out: "arrow-right-start-on-rectangle",
 
     # WHY: the legend draws none of the feedback screens' glyphs, so they are Heroicons' own, as design C on #405 draws them.
+    feedback: "chat-bubble-left-ellipsis",
     send: "paper-airplane",
     remove: "x-mark",
     return: "arrow-uturn-left"

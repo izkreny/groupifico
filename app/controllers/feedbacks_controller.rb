@@ -23,6 +23,7 @@ class FeedbacksController < ApplicationController
   def show
     @feedback = Current.user.feedbacks.find(params[:id])
     authorize! @feedback
+    @group = Current.user.current_groups.find_by(id: @feedback.page_group_id)
   end
 
   private

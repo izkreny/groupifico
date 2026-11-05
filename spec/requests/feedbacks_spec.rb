@@ -86,6 +86,14 @@ RSpec.describe "Feedbacks", type: :request do
     end
   end
 
+  describe "GET /500.html" do
+    it "links to the feedback form" do
+      get "/500.html"
+
+      expect(Nokogiri::HTML(response.body).css("a").map { it["href"] }).to eq [ new_feedback_path ]
+    end
+  end
+
   describe "GET /feedbacks/:id" do
     context "when signed in" do
       it "thanks the user and leads back to the page they came from" do
@@ -97,6 +105,35 @@ RSpec.describe "Feedbacks", type: :request do
 
         expect(response.body).to include "Thank you"
         expect([ back.text.squish, back["href"] ]).to eq [ "Back to where you were", "/groups/3/events" ]
+      end
+
+      it "draws the tabs of the group the feedback was sent from" do
+        member = create(:member)
+        feedback = create(:feedback, user: member.user, page: "/groups/#{member.group.id}/events")
+        sign_in_as(member.user)
+
+        get feedback_path(feedback)
+
+        expect(Nokogiri::HTML(response.body).css("nav.dock a").map { it["href"] }).to eq [ group_path(member.group), group_events_path(member.group), group_members_path(member.group) ]
+      end
+
+      it "draws no tabs for a group the user does not belong to" do
+        feedback = create(:feedback, page: "/groups/#{create(:group).id}/events")
+        sign_in_as(feedback.user)
+
+        get feedback_path(feedback)
+
+        expect(Nokogiri::HTML(response.body).css("nav.dock")).to be_empty
+      end
+
+      it "draws no tabs when the feedback was sent from outside a group" do
+        member = create(:member)
+        feedback = create(:feedback, user: member.user, page: "/user/profile/edit")
+        sign_in_as(member.user)
+
+        get feedback_path(feedback)
+
+        expect(Nokogiri::HTML(response.body).css("nav.dock")).to be_empty
       end
 
       it "answers not found for another user's feedback" do

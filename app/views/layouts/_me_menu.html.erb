@@ -21,6 +21,7 @@
 
     <ul class="menu w-full p-0 gap-2">
       <li><%= link_to edit_user_profile_path do %><%= icon :profile, class: "size-icon-control text-icon-muted" %>Edit profile<% end %></li>
+      <li><%= link_to new_feedback_path do %><%= icon :feedback, class: "size-icon-control text-icon-muted" %>Send feedback<% end %></li>
       <li><%= link_to new_group_path do %><%= icon :new, class: "size-icon-control text-icon-muted" %>New group<% end %></li>
       <li><%= tag.button type: "submit", form: "#{id}_sign_out" do %><%= icon :sign_out, class: "size-icon-control text-icon-muted" %>Sign out<% end %></li>
     </ul>

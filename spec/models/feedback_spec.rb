@@ -77,6 +77,20 @@ RSpec.describe Feedback, type: :model do
     end
   end
 
+  describe "#page_group_id" do
+    it "is the group a page inside a group belongs to" do
+      expect(described_class.new(page: "/groups/7/events/3/edit").page_group_id).to eq "7"
+    end
+
+    it "is the group a group's own home page shows" do
+      expect(described_class.new(page: "/groups/7").page_group_id).to eq "7"
+    end
+
+    it "is nothing for a page outside any group or one the app does not know" do
+      expect([ described_class.new(page: "/user/profile/edit").page_group_id, described_class.new(page: "/nowhere").page_group_id ]).to eq [ nil, nil ]
+    end
+  end
+
   def upload(name, type)
     Rack::Test::UploadedFile.new(file_fixture(name), type)
   end

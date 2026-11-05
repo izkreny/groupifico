@@ -135,6 +135,17 @@ RSpec.describe "The group shell", type: :system do
     expect(page).to have_css ".dock a[aria-label='Events'][aria-current='page']"
   end
 
+  it "keeps the tab of the page the feedback was sent from marked on the thank-you page" do
+    member = create(:member, group: create(:group))
+    feedback = create(:feedback, user: member.user, page: "/groups/#{member.group.id}/members")
+    sign_in_as member.user
+    resize_to ViewportHelper::MOBILE
+
+    visit feedback_path(feedback)
+
+    expect(page).to have_css ".dock a[aria-label='Members'][aria-current='page']"
+  end
+
   it "opens the switcher and leads to the reader's other group" do
     member = create(:member, group: create(:group, name: "Riverside Choir"))
     other = create(:member, user: member.user, group: create(:group, name: "Harbour Band"))

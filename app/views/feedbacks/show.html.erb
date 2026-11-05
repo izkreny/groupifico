@@ -1,4 +1,5 @@
 <% content_for :title, "Feedback sent" %>
+<% content_for :shell_controller, @feedback.page_controller if @group %>
 <% back_path = @feedback.page.presence || root_path %>
 <%= render "shared/page_header", title: "Feedback sent", back: back_path %>
 

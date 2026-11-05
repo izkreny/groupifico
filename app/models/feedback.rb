@@ -66,7 +66,23 @@ class Feedback < ApplicationRecord
     super(nil)
   end
 
+  # The controller that drew the recorded page, so the thank-you page can stand in its section.
+  def page_controller
+    page_route[:controller]
+  end
+
+  def page_group_id
+    page_route[:group_id] || (page_route[:id] if page_controller == "groups")
+  end
+
   private
+    # WHY: only the router can tell which group and section a path belongs to, and a path it does not know answers with neither.
+    def page_route
+      @page_route ||= page ? Rails.application.routes.recognize_path(page) : {}
+    rescue ActionController::RoutingError
+      @page_route = {}
+    end
+
     def screenshots_are_allowed_images
       errors.add(:base, "You can add at most #{SCREENSHOT_LIMIT} screenshots.") if screenshots.size > SCREENSHOT_LIMIT
 

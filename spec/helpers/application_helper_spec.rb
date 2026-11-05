@@ -27,6 +27,13 @@ RSpec.describe ApplicationHelper, type: :helper do
       expect(helper.shell_section).to eq :events
     end
 
+    it "is the section of the controller a screen names as the one it stands in for" do
+      allow(helper).to receive(:controller_name).and_return("feedbacks")
+      helper.content_for(:shell_controller, "members")
+
+      expect(helper.shell_section).to eq :members
+    end
+
     it "is nothing for a controller outside a group" do
       allow(helper).to receive(:controller_name).and_return("user_profiles")
 
