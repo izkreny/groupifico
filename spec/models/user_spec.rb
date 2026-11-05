@@ -7,6 +7,7 @@ RSpec.describe User, type: :model do
     it { is_expected.to have_one(:profile).class_name("UserProfile").dependent(:destroy) }
     it { is_expected.to have_many(:members).dependent(:destroy) }
     it { is_expected.to have_many(:groups).through(:members) }
+    it { is_expected.to have_many(:feedbacks).dependent(:destroy) }
   end
 
   describe "(validations)" do
@@ -130,6 +131,15 @@ RSpec.describe User, type: :model do
       user = create(:member).user
 
       expect { user.destroy }.to change(described_class, :count).by(-1)
+    end
+  end
+
+  describe "(feedback on deletion)" do
+    it "takes the user's feedback and its screenshots with the account" do
+      feedback = create(:feedback, screenshots: [ Rack::Test::UploadedFile.new(file_fixture("screenshot.png"), "image/png") ])
+
+      expect { feedback.user.destroy }.to change(Feedback, :count).by(-1)
+        .and change(ActiveStorage::Attachment, :count).by(-1)
     end
   end
 
