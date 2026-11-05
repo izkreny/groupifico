@@ -5,6 +5,7 @@ class FeedbacksController < ApplicationController
   def new
     @feedback = Current.user.feedbacks.new(page: request.referer)
     authorize! @feedback
+    @back_path = back_path
   end
 
   def create
@@ -16,6 +17,7 @@ class FeedbacksController < ApplicationController
     if @feedback.save
       redirect_to feedback_path(@feedback), notice: "Your feedback was sent.", status: :see_other
     else
+      @back_path = back_path
       render :new, status: :unprocessable_content
     end
   end
@@ -24,9 +26,15 @@ class FeedbacksController < ApplicationController
     @feedback = Current.user.feedbacks.find(params[:id])
     authorize! @feedback
     @group = Current.user.current_groups.find_by(id: @feedback.page_group_id)
+    @back_path = back_path
   end
 
   private
+    # WHY: the page is a stored URL, so the links back to it go through `url_from`, which answers only for a location on this host.
+    def back_path
+      url_from(@feedback.page) || root_path
+    end
+
     def feedback_params
       params.expect(feedback: [
         :description, :page, :viewport_width, :viewport_height, :screen_width, :screen_height, :pixel_ratio,
