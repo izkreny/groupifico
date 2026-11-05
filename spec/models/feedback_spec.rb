@@ -77,6 +77,19 @@ RSpec.describe Feedback, type: :model do
     end
   end
 
+  describe ".prune" do
+    it "removes feedback and its screenshots once 66 days have passed since it was saved" do
+      freeze_time
+      expired = create(:feedback, created_at: 66.days.ago - 1.second, screenshots: [ upload("screenshot.png", "image/png") ])
+      kept = create(:feedback, created_at: 66.days.ago + 1.second)
+
+      described_class.prune
+
+      expect(described_class.pluck(:id)).to eq [ kept.id ]
+      expect(ActiveStorage::Attachment.where(record: expired)).to be_empty
+    end
+  end
+
   describe "#page_group_id" do
     it "is the group a page inside a group belongs to" do
       expect(described_class.new(page: "/groups/7/events/3/edit").page_group_id).to eq "7"

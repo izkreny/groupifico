@@ -28,12 +28,15 @@ class Feedback < ApplicationRecord
   SCREENSHOT_TYPES = %w[ image/png image/jpeg image/gif image/webp ]
   SCREENSHOT_LIMIT = 3
   SCREENSHOT_MAX_SIZE = 5.megabytes
+  RETENTION = 66.days
 
   belongs_to :user
   has_many_attached :screenshots
 
   # WHY: after `has_many_attached`, because commit callbacks run in the order defined and the screenshots must be uploaded before the filing job can read them.
   include Filing
+
+  scope :expired, -> { where(created_at: ...RETENTION.ago) }
 
   store_accessor :context, :page, :user_agent, :revision,
     :viewport_width, :viewport_height, :screen_width, :screen_height, :pixel_ratio,
@@ -56,6 +59,11 @@ class Feedback < ApplicationRecord
   validates :language, format: { with: /\A[A-Za-z0-9-]{2,35}\z/ }, allow_blank: true
   validates :connection, inclusion: { in: %w[ slow-2g 2g 3g 4g ] }, allow_blank: true
   validate :screenshots_are_allowed_images
+
+  # WHY: the issue keeps the report, so the row and its screenshots, which are personal data, go once the retention has passed.
+  def self.prune
+    expired.with_attached_screenshots.find_each(&:destroy)
+  end
 
   # WHY: `normalizes` never runs on a `store_accessor` key, which is no attribute of its own; the path alone keeps a sign-in link's token out of the issue.
   # WHY: a path opening with two slashes is a link to another site, and the thank-you page links back to this one.
