@@ -8,7 +8,7 @@
 <%= form_with model: @feedback, class: "contents", data: { controller: "feedback-context feedback-draft", feedback_draft_key_value: "feedback-draft-#{Current.user.id}" } do |form| %>
   <%= form.with_error_summary do %>
     <fieldset class="fieldset">
-      <div class="flex flex-wrap gap-2 mb-2.5" role="group" aria-label="Screenshots" data-controller="screenshots" data-screenshots-limit-value="<%= Feedback::SCREENSHOT_LIMIT %>">
+      <div class="flex flex-wrap gap-2 mb-2.5" role="group" aria-label="Screenshots" data-controller="screenshots" data-action="turbo:before-cache@document->screenshots#reset" data-screenshots-limit-value="<%= Feedback::SCREENSHOT_LIMIT %>">
         <template data-screenshots-target="template">
           <div class="relative size-20 rounded-field bg-base-300 overflow-hidden border border-base-300" data-screenshots-target="thumbnail">
             <img class="size-full object-cover" alt="">

@@ -19,6 +19,12 @@ export default class extends Controller {
     if (fresh.length > 0) this.#render()
   }
 
+  // WHY: Turbo caches the page as drawn and restores it on Back, but `connect` starts the kept list empty, so the snapshot must hold no thumbnails either.
+  reset() {
+    this.picked = new DataTransfer()
+    this.#render()
+  }
+
   remove(event) {
     this.picked.items.remove(this.thumbnailTargets.indexOf(event.currentTarget.closest("[data-screenshots-target~=thumbnail]")))
 

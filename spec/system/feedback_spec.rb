@@ -51,6 +51,19 @@ RSpec.describe "Sending feedback", type: :system do
     expect(page).to have_text "Add screenshot"
   end
 
+  it "draws no picked screenshot when the member comes back to the form" do
+    sign_in_as create(:user)
+
+    visit new_feedback_path
+    pick_screenshot_made_in_page
+    click_link "Cancel"
+    expect(page).to have_no_field "Please describe the issue in as much detail as possible."
+    page.go_back
+
+    expect(page).to have_text "Add screenshot"
+    expect(page).to have_no_button "Remove screenshot 1"
+  end
+
   it "sends a screenshot and the device details, then thanks the member" do
     user = create(:user)
     sign_in_as user
