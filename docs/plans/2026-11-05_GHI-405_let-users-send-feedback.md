@@ -44,11 +44,11 @@ Every example is new and covers code that does not exist yet, so each is red bef
 ## Steps
 
 - Install Active Storage and add the `feedbacks` migration and `Feedback` with its validations, normalisation and model spec
-- Add `Feedback::GithubIssue`, `Feedback::Filing` and `Feedback::FileIssueJob` with their specs, `Net::HTTP` stubbed at its boundary with RSpec doubles, no new gem
-- Verify against a throwaway private repository whether GitHub accepts a fine-grained token on the attachment upload, and keep the Contents API fallback only if it refuses
+- Add `Feedback::GithubIssue`, `Feedback::Filing` and `Feedback::FileIssueJob` with their specs, `Net::HTTP` stubbed at its boundary with RSpec doubles, no new gem; the step also brings the owner's edited `config/credentials.yml.enc` from the main checkout, where it sits uncommitted and must never be committed, into this branch's worktree and commits it here
 - Add the route, `FeedbacksController`, `FeedbackPolicy`, the revision config and their request and policy specs
 - Build the form, the thank-you page and the three Stimulus controllers through the Blueprint MCP server, with their system spec
 - Add the Send feedback row and its icon, the thank-you page's tabs in `ApplicationHelper`, and the `public/500.html` link, with their specs
+- Prune each feedback and its screenshots 66 days after it was saved, through a Solid Queue recurring task, with its spec
 
 ## Verification
 
@@ -62,7 +62,13 @@ No gate here can tell whether picking a screenshot from a real iPhone's or Andro
 
 ## Open questions
 
-- The private feedback repository and its fine-grained token, with Issues write and, if the fallback is kept, Contents write on that repository only, are the owner's to create; the filing steps need both in credentials.
-- How long a stored feedback row and its screenshots are kept once the issue exists: keep them, or purge the screenshots after filing?
-- On a retry whose earlier attempt timed out after GitHub had created the issue, should the job search the private repository first, or accept the rare duplicate?
-- The rate limit: 5 submissions per user within 10 minutes, unless the owner wants other numbers.
+None.
+
+## Settled
+
+- How long a stored feedback row and its screenshots are kept once the issue exists: pruned 66 days after the feedback was saved, row and screenshots together.
+- Whether a retry after a timeout searches the private repository first: it does, by the marker `[F<id>]`, which is the whole title the app gives each issue, nothing added; agents that later add text keep the marker.
+- The private feedback repository and its fine-grained token: created by the owner and stored in Rails credentials as `github.feedback_repository` and `github.feedback_token`; a read of the repository and its issues with that token returned 200.
+- The rate limit and the retry schedule: 5 submissions per user within 10 minutes, and the filing job retries every 10 minutes, at most 6 times.
+- The app calls GitHub only over its REST endpoints through `Net::HTTP`; the `gh` CLI is never needed at runtime.
+- Screenshots go up through `POST https://uploads.github.com/user-attachments/assets`, the endpoint `gh` uses: on 2026-11-05 the fine-grained token got a 201 from it and an issue showing the image, so no Contents API fallback is built.
