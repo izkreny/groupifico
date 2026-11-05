@@ -36,7 +36,8 @@ class Feedback < ApplicationRecord
   # WHY: after `has_many_attached`, because commit callbacks run in the order defined and the screenshots must be uploaded before the filing job can read them.
   include Filing
 
-  scope :expired, -> { where(created_at: ...RETENTION.ago) }
+  # WHY: unfiled feedback exists nowhere but here, so only feedback that became an issue ever expires.
+  scope :expired, -> { where.not(issue_number: nil).where(created_at: ...RETENTION.ago) }
 
   store_accessor :context, :page, :user_agent, :revision,
     :viewport_width, :viewport_height, :screen_width, :screen_height, :pixel_ratio,

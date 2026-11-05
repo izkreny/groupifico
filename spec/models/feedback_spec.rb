@@ -86,15 +86,23 @@ RSpec.describe Feedback, type: :model do
   end
 
   describe ".prune" do
-    it "removes feedback and its screenshots once 66 days have passed since it was saved" do
+    it "removes filed feedback and its screenshots once 66 days have passed since it was saved" do
       freeze_time
-      expired = create(:feedback, created_at: 66.days.ago - 1.second, screenshots: [ upload("screenshot.png", "image/png") ])
-      kept = create(:feedback, created_at: 66.days.ago + 1.second)
+      expired = create(:feedback, issue_number: 4, created_at: 66.days.ago - 1.second, screenshots: [ upload("screenshot.png", "image/png") ])
+      kept = create(:feedback, issue_number: 5, created_at: 66.days.ago + 1.second)
 
       described_class.prune
 
       expect(described_class.pluck(:id)).to eq [ kept.id ]
       expect(ActiveStorage::Attachment.where(record: expired)).to be_empty
+    end
+
+    it "keeps feedback that never became an issue, however old, since it exists nowhere else" do
+      unfiled = create(:feedback, created_at: 67.days.ago)
+
+      described_class.prune
+
+      expect(described_class.pluck(:id)).to eq [ unfiled.id ]
     end
   end
 
