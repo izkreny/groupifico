@@ -75,7 +75,7 @@ RSpec.describe "SignIns", type: :request do
         expect(response).to redirect_to root_url
       end
 
-      it "sets the session cookie out of reach of scripts and cross-site requests" do
+      it "sets the session cookie HttpOnly and SameSite=Lax" do
         get sign_in_path(token: SignInToken.mint(create(:user)))
 
         post sign_in_path
