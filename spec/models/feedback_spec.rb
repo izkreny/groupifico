@@ -55,6 +55,14 @@ RSpec.describe Feedback, type: :model do
       expect(feedback).not_to be_valid
       expect(feedback.errors[:base]).to eq [ "You can add at most 3 screenshots." ]
     end
+
+    it "refuses a screenshot named by a stored file's signed id, which would skip every check on its content" do
+      blob = ActiveStorage::Blob.create_and_upload!(io: file_fixture("notes.txt").open, filename: "notes.svg", content_type: "image/svg+xml")
+      feedback = build(:feedback, screenshots: [ blob.signed_id ])
+
+      expect(feedback).not_to be_valid
+      expect(feedback.errors[:base]).to eq [ "A screenshot has to be picked from your device." ]
+    end
   end
 
   describe "#page=" do

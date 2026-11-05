@@ -94,20 +94,29 @@ class Feedback < ApplicationRecord
     def screenshots_are_allowed_images
       errors.add(:base, "You can add at most #{SCREENSHOT_LIMIT} screenshots.") if screenshots.size > SCREENSHOT_LIMIT
 
-      new_screenshot_files.each do |file|
-        case sniff(file)
-        when *SCREENSHOT_TYPES
-          errors.add(:base, "#{file.original_filename} is larger than 5 MB, the most a screenshot can be.") if file.size > SCREENSHOT_MAX_SIZE
-        when "image/heic", "image/heif"
-          errors.add(:base, "#{file.original_filename} is a HEIC photo, which can't be sent. Take a screenshot instead.")
+      new_screenshots.each do |file|
+        if file.respond_to?(:original_filename)
+          screenshot_is_allowed_image(file)
         else
-          errors.add(:base, "#{file.original_filename} isn't a PNG, JPEG, GIF or WebP image.")
+          errors.add(:base, "A screenshot has to be picked from your device.")
         end
       end
     end
 
-    def new_screenshot_files
-      Array(attachment_changes["screenshots"]&.attachables).select { it.respond_to?(:original_filename) }
+    def screenshot_is_allowed_image(file)
+      case sniff(file)
+      when *SCREENSHOT_TYPES
+        errors.add(:base, "#{file.original_filename} is larger than 5 MB, the most a screenshot can be.") if file.size > SCREENSHOT_MAX_SIZE
+      when "image/heic", "image/heif"
+        errors.add(:base, "#{file.original_filename} is a HEIC photo, which can't be sent. Take a screenshot instead.")
+      else
+        errors.add(:base, "#{file.original_filename} isn't a PNG, JPEG, GIF or WebP image.")
+      end
+    end
+
+    # WHY: a signed blob id is accepted by the attachment setter too, and it names a file whose content was never sniffed or sized here.
+    def new_screenshots
+      Array(attachment_changes["screenshots"]&.attachables)
     end
 
     # WHY: Active Storage trusts the declared type whenever the bytes alone match nothing, so a text file declared `image/png` would pass as a PNG.
