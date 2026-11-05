@@ -40,4 +40,4 @@ None.
 
 ## Settled
 
-None yet.
+- **The 8.1.4.1 same-site fix reaches only session stores other than `CookieStore`, never the `session_id` cookie `app/controllers/concerns/authentication.rb` sets with its own `same_site: :lax`, so should the sign-in example stay?** The owner chose to keep it as plain pinning of that cookie's `HttpOnly` and `SameSite=Lax`, which an edit to that line turns red, though this bump cannot.
