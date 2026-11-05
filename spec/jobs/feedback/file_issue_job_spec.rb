@@ -26,6 +26,27 @@ RSpec.describe Feedback::FileIssueJob, type: :job do
       .to have_enqueued_job(described_class).with(feedback).at(be_within(2.minutes).of(10.minutes.from_now))
   end
 
+  it "tries again when the host has no route to GitHub" do
+    feedback = create(:feedback)
+    stub_request(:get, %r{\Ahttps://api\.github\.com/repos/acme/feedback/issues\?}).to_raise(Errno::EHOSTUNREACH)
+
+    expect { described_class.perform_now(feedback) }.to have_enqueued_job(described_class).with(feedback)
+  end
+
+  it "tries again when the host's network is down" do
+    feedback = create(:feedback)
+    stub_request(:get, %r{\Ahttps://api\.github\.com/repos/acme/feedback/issues\?}).to_raise(Errno::ENETUNREACH)
+
+    expect { described_class.perform_now(feedback) }.to have_enqueued_job(described_class).with(feedback)
+  end
+
+  it "tries again when sending a screenshot to GitHub times out" do
+    feedback = create(:feedback)
+    stub_request(:get, %r{\Ahttps://api\.github\.com/repos/acme/feedback/issues\?}).to_raise(Net::WriteTimeout)
+
+    expect { described_class.perform_now(feedback) }.to have_enqueued_job(described_class).with(feedback)
+  end
+
   it "tries again when GitHub refuses the request" do
     feedback = create(:feedback)
     stub_request(:get, %r{\Ahttps://api\.github\.com/repos/acme/feedback/issues\?}).to_return(status: 502)
