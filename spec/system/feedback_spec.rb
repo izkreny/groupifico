@@ -30,11 +30,11 @@ RSpec.describe "Sending feedback", type: :system do
     sign_in_as create(:user)
 
     visit new_feedback_path
-    fill_in "What should we look at?", with: "The dock covers Save."
+    fill_in "Please describe the issue in as much detail as possible.", with: "The dock covers Save."
     visit root_path
     visit new_feedback_path
 
-    expect(page).to have_field "What should we look at?", with: "The dock covers Save."
+    expect(page).to have_field "Please describe the issue in as much detail as possible.", with: "The dock covers Save."
   end
 
   it "draws each picked screenshot and hides the tile once three are picked" do
@@ -58,7 +58,7 @@ RSpec.describe "Sending feedback", type: :system do
 
     visit new_feedback_path
     pick_screenshot_made_in_page
-    fill_in "What should we look at?", with: "The dock covers Save."
+    fill_in "Please describe the issue in as much detail as possible.", with: "The dock covers Save."
     click_button "Send"
 
     expect(page).to have_text "Thank you"
@@ -69,12 +69,12 @@ RSpec.describe "Sending feedback", type: :system do
     sign_in_as create(:user)
 
     visit new_feedback_path
-    fill_in "What should we look at?", with: "The dock covers Save."
+    fill_in "Please describe the issue in as much detail as possible.", with: "The dock covers Save."
     click_button "Send"
     expect(page).to have_text "Thank you"
     visit new_feedback_path
 
-    expect(page).to have_field "What should we look at?", with: ""
+    expect(page).to have_field "Please describe the issue in as much detail as possible.", with: ""
   end
 
   it "paints the thank-you page, with no accessibility violations" do

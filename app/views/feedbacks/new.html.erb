@@ -8,7 +8,7 @@
 <%= form_with model: @feedback, class: "contents", data: { controller: "feedback-context feedback-draft", feedback_draft_key_value: "feedback-draft-#{Current.user.id}" } do |form| %>
   <%= form.with_error_summary do %>
     <fieldset class="fieldset">
-      <div class="flex flex-wrap gap-2" role="group" aria-label="Screenshots" data-controller="screenshots" data-screenshots-limit-value="<%= Feedback::SCREENSHOT_LIMIT %>">
+      <div class="flex flex-wrap gap-2 mb-2.5" role="group" aria-label="Screenshots" data-controller="screenshots" data-screenshots-limit-value="<%= Feedback::SCREENSHOT_LIMIT %>">
         <template data-screenshots-target="template">
           <div class="relative size-20 rounded-field bg-base-300 overflow-hidden border border-base-300" data-screenshots-target="thumbnail">
             <img class="size-full object-cover" alt="">
@@ -25,8 +25,8 @@
         </label>
       </div>
 
-      <%= form.label :description, "What should we look at?", class: "sr-only" %>
-      <%= form.text_area :description, rows: 6, placeholder: "What should we look at?", class: "textarea w-full text-base", data: { feedback_draft_target: "description", action: "feedback-draft#save" } %>
+      <%= form.label :description, "Please describe the issue in as much detail as possible.", class: "sr-only" %>
+      <%= form.text_area :description, rows: 6, placeholder: "Please describe the issue in as much detail as possible.", class: "textarea w-full text-base", data: { feedback_draft_target: "description", action: "feedback-draft#save" } %>
     </fieldset>
   <% end %>
 
@@ -35,7 +35,7 @@
     <%= form.hidden_field key, data: { feedback_context_target: "field", key: } %>
   <% end %>
 
-  <p class="text-meta text-muted mt-3">Please don't include passwords or other private details. We also send the page you came from and your device details, such as screen size, browser and time zone.</p>
+  <p class="text-meta text-muted mt-3">Don't include passwords or other unnecessary private details. We also send the page you came from and your device details, such as screen size, browser and time zone.</p>
 
   <div class="flex flex-wrap items-center gap-2 mt-4 mb-[env(safe-area-inset-bottom)]">
     <%= link_to @back_path, class: "btn btn-ghost" do %><%= icon :cancel, class: "size-icon-control" %>Cancel<% end %>
