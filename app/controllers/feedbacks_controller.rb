@@ -1,6 +1,5 @@
 class FeedbacksController < ApplicationController
-  rate_limit to: 5, within: 10.minutes, only: :create, by: -> { Current.user.id },
-    with: -> { redirect_to new_feedback_path, alert: "You've sent a lot of feedback just now. Please try again later." }
+  rate_limit to: 5, within: 10.minutes, only: :create, by: -> { Current.user.id }, with: -> { render_rate_limited }
 
   def new
     @feedback = Current.user.feedbacks.new(page: request.referer)
@@ -30,6 +29,14 @@ class FeedbacksController < ApplicationController
   end
 
   private
+    # WHY: rendered rather than redirected, because a redirect makes the form its own referer and loses the page it was first opened from, along with what was typed.
+    def render_rate_limited
+      @feedback = Current.user.feedbacks.new(feedback_params)
+      @back_path = back_path
+      flash.now[:alert] = "You've sent a lot of feedback just now. Please try again later."
+      render :new, status: :too_many_requests
+    end
+
     # WHY: the page is a stored URL, so the links back to it go through `url_from`, which answers only for a location on this host.
     def back_path
       url_from(@feedback.page) || root_path

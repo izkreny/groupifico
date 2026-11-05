@@ -67,13 +67,12 @@ RSpec.describe "Feedbacks", type: :request do
         sign_in_as(user)
 
         5.times { post feedbacks_path, params: { feedback: { description: "Another thing." } } }
+        post feedbacks_path, params: { feedback: { description: "One more thing.", page: "/groups/7/events" } }
+        form = Nokogiri::HTML(response.body)
 
-        expect(user.feedbacks.count).to eq 5
-
-        post feedbacks_path, params: { feedback: { description: "One more thing." } }
-
-        expect(response).to redirect_to new_feedback_path
-        expect(flash[:alert]).to eq "You've sent a lot of feedback just now. Please try again later."
+        expect(response).to have_http_status :too_many_requests
+        expect(response.body).to include "You&#39;ve sent a lot of feedback just now. Please try again later."
+        expect([ form.at_css("textarea").text.strip, form.at_css("input[name='feedback[page]']")["value"] ]).to eq [ "One more thing.", "/groups/7/events" ]
         expect(user.feedbacks.count).to eq 5
       end
     end
