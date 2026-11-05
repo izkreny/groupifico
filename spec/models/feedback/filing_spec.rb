@@ -31,7 +31,8 @@ RSpec.describe Feedback::Filing, type: :model do
       stub_screenshot_upload(returning: "https://github.com/user-attachments/assets/abc")
       bodies = stub_issue_opening(number: 7)
 
-      feedback.file_issue
+      # WHY: found afresh, as the job finds it, because the record `create` returned already holds its screenshots loaded.
+      Feedback.find(feedback.id).file_issue
 
       expect(bodies.sole).to include("The dock hides the Save button.", "![Screenshot 1](https://github.com/user-attachments/assets/abc)", "- Page: /groups/1/events", "- Viewport: 390 × 844")
     end

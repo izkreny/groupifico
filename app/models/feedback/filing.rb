@@ -24,7 +24,7 @@ module Feedback::Filing
     end
 
     def issue_body(github)
-      screenshot_images = screenshots.map.with_index(1) { |screenshot, n| "![Screenshot #{n}](#{github.upload(screenshot.blob)})" }
+      screenshot_images = screenshots.blobs.map.with_index(1) { |blob, n| "![Screenshot #{n}](#{github.upload(blob)})" }
 
       [ description, *screenshot_images, context_list ].join("\n\n")
     end
