@@ -41,7 +41,9 @@ RSpec.describe "Sending feedback", type: :system do
     sign_in_as create(:user)
 
     visit new_feedback_path
-    %w[ screenshot.png screenshot-2.png screenshot-3.png ].each { attach_file "feedback[screenshots][]", file_fixture(it).to_s }
+    attach_file "feedback[screenshots][]", file_fixture("screenshot.png").to_s
+    attach_file "feedback[screenshots][]", file_fixture("screenshot-2.png").to_s
+    attach_file "feedback[screenshots][]", file_fixture("screenshot-3.png").to_s
 
     expect(page).to have_button "Remove screenshot 3"
     expect(page).to have_no_text "Add screenshot"
