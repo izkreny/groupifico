@@ -34,7 +34,17 @@ RSpec.describe "Feedbacks", type: :request do
 
         expect(response).to redirect_to feedback_path(feedback)
         expect(response).to have_http_status :see_other
+        expect(flash[:notice]).to eq "Your feedback was sent."
         expect([ feedback.description, feedback.page, feedback.viewport_width, feedback.user_agent ]).to eq [ "The dock covers Save.", "/groups/3", "390", "TestPhone/1.0" ]
+      end
+
+      it "saves the picked screenshots with the feedback" do
+        user = create(:user)
+        sign_in_as(user)
+
+        post feedbacks_path, params: { feedback: { description: "See the picture.", screenshots: [ fixture_file_upload("screenshot.png", "image/png") ] } }
+
+        expect(user.feedbacks.sole.screenshots.map { it.filename.to_s }).to eq [ "screenshot.png" ]
       end
 
       it "files the saved feedback as an issue in the background" do

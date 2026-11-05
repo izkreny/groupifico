@@ -14,7 +14,7 @@ class FeedbacksController < ApplicationController
     authorize! @feedback
 
     if @feedback.save
-      redirect_to feedback_path(@feedback), status: :see_other
+      redirect_to feedback_path(@feedback), notice: "Your feedback was sent.", status: :see_other
     else
       render :new, status: :unprocessable_content
     end

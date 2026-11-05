@@ -6,7 +6,7 @@
   <span>Something looks wrong? Take a screenshot with your phone first, then add it here.</span>
 <% end %>
 
-<%= form_with model: @feedback, class: "contents", data: { controller: "feedback-context feedback-draft" } do |form| %>
+<%= form_with model: @feedback, class: "contents", data: { controller: "feedback-context feedback-draft", feedback_draft_key_value: "feedback-draft-#{Current.user.id}" } do |form| %>
   <%= form.with_error_summary do %>
     <fieldset class="fieldset">
       <div class="flex flex-wrap gap-2" role="group" aria-label="Screenshots" data-controller="screenshots" data-screenshots-limit-value="<%= Feedback::SCREENSHOT_LIMIT %>">
@@ -21,7 +21,7 @@
 
         <label class="size-20 rounded-field border-2 border-dashed border-base-content/50 flex flex-col items-center justify-center gap-1 text-icon-muted cursor-pointer has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-primary" data-screenshots-target="add">
           <%= icon :new, class: "size-icon-control" %>
-          <span class="text-meta text-center leading-tight">Add screenshot</span>
+          <span class="text-meta text-center leading-tight text-base-content">Add screenshot</span>
           <%= form.file_field :screenshots, multiple: true, accept: Feedback::SCREENSHOT_TYPES.join(","), class: "sr-only", data: { screenshots_target: "input", action: "screenshots#add" } %>
         </label>
       </div>
