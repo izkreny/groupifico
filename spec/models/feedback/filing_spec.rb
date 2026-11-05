@@ -11,6 +11,12 @@ RSpec.describe Feedback::Filing, type: :model do
     expect { create(:feedback) }.to have_enqueued_job(Feedback::FileIssueJob)
   end
 
+  it "files nothing where filing is off, as in development" do
+    allow(Rails.configuration.x).to receive(:file_feedback).and_return(false)
+
+    expect { create(:feedback) }.not_to have_enqueued_job(Feedback::FileIssueJob)
+  end
+
   describe "#file_issue" do
     it "opens one issue titled with the feedback's marker and records its number" do
       feedback = create(:feedback, description: "The dock hides the Save button.", page: "/groups/1/events", viewport_width: "390", viewport_height: "844")

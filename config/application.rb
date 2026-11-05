@@ -42,6 +42,9 @@ module Groupifico
     # WHY: Kamal sets `KAMAL_VERSION` in the app container to the deployed commit, so feedback can name the revision it was sent from; blank in development.
     config.x.revision = ENV["KAMAL_VERSION"]
 
+    # WHY: development and production would share the private feedback repository and its `[F<id>]` markers while numbering feedback apart, so only production and test file issues; `production.rb` and `test.rb` turn it on.
+    config.x.file_feedback = false
+
     # WHY: an unset `config.x` key answers an empty, truthy options hash rather than nil, so the element picker's switch is declared off here and `config/environments/development.rb` alone turns it on.
     config.x.picks_file = nil
 

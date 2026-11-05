@@ -71,4 +71,7 @@ Rails.application.configure do
   # `action_on_strict_loading_violation` is left at its `:raise` default.
   config.active_record.strict_loading_by_default = true
   config.active_record.strict_loading_mode = :n_plus_one_only
+
+  # Files each saved feedback as an issue; `config/application.rb` says why only here.
+  config.x.file_feedback = true
 end

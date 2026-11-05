@@ -2,7 +2,7 @@ module Feedback::Filing
   extend ActiveSupport::Concern
 
   included do
-    after_create_commit :file_issue_later
+    after_create_commit :file_issue_later, if: -> { Rails.configuration.x.file_feedback }
   end
 
   def file_issue
