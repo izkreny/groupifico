@@ -18,7 +18,7 @@ Kamal always boots the new container and health-checks it before it stops the ol
 
 ## Steps
 
-- Owner step: install Docker on the developer machine and start its daemon, chosen through the machine's package-management procedure, since an install is never run by an agent
+- Owner step: install Docker on the developer machine and start its daemon
 - Owner step: name the VPS address and the SSH user Kamal connects as, and confirm the box is x86, since `builder.arch` is `amd64`
 - Owner step: point the DNS A records of `chorifico.com`, `www.chorifico.com`, `groupifico.com` and `www.groupifico.com` at the VPS
 - Owner step: create a GitHub token with `write:packages` and export it as `KAMAL_REGISTRY_PASSWORD` in the shell that runs Kamal
@@ -41,7 +41,7 @@ Kamal always boots the new container and health-checks it before it stops the ol
 - `bin/ci` passes, browser suite included
 - `bin/kamal setup` exits 0
 - `curl -fsS https://chorifico.com/up && curl -fsS https://groupifico.com/up` exits 0, which fails on an invalid or self-signed certificate for either domain
-- `curl -fsSI http://chorifico.com/` answers with a redirect to `https://`, proving `force_ssl` is on behind the proxy
+- `curl -fsSI https://chorifico.com/ | grep -qi '^strict-transport-security'` exits 0, having been seen to exit 1 against a deploy with `force_ssl` commented out, since kamal-proxy answers the HTTP-to-HTTPS redirect itself and the HSTS header is what `force_ssl` adds behind `assume_ssl`
 - `bin/kamal app exec --reuse 'test -f /rails/storage/redeploy-marker && test -f /rails/storage/production.sqlite3'` exits 0 after the second `bin/kamal deploy`, having been seen to exit 1 before the marker was written
 - The second `bin/kamal deploy` exits 0
 
