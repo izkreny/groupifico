@@ -44,13 +44,13 @@ RSpec.describe "Events", type: :request do
 
       # Who may create an event is `EventPolicy#create?`, and a refused reader gets no control
       # rather than a disabled one - so the assertion is the route's absence, not a class.
-      it "offers the New button to a reader who may create events" do
+      it "offers the New event button to a reader who may create events" do
         owner = create(:member, :owner)
         sign_in_as(owner.user)
 
         get group_events_path(owner.group)
 
-        expect(response.body).to include %(href="#{new_group_event_path(owner.group)}")
+        expect(Nokogiri::HTML(response.body).at_css("a[href='#{new_group_event_path(owner.group)}']").text.strip).to eq "New event"
       end
 
       it "offers a plain member no New button" do

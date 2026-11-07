@@ -200,7 +200,7 @@ RSpec.describe "Members", type: :request do
 
         html = Nokogiri::HTML(response.body)
         expect(html.text).to include "2 members"
-        expect(html.at_css("a[href='#{new_group_member_path(actor.group)}']").text.strip).to eq "Invite"
+        expect(html.at_css("a[href='#{new_group_member_path(actor.group)}']").text.strip).to eq "Invite member"
       end
 
       it "offers each member's edit form and the inactive toggle" do
