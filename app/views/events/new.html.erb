@@ -3,5 +3,5 @@
 <%= render "shared/page_header", title: "New event" %>
 
 <div class="w-full">
-  <%= render "events/form", group: @group, event: @event, submit: "Create event", cancel: group_events_path(@group) %>
+  <%= render "events/form", group: @group, event: @event, submit: "Create event", fits_at: 19, cancel: group_events_path(@group) %>
 </div>

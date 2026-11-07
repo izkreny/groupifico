@@ -1,4 +1,4 @@
-<%# locals: (group:, event:, submit:, cancel:, original: nil, namespace: nil, leading: nil, may_fill: nil) %>
+<%# locals: (group:, event:, submit:, cancel:, fits_at:, original: nil, namespace: nil, leading: nil, may_fill: nil) %>
 <%# `namespace` is the styleguide's, which draws this form once per theme; every screen leaves it out and keeps its ids. %>
 <%# WHY: `may_fill` is the answer `EventsController#update` read before assigning anything, because a refused save draws an event already carrying the posted manager, which would ask the registering row of the successor. Asked here where nothing was posted. %>
 <%= form_with(model: [group, event], namespace:, class: "contents") do |form| %>
@@ -81,7 +81,7 @@
     </div>
   <% end %>
 
-  <%= render layout: "shared/form_actions", locals: { fits_at: leading ? 29 : (original ? 18 : 19), leading:, classes: "mt-4" } do %>
+  <%= render layout: "shared/form_actions", locals: { fits_at:, leading:, classes: "mt-4" } do %>
     <%= link_to cancel, class: "btn btn-ghost" do %><%= icon :cancel, class: "size-icon-control" %>Cancel<% end %>
     <%= form.button class: "btn btn-primary" do %><%= icon :save, class: "size-icon-control" %><%= submit %><% end %>
   <% end %>
