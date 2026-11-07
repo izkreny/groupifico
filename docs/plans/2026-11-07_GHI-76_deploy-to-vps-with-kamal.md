@@ -23,7 +23,7 @@ Kamal always boots the new container and health-checks it before it stops the ol
 - ::S3:: Owner step: point the DNS A records of `chorifico.com`, `www.chorifico.com`, `groupifico.com` and `www.groupifico.com` at the VPS
 - ::S4:: Owner step: create a GitHub token with `write:packages` and export it as `KAMAL_REGISTRY_PASSWORD` in the shell that runs Kamal, noting that ticking `write:packages` on a classic token also ticks `repo`
 - ::S5:: Build the image locally with `docker build -t groupifico .` against the `RUBY_VERSION=4.0.9` that `Dockerfile` already carries
-- ::S6:: Fill in `config/deploy.yml`: `servers.web`, `image`, the ghcr.io `registry` with its username and password secret, the `proxy` block with `ssl: true` and all four hosts, and the deletion of the commented builder `args:` example with its `RUBY_VERSION: 3.4.7`
+- ::S6:: Fill in `config/deploy.yml`: `servers.web`, `image`, the ghcr.io `registry` with its username and password secret, the `proxy` block with `ssl: true` and all four hosts, and the deletion of the commented builder `args:` example with its `RUBY_VERSION: 3.4.7`, rewording the comment above the kept `secrets:` example to "Pass secrets to the Docker build process"
 - ::S7:: Add `KAMAL_REGISTRY_PASSWORD=$KAMAL_REGISTRY_PASSWORD` to `.kamal/secrets`
 - ::S8:: In `config/environments/production.rb`, turn on `assume_ssl` and `force_ssl`, set `config.hosts` for both domains and the `/up` exclusion in `host_authorization`, and set the mailer host Open questions settles
 - ::S9:: Apply the overlap decision from Open questions: either no hook, or a `pre-app-boot` hook in `.kamal/hooks/` that stops the old container
