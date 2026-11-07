@@ -47,18 +47,10 @@ class Feedback < ApplicationRecord
   validates :description, presence: true, length: { maximum: 5_000 }
   validates :page, length: { maximum: 2_000 }
   validates :user_agent, length: { maximum: 1_000 }
-  validates :revision, length: { maximum: 100 }
-  validates :viewport_width, :viewport_height, :screen_width, :screen_height,
-    numericality: { only_integer: true, in: 1..20_000 }, allow_blank: true
-  validates :pixel_ratio, numericality: { in: 0.1..10 }, allow_blank: true
-  validates :orientation, inclusion: { in: %w[ portrait-primary portrait-secondary landscape-primary landscape-secondary ] }, allow_blank: true
-  validates :color_scheme, inclusion: { in: %w[ light dark ] }, allow_blank: true
-  validates :reduced_motion, inclusion: { in: %w[ reduce no-preference ] }, allow_blank: true
-  validates :pointer, inclusion: { in: %w[ coarse fine none ] }, allow_blank: true
-  validates :display_mode, inclusion: { in: %w[ standalone browser ] }, allow_blank: true
-  validates :time_zone, format: { with: %r{\A[A-Za-z0-9_+\-/]{1,64}\z} }, allow_blank: true
-  validates :language, format: { with: /\A[A-Za-z0-9-]{2,35}\z/ }, allow_blank: true
-  validates :connection, inclusion: { in: %w[ slow-2g 2g 3g 4g ] }, allow_blank: true
+  # WHY: the member never sees or edits these details, so a value no list foresaw must not block their feedback; the cap only stops a forged request from storing anything large.
+  validates :revision, :viewport_width, :viewport_height, :screen_width, :screen_height, :pixel_ratio,
+    :orientation, :color_scheme, :reduced_motion, :pointer, :display_mode, :time_zone, :language, :connection,
+    length: { maximum: 100 }
   validate :screenshots_are_allowed_images
 
   # WHY: the issue keeps the report, so the row and its screenshots, which are personal data, go once the retention has passed.
