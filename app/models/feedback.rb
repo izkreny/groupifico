@@ -48,8 +48,7 @@ class Feedback < ApplicationRecord
   validates :page, :user_agent, length: { maximum: 3_000 }
   # WHY: the member never sees or edits these details, so a value no list foresaw must not block their feedback; the cap only stops a forged request from storing anything large.
   validates :viewport_width, :viewport_height, :screen_width, :screen_height, :pixel_ratio, length: { maximum: 100 }
-  validates :revision, :orientation, :color_scheme, :reduced_motion, :pointer, :display_mode, :time_zone, :language, :connection,
-    length: { maximum: 1_000 }
+  validates :revision, :orientation, :color_scheme, :reduced_motion, :pointer, :display_mode, :time_zone, :language, :connection, length: { maximum: 1_000 }
   validate :screenshots_are_allowed_images
 
   # WHY: the issue keeps the report, so the row and its screenshots, which are personal data, go once the retention has passed.
