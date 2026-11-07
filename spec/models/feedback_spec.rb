@@ -8,21 +8,27 @@ RSpec.describe Feedback, type: :model do
   describe "validations" do
     it { is_expected.to validate_presence_of(:description) }
     it { is_expected.to validate_length_of(:description).is_at_most(5_000) }
-    it { is_expected.to validate_length_of(:user_agent).is_at_most(1_000) }
-    it { is_expected.to validate_length_of(:revision).is_at_most(100) }
+    it { is_expected.to validate_length_of(:user_agent).is_at_most(3_000) }
+    it { is_expected.to validate_length_of(:revision).is_at_most(1_000) }
     it { is_expected.to validate_length_of(:viewport_width).is_at_most(100) }
     it { is_expected.to validate_length_of(:viewport_height).is_at_most(100) }
     it { is_expected.to validate_length_of(:screen_width).is_at_most(100) }
     it { is_expected.to validate_length_of(:screen_height).is_at_most(100) }
     it { is_expected.to validate_length_of(:pixel_ratio).is_at_most(100) }
-    it { is_expected.to validate_length_of(:orientation).is_at_most(100) }
-    it { is_expected.to validate_length_of(:color_scheme).is_at_most(100) }
-    it { is_expected.to validate_length_of(:reduced_motion).is_at_most(100) }
-    it { is_expected.to validate_length_of(:pointer).is_at_most(100) }
-    it { is_expected.to validate_length_of(:display_mode).is_at_most(100) }
-    it { is_expected.to validate_length_of(:time_zone).is_at_most(100) }
-    it { is_expected.to validate_length_of(:language).is_at_most(100) }
-    it { is_expected.to validate_length_of(:connection).is_at_most(100) }
+    it { is_expected.to validate_length_of(:orientation).is_at_most(1_000) }
+    it { is_expected.to validate_length_of(:color_scheme).is_at_most(1_000) }
+    it { is_expected.to validate_length_of(:reduced_motion).is_at_most(1_000) }
+    it { is_expected.to validate_length_of(:pointer).is_at_most(1_000) }
+    it { is_expected.to validate_length_of(:display_mode).is_at_most(1_000) }
+    it { is_expected.to validate_length_of(:time_zone).is_at_most(1_000) }
+    it { is_expected.to validate_length_of(:language).is_at_most(1_000) }
+    it { is_expected.to validate_length_of(:connection).is_at_most(1_000) }
+
+    it "caps the page at 3,000 characters" do
+      feedbacks = [ build(:feedback, page: "/#{"a" * 2_999}"), build(:feedback, page: "/#{"a" * 3_000}") ]
+
+      expect(feedbacks.map(&:valid?)).to eq [ true, false ]
+    end
 
     it "accepts a PNG whatever type the browser declares for it" do
       feedback = build(:feedback, screenshots: [ upload("screenshot-1.png", "text/plain") ])

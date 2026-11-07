@@ -38,6 +38,15 @@ RSpec.describe "Feedbacks", type: :request do
         expect([ feedback.description, feedback.page, feedback.viewport_width, feedback.user_agent ]).to eq [ "The dock covers Save.", "/groups/3", "390", "TestPhone/1.0" ]
       end
 
+      it "keeps a user agent of up to 3,000 characters and cuts a longer one there" do
+        user = create(:user)
+        sign_in_as(user)
+
+        post feedbacks_path, params: { feedback: { description: "The dock covers Save." } }, headers: { "User-Agent" => "a" * 3_001 }
+
+        expect(user.feedbacks.sole.user_agent).to eq "a" * 3_000
+      end
+
       it "saves the picked screenshots with the feedback" do
         user = create(:user)
         sign_in_as(user)

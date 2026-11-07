@@ -9,7 +9,7 @@ class FeedbacksController < ApplicationController
 
   def create
     @feedback = Current.user.feedbacks.new(feedback_params)
-    @feedback.user_agent = request.user_agent.to_s.first(1_000)
+    @feedback.user_agent = request.user_agent.to_s.first(3_000)
     @feedback.revision = Rails.configuration.x.revision
     authorize! @feedback
 
