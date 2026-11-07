@@ -2,15 +2,15 @@ require "rails_helper"
 
 # Only what a browser adds: the screens painting, the draft kept across a visit, the picked screenshots drawn as thumbnails, and the device details only JavaScript can read. What the form draws and what a submission saves without them is `spec/requests/feedbacks_spec.rb`'s.
 RSpec.describe "Sending feedback", type: :system do
-  # "Cancel | Send" fits the 288px row a 320px phone leaves: half of it each, less the 8px gap.
-  it "shares one line equally between its two buttons on a 320px phone" do
+  # "Cancel | Send" fits the 268px row a 300px window leaves, narrower than the 288px a wider two-button row needs: half of it each, less the 8px gap.
+  it "shares one line equally between its two buttons in a 300px window" do
     sign_in_as create(:user)
-    resize_to [ 320, 700 ]
+    resize_to [ 300, 700 ]
 
     visit new_feedback_path
 
     expect(page).to have_button "Send"
-    expect(form_actions_layout).to eq({ "buttons" => [ [ "Cancel", 140 ], [ "Send", 140 ] ], "lines" => 1 })
+    expect(form_actions_layout).to eq({ "buttons" => [ [ "Cancel", 130 ], [ "Send", 130 ] ], "lines" => 1 })
   end
 
   it "paints the form in light, with no accessibility violations" do
