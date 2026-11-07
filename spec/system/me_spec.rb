@@ -125,6 +125,27 @@ RSpec.describe "The Me menu", type: :system do
       expect(horizontal_overflow).to eq 0
     end
 
+    # The widest button row in the app, so it is the one that decides where a row led by Delete stops fitting. The column is 608px at `DESKTOP`, three equal shares of it less two 8px gaps.
+    it "shares one line equally between its three buttons on a desktop" do
+      sign_in_as create(:user)
+      resize_to ViewportHelper::DESKTOP
+
+      visit edit_user_profile_path
+
+      expect(page).to have_button "Delete my account"
+      expect(form_actions_layout).to eq({ "buttons" => [ [ "Delete my account", 197 ], [ "Cancel", 197 ], [ "Save", 197 ] ], "lines" => 1 })
+    end
+
+    it "stacks its buttons full width on a phone, Save on top and Delete my account at the bottom" do
+      sign_in_as create(:user)
+      resize_to ViewportHelper::MOBILE
+
+      visit edit_user_profile_path
+
+      expect(page).to have_button "Delete my account"
+      expect(form_actions_layout).to eq({ "buttons" => [ [ "Save", 358 ], [ "Cancel", 358 ], [ "Delete my account", 358 ] ], "lines" => 3 })
+    end
+
     it "lands home with the new name in the menu when saved" do
       sign_in_as create(:user)
 

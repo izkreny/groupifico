@@ -81,9 +81,8 @@
     </div>
   <% end %>
 
-  <div class="flex flex-wrap items-center gap-2 mt-4">
-    <%= leading %>
+  <%= render layout: "shared/form_actions", locals: { leading:, classes: "mt-4" } do %>
     <%= link_to cancel, class: "btn btn-ghost" do %><%= icon :cancel, class: "size-icon-control" %>Cancel<% end %>
     <%= form.button class: "btn btn-primary" do %><%= icon :save, class: "size-icon-control" %><%= submit %><% end %>
-  </div>
+  <% end %>
 <% end %>

@@ -84,6 +84,17 @@ RSpec.describe "The address edit page", type: :system do
       expect(page).to be_accessible
     end
 
+    # Two buttons fit a phone's 358px column, so they share it rather than stack: half of it each, less the 8px gap.
+    it "shares one line equally between Cancel and Save on a phone" do
+      sign_in_as member.user
+      resize_to ViewportHelper::MOBILE
+
+      visit edit_address_path(member.group.address)
+
+      expect(page).to have_button "Save"
+      expect(form_actions_layout).to eq({ "buttons" => [ [ "Cancel", 175 ], [ "Save", 175 ] ], "lines" => 1 })
+    end
+
     it "returns to the place when the correction is cancelled" do
       sign_in_as member.user
 

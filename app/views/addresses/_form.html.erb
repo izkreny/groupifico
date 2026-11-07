@@ -39,8 +39,8 @@
     <p class="mt-4">Used by <%= pluralize(count, "event") %> in <%= address.owning_group.name %>. <%= count == 1 ? "That event moves" : "They all move" %> with it.</p>
   <% end %>
 
-  <div class="flex flex-wrap items-center gap-2 mt-4">
+  <%= render layout: "shared/form_actions", locals: { classes: "mt-4" } do %>
     <%= link_to address_path(address), class: "btn btn-ghost" do %><%= icon :cancel, class: "size-icon-control" %>Cancel<% end %>
     <%= form.button class: "btn btn-primary" do %><%= icon :save, class: "size-icon-control" %>Save<% end %>
-  </div>
+  <% end %>
 <% end %>

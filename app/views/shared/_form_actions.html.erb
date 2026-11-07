@@ -1,0 +1,10 @@
+<%# locals: (leading: nil, classes: nil) %>
+<%# A form's button row: the block's buttons, led by an edit screen's Delete trigger in `leading`. %>
+<%# WHY: the row is its own container because whether its buttons fit is a question about its width, not the viewport's, and the form around it is `contents`, so it cannot be one. Each threshold is the narrowest row the widest row of its shape fits at an equal share, measured in Chromium: 559px for "Delete my account | Cancel | Save", 300px for "Cancel | Create group". %>
+<%# WHY: `flex-col-reverse` puts Save on top of the stack while the DOM keeps the one-line order, so only the stacked row runs focus bottom to top. %>
+<%= tag.div class: [ "@container", classes ] do %>
+  <div class="flex flex-col-reverse gap-2 <%= leading ? "@[35rem]:flex-row @[35rem]:*:flex-1" : "@[19rem]:flex-row @[19rem]:*:flex-1" %>">
+    <%= leading %>
+    <%= yield %>
+  </div>
+<% end %>
