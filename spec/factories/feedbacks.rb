@@ -8,7 +8,7 @@
 # ------------------- | ------------------ | ---------------------------
 # **`id`**            | `integer`          | `not null, primary key`
 # **`context`**       | `json`             | `not null`
-# **`description`**   | `text`             | `not null`
+# **`description`**   | `text(20000)`      | `not null`
 # **`issue_number`**  | `integer`          |
 # **`created_at`**    | `datetime`         | `not null`
 # **`updated_at`**    | `datetime`         | `not null`

@@ -71,7 +71,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_05_100710) do
 
   create_table "feedbacks", force: :cascade do |t|
     t.integer "user_id", null: false
-    t.text "description", null: false
+    t.text "description", limit: 20000, null: false
     t.json "context", default: {}, null: false
     t.integer "issue_number"
     t.datetime "created_at", null: false
