@@ -1,0 +1,46 @@
+<% content_for :title, "Send feedback" %>
+<%= render "shared/page_header", title: "Send feedback", back: @back_path %>
+
+<%= render layout: "shared/alert", locals: { kind: :info, classes: "mb-5" } do %>
+  <span>Something looks wrong? Take a screenshot with your phone first, then add it here.</span>
+<% end %>
+
+<%= form_with model: @feedback, class: "contents", data: { controller: "feedback-context feedback-draft", feedback_draft_key_value: "feedback-draft-#{Current.user.id}" } do |form| %>
+  <%= form.with_error_summary do %>
+    <fieldset class="fieldset">
+      <div class="flex flex-wrap gap-2 mb-2.5" role="group" aria-label="Screenshots" data-controller="screenshots" data-action="turbo:before-cache@document->screenshots#reset" data-screenshots-limit-value="<%= Feedback::SCREENSHOT_LIMIT %>" data-screenshots-max-size-value="<%= Feedback::SCREENSHOT_MAX_SIZE %>" data-screenshots-types-value="<%= Feedback::SCREENSHOT_TYPES.to_json %>" data-screenshots-errors-value="<%= Feedback::SCREENSHOT_ERRORS.to_json %>">
+        <template data-screenshots-target="template">
+          <div class="relative size-20 rounded-field bg-base-300 overflow-hidden border border-base-300" data-screenshots-target="thumbnail">
+            <img class="size-full object-cover" alt="">
+            <button type="button" class="btn btn-circle btn-sm absolute top-1 right-1" aria-label="Remove screenshot" data-action="screenshots#remove">
+              <%= icon :remove, class: "size-icon-inline" %>
+            </button>
+          </div>
+        </template>
+
+        <label class="size-20 rounded-field border-2 border-dashed border-base-content/50 flex flex-col items-center justify-center gap-1 text-icon-muted cursor-pointer has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-primary" data-screenshots-target="add">
+          <%= icon :new, class: "size-icon-control" %>
+          <span class="text-meta text-center leading-tight text-base-content">Add screenshot</span>
+          <%= form.file_field :screenshots, multiple: true, accept: Feedback::SCREENSHOT_TYPES.join(","), class: "sr-only", data: { screenshots_target: "input", action: "screenshots#add" } %>
+        </label>
+
+        <p class="w-full text-meta text-error" role="alert" data-screenshots-target="error" hidden></p>
+      </div>
+
+      <%= form.label :description, "Please describe the issue in as much detail as possible.", class: "sr-only" %>
+      <%= form.text_area :description, rows: 6, placeholder: "Please describe the issue in as much detail as possible.", class: "textarea w-full text-base", data: { feedback_draft_target: "description", action: "feedback-draft#save" } %>
+    </fieldset>
+  <% end %>
+
+  <%= form.hidden_field :page %>
+  <% %i[ viewport_width viewport_height screen_width screen_height pixel_ratio orientation color_scheme reduced_motion pointer display_mode time_zone language connection ].each do |key| %>
+    <%= form.hidden_field key, data: { feedback_context_target: "field", key: } %>
+  <% end %>
+
+  <p class="text-meta text-muted mt-3">Don't include passwords or other unnecessary private details. We also send the page you came from and your device details, such as screen size, browser and time zone.</p>
+
+  <div class="flex flex-wrap items-center gap-2 mt-4 mb-[env(safe-area-inset-bottom)]">
+    <%= link_to @back_path, class: "btn btn-ghost" do %><%= icon :cancel, class: "size-icon-control" %>Cancel<% end %>
+    <%= form.button class: "btn btn-primary" do %><%= icon :send, class: "size-icon-control" %>Send<% end %>
+  </div>
+<% end %>

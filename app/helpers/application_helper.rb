@@ -9,8 +9,9 @@ module ApplicationHelper
   # save, and a reader looking at a form on a phone must see no dock.
   FORM_ACTIONS = %w[ new create edit update duplicate ].freeze
 
+  # WHY: the thank-you page stands in for the page the feedback was sent from, so it names that page's controller through `content_for` and is drawn in its section.
   def shell_section
-    SHELL_SECTIONS[controller_name]
+    SHELL_SECTIONS[content_for(:shell_controller).presence || controller_name]
   end
 
   # A `nil` group is ordinary: it covers the screens outside a group and `groups#index`, which
