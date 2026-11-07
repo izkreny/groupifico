@@ -81,7 +81,7 @@
     </div>
   <% end %>
 
-  <%= render layout: "shared/form_actions", locals: { leading:, classes: "mt-4" } do %>
+  <%= render layout: "shared/form_actions", locals: { fits_at: leading ? 29 : (original ? 18 : 19), leading:, classes: "mt-4" } do %>
     <%= link_to cancel, class: "btn btn-ghost" do %><%= icon :cancel, class: "size-icon-control" %>Cancel<% end %>
     <%= form.button class: "btn btn-primary" do %><%= icon :save, class: "size-icon-control" %><%= submit %><% end %>
   <% end %>

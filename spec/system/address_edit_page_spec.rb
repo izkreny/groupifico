@@ -95,6 +95,17 @@ RSpec.describe "The address edit page", type: :system do
       expect(form_actions_layout).to eq({ "buttons" => [ [ "Cancel", 175 ], [ "Save", 175 ] ], "lines" => 1 })
     end
 
+    # A 320px phone leaves a 288px row, still wide enough for Cancel and Save: half of it each, less the 8px gap.
+    it "shares one line equally between Cancel and Save on a 320px phone" do
+      sign_in_as member.user
+      resize_to [ 320, 700 ]
+
+      visit edit_address_path(member.group.address)
+
+      expect(page).to have_button "Save"
+      expect(form_actions_layout).to eq({ "buttons" => [ [ "Cancel", 140 ], [ "Save", 140 ] ], "lines" => 1 })
+    end
+
     it "returns to the place when the correction is cancelled" do
       sign_in_as member.user
 

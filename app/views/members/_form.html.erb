@@ -45,7 +45,7 @@
     <% end %>
   <% end %>
 
-  <%= render layout: "shared/form_actions", locals: { leading: } do %>
+  <%= render layout: "shared/form_actions", locals: { fits_at: leading ? 29 : (member.persisted? ? 19 : 18), leading: } do %>
     <%= link_to cancel, class: "btn btn-ghost" do %><%= icon :cancel, class: "size-icon-control" %>Cancel<% end %>
     <%= form.button class: "btn btn-primary" do %><%= icon (member.persisted? ? :save : :send_invite), class: "size-icon-control" %><%= submit %><% end %>
   <% end %>
