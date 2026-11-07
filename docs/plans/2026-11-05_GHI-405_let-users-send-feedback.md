@@ -69,6 +69,7 @@ None.
 - How long a stored feedback row and its screenshots are kept once the issue exists: pruned 66 days after the feedback was saved, row and screenshots together.
 - Whether a retry after a timeout searches the private repository first: it does, by the marker `[F<id>]`, which is the whole title the app gives each issue, nothing added; agents that later add text keep the marker.
 - The private feedback repository and its fine-grained token: created by the owner and stored in Rails credentials as `github.feedback_repository` and `github.feedback_token`; a read of the repository and its issues with that token returned 200.
-- The rate limit and the retry schedule: 5 submissions per user within 10 minutes, and the filing job retries every 10 minutes, at most 6 times.
+- The rate limit and the retry schedule: 5 submissions per user within 10 minutes, and the filing job retries over 11 attempts with waits of about n⁴ seconds, roughly 7 hours in all.
 - The app calls GitHub only over its REST endpoints through `Net::HTTP`; the `gh` CLI is never needed at runtime.
 - Screenshots go up through `POST https://uploads.github.com/user-attachments/assets`, the endpoint `gh` uses: on 2026-11-05 the fine-grained token got a 201 from it and an issue showing the image, so no Contents API fallback is built.
+- Which environments file issues: production only, with filing on in test for the specs, because development shares the private repository and the `[F<id>]` markers while numbering feedback apart; development saves feedback without filing it.
