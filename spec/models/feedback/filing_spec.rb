@@ -72,13 +72,13 @@ RSpec.describe Feedback::Filing, type: :model do
   end
 
   def screenshot
-    Rack::Test::UploadedFile.new(file_fixture("screenshot.png"), "image/png")
+    Rack::Test::UploadedFile.new(file_fixture("screenshot-1.png"), "image/png")
   end
 
   def stub_screenshot_upload(returning:)
     stub_request(:get, "https://api.github.com/repos/acme/feedback").to_return_json(body: { id: 42 })
     stub_request(:post, "https://uploads.github.com/user-attachments/assets")
-      .with(query: { name: "screenshot.png", content_type: "image/png", repository_id: "42" }, body: file_fixture("screenshot.png").binread)
+      .with(query: { name: "screenshot-1.png", content_type: "image/png", repository_id: "42" }, body: file_fixture("screenshot-1.png").binread)
       .to_return_json(status: 201, body: { url: returning })
   end
 

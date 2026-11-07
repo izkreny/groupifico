@@ -42,9 +42,9 @@ RSpec.describe "Feedbacks", type: :request do
         user = create(:user)
         sign_in_as(user)
 
-        post feedbacks_path, params: { feedback: { description: "See the picture.", screenshots: [ fixture_file_upload("screenshot.png", "image/png") ] } }
+        post feedbacks_path, params: { feedback: { description: "See the picture.", screenshots: [ fixture_file_upload("screenshot-1.png", "image/png") ] } }
 
-        expect(user.feedbacks.sole.screenshots.map { it.filename.to_s }).to eq [ "screenshot.png" ]
+        expect(user.feedbacks.sole.screenshots.map { it.filename.to_s }).to eq [ "screenshot-1.png" ]
       end
 
       it "files the saved feedback as an issue in the background" do

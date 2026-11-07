@@ -41,7 +41,7 @@ RSpec.describe "Sending feedback", type: :system do
     sign_in_as create(:user)
 
     visit new_feedback_path
-    attach_file "feedback[screenshots][]", file_fixture("screenshot.png").to_s
+    attach_file "feedback[screenshots][]", file_fixture("screenshot-1.png").to_s
     attach_file "feedback[screenshots][]", file_fixture("screenshot-2.png").to_s
     attach_file "feedback[screenshots][]", file_fixture("screenshot-3.png").to_s
 

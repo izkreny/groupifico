@@ -136,7 +136,7 @@ RSpec.describe User, type: :model do
 
   describe "(feedback on deletion)" do
     it "takes the user's feedback and its screenshots with the account" do
-      feedback = create(:feedback, screenshots: [ Rack::Test::UploadedFile.new(file_fixture("screenshot.png"), "image/png") ])
+      feedback = create(:feedback, screenshots: [ Rack::Test::UploadedFile.new(file_fixture("screenshot-1.png"), "image/png") ])
 
       expect { feedback.user.destroy }.to change(Feedback, :count).by(-1)
         .and change(ActiveStorage::Attachment, :count).by(-1)

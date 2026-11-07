@@ -21,7 +21,7 @@ RSpec.describe Feedback, type: :model do
     end
 
     it "accepts a PNG whatever type the browser declares for it" do
-      feedback = build(:feedback, screenshots: [ upload("screenshot.png", "text/plain") ])
+      feedback = build(:feedback, screenshots: [ upload("screenshot-1.png", "text/plain") ])
 
       expect(feedback).to be_valid
     end
@@ -41,7 +41,7 @@ RSpec.describe Feedback, type: :model do
     end
 
     it "refuses a screenshot larger than 5 MB" do
-      bytes = file_fixture("screenshot.png").binread + ("\0" * 5.megabytes)
+      bytes = file_fixture("screenshot-1.png").binread + ("\0" * 5.megabytes)
       large = Rack::Test::UploadedFile.new(StringIO.new(bytes), "image/png", original_filename: "large.png")
       feedback = build(:feedback, screenshots: [ large ])
 
@@ -50,7 +50,7 @@ RSpec.describe Feedback, type: :model do
     end
 
     it "refuses a fourth screenshot" do
-      feedback = build(:feedback, screenshots: Array.new(4) { upload("screenshot.png", "image/png") })
+      feedback = build(:feedback, screenshots: Array.new(4) { upload("screenshot-1.png", "image/png") })
 
       expect(feedback).not_to be_valid
       expect(feedback.errors[:base]).to eq [ "You can add at most 3 screenshots." ]
@@ -88,7 +88,7 @@ RSpec.describe Feedback, type: :model do
   describe ".prune" do
     it "removes filed feedback and its screenshots once 66 days have passed since it was saved" do
       freeze_time
-      expired = create(:feedback, issue_number: 4, created_at: 66.days.ago - 1.second, screenshots: [ upload("screenshot.png", "image/png") ])
+      expired = create(:feedback, issue_number: 4, created_at: 66.days.ago - 1.second, screenshots: [ upload("screenshot-1.png", "image/png") ])
       kept = create(:feedback, issue_number: 5, created_at: 66.days.ago + 1.second)
 
       described_class.prune
