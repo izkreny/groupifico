@@ -111,6 +111,19 @@ RSpec.describe "The event form", type: :system do
     expect(form_actions_layout).to eq({ "buttons" => [ [ "Delete event", 164 ], [ "Cancel", 164 ], [ "Save changes", 164 ] ], "lines" => 1 })
   end
 
+  # "Cancel | Create copy" fits the 288px row a 320px phone leaves, narrower than the new event screen's row needs. Half of it each, less the 8px gap.
+  it "shares one line equally between the duplicate screen's two buttons on a 320px phone" do
+    actor = create(:member, :active, :events_administrator)
+    event = create(:event, :from_the_future, group: actor.group)
+    sign_in_as actor.user
+    resize_to [ 320, 700 ]
+
+    visit duplicate_group_event_path(event.group, event)
+
+    expect(page).to have_button "Create copy"
+    expect(form_actions_layout).to eq({ "buttons" => [ [ "Cancel", 140 ], [ "Create copy", 140 ] ], "lines" => 1 })
+  end
+
   it "paints the duplicate screen's note, with no accessibility violations" do
     actor = create(:member, :active, :events_administrator)
     event = create(:event, group: actor.group)

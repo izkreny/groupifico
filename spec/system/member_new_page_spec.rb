@@ -3,6 +3,18 @@ require "rails_helper"
 # Only what a browser adds. Which fields the form draws for which member, and what a submission
 # writes and mails, are `spec/requests/members_spec.rb`'s assertions.
 RSpec.describe "The new member page", type: :system do
+  # "Cancel | Send invite" fits the 288px row a 320px phone leaves: half of it each, less the 8px gap.
+  it "shares one line equally between its two buttons on a 320px phone" do
+    actor = create(:member, :active, :members_administrator, :with_all_attributes)
+    sign_in_as actor.user
+    resize_to [ 320, 700 ]
+
+    visit new_group_member_path(actor.group)
+
+    expect(page).to have_button "Send invite"
+    expect(form_actions_layout).to eq({ "buttons" => [ [ "Cancel", 140 ], [ "Send invite", 140 ] ], "lines" => 1 })
+  end
+
   context "when the address already belongs to the group" do
     before do
       actor = create(:member, :active, :members_administrator, :with_all_attributes)

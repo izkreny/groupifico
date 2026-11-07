@@ -106,7 +106,30 @@ RSpec.describe "The group form", type: :system do
     expect(page).to have_current_path groups_path
   end
 
+  # "Cancel | Create group" fits a phone's 358px row: half of it each, less the 8px gap.
+  it "shares one line equally between the new group screen's two buttons on a phone" do
+    sign_in_as create(:user)
+    resize_to ViewportHelper::MOBILE
+
+    visit new_group_path
+
+    expect(page).to have_button "Create group"
+    expect(form_actions_layout).to eq({ "buttons" => [ [ "Cancel", 175 ], [ "Create group", 175 ] ], "lines" => 1 })
+  end
+
   context "when the group already exists" do
+    # "Delete group | Cancel | Save changes" fits the 508px row a 540px window leaves, which Edit profile's wider row does not. Three equal shares of 508px less two 8px gaps.
+    it "shares one line equally between its three buttons where they fit" do
+      member = create(:member, :active, :owner, :with_all_attributes)
+      sign_in_as member.user
+      resize_to [ 540, 900 ]
+
+      visit edit_group_path(member.group)
+
+      expect(page).to have_button "Delete group"
+      expect(form_actions_layout).to eq({ "buttons" => [ [ "Delete group", 164 ], [ "Cancel", 164 ], [ "Save changes", 164 ] ], "lines" => 1 })
+    end
+
     it "paints it in light, with no accessibility violations" do
       member = create(:member, :active, :owner, :with_all_attributes)
       sign_in_as member.user
