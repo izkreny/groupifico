@@ -28,6 +28,12 @@ class Feedback < ApplicationRecord
   SCREENSHOT_TYPES = %w[ image/png image/jpeg image/gif image/webp ]
   SCREENSHOT_LIMIT = 3
   SCREENSHOT_MAX_SIZE = 5.megabytes
+  # WHY: the screenshots controller refuses the same files as they are picked, so the messages it shows are these, filled in with the file's name.
+  SCREENSHOT_ERRORS = {
+    too_large: "%{name} is larger than 5 MB, the most a screenshot can be.",
+    heic: "%{name} is a HEIC photo, which can't be sent. Take a screenshot instead.",
+    not_image: "%{name} isn't a PNG, JPEG, GIF or WebP image."
+  }
   RETENTION = 66.days
 
   belongs_to :user
@@ -97,11 +103,11 @@ class Feedback < ApplicationRecord
     def screenshot_is_allowed_image(file)
       case sniff(file)
       when *SCREENSHOT_TYPES
-        errors.add(:base, "#{file.original_filename} is larger than 5 MB, the most a screenshot can be.") if file.size > SCREENSHOT_MAX_SIZE
+        errors.add(:base, format(SCREENSHOT_ERRORS[:too_large], name: file.original_filename)) if file.size > SCREENSHOT_MAX_SIZE
       when "image/heic", "image/heif"
-        errors.add(:base, "#{file.original_filename} is a HEIC photo, which can't be sent. Take a screenshot instead.")
+        errors.add(:base, format(SCREENSHOT_ERRORS[:heic], name: file.original_filename))
       else
-        errors.add(:base, "#{file.original_filename} isn't a PNG, JPEG, GIF or WebP image.")
+        errors.add(:base, format(SCREENSHOT_ERRORS[:not_image], name: file.original_filename))
       end
     end
 

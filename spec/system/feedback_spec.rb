@@ -37,6 +37,29 @@ RSpec.describe "Sending feedback", type: :system do
     expect(page).to have_field "Please describe the issue in as much detail as possible.", with: "The dock covers Save."
   end
 
+  it "refuses a screenshot over 5 MB as it is picked, keeping the ones already picked" do
+    sign_in_as create(:user)
+
+    visit new_feedback_path
+    pick_screenshot_made_in_page
+    pick_file_made_in_page "big.png", type: "image/png", bytes: 5.megabytes + 1
+
+    expect(page).to have_text "big.png is larger than 5 MB, the most a screenshot can be."
+    expect(page).to have_button "Remove screenshot 1"
+    expect(page).to have_no_button "Remove screenshot 2"
+    expect(page).to be_accessible
+  end
+
+  it "refuses a HEIC photo as it is picked, with the hint to take a screenshot" do
+    sign_in_as create(:user)
+
+    visit new_feedback_path
+    pick_file_made_in_page "photo.heic", type: "image/heic", bytes: 100
+
+    expect(page).to have_text "photo.heic is a HEIC photo, which can't be sent. Take a screenshot instead."
+    expect(page).to have_no_button "Remove screenshot 1"
+  end
+
   it "draws each picked screenshot and hides the tile once three are picked" do
     sign_in_as create(:user)
 
@@ -101,6 +124,18 @@ RSpec.describe "Sending feedback", type: :system do
 
     expect(page).to paint "main .btn-primary"
     expect(page).to be_accessible
+  end
+
+  # WHY: only the declared type and the size matter to the check at pick time, so the file is made in the page rather than attached through CDP, for the reason `pick_screenshot_made_in_page` gives.
+  def pick_file_made_in_page(name, type:, bytes:)
+    page.execute_script(<<~JS, name, type, bytes)
+      const [ name, type, bytes ] = arguments
+      const input = document.querySelector("input[type=file]")
+      const transfer = new DataTransfer()
+      transfer.items.add(new File([ new Uint8Array(bytes) ], name, { type }))
+      input.files = transfer.files
+      input.dispatchEvent(new Event("input", { bubbles: true }))
+    JS
   end
 
   # WHY: a file CDP attaches cannot be read back in headless Chromium, so its thumbnail draws broken and submitting or leaving the page stalls the browser; a file the page makes itself goes through the same input as a phone's pick.
