@@ -8,7 +8,7 @@
 <%= render layout: "shared/confirm_scope", locals: { enabled: deletable, classes: "flex flex-col gap-4 w-full" } do %>
   <h2 class="text-record"><%= @member.full_name %></h2>
 
-  <%= render "members/form", group: @group, member: @member, submit: "Save member", cancel: group_member_path(@group, @member),
+  <%= render "members/form", group: @group, member: @member, submit: "Save member", fits_at: (deletable ? 29 : 19), cancel: group_member_path(@group, @member),
         leading: (render("shared/confirm_trigger", id:, confirm: "Remove") if deletable) %>
 
   <% if deletable %>

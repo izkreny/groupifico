@@ -65,6 +65,19 @@ module ViewportHelper
     JS
   end
 
+  # The form's button row as the reader sees it: each button's label and rendered width in whole px, top to bottom and then left to right, plus how many lines the row takes. Read off the boxes because the row's order and its stacking are both CSS, so the markup's order says nothing about either. The row is found from its primary button rather than its classes, so the reading holds whatever the row is built from.
+  def form_actions_layout
+    page.evaluate_script(<<~JS)
+      (() => {
+        const boxes = [...document.querySelector("main form .btn-primary[type=submit]").parentElement.children].map(button => {
+          const rect = button.getBoundingClientRect();
+          return { label: button.textContent.trim(), top: Math.round(rect.top), left: Math.round(rect.left), width: Math.round(rect.width) };
+        }).sort((a, b) => a.top - b.top || a.left - b.left);
+        return { buttons: boxes.map(box => [ box.label, box.width ]), lines: new Set(boxes.map(box => box.top)).size };
+      })()
+    JS
+  end
+
   # An element's rendered width in whole px, for comparing a control against the column it should span.
   def width_of(selector)
     page.evaluate_script("Math.round(document.querySelector(arguments[0]).getBoundingClientRect().width)", selector)

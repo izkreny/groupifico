@@ -127,4 +127,17 @@ RSpec.describe "The member edit page", type: :system do
     expect(page).to have_text "Member was successfully destroyed."
     expect(Member.exists?(target.id)).to be false
   end
+
+  # "Remove | Cancel | Save member" fits the 508px row a 540px window leaves, which Edit profile's wider row does not. Three equal shares of 508px less two 8px gaps.
+  it "shares one line equally between its three buttons where they fit" do
+    actor  = create(:member, :active, :members_administrator, :with_all_attributes)
+    target = create(:member, :with_all_attributes, group: actor.group)
+    sign_in_as actor.user
+    resize_to [ 540, 900 ]
+
+    visit edit_group_member_path(actor.group, target)
+
+    expect(page).to have_button "Remove"
+    expect(form_actions_layout).to eq({ "buttons" => [ [ "Remove", 164 ], [ "Cancel", 164 ], [ "Save member", 164 ] ], "lines" => 1 })
+  end
 end

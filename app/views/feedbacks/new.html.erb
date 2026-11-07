@@ -39,8 +39,8 @@
 
   <p class="text-meta text-muted mt-3">Don't include passwords or other unnecessary private details. We also send the page you came from and your device details, such as screen size, browser and time zone.</p>
 
-  <div class="flex flex-wrap items-center gap-2 mt-4 mb-[env(safe-area-inset-bottom)]">
+  <%= render layout: "shared/form_actions", locals: { fits_at: 14, classes: "mt-4 mb-[env(safe-area-inset-bottom)]" } do %>
     <%= link_to @back_path, class: "btn btn-ghost" do %><%= icon :cancel, class: "size-icon-control" %>Cancel<% end %>
     <%= form.button class: "btn btn-primary" do %><%= icon :send, class: "size-icon-control" %>Send<% end %>
-  </div>
+  <% end %>
 <% end %>

@@ -98,6 +98,32 @@ RSpec.describe "The event form", type: :system do
     expect(horizontal_overflow).to eq 0
   end
 
+  # "Delete event | Cancel | Save changes" fits a 508px row, which a 540px window leaves, though Edit profile's wider row does not: the edit screen's row shares one line by its own width. Three equal shares of 508px less two 8px gaps.
+  it "shares one line equally between the edit screen's three buttons where they fit" do
+    actor = create(:member, :active, :events_administrator)
+    event = create(:event, :from_the_future, group: actor.group)
+    sign_in_as actor.user
+    resize_to [ 540, 900 ]
+
+    visit edit_group_event_path(event.group, event)
+
+    expect(page).to have_button "Delete event"
+    expect(form_actions_layout).to eq({ "buttons" => [ [ "Delete event", 164 ], [ "Cancel", 164 ], [ "Save changes", 164 ] ], "lines" => 1 })
+  end
+
+  # "Cancel | Create copy" fits the 288px row a 320px phone leaves, narrower than the new event screen's row needs. Half of it each, less the 8px gap.
+  it "shares one line equally between the duplicate screen's two buttons on a 320px phone" do
+    actor = create(:member, :active, :events_administrator)
+    event = create(:event, :from_the_future, group: actor.group)
+    sign_in_as actor.user
+    resize_to [ 320, 700 ]
+
+    visit duplicate_group_event_path(event.group, event)
+
+    expect(page).to have_button "Create copy"
+    expect(form_actions_layout).to eq({ "buttons" => [ [ "Cancel", 140 ], [ "Create copy", 140 ] ], "lines" => 1 })
+  end
+
   it "paints the duplicate screen's note, with no accessibility violations" do
     actor = create(:member, :active, :events_administrator)
     event = create(:event, group: actor.group)

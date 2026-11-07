@@ -18,9 +18,8 @@
     </fieldset>
   <% end %>
 
-  <div class="flex flex-wrap items-center gap-2 mt-4">
-    <%= leading %>
+  <%= render layout: "shared/form_actions", locals: { fits_at: leading ? 35 : 14, leading:, classes: "mt-4" } do %>
     <%= link_to root_path, class: "btn btn-ghost" do %><%= icon :cancel, class: "size-icon-control" %>Cancel<% end %>
     <%= form.button class: "btn btn-primary" do %><%= icon :save, class: "size-icon-control" %>Save<% end %>
-  </div>
+  <% end %>
 <% end %>
