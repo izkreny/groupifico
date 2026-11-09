@@ -7,7 +7,7 @@
 # so no membership answers it either. #221 and #223 consume the same rule for a sender address and
 # for the application chrome; this carries `group_type` alone, since neither of those is scheduled.
 class Brand
-  # One entry, because `chorifico.com` is the only registered domain. A second one is a row here.
+  # WHY: one entry, because `chorifico.com` is the only branded domain; `groupifico.com` is registered too, but it is the general brand's and needs no row. A second branded domain is a row here.
   GROUP_TYPES = { "chorifico.com" => "choir" }.freeze
 
   # What the general brand's domains get: `localhost`, a bare IP, and `groupifico.com` itself.
