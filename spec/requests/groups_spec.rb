@@ -28,6 +28,14 @@ RSpec.describe "Groups", type: :request do
         expect(Nokogiri::HTML(response.body).at_css("header h1").text.squish).to eq "Chorifico"
       end
 
+      it "heads the shell with the Groupifico brand on a domain that carries no brand" do
+        sign_in_as(create(:user))
+
+        get groups_path
+
+        expect(Nokogiri::HTML(response.body).at_css("header h1").text.squish).to eq "Groupifico"
+      end
+
       it "keeps its own title on a branded domain" do
         host! "chorifico.com"
         sign_in_as(create(:user))
