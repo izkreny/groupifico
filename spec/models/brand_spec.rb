@@ -44,4 +44,22 @@ RSpec.describe Brand, type: :model do
       expect(described_class.new(nil).name).to eq("Groupifico")
     end
   end
+
+  describe "#tagline" do
+    it "asks about rehearsal on the chorifico.com domain" do
+      expect(described_class.new("chorifico.com").tagline).to eq("Who's coming to rehearsal.")
+    end
+
+    it "asks about rehearsal whatever case the domain arrives in" do
+      expect(described_class.new("ChoRifico.COM").tagline).to eq("Who's coming to rehearsal.")
+    end
+
+    it "asks about the next event for a domain that carries no brand" do
+      expect(described_class.new("example.com").tagline).to eq("Who's coming to the next event.")
+    end
+
+    it "asks about the next event when there is no domain at all" do
+      expect(described_class.new(nil).tagline).to eq("Who's coming to the next event.")
+    end
+  end
 end

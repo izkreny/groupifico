@@ -41,6 +41,20 @@ RSpec.describe "Sessions", type: :request do
         expect(page.at_css("body header p").text).to eq "Groupifico"
       end
 
+      it "asks who is coming to rehearsal under the masthead on chorifico.com" do
+        host! "chorifico.com"
+
+        get new_session_path
+
+        expect(Nokogiri::HTML(response.body).at_css("body header p.text-meta").text).to eq "Who's coming to rehearsal."
+      end
+
+      it "asks who is coming to the next event under the masthead on a domain that carries no brand" do
+        get new_session_path
+
+        expect(Nokogiri::HTML(response.body).at_css("body header p.text-meta").text).to eq "Who's coming to the next event."
+      end
+
       # Criterion 8: the shell's chrome belongs to a reader inside a group, and this is the
       # signed-out screen it must stay off. The header row itself renders on every screen.
       it "carries none of the shell's chrome" do
