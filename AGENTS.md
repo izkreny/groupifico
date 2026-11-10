@@ -41,3 +41,13 @@
 - `rails_rails` outranks everything on framework capability questions: what edge Rails already ships gets used, or locally backported, before anything is hand-built.
 - `basecamp_*` solutions get preference on application patterns.
 - Exploring these repos is always a cheap subagent's job, never done in the main session's context.
+
+## LOCAL SIGN-IN LINKS
+
+Development delivers no mail, so the owner signs in to the local app through a link minted on the spot.
+
+- **`login link` or `:ll`** hands the owner a link for their own account, the address `git config user.email` prints, creating the account where the database has none.
+- **`login link list` or `:lll`** first lists the users of that database as numbered lines (full name, address, and each group with the user's status and roles, grouped by group, owners and administrators first), then waits for the owner's number and hands over a link for that user, creating nobody.
+- **The link signs into the session's own checkout**, the worktree when the session is in one. That checkout must serve port 3000: a server already on the port may be another checkout's (its pid from `ss -ltnp`, its directory from `readlink /proc/<pid>/cwd`), and it would refuse a token minted here. With nothing on the port, start `bin/rails server -p 3000` in the background, since `bin/dev` exits there, after `bin/rails db:prepare` in a new worktree, and wait for `/up` to answer `200`.
+- **Mint it** with `bin/rails runner 'puts Rails.application.routes.url_helpers.sign_in_url(token: SignInToken.mint(User.find_by!(email: "<address>")), host: "localhost", port: 3000)'`, swapping `find_by!` for `find_or_create_by!` for the owner's own account, and hand it over as a bare URL that works once and expires in 15 minutes.
+- **Stop a server the session started** when the owner says they are done, and always before its worktree is removed.
