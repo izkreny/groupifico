@@ -19,6 +19,24 @@ RSpec.describe "Groups", type: :request do
         expect(response).to have_http_status :ok
       end
 
+      it "heads the shell with the Chorifico brand on chorifico.com" do
+        host! "chorifico.com"
+        sign_in_as(create(:user))
+
+        get groups_path
+
+        expect(Nokogiri::HTML(response.body).at_css("header h1").text.squish).to eq "Chorifico"
+      end
+
+      it "keeps its own title on a branded domain" do
+        host! "chorifico.com"
+        sign_in_as(create(:user))
+
+        get groups_path
+
+        expect(Nokogiri::HTML(response.body).at_css("title").text).to eq "Your groups"
+      end
+
       it "lists only the groups the acting user belongs to" do
         member = create(:member)
         other_group = create(:group) # the acting user does not belong to this one

@@ -32,8 +32,12 @@ RSpec.describe Brand, type: :model do
       expect(described_class.new("example.com").name).to eq("Groupifico")
     end
 
-    it "is Groupifico for the chorifico.com domain too, until #223 lands" do
-      expect(described_class.new("chorifico.com").name).to eq("Groupifico")
+    it "is Chorifico for the chorifico.com domain" do
+      expect(described_class.new("chorifico.com").name).to eq("Chorifico")
+    end
+
+    it "is Chorifico whatever case the domain arrives in" do
+      expect(described_class.new("ChoRifico.COM").name).to eq("Chorifico")
     end
 
     it "is Groupifico when there is no domain at all" do
