@@ -12,7 +12,8 @@ class Member::Import
 
   def initialize(group, csv)
     @group = group
-    @table = CSV.parse(csv, headers: true, strip: true)
+    # WHY: Excel's "CSV UTF-8" export opens with a byte-order mark, which would otherwise become part of the first header.
+    @table = CSV.parse(csv.delete_prefix("﻿"), headers: true, strip: true)
 
     if @table.headers.sort != HEADERS.sort
       raise HeaderMismatch, "Expected the headers #{HEADERS.join(", ")}; got #{@table.headers.join(", ")}"

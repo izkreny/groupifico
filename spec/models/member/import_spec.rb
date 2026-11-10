@@ -111,6 +111,12 @@ RSpec.describe Member::Import do
       .to raise_error(Member::Import::HeaderMismatch, "Expected the headers first_name, last_name, email, mobile_phone; got name, email")
   end
 
+  it "reads a file that opens with a byte-order mark, as Excel's UTF-8 CSV export writes one" do
+    import = described_class.new(group, "﻿#{csv("Ana,Horvat,ana@example.com,+385911111111")}")
+
+    expect(import.save).to be(true)
+  end
+
   it "sends no mail" do
     expect { described_class.new(group, csv("Ana,Horvat,ana@example.com,+385911111111")).save }.not_to have_enqueued_mail
   end
