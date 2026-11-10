@@ -58,8 +58,8 @@ Rails.application.configure do
   # config.action_mailer.raise_delivery_errors = false
 
   # Set host to be used by links generated in mailer templates.
-  # WHY: one fixed host while both domains serve, per #414; `protocol` because Action Mailer builds `http` links unless told, and a sign-in link must not cross the network in the clear before the proxy's redirect.
-  config.action_mailer.default_url_options = { host: "chorifico.com", protocol: "https" }
+  # WHY: one fixed host while both domains serve, per #414.
+  config.action_mailer.default_url_options = { host: "chorifico.com" }
 
   # Deliver over MailPace's HTTPS API rather than SMTP, whose ports the VPS provider blocks. Set
   # here and never in config/application.rb: which transport an environment uses is exactly what
