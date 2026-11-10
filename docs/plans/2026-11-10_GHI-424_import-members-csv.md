@@ -25,12 +25,12 @@ Nothing mails anyone, because `MemberMailer.welcome` is sent by `MembersControll
 - ::V5:: `mise exec -- bin/rubocop Gemfile app/models/member/import.rb lib/tasks/members.rake spec/models/member/import_spec.rb spec/tasks/members_import_spec.rb` exits 0
 - ::V6:: `mise exec -- bin/ci` passes, browser suite included
 
-The specs read standard input from a string, so they cannot see whether a paste through `kamal app exec --interactive` arrives intact on the server; that is the owner's to judge on the first real run, which the all-or-nothing transaction makes safe to retry.
+The specs read standard input from a string, so they cannot see the production run itself; Q1's `wc -l` check showed a piped file reaching the container, and the first real import is the owner's to judge, which the all-or-nothing transaction makes safe to retry.
 
 ## Open questions
 
-- ::Q1:: The production run reads the file by pasting it into `kamal app exec --interactive --reuse "bin/rails 'members:import[1]'"` and ending with Ctrl-D, since a plain `kamal app exec` is not known to forward local standard input and copying a file into the container needs admin steps on the server. Keep that as the recorded command? OK keeps it.
+None.
 
 ## Settled
 
-None yet.
+- ::Q1:: How does the file reach the production container? Piped: `kamal app exec --interactive --reuse "bin/rails 'members:import[1]'" < members.csv`. Kamal 2.12.0 drops `docker exec` to `-i` when its standard input is not a terminal, so the file streams through SSH into the task and is never stored on the server; the owner confirmed it by piping a file into `wc -l` the same way, which counted its lines in the container.
