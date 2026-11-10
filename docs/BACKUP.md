@@ -36,19 +36,25 @@ To rebuild the database as it was at an earlier moment, add `-timestamp` with a 
 The accessory runs Litestream with `-restore-if-db-not-exists`, so on a server whose storage volume is empty it restores the database from R2 before it starts replicating again.
 
 1. Prepare the new server and point DNS at it as for the first deploy, and set `KAMAL_SERVER` to it.
-2. Boot the accessory alone, so the database is back before the application creates an empty one:
+2. Create the storage volume and hand it to the application's user, `1000:1000`, which the accessory also runs as. A volume Docker creates for the accessory alone is owned by root, and the restore cannot write into it:
+
+   ```sh
+   bin/kamal server exec "docker run --rm --user 0:0 --entrypoint chown -v groupifico_storage:/rails/storage litestream/litestream:0.5.18 1000:1000 /rails/storage"
+   ```
+
+3. Boot the accessory alone, so the database is back before the application creates an empty one:
 
    ```sh
    bin/kamal accessory boot litestream
    ```
 
-3. Wait until `bin/kamal accessory logs litestream` reports the restore finished and replication started.
-4. Deploy the application, which finds the restored database on the volume:
+4. Wait until `bin/kamal accessory logs litestream` reports the restore finished and replication started.
+5. Deploy the application, which finds the restored database on the volume:
 
    ```sh
    bin/kamal setup
    ```
 
-5. Sign in and check that the groups, members and events are there.
+6. Sign in and check that the groups, members and events are there.
 
 `bin/kamal setup` skips the accessory, since its container already exists.
