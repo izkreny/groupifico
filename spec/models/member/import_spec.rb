@@ -118,6 +118,13 @@ RSpec.describe Member::Import do
     expect(import.rows).to contain_exactly(have_attributes(line: 2, outcome: :added), have_attributes(line: 4, outcome: :refused))
   end
 
+  it "names each row by its line when rows end in a bare carriage return" do
+    import = described_class.new(group, csv("Ana,Horvat,ana@example.com,+385911111111", "Marko,Babić,not-an-address,+385922222222").gsub("\n", "\r"))
+    import.save
+
+    expect(import.rows).to contain_exactly(have_attributes(line: 2, outcome: :added), have_attributes(line: 3, outcome: :refused))
+  end
+
   it "lists no rows before it is saved" do
     expect(described_class.new(group, csv("Ana,Horvat,ana@example.com,+385911111111")).rows).to eq([])
   end

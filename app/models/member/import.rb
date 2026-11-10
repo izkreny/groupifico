@@ -35,12 +35,12 @@ class Member::Import
   end
 
   private
-    # WHY: `CSV#lineno` counts records rather than lines, so a quoted cell spanning lines would shift every later row's line; each record's own text says how many lines it took.
+    # WHY: `CSV#lineno` counts records rather than lines, so a quoted cell spanning lines would shift every later row's line; each record's own text says how many lines it took, whichever line ending the file uses.
     def read_records(reader)
       line = 2
 
       reader.map do |record|
-        [ line, record ].tap { line += reader.line.count("\n") }
+        [ line, record ].tap { line += reader.line.scan(/\r\n?|\n/).size }
       end
     end
 
