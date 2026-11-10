@@ -44,6 +44,9 @@ gem "image_processing", "~> 2.0"
 # Authorization policies [https://github.com/palkan/action_policy]
 gem "action_policy"
 
+# WHY: Ruby 4.0 ships `csv` as a bundled gem rather than a default one, so `require "csv"` fails under Bundler unless it is listed; `members:import` reads its rows with it.
+gem "csv"
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
