@@ -81,7 +81,7 @@ RSpec.describe Member::Import do
 
   describe "a file with a refused row" do
     it "writes nothing at all, the valid rows included" do
-      import = described_class.new(group, csv("Ana,Horvat,ana@example.com,+385911111111", "Marko,Babić,not-an-address,+385922222222"))
+      import = described_class.new(group, csv("Ana,Horvat,ana@example.com,+385911111111", "Marko,Babić,not-an-address,+385922222222", "Iva,Kovač,iva@example.com,+385944444444"))
 
       expect { expect(import.save).to be(false) }.not_to change { [ User.count, Member.count, UserProfile.count ] }
     end
