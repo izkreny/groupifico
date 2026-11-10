@@ -1,0 +1,18 @@
+# WHY: every account-specific value arrives through the environment from .kamal/secrets, so this public file names no account, bucket or key.
+heartbeat-url: ${LITESTREAM_HEARTBEAT_URL}
+heartbeat-interval: 1m
+
+snapshot:
+  interval: 24h
+  retention: 2160h
+
+dbs:
+  - path: /rails/storage/production.sqlite3
+    replica:
+      type: s3
+      endpoint: ${LITESTREAM_R2_ACCOUNT_ID}.r2.cloudflarestorage.com
+      region: auto
+      bucket: ${LITESTREAM_BUCKET}
+      path: production
+      access-key-id: ${LITESTREAM_ACCESS_KEY_ID}
+      secret-access-key: ${LITESTREAM_SECRET_ACCESS_KEY}
