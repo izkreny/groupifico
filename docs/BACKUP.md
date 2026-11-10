@@ -24,10 +24,10 @@ bin/kamal secrets print | grep '^LITESTREAM_' > tmp/litestream.env
 mkdir -p tmp/restore
 docker run --rm --env-file tmp/litestream.env -v $PWD/config/litestream.yml:/etc/litestream.yml:ro -v $PWD/tmp/restore:/restore litestream/litestream:0.5.18 restore -config /etc/litestream.yml -o /restore/production.sqlite3 /rails/storage/production.sqlite3
 rm tmp/litestream.env
-sqlite3 tmp/restore/production.sqlite3 'PRAGMA integrity_check'
+sqlite3 -readonly tmp/restore/production.sqlite3 'PRAGMA integrity_check'
 ```
 
-The last command prints `ok` for a sound copy. `restore` refuses to overwrite an existing file, so delete `tmp/restore/production.sqlite3` before restoring again.
+The last command prints `ok` for a sound copy. `-readonly` matters: without it, `sqlite3` creates an empty database where the restore wrote nothing, and an empty database checks `ok` too. `restore` refuses to overwrite an existing file, so delete `tmp/restore/production.sqlite3` before restoring again.
 
 To rebuild the database as it was at an earlier moment, add `-timestamp` with a UTC time before `-o`, for example `-timestamp 2026-11-10T09:00:00Z`. Copy the records you need back into production through `bin/kamal console` rather than replacing the production database, which would lose every write since that moment.
 
