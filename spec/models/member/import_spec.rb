@@ -111,8 +111,19 @@ RSpec.describe Member::Import do
       .to raise_error(Member::Import::HeaderMismatch, "Expected the headers first_name, last_name, email, mobile_phone; got name, email")
   end
 
+  it "names each row by the line it starts on when a quoted cell spans two lines" do
+    import = described_class.new(group, csv(%("Ana\nMarija",Horvat,ana@example.com,+385911111111), "Marko,Babić,not-an-address,+385922222222"))
+    import.save
+
+    expect(import.rows).to contain_exactly(have_attributes(line: 2, outcome: :added), have_attributes(line: 4, outcome: :refused))
+  end
+
+  it "lists no rows before it is saved" do
+    expect(described_class.new(group, csv("Ana,Horvat,ana@example.com,+385911111111")).rows).to eq([])
+  end
+
   it "reads a file that opens with a byte-order mark, as Excel's UTF-8 CSV export writes one" do
-    import = described_class.new(group, "﻿#{csv("Ana,Horvat,ana@example.com,+385911111111")}")
+    import = described_class.new(group, "\uFEFF#{csv("Ana,Horvat,ana@example.com,+385911111111")}")
 
     expect(import.save).to be(true)
   end

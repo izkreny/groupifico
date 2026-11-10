@@ -12,18 +12,22 @@ class Member::Import
 
   def initialize(group, csv)
     @group = group
+    @rows  = []
     # WHY: Excel's "CSV UTF-8" export opens with a byte-order mark, which would otherwise become part of the first header.
-    @table = CSV.parse(csv.delete_prefix("﻿"), headers: true, strip: true)
+    reader  = CSV.new(csv.delete_prefix("\uFEFF"), headers: true, strip: true, return_headers: true)
+    headers = Array(reader.shift&.headers)
 
-    if @table.headers.sort != HEADERS.sort
-      raise HeaderMismatch, "Expected the headers #{HEADERS.join(", ")}; got #{@table.headers.join(", ")}"
+    if headers.sort != HEADERS.sort
+      raise HeaderMismatch, "Expected the headers #{HEADERS.join(", ")}; got #{headers.join(", ")}"
     end
+
+    @records = read_records(reader)
   end
 
   # WHY: one refused row rolls every row back, so a file is either imported whole or fixed and run again, and a second run of a whole import finds everybody already in the group.
   def save
     Member.transaction do
-      @rows = @table.each.with_index(2).map { |row, line| import(row, line) }
+      @rows = @records.map { |line, record| import(record, line) }
       raise ActiveRecord::Rollback if refused?
     end
 
@@ -31,6 +35,15 @@ class Member::Import
   end
 
   private
+    # WHY: `CSV#lineno` counts records rather than lines, so a quoted cell spanning lines would shift every later row's line; each record's own text says how many lines it took.
+    def read_records(reader)
+      line = 2
+
+      reader.map do |record|
+        [ line, record ].tap { line += reader.line.count("\n") }
+      end
+    end
+
     def refused?
       @rows.any? { it.outcome == :refused }
     end
