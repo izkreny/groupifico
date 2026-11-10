@@ -44,10 +44,54 @@
 
 ## LOCAL SIGN-IN LINKS
 
-Development delivers no mail, so the owner signs in to the local app through a link minted on the spot.
+Development delivers no mail, so the owner signs in to the local app through a link minted on the spot, for a user read from the development database. Run the command's block below exactly as written, from the checkout's root; a link works once and expires in 15 minutes, and is handed over as a bare URL.
 
-- **`login link` or `:ll`** hands the owner a link for their own account, the address `git config user.email` prints, creating the account where the database has none.
-- **`login link list` or `:lll`** first lists the users of that database as numbered lines (full name, address, and each group with the user's status and roles, grouped by group, owners and administrators first), then waits for the owner's number and hands over a link for that user, creating nobody.
 - **The link signs into the session's own checkout**, the worktree when the session is in one. That checkout must serve port 3000: a server already on the port may be another checkout's (its pid from `ss -ltnp`, its directory from `readlink /proc/<pid>/cwd`), and it would refuse a token minted here. With nothing on the port, start `bin/rails server -p 3000` in the background, since `bin/dev` exits there, after `bin/rails db:prepare` in a new worktree, and wait for `/up` to answer `200`.
-- **Mint it** with `bin/rails runner 'puts Rails.application.routes.url_helpers.sign_in_url(token: SignInToken.mint(User.find_by!(email: "<address>")), host: "localhost", port: 3000)'`, swapping `find_by!` for `find_or_create_by!` for the owner's own account, and hand it over as a bare URL that works once and expires in 15 minutes.
+- **A list command runs twice**: without `PICK` it prints the numbered list, and once the owner answers with a number, the same block with `PICK=<number>` mints that row's link, so the number always means the row the owner saw.
 - **Stop a server the session started** when the owner says they are done, and always before its worktree is removed.
+
+**`:ll` or `login link`**: the first active owner, meaning the earliest active owner of the group with the lowest id.
+
+```bash
+bin/rails runner '
+member = Member.active.joins(:roles).where(roles: { name: Role::OWNER }).order(:group_id, :created_at).includes(:group, user: :profile).strict_loading(false).first
+puts "#{member.group.name} - #{member.profile.full_name}"
+puts Rails.application.routes.url_helpers.sign_in_url(token: SignInToken.mint(member.user), host: "localhost", port: 3000)'
+```
+
+**`:lll` or `login link list`**: pick among the active owners.
+
+```bash
+PICK= bin/rails runner '
+owners = Member.active.joins(:roles).where(roles: { name: Role::OWNER }).order(:group_id, :created_at).includes(:group, user: :profile).strict_loading(false).to_a
+if (pick = ENV["PICK"].presence)
+  puts Rails.application.routes.url_helpers.sign_in_url(token: SignInToken.mint(owners.fetch(pick.to_i - 1).user), host: "localhost", port: 3000)
+else
+  owners.each.with_index(1) { |member, number| puts "#{number}. #{member.group.name} - #{member.profile.full_name}" }
+end'
+```
+
+**`:lla`**: pick among every active and paused member, from a markdown table sorted by group, then by the member's first role in `Role::NAMES` order with members holding none last, then by name.
+
+```bash
+PICK= bin/rails runner '
+rank = ->(member) { member.roles.map { Role::NAMES.index(it.name) }.min || Role::NAMES.size }
+members = Member.where(status: %i[ active paused ]).includes(:group, :roles, user: :profile).strict_loading(false).sort_by { [ it.group_id, rank.(it), it.profile.full_name.downcase ] }
+if (pick = ENV["PICK"].presence)
+  puts Rails.application.routes.url_helpers.sign_in_url(token: SignInToken.mint(members.fetch(pick.to_i - 1).user), host: "localhost", port: 3000)
+else
+  rows = members.each.with_index(1).map { |member, number| [ number.to_s, member.group.name, member.roles.map(&:name).sort_by { Role::NAMES.index(it) }.join(", ").presence || "-", member.profile.full_name ] }
+  widths = (0..3).map { |column| ([ %w[ # Group Roles Full\ name ] ] + rows).map { it[column].size }.max }
+  line = ->(cells) { "| " + cells.each_with_index.map { |cell, column| cell.ljust(widths[column]) }.join(" | ") + " |" }
+  puts line.(%w[ # Group Roles Full\ name ]), "|" + widths.map { "-" * (it + 2) }.join("|") + "|", rows.map(&line)
+end'
+```
+
+**`:llsg`**: the earliest active owner of the styleguide group, the one `db/seeds/styleguide.rb` creates and `StyleguidesController::GROUP_NAME` names.
+
+```bash
+bin/rails runner '
+member = Group.find_by!(name: StyleguidesController::GROUP_NAME).members.active.joins(:roles).where(roles: { name: Role::OWNER }).order(:created_at).includes(user: :profile).strict_loading(false).first
+puts "#{StyleguidesController::GROUP_NAME} - #{member.profile.full_name}"
+puts Rails.application.routes.url_helpers.sign_in_url(token: SignInToken.mint(member.user), host: "localhost", port: 3000)'
+```
