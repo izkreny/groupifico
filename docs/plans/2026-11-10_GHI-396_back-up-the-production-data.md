@@ -16,7 +16,7 @@ Snapshot retention and the failure alert are configuration. Q1 and Q2 below deci
 
 ## Weighed against it
 
-A nightly `sqlite3 .backup` pushed to object storage is the simpler tool, but it loses up to a day of writes and needs a scheduler that outlives the application. A job in Solid Queue's `config/recurring.yml` is that scheduler only on paper, since it stops when the application does, which is the failure a backup has to outlast. rclone to Google Drive's hidden app-data folder was dropped because an unattended OAuth token there needs either rclone's shared client or a published Google OAuth app. R2 wins the destination on its free tier of 10 GB-month with free egress, and on API tokens scoped to named buckets, which keeps this backup and the attachments of #417 out of each other's reach.
+A nightly `sqlite3 .backup` pushed to object storage is the simpler tool, but it loses up to a day of writes and needs a scheduler that outlives the application. A job in Solid Queue's `config/recurring.yml` is that scheduler only on paper, since it stops when the application does, which is the failure a backup has to outlast. rclone to Google Drive's hidden app-data folder was dropped because an unattended OAuth token there needs either rclone's shared client or a published Google OAuth app. The `litestream` gem runs the same Litestream inside Puma, but Kamal's gapless deploy runs two application containers for a few seconds, so two replicators would write one replica, and avoiding that means giving up the gapless deploy #76 settled on. R2 wins the destination on its free tier of 10 GB-month with free egress, and on API tokens scoped to named buckets, which keeps this backup and the attachments of #417 out of each other's reach.
 
 ## Steps
 
@@ -50,9 +50,9 @@ AC7 is proven by the owner, who judges whether the heartbeat service's alert rea
 
 ## Open questions
 
-- ::Q1:: **Which dead-man's-switch service receives the heartbeat?** Recommended: healthchecks.io, whose free Hobbyist plan monitors 20 checks; S2 confirms it alerts by email before relying on it.
-- ::Q2:: **How long are restore points kept?** Litestream's default `retention` is `24h`, so a deletion noticed the next day could no longer be undone. Recommended: a daily snapshot kept for 30 days, `interval: 24h` and `retention: 720h`, well inside R2's free 10 GB-month for a database this small.
+None.
 
 ## Settled
 
-None yet.
+- ::Q1:: **Which dead-man's-switch service receives the heartbeat?** healthchecks.io, pinged every minute by `heartbeat-interval: 1m` with the check's period at 1 minute and its grace at 5, settled by the owner in the session on 2026-11-10; Litestream syncs idle databases on an interval, so a quiet night still pings.
+- ::Q2:: **How long are restore points kept?** 90 days, as `interval: 24h` and `retention: 2160h` in a bucket of R2's Standard storage class, settled by the owner in the session on 2026-11-10; Infrequent Access bills retrievals and a 30-day minimum that Litestream's constant compaction would pay.
