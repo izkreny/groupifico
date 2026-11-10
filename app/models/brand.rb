@@ -1,5 +1,5 @@
 # The domain a person arrived through, and what it implies about the group they are starting.
-# Groupifico is the general brand and Chorifico and Bandifico are the per-domain ones, so this
+# Groupifico is the general brand and Chorifico and Bandifico (to be registered) are the per-domain ones, so this
 # resolves which brand a request belongs to rather than renaming anything.
 #
 # Resolved from the domain rather than from anything on the group, because at the moment a group is
