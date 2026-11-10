@@ -8,8 +8,11 @@ Rails.application.routes.draw do
   # Two singular resources mirroring the sign-in pair, and split for the same reason: requesting a
   # link and redeeming one are different actions with different guards. `resource :sign_up` is the
   # counterpart of `resource :session`, and `resource :sign_up_confirmation` of `resource :sign_in`.
-  resource :sign_up, only: %i[ new create ]
-  resource :sign_up_confirmation, only: %i[ show create ]
+  # WHY: nobody who is not signed in may create a group in production until the owner opens sign-up; the controllers, views and mailer stay, so reopening it is deleting this guard - #422.
+  if Rails.env.local?
+    resource :sign_up, only: %i[ new create ]
+    resource :sign_up_confirmation, only: %i[ show create ]
+  end
   # An address exists only as a detail of the group or event that points at it: both build one
   # through `accepts_nested_attributes_for :address`, and `EventsController` picks an existing one
   # out of `group.addresses`. So there is nothing to create standalone - an address pointed at by
