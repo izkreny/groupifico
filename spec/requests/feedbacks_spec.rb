@@ -115,6 +115,25 @@ RSpec.describe "Feedbacks", type: :request do
         expect([ back.text.squish, back["href"] ]).to eq [ "Back to where you were", "/groups/3/events" ]
       end
 
+      it "thanks the user on behalf of Chorifico on chorifico.com" do
+        host! "chorifico.com"
+        feedback = create(:feedback)
+        sign_in_as(feedback.user)
+
+        get feedback_path(feedback)
+
+        expect(response.body).to include "it helps us fix and improve Chorifico."
+      end
+
+      it "thanks the user on behalf of Groupifico on a domain that carries no brand" do
+        feedback = create(:feedback)
+        sign_in_as(feedback.user)
+
+        get feedback_path(feedback)
+
+        expect(response.body).to include "it helps us fix and improve Groupifico."
+      end
+
       it "draws the tabs of the group the feedback was sent from" do
         member = create(:member)
         feedback = create(:feedback, user: member.user, page: "/groups/#{member.group.id}/events")
