@@ -25,10 +25,10 @@ Rails.application.configure do
   config.active_storage.service = :local
 
   # Assume all access to the app is happening through a SSL-terminating reverse proxy.
-  # config.assume_ssl = true
+  config.assume_ssl = true
 
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
-  # config.force_ssl = true
+  config.force_ssl = true
 
   # Skip http-to-https redirect for the default health check endpoint.
   # config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
@@ -58,7 +58,8 @@ Rails.application.configure do
   # config.action_mailer.raise_delivery_errors = false
 
   # Set host to be used by links generated in mailer templates.
-  config.action_mailer.default_url_options = { host: "example.com" }
+  # WHY: one fixed host while both domains serve, per #414.
+  config.action_mailer.default_url_options = { host: "chorifico.com" }
 
   # Deliver over MailPace's HTTPS API rather than SMTP, whose ports the VPS provider blocks. Set
   # here and never in config/application.rb: which transport an environment uses is exactly what
@@ -85,13 +86,10 @@ Rails.application.configure do
   config.active_record.action_on_strict_loading_violation = :log
 
   # Enable DNS rebinding protection and other `Host` header attacks.
-  # config.hosts = [
-  #   "example.com",     # Allow requests from example.com
-  #   /.*\.example\.com/ # Allow requests from subdomains like `www.example.com`
-  # ]
-  #
+  config.hosts = %w[ chorifico.com www.chorifico.com groupifico.com www.groupifico.com ]
+
   # Skip DNS rebinding protection for the default health check endpoint.
-  # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+  config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
 
   # Files each saved feedback as an issue; `config/application.rb` says why only here.
   config.x.file_feedback = true
