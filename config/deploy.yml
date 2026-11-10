@@ -104,7 +104,7 @@ accessories:
     image: litestream/litestream:0.5.18
     roles:
       - web
-    cmd: replicate -config /etc/litestream.yml
+    cmd: replicate -config /etc/litestream.yml -restore-if-db-not-exists
     files:
       - config/litestream.yml:/etc/litestream.yml
     volumes:
