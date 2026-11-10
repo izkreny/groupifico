@@ -2,12 +2,13 @@
 service: groupifico
 
 # Name of the container image (use your-user/app-name on external registries).
-image: groupifico
+image: izkreny/groupifico
 
 # Deploy to these servers.
 servers:
   web:
-    - 192.168.0.1
+    # WHY: the server is reachable over SSH only on a private network, so its name comes from the deployer's environment rather than being published in this repository.
+    - <%= ENV.fetch("KAMAL_SERVER") %>
   # job:
   #   hosts:
   #     - 192.168.0.1
@@ -20,21 +21,25 @@ servers:
 #
 # Don't use this when deploying to multiple web servers (then you have to terminate SSL at your load balancer).
 #
-# proxy:
-#   ssl: true
-#   host: app.example.com
+proxy:
+  ssl: true
+  hosts:
+    - chorifico.com
+    - www.chorifico.com
+    - groupifico.com
+    - www.groupifico.com
 
 # Where you keep your container images.
 registry:
   # Alternatives: hub.docker.com / registry.digitalocean.com / ghcr.io / ...
-  server: localhost:5555
+  server: ghcr.io
 
   # Needed for authenticated registries.
-  # username: your-user
+  username: izkreny
 
   # Always use an access token rather than real password when possible.
-  # password:
-  #   - KAMAL_REGISTRY_PASSWORD
+  password:
+    - KAMAL_REGISTRY_PASSWORD
 
 # Inject ENV variables into containers (secrets come from .kamal/secrets).
 env:
@@ -84,16 +89,14 @@ builder:
   # # Build image via remote server (useful for faster amd64 builds on arm64 computers)
   # remote: ssh://docker@docker-builder-server
   #
-  # # Pass arguments and secrets to the Docker build process
-  # args:
-  #   RUBY_VERSION: 3.4.7
+  # # Pass secrets to the Docker build process
   # secrets:
   #   - GITHUB_TOKEN
   #   - RAILS_MASTER_KEY
 
 # Use a different ssh user than root
-# ssh:
-#   user: app
+ssh:
+  user: kamal
 
 # Use accessory services (secrets come from .kamal/secrets).
 # accessories:
