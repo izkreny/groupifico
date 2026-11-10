@@ -23,6 +23,7 @@ Each entry is what to compare and the commands that read both sides:
 - **The GitHub Actions majors**: every `uses:` line, `grep -ho 'uses: [^ ]*' .github/workflows/*.yml | sort -u`, against `gh release view --repo <owner>/<action> --json tagName --jq .tagName` for each. Every `uses:` names a major tag, so only a new major is an edit.
 - **The importmap pins**: `config/importmap.rb` pins Turbo and Stimulus to the files the `turbo-rails` and `stimulus-rails` gems serve, so they move when those gems appear in `bundle outdated` and never on their own. `grep -n '@[0-9]' config/importmap.rb` finding nothing confirms that no pin carries an npm version; a pin it does find moves with `mise exec -- bin/importmap outdated`, and that command alone cannot tell no npm pins from current ones.
 - **The vendored daisyUI**: `grep -o 'var version = "[^"]*"' app/assets/tailwind/daisyui.mjs` against `gh release view --repo saadeghi/daisyui --json tagName --jq .tagName`. No package manager reports it as outdated, so this comparison is what finds it.
+- **The Litestream image**: the `litestream/litestream` tag in `config/deploy.yml`, `grep -o 'litestream/litestream:[^ ]*' config/deploy.yml`, against `gh release view --repo benbjohnson/litestream --json tagName --jq .tagName`. Dependabot reads no `config/deploy.yml`, so this comparison is what finds it, and the same tag appears in `docs/BACKUP.md`, which moves with it.
 
 ## The update order
 
