@@ -171,4 +171,27 @@ RSpec.describe "SignUps", type: :request do
       end
     end
   end
+
+  # WHY: `config/routes.rb` is drawn into a route set of its own while `Rails.env` answers production, so the application's own routes are never redrawn and both stubs end with the example, as in `spec/requests/styleguides_spec.rb`.
+  describe "its routes in production" do
+    it "draws no route to the form" do
+      routes = ActionDispatch::Routing::RouteSet.new
+      allow(Rails).to receive(:env).and_return(ActiveSupport::EnvironmentInquirer.new("production"))
+      allow(Rails.application).to receive(:routes).and_return(routes)
+
+      load Rails.root.join("config/routes.rb")
+
+      expect { routes.recognize_path("/sign_up/new") }.to raise_error ActionController::RoutingError
+    end
+
+    it "draws no route to requesting a link" do
+      routes = ActionDispatch::Routing::RouteSet.new
+      allow(Rails).to receive(:env).and_return(ActiveSupport::EnvironmentInquirer.new("production"))
+      allow(Rails.application).to receive(:routes).and_return(routes)
+
+      load Rails.root.join("config/routes.rb")
+
+      expect { routes.recognize_path("/sign_up", method: :post) }.to raise_error ActionController::RoutingError
+    end
+  end
 end
