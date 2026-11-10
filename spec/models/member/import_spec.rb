@@ -8,9 +8,9 @@ RSpec.describe Member::Import do
   end
 
   describe "a row whose address no account holds" do
-    let(:import) { described_class.new(group, csv("Ana,Horvat,ana@example.com,+385911111111")) }
-
     it "adds a new user to the group as an active member, with the row's profile" do
+      import = described_class.new(group, csv("Ana,Horvat,ana@example.com,+385911111111"))
+
       expect(import.save).to be(true)
 
       user = User.find_by!(email: "ana@example.com")
@@ -19,6 +19,7 @@ RSpec.describe Member::Import do
     end
 
     it "reports the row as added, by its line number" do
+      import = described_class.new(group, csv("Ana,Horvat,ana@example.com,+385911111111"))
       import.save
 
       expect(import.rows).to contain_exactly(have_attributes(line: 2, outcome: :added, reasons: []))
@@ -51,16 +52,18 @@ RSpec.describe Member::Import do
   end
 
   describe "a row whose address already belongs to a member of the group" do
-    let!(:member) { create(:member, group:, user: create(:user, email: "iva@example.com")) }
-    let(:import) { described_class.new(group, csv("Iva,Kovač,iva@example.com,+385933333333")) }
-
     it "changes nothing" do
+      member = create(:member, group:, user: create(:user, email: "iva@example.com"))
+      import = described_class.new(group, csv("Iva,Kovač,iva@example.com,+385933333333"))
+
       expect { import.save }.not_to change(Member, :count)
 
       expect(member.profile.reload).to have_attributes(first_name: nil, last_name: nil, mobile_phone: nil)
     end
 
     it "reports the row as already a member" do
+      create(:member, group:, user: create(:user, email: "iva@example.com"))
+      import = described_class.new(group, csv("Iva,Kovač,iva@example.com,+385933333333"))
       import.save
 
       expect(import.rows).to contain_exactly(have_attributes(line: 2, outcome: :already_member))
@@ -77,20 +80,14 @@ RSpec.describe Member::Import do
   end
 
   describe "a file with a refused row" do
-    let(:rows) do
-      csv(
-        "Ana,Horvat,ana@example.com,+385911111111",
-        "Marko,Babić,not-an-address,+385922222222",
-        "Iva,Kovač,iva@example.com,+385944444444"
-      )
-    end
-    let(:import) { described_class.new(group, rows) }
-
     it "writes nothing at all, the valid rows included" do
+      import = described_class.new(group, csv("Ana,Horvat,ana@example.com,+385911111111", "Marko,Babić,not-an-address,+385922222222"))
+
       expect { expect(import.save).to be(false) }.not_to change { [ User.count, Member.count, UserProfile.count ] }
     end
 
     it "reports the refused row with its reason and every other row as it would have gone" do
+      import = described_class.new(group, csv("Ana,Horvat,ana@example.com,+385911111111", "Marko,Babić,not-an-address,+385922222222", "Iva,Kovač,iva@example.com,+385944444444"))
       import.save
 
       expect(import.rows).to contain_exactly(
