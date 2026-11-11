@@ -51,7 +51,7 @@ RSpec.describe "UserProfiles", type: :request do
       it "redirects to the sign-in page" do
         get edit_user_profile_path
 
-        expect(response).to redirect_to new_session_path
+        expect(response).to redirect_to new_session_path(return_to: request.fullpath)
       end
     end
 

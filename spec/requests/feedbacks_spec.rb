@@ -17,7 +17,7 @@ RSpec.describe "Feedbacks", type: :request do
       it "redirects to sign in" do
         get new_feedback_path
 
-        expect(response).to redirect_to new_session_path
+        expect(response).to redirect_to new_session_path(return_to: request.fullpath)
       end
     end
   end
@@ -176,7 +176,7 @@ RSpec.describe "Feedbacks", type: :request do
       it "redirects to sign in" do
         get feedback_path(create(:feedback))
 
-        expect(response).to redirect_to new_session_path
+        expect(response).to redirect_to new_session_path(return_to: request.fullpath)
       end
     end
   end

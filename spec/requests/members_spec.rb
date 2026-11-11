@@ -6,7 +6,7 @@ RSpec.describe "Members", type: :request do
       it "redirects to the sign-in page" do
         get group_members_path(create(:group))
 
-        expect(response).to redirect_to new_session_path
+        expect(response).to redirect_to new_session_path(return_to: request.fullpath)
       end
     end
 
@@ -297,7 +297,7 @@ RSpec.describe "Members", type: :request do
 
         get group_member_path(member.group, member)
 
-        expect(response).to redirect_to new_session_path
+        expect(response).to redirect_to new_session_path(return_to: request.fullpath)
       end
     end
 
@@ -446,7 +446,7 @@ RSpec.describe "Members", type: :request do
       it "redirects to the sign-in page" do
         get new_group_member_path(create(:group))
 
-        expect(response).to redirect_to new_session_path
+        expect(response).to redirect_to new_session_path(return_to: request.fullpath)
       end
     end
 
@@ -534,7 +534,7 @@ RSpec.describe "Members", type: :request do
 
         get edit_group_member_path(member.group, member)
 
-        expect(response).to redirect_to new_session_path
+        expect(response).to redirect_to new_session_path(return_to: request.fullpath)
       end
     end
 
