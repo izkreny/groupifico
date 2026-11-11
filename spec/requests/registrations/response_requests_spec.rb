@@ -49,6 +49,15 @@ RSpec.describe "Registrations::ResponseRequests", type: :request do
         expect(held.reload).to be_reserved
         expect(response).to redirect_to root_path
       end
+
+      it "emails nobody" do
+        member = create(:member, :active)
+        event = create(:event, group: member.group, creator: member)
+        held = create(:registration, event:, member:, status: :reserved)
+        sign_in_as(member.user)
+
+        expect { post group_event_registration_response_request_path(event.group, event, held) }.not_to have_enqueued_mail(RegistrationMailer, :response_requested)
+      end
     end
 
     context "when signed in as a paused events administrator" do
@@ -89,6 +98,18 @@ RSpec.describe "Registrations::ResponseRequests", type: :request do
         expect(held.reload).to be_reserved
         expect(response).to redirect_to group_event_path(event.group, event)
         expect(flash[:alert]).to end_with "is paused, so no response was requested."
+      end
+
+      it "refuses on a concluded event with an alert, and leaves the held place as it was" do
+        actor = create(:member, :active)
+        event = create(:event, group: actor.group, creator: actor, manager: actor, status: :concluded)
+        held = create(:registration, event:, member: create(:member, :active, group: event.group), status: :reserved)
+        sign_in_as(actor.user)
+
+        post group_event_registration_response_request_path(event.group, event, held)
+
+        expect(held.reload).to be_reserved
+        expect(flash[:alert]).to eq "This event is concluded, so no response was requested."
       end
 
       it "leaves an answer as it was, because a manager does not overrule one" do

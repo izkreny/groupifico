@@ -592,6 +592,27 @@ RSpec.describe Event, type: :model do
 
       expect(event.registrations).to be_empty
     end
+
+    it "emails each member whose response it requested, and not one who already answered" do
+      event = create(:event, list_filling: "request")
+      create(:member, :active, group: event.group)
+      create(:registration, event:, member: create(:member, :active, group: event.group), status: :no)
+
+      expect { event.fill_list }.to have_enqueued_mail(RegistrationMailer, :response_requested).exactly(2).times
+    end
+
+    # WHY: the place is held before the transaction, because a mail for a registration the rollback erased cannot be deserialised, and `have_enqueued_mail` then fails to match it, so this would pass whatever was sent.
+    it "emails nobody when the save it belongs to rolls back" do
+      event = create(:event, list_filling: "request")
+      create(:registration, event:, member: event.creator, status: :reserved)
+
+      expect {
+        described_class.transaction do
+          event.fill_list
+          raise ActiveRecord::Rollback
+        end
+      }.not_to have_enqueued_mail(RegistrationMailer, :response_requested)
+    end
   end
 
   describe "#anyone_left_to_reserve?" do
@@ -638,6 +659,18 @@ RSpec.describe Event, type: :model do
       expect(event.request_all_responses).to eq 0
       expect([ paused.reload.status, gone.reload.status ]).to eq %w[ reserved reserved ]
     end
+
+    it "emails each member whose held place moved, once, and nobody else" do
+      event = create(:event, status: :confirmed)
+      held = create(:registration, event:, member: event.creator, status: :reserved)
+      create(:registration, event:, member: create(:member, group: event.group), status: :yes)
+      create(:registration, event:, member: create(:member, group: event.group), status: :response_requested)
+      create(:registration, event:, member: create(:member, :paused, group: event.group), status: :reserved)
+      create(:member, :active, group: event.group)
+
+      expect { event.request_all_responses }.to have_enqueued_mail(RegistrationMailer, :response_requested).with(held).once
+        .and have_enqueued_mail(RegistrationMailer, :response_requested).once
+    end
   end
 
   describe "#anyone_left_to_request?" do
@@ -652,6 +685,15 @@ RSpec.describe Event, type: :model do
       create(:registration, event:, member: event.creator, status: :reserved)
 
       expect(event).to be_anyone_left_to_request
+    end
+
+    it "answers false on a concluded or canceled event, whoever's place is held" do
+      concluded = create(:event, status: :concluded)
+      canceled = create(:event, status: :canceled)
+      create(:registration, event: concluded, member: concluded.creator, status: :reserved)
+      create(:registration, event: canceled, member: canceled.creator, status: :reserved)
+
+      expect([ concluded.anyone_left_to_request?, canceled.anyone_left_to_request? ]).to eq [ false, false ]
     end
 
     it "answers false once every active member's response is requested, whoever else is held" do

@@ -199,7 +199,7 @@ class Event < ApplicationRecord
     end
   end
 
-  # WHY: requests a response from every active member holding a place, in one transaction. Being off the list is a choice, so nobody joins it through a request. An answer is the member's own and is never overruled, and a paused or inactive member never gets a request. Record by record rather than `update_all`, so every registration runs its callbacks, which a notification will hang off. The read and the writes share one transaction, which SQLite opens immediate, so no registration can land between them. Returns how many moved.
+  # WHY: requests a response from every active member holding a place, in one transaction. Being off the list is a choice, so nobody joins it through a request. An answer is the member's own and is never overruled, and a paused or inactive member never gets a request. Record by record rather than `update_all`, so every place moves through `Registration#request_response`, which emails the member it asked. The read and the writes share one transaction, which SQLite opens immediate, so no registration can land between them. Returns how many moved.
   def request_all_responses
     transaction do
       active_members_reserved_registrations.count(&:request_response)
@@ -207,9 +207,9 @@ class Event < ApplicationRecord
   end
 
   # Whether `request_all_responses` would move anybody, read by the roster before it offers
-  # "Request the rest". Reads the same set, so the offer and the action cannot disagree.
+  # "Request the rest". Reads the same set and the same `open_to_answers?` rule `Registration#request_response` applies, so the offer and the action cannot disagree.
   def anyone_left_to_request?
-    active_members_reserved_registrations.exists?
+    open_to_answers? && active_members_reserved_registrations.exists?
   end
 
   # TODO: add event's time_zone context

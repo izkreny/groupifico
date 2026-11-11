@@ -10,7 +10,7 @@
 
   A row whose pills already say where it stands draws no status icon beside them. An unanswered row keeps
   its status icon, because no pill is current there to tell `reserved` from `response_requested`. A reader who may request gets the paper plane beside it: plain on a `reserved` row, which it moves, and tinted on a `response_requested` one, which has moved already and stays as it is, where the plane alone says it, so the row draws no second one. A paused
-  or inactive member's row keeps its status icon alone, because they never get a request.
+  or inactive member's row keeps its status icon alone, because they never get a request, and so does every row of an event no longer open to answers.
 
   The pills are `Event#available_registration_answers`, so once the event has ended a maybe given before it has no pill to light, and its row keeps the status icon as an unanswered one does.
 
@@ -62,7 +62,7 @@
             <td class="px-0 py-2">
               <%# WHY: one strip at one gap, so every status icon on the row sits the same distance from its neighbours whichever controls the reader gets. %>
               <div class="flex items-center justify-end gap-controls">
-                <% requestable = may_fill && !registration.answered? && registration.member.active? %>
+                <% requestable = may_fill && event.open_to_answers? && !registration.answered? && registration.member.active? %>
                 <% requested = registration.response_requested? %>
                 <% if (!may_answer || answers.exclude?(registration.status)) && !(requestable && requested) %>
                   <span class="inline-flex size-control items-center justify-center <%= status_ink(registration.status) %>" title="<%= registration_status_label(registration) %>">

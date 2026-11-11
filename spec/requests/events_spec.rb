@@ -990,6 +990,18 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include "Request a response from Dan Ellis"
       end
 
+      it "offers no paper plane and no Request the rest on a concluded event" do
+        owner = create(:member, :active, :owner)
+        event = detailed_event(owner)
+        event.update!(status: :concluded)
+        sign_in_as(owner.user)
+
+        get group_event_path(event.group, event)
+
+        expect(page_text(response.body)).to include "Ben Cole"
+        expect(response.body).not_to include "Request a response from Ben Cole", "Request the rest"
+      end
+
       it "offers Request the rest while an active member's place is only held" do
         owner = create(:member, :active, :owner)
         event = detailed_event(owner)
@@ -1933,6 +1945,17 @@ RSpec.describe "Events", type: :request do
 
         expect(response).to redirect_to root_path
         expect(flash[:alert]).to be_present
+      end
+    end
+
+    context "when signed in as a member holding no role" do
+      it "emails nobody when the refused form asked to request responses" do
+        member = create(:member, :active)
+        create(:member, :active, group: member.group)
+        params = { name: "Rehearsal", starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour, list_filling: "request" }
+        sign_in_as(member.user)
+
+        expect { post group_events_path(member.group), params: { event: params } }.not_to have_enqueued_mail(RegistrationMailer, :response_requested)
       end
     end
   end

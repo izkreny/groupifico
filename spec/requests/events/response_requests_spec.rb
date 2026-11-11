@@ -32,6 +32,15 @@ RSpec.describe "Events::ResponseRequests", type: :request do
         expect(response).to redirect_to root_path
         expect(flash[:alert]).to be_present
       end
+
+      it "emails nobody" do
+        event = create(:event)
+        member = create(:member, :active, group: event.group)
+        create(:registration, event:, member:, status: :reserved)
+        sign_in_as(member.user)
+
+        expect { post group_event_response_request_path(event.group, event) }.not_to have_enqueued_mail(RegistrationMailer, :response_requested)
+      end
     end
 
     context "when signed in as a members administrator" do
