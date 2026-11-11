@@ -4,12 +4,23 @@ RSpec.describe RegistrationMailer, type: :mailer do
   describe "#response_requested" do
     it "addresses the member, naming the group and the event" do
       group = create(:group, name: "Riverside Choir")
-      registration = create(:registration, event: create(:event, group:, name: "Spring concert"), member: create(:member, group:, user: create(:user, email: "asked@example.com")))
+      registration = create(:registration, event: create(:event, group:, name: "Spring concert", starts_at: 1.day.from_now), member: create(:member, group:, user: create(:user, email: "asked@example.com")))
 
       mail = described_class.response_requested(registration)
 
       expect(mail.to).to eq([ "asked@example.com" ])
       expect(mail.subject).to eq("Riverside Choir: are you coming to Spring concert?")
+    end
+
+    it "asks whether they went, once the event has ended" do
+      group = create(:group, name: "Riverside Choir")
+      event = create(:event, group:, name: "Spring concert", starts_at: 2.days.ago, ends_at: 2.days.ago + 2.hours)
+
+      mail = described_class.response_requested(create(:registration, event:))
+
+      expect(mail.subject).to eq("Riverside Choir: did you go to Spring concert?")
+      expect(mail.text_part.decoded).to include("Riverside Choir is asking whether you went to Spring concert")
+      expect(mail.html_part.decoded).to include("Riverside Choir is asking whether you went to Spring concert")
     end
 
     it "states when the event starts, in both parts" do

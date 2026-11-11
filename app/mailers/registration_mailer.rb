@@ -7,6 +7,9 @@ class RegistrationMailer < ApplicationMailer
     @event = registration.event
     @group = @event.group
 
-    mail subject: "#{@group.name}: are you coming to #{@event.name}?", to: registration.member.email
+    # WHY: after the event the question is attendance, as `EventsHelper#answer_prompt` asks it on the page.
+    question = @event.ended? ? "did you go to" : "are you coming to"
+
+    mail subject: "#{@group.name}: #{question} #{@event.name}?", to: registration.member.email
   end
 end

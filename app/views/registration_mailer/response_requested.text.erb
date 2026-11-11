@@ -1,4 +1,4 @@
-<%= @group.name %> is asking whether you are coming to <%= @event.name %>, <%= event_schedule_range(@event) %>.
+<%= @group.name %> is asking whether <%= @event.ended? ? "you went to" : "you are coming to" %> <%= @event.name %>, <%= event_schedule_range(@event) %>.
 
 Answer on the event's page: <%= group_event_url(@group, @event) %>
 

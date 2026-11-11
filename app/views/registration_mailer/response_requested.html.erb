@@ -1,5 +1,5 @@
 <p>
-  <%= @group.name %> is asking whether you are coming to <%= @event.name %>, <%= event_schedule_range(@event) %>.
+  <%= @group.name %> is asking whether <%= @event.ended? ? "you went to" : "you are coming to" %> <%= @event.name %>, <%= event_schedule_range(@event) %>.
 </p>
 
 <p>
