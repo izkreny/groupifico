@@ -1,6 +1,9 @@
 <p>
   <%= @group.name %> is asking whether you are coming to <%= @event.name %>, <%= event_schedule_range(@event) %>.
-  <%= link_to "Answer on the event's page", group_event_url(@group, @event) %>.
+</p>
+
+<p>
+  Answer on the event's page: <%= link_to group_event_url(@group, @event), group_event_url(@group, @event) %>
 </p>
 
 <p>
