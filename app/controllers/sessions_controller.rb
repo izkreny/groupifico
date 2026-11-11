@@ -32,9 +32,12 @@ class SessionsController < ApplicationController
 
   # Enqueued rather than delivered, so a known and an unknown address take the same time to answer.
   # A response identical in status and body is still distinguishable if one path waits on SMTP.
+  #
+  # `url_from` keeps an off-site destination out of the mail; the guard that decides where somebody
+  # lands is `SignInsController#create`'s, since the link's query string is anybody's to write.
   def create
     if user = User.find_by(email: params[:email].to_s)
-      SignInMailer.link(user).deliver_later
+      SignInMailer.link(user, return_to: url_from(params[:return_to])).deliver_later
     end
 
     redirect_to new_session_path, notice: LINK_SENT

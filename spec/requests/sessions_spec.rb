@@ -20,6 +20,13 @@ RSpec.describe "Sessions", type: :request do
         expect(Nokogiri::HTML(response.body).at_css("input[type=email]")["value"]).to eq "added@example.com"
       end
 
+      # #430: the page a signed-out member was bounced from rides this form into the emailed link.
+      it "carries the destination it is opened with in a hidden field" do
+        get new_session_path(return_to: "/groups/1/events/2")
+
+        expect(Nokogiri::HTML(response.body).at_css("input[type=hidden][name=return_to]")["value"]).to eq "/groups/1/events/2"
+      end
+
       # `www.` because only `request.domain` collapses it onto the branded domain, which `Brand` never sees.
       it "names the Chorifico brand in its application name and its masthead on www.chorifico.com" do
         host! "www.chorifico.com"
@@ -89,13 +96,29 @@ RSpec.describe "Sessions", type: :request do
 
   describe "POST /session" do
     context "when not signed in" do
-      it "enqueues the sign-in link for an address that has an account" do
+      it "enqueues the sign-in link, carrying no destination, for an address that has an account" do
         user = create(:user)
 
         expect { post session_path, params: { email: user.email } }
-          .to have_enqueued_mail(SignInMailer, :link).with(user)
+          .to have_enqueued_mail(SignInMailer, :link).with(user, return_to: nil)
 
         expect(response).to redirect_to new_session_path
+      end
+
+      it "hands the mail the destination the form carried" do
+        user = create(:user)
+
+        expect { post session_path, params: { email: user.email, return_to: "/groups/1/events/2" } }
+          .to have_enqueued_mail(SignInMailer, :link).with(user, return_to: "/groups/1/events/2")
+      end
+
+      # #430 AC2's hygiene half: the guard that decides where somebody lands is the redemption's,
+      # and this keeps an off-site value from being written into a mail at all.
+      it "drops a destination that is not a path inside the application" do
+        user = create(:user)
+
+        expect { post session_path, params: { email: user.email, return_to: "https://other.example/x" } }
+          .to have_enqueued_mail(SignInMailer, :link).with(user, return_to: nil)
       end
 
       # The response has to match in status, body and timing, so the mail is enqueued rather than

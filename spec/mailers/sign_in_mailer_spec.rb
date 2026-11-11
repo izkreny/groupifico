@@ -26,6 +26,12 @@ RSpec.describe SignInMailer, type: :mailer do
       expect(URI.decode_www_form(url.query).to_h).to have_key("token")
     end
 
+    it "carries the destination it is given beside the token" do
+      url = sign_in_url_from(described_class.link(create(:user), return_to: "/groups/1/events/2"))
+
+      expect(URI.decode_www_form(url.query).to_h).to include("token", "return_to" => "/groups/1/events/2")
+    end
+
     it "sends a token that signs the addressee in" do
       user = create(:user)
 
@@ -46,7 +52,9 @@ RSpec.describe SignInMailer, type: :mailer do
   end
 
   private
+    # The text part, decoded, because a link carrying a destination is long enough for the encoded
+    # body's quoted-printable soft breaks to split it.
     def sign_in_url_from(mail)
-      URI.parse(mail.body.encoded[%r{https?://\S+?/sign_in\?token=[\w\-]+}])
+      URI.parse(mail.text_part.decoded[%r{https?://\S+?/sign_in\?\S+}])
     end
 end
