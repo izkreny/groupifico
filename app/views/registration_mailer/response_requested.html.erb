@@ -1,0 +1,9 @@
+<p>
+  <%= @group.name %> is asking whether you are coming to <%= @event.name %>, <%= event_schedule_range(@event) %>.
+  <%= link_to "Answer on the event's page", group_event_url(@group, @event) %>.
+</p>
+
+<p>
+  If you are not signed in, the link opens the sign-in form first.
+  Nothing is sent until you press the form's button, which emails you a sign-in link.
+</p>
