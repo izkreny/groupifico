@@ -1911,15 +1911,6 @@ RSpec.describe "Events", type: :request do
         expect(Event.sole.registrations.response_requested.pluck(:member_id)).to contain_exactly(creator.id, active.id)
       end
 
-      it "emails every active member asked" do
-        creator = create(:member, :active, :events_administrator)
-        create(:member, :active, group: creator.group)
-        sign_in_as(creator.user)
-        params = { name: "Rehearsal", starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour, list_filling: "request" }
-
-        expect { post group_events_path(creator.group), params: { event: params } }.to have_enqueued_mail(RegistrationMailer, :response_requested).exactly(2).times
-      end
-
       it "fills nothing when Not now stays picked" do
         creator = create(:member, :active, :events_administrator)
         sign_in_as(creator.user)

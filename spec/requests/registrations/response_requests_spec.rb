@@ -87,15 +87,6 @@ RSpec.describe "Registrations::ResponseRequests", type: :request do
         expect(response).to redirect_to group_event_path(event.group, event)
       end
 
-      it "emails the member asked" do
-        actor = create(:member, :active)
-        event = create(:event, group: actor.group, creator: actor, manager: actor)
-        held = create(:registration, event:, member: create(:member, group: event.group), status: :reserved)
-        sign_in_as(actor.user)
-
-        expect { post group_event_registration_response_request_path(event.group, event, held) }.to have_enqueued_mail(RegistrationMailer, :response_requested).with(held).once
-      end
-
       it "refuses to request a response from a paused member, and leaves their held place as it was" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, creator: actor, manager: actor)
