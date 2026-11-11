@@ -1,6 +1,6 @@
 # The half of redeeming an emailed link that both flows do identically: take the token out of the
 # query string, prove it resolves to something live, and move it into the browser session so the
-# button on the page submits nothing but a form.
+# button on the page submits a form that carries no token.
 #
 # It is shared rather than written twice because both halves are security measures that would
 # otherwise be reimplemented. The token leaves the query string because only the query string is

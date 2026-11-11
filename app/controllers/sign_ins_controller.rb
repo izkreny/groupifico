@@ -32,9 +32,11 @@ class SignInsController < ApplicationController
 
     start_new_session_for user
 
-    # The root, always. Nothing records where somebody was bounced from, deliberately, and
-    # `request_authentication` carries why.
-    redirect_to root_url
+    # The guard against an open redirect sits here, at the last hop, because the link's query string
+    # and the button's hidden field are both anybody's to write. `url_from` answers only a path
+    # inside the application or a URL on this host; anything else, and no destination at all, lands
+    # on the root. `request_authentication` carries why the value never touches the browser session.
+    redirect_to url_from(params[:return_to]) || root_url
   rescue SignInToken::InvalidToken
     redirect_to new_session_path, alert: INVALID_LINK
   end

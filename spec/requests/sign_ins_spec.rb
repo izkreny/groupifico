@@ -35,6 +35,12 @@ RSpec.describe "SignIns", type: :request do
         expect(page_text(response.body)).to include(user.email)
       end
 
+      it "carries the destination the link names on its button" do
+        get sign_in_path(token: SignInToken.mint(create(:user)), return_to: "/groups/1/events/2")
+
+        expect(Nokogiri::HTML(response.body).at_css("form input[type=hidden][name=return_to]")["value"]).to eq "/groups/1/events/2"
+      end
+
       it "refuses a request carrying no token at all" do
         get sign_in_path
 
@@ -73,6 +79,46 @@ RSpec.describe "SignIns", type: :request do
         expect { post sign_in_path }.to change { user.sessions.count }.by(1)
 
         expect(response).to redirect_to root_url
+      end
+
+      # #430 AC1.
+      it "signs the person in and lands on the destination the link carried" do
+        get sign_in_path(token: SignInToken.mint(create(:user)))
+
+        post sign_in_path, params: { return_to: "/groups/1/events/2" }
+
+        expect(response).to redirect_to "/groups/1/events/2"
+      end
+
+      # #430 AC2, the open-redirect guard. Posted straight at the redemption rather than through the
+      # form, because the link's query string and the button's hidden field are both anybody's to
+      # write, so this is the hop the guard has to hold at. The backslash form is one browsers read
+      # as `//`.
+      [ "https://other.example/x", "//other.example", "/\\other.example" ].each do |destination|
+        it "lands on the root page for #{destination}, which is not a path inside the application" do
+          get sign_in_path(token: SignInToken.mint(create(:user)))
+
+          post sign_in_path, params: { return_to: destination }
+
+          expect(response).to redirect_to root_url
+        end
+      end
+
+      # #430 AC1 across every hop, through the real controllers and the delivered mail, because the
+      # browser suite that walks the same route never runs on CI.
+      it "returns a member bounced from an event page to it, through the form and the mailed link" do
+        member = create(:member)
+        event  = create(:event, group: member.group)
+
+        get group_event_path(event.group, event)
+        follow_redirect!
+        perform_enqueued_jobs do
+          post session_path, params: { email: member.user.email, return_to: hidden_return_to(response.body) }
+        end
+        get mailed_sign_in_link(member.user.email).request_uri
+        post sign_in_path, params: { return_to: hidden_return_to(response.body) }
+
+        expect(response).to redirect_to group_event_path(event.group, event)
       end
 
       it "sets the session cookie HttpOnly and SameSite=Lax" do
@@ -149,4 +195,13 @@ RSpec.describe "SignIns", type: :request do
       end
     end
   end
+
+  private
+    def mailed_sign_in_link(email)
+      URI.parse(ActionMailer::Base.deliveries.select { it.to == [ email ] }.sole.text_part.decoded[%r{https?://\S+?/sign_in\?\S+}])
+    end
+
+    def hidden_return_to(body)
+      Nokogiri::HTML(body).at_css("form input[type=hidden][name=return_to]")["value"]
+    end
 end
