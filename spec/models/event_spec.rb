@@ -687,6 +687,15 @@ RSpec.describe Event, type: :model do
       expect(event).to be_anyone_left_to_request
     end
 
+    it "answers false on a concluded or canceled event, whoever's place is held" do
+      concluded = create(:event, status: :concluded)
+      canceled = create(:event, status: :canceled)
+      create(:registration, event: concluded, member: concluded.creator, status: :reserved)
+      create(:registration, event: canceled, member: canceled.creator, status: :reserved)
+
+      expect([ concluded.anyone_left_to_request?, canceled.anyone_left_to_request? ]).to eq [ false, false ]
+    end
+
     it "answers false once every active member's response is requested, whoever else is held" do
       event = create(:event)
       create(:registration, event:, member: event.creator, status: :response_requested)

@@ -169,6 +169,15 @@ RSpec.describe Registration, type: :model do
       expect([ paused.reload.status, gone.reload.status ]).to eq %w[ reserved reserved ]
     end
 
+    it "leaves a held place on a concluded or canceled event reserved, and emails nobody" do
+      concluded = create(:registration, event: create(:event, status: :concluded), status: :reserved)
+      canceled = create(:registration, event: create(:event, status: :canceled), status: :reserved)
+
+      expect { concluded.request_response }.not_to have_enqueued_mail(RegistrationMailer, :response_requested)
+      expect { canceled.request_response }.not_to have_enqueued_mail(RegistrationMailer, :response_requested)
+      expect([ concluded.reload.status, canceled.reload.status ]).to eq %w[ reserved reserved ]
+    end
+
     it "emails the member once their held place moves" do
       registration = create(:registration, status: :reserved)
 

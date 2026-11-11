@@ -100,6 +100,18 @@ RSpec.describe "Registrations::ResponseRequests", type: :request do
         expect(flash[:alert]).to end_with "is paused, so no response was requested."
       end
 
+      it "refuses on a concluded event with an alert, and leaves the held place as it was" do
+        actor = create(:member, :active)
+        event = create(:event, group: actor.group, creator: actor, manager: actor, status: :concluded)
+        held = create(:registration, event:, member: create(:member, :active, group: event.group), status: :reserved)
+        sign_in_as(actor.user)
+
+        post group_event_registration_response_request_path(event.group, event, held)
+
+        expect(held.reload).to be_reserved
+        expect(flash[:alert]).to eq "This event is concluded, so no response was requested."
+      end
+
       it "leaves an answer as it was, because a manager does not overrule one" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, creator: actor, manager: actor, status: :confirmed)

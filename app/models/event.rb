@@ -207,9 +207,9 @@ class Event < ApplicationRecord
   end
 
   # Whether `request_all_responses` would move anybody, read by the roster before it offers
-  # "Request the rest". Reads the same set, so the offer and the action cannot disagree.
+  # "Request the rest". Reads the same set and the same `open_to_answers?` rule `Registration#request_response` applies, so the offer and the action cannot disagree.
   def anyone_left_to_request?
-    active_members_reserved_registrations.exists?
+    open_to_answers? && active_members_reserved_registrations.exists?
   end
 
   # TODO: add event's time_zone context

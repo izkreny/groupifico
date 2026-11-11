@@ -990,6 +990,18 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include "Request a response from Dan Ellis"
       end
 
+      it "offers no paper plane and no Request the rest on a concluded event" do
+        owner = create(:member, :active, :owner)
+        event = detailed_event(owner)
+        event.update!(status: :concluded)
+        sign_in_as(owner.user)
+
+        get group_event_path(event.group, event)
+
+        expect(page_text(response.body)).to include "Ben Cole"
+        expect(response.body).not_to include "Request a response from Ben Cole", "Request the rest"
+      end
+
       it "offers Request the rest while an active member's place is only held" do
         owner = create(:member, :active, :owner)
         event = detailed_event(owner)
