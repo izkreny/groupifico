@@ -12,6 +12,16 @@ RSpec.describe RegistrationMailer, type: :mailer do
       expect(mail.subject).to eq("Riverside Choir: are you coming to Spring concert?")
     end
 
+    it "asks whether they are coming, in both parts, before the event" do
+      group = create(:group, name: "Riverside Choir")
+      event = create(:event, group:, name: "Spring concert", starts_at: 1.day.from_now)
+
+      mail = described_class.response_requested(create(:registration, event:))
+
+      expect(mail.text_part.decoded).to include("Riverside Choir is asking whether you are coming to Spring concert")
+      expect(mail.html_part.decoded).to include("Riverside Choir is asking whether you are coming to Spring concert")
+    end
+
     it "asks whether they went, once the event has ended" do
       group = create(:group, name: "Riverside Choir")
       event = create(:event, group:, name: "Spring concert", starts_at: 2.days.ago, ends_at: 2.days.ago + 2.hours)
