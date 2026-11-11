@@ -1,6 +1,9 @@
 require "rails_helper"
 
 RSpec.describe "Authentication", type: :system do
+  # WHY: here rather than for every system spec, because it swaps the job adapter for the test one, and only this file reads a mail a page sent.
+  include ActiveJob::TestHelper
+
   # The one spec that pays for the whole cycle in the browser, so the flow every other spec skips
   # by setting the cookie is still covered somewhere.
   it "signs a member in through the emailed link" do
@@ -26,6 +29,25 @@ RSpec.describe "Authentication", type: :system do
 
     sign_in_through_the_browser member.user
     expect(page).to have_text "Riverside Choir"
+  end
+
+  # #430 AC1 in the browser: the event link a response request mails lands a signed-out member on
+  # the sign-in form, and the link that form mails brings them back to the event. The link is read
+  # out of the delivered mail, so every hop is the real one. The event's creator is the member, since
+  # the factory makes them one of its group.
+  it "returns a member who opened an event page signed out to it after signing in" do
+    event = create(:event)
+
+    visit group_event_path(event.group, event)
+    fill_in "Email", with: event.creator.user.email
+    perform_enqueued_jobs do
+      click_button "Email me a sign-in link"
+      expect(page).to have_text "Check your inbox"
+    end
+    visit mailed_sign_in_link(event.creator.user.email).request_uri
+    click_button "Sign in"
+
+    expect(page).to have_current_path group_event_path(event.group, event)
   end
 
   # Guards the helper every other system spec depends on: a cookie the browser rejects would make

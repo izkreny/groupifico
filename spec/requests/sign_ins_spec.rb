@@ -197,10 +197,6 @@ RSpec.describe "SignIns", type: :request do
   end
 
   private
-    def mailed_sign_in_link(email)
-      URI.parse(ActionMailer::Base.deliveries.select { it.to == [ email ] }.sole.text_part.decoded[%r{https?://\S+?/sign_in\?\S+}])
-    end
-
     def hidden_return_to(body)
       Nokogiri::HTML(body).at_css("form input[type=hidden][name=return_to]")["value"]
     end
