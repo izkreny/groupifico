@@ -77,13 +77,16 @@ class Registration < ApplicationRecord
     event.ended? ? event.available_registration_answers.exclude?(status) : response_requested?
   end
 
-  # WHY: the one rule for requesting a response, read by the roster row's paper plane and by
-  # `Event#request_all_responses` alike. Both are reachable by anyone the registering row admits,
-  # the event's manager included, who may not overrule an answer; so only a held place moves, and
-  # only an active member's, since a paused or inactive one never gets a request. Whether it moved is the
-  # return value.
+  # WHY: the one rule for requesting a response, read by the roster row's paper plane and by `Event#request_all_responses` alike. Both are reachable by anyone the registering row admits, the event's manager included, who may not overrule an answer; so only a held place moves, and only an active member's, since a paused or inactive one never gets a request. Whether it moved is the return value.
+  #
+  # WHY: the email goes from here rather than from a callback on the status, because `RegistrationsController#update` lets a manager post `response_requested` onto any row, a paused member's included. It waits for the outermost commit, because `deliver_later` enqueues at once into a queue database that a rollback here never reaches.
   def request_response
-    reserved? && member.active? && response_requested!
+    if reserved? && member.active? && response_requested!
+      ActiveRecord.after_all_transactions_commit { RegistrationMailer.response_requested(self).deliver_later }
+      true
+    else
+      false
+    end
   end
 
   private

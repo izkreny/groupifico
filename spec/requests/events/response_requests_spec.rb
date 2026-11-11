@@ -32,6 +32,15 @@ RSpec.describe "Events::ResponseRequests", type: :request do
         expect(response).to redirect_to root_path
         expect(flash[:alert]).to be_present
       end
+
+      it "emails nobody" do
+        event = create(:event)
+        member = create(:member, :active, group: event.group)
+        create(:registration, event:, member:, status: :reserved)
+        sign_in_as(member.user)
+
+        expect { post group_event_response_request_path(event.group, event) }.not_to have_enqueued_mail(RegistrationMailer, :response_requested)
+      end
     end
 
     context "when signed in as a members administrator" do
@@ -69,6 +78,16 @@ RSpec.describe "Events::ResponseRequests", type: :request do
         expect(event.registrations.response_requested.count).to eq 2
         expect(response).to redirect_to group_event_path(event.group, event)
         expect(flash[:notice]).to eq "2 responses requested."
+      end
+
+      it "emails each member asked" do
+        actor = create(:member, :active)
+        event = create(:event, group: actor.group, creator: actor, manager: actor)
+        create(:registration, event:, member: actor, status: :reserved)
+        create(:registration, event:, member: create(:member, :active, group: event.group), status: :reserved)
+        sign_in_as(actor.user)
+
+        expect { post group_event_response_request_path(event.group, event) }.to have_enqueued_mail(RegistrationMailer, :response_requested).exactly(2).times
       end
 
       # The events list and the group home draw the same Next up card, so pressing it there lands

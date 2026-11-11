@@ -199,7 +199,7 @@ class Event < ApplicationRecord
     end
   end
 
-  # WHY: requests a response from every active member holding a place, in one transaction. Being off the list is a choice, so nobody joins it through a request. An answer is the member's own and is never overruled, and a paused or inactive member never gets a request. Record by record rather than `update_all`, so every registration runs its callbacks, which a notification will hang off. The read and the writes share one transaction, which SQLite opens immediate, so no registration can land between them. Returns how many moved.
+  # WHY: requests a response from every active member holding a place, in one transaction. Being off the list is a choice, so nobody joins it through a request. An answer is the member's own and is never overruled, and a paused or inactive member never gets a request. Record by record rather than `update_all`, so every place moves through `Registration#request_response`, which emails the member it asked. The read and the writes share one transaction, which SQLite opens immediate, so no registration can land between them. Returns how many moved.
   def request_all_responses
     transaction do
       active_members_reserved_registrations.count(&:request_response)

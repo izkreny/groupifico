@@ -168,5 +168,38 @@ RSpec.describe Registration, type: :model do
       expect([ paused.request_response, gone.request_response ]).to eq [ false, false ]
       expect([ paused.reload.status, gone.reload.status ]).to eq %w[ reserved reserved ]
     end
+
+    it "emails the member once their held place moves" do
+      registration = create(:registration, status: :reserved)
+
+      expect { registration.request_response }.to have_enqueued_mail(RegistrationMailer, :response_requested).with(registration).once
+    end
+
+    it "emails nobody whose response was already requested or who already answered" do
+      requested = create(:registration, status: :response_requested)
+      answered = create(:registration, event: create(:event, status: :confirmed), status: :yes)
+
+      expect { requested.request_response }.not_to have_enqueued_mail(RegistrationMailer, :response_requested)
+      expect { answered.request_response }.not_to have_enqueued_mail(RegistrationMailer, :response_requested)
+    end
+
+    it "emails no paused or inactive member" do
+      paused = create(:registration, member: create(:member, :paused), status: :reserved)
+      gone = create(:registration, member: create(:member, :inactive), status: :reserved)
+
+      expect { paused.request_response }.not_to have_enqueued_mail(RegistrationMailer, :response_requested)
+      expect { gone.request_response }.not_to have_enqueued_mail(RegistrationMailer, :response_requested)
+    end
+
+    it "emails nobody when the transaction it ran in rolls back" do
+      registration = create(:registration, status: :reserved)
+
+      expect {
+        described_class.transaction do
+          registration.request_response
+          raise ActiveRecord::Rollback
+        end
+      }.not_to have_enqueued_mail(RegistrationMailer, :response_requested)
+    end
   end
 end

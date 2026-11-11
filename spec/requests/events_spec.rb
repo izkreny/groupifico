@@ -1911,6 +1911,15 @@ RSpec.describe "Events", type: :request do
         expect(Event.sole.registrations.response_requested.pluck(:member_id)).to contain_exactly(creator.id, active.id)
       end
 
+      it "emails every active member asked" do
+        creator = create(:member, :active, :events_administrator)
+        create(:member, :active, group: creator.group)
+        sign_in_as(creator.user)
+        params = { name: "Rehearsal", starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour, list_filling: "request" }
+
+        expect { post group_events_path(creator.group), params: { event: params } }.to have_enqueued_mail(RegistrationMailer, :response_requested).exactly(2).times
+      end
+
       it "fills nothing when Not now stays picked" do
         creator = create(:member, :active, :events_administrator)
         sign_in_as(creator.user)
@@ -1933,6 +1942,17 @@ RSpec.describe "Events", type: :request do
 
         expect(response).to redirect_to root_path
         expect(flash[:alert]).to be_present
+      end
+    end
+
+    context "when signed in as a member holding no role" do
+      it "emails nobody when the refused form asked to request responses" do
+        member = create(:member, :active)
+        create(:member, :active, group: member.group)
+        params = { name: "Rehearsal", starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour, list_filling: "request" }
+        sign_in_as(member.user)
+
+        expect { post group_events_path(member.group), params: { event: params } }.not_to have_enqueued_mail(RegistrationMailer, :response_requested)
       end
     end
   end
