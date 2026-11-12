@@ -89,6 +89,16 @@ class Registration < ApplicationRecord
     end
   end
 
+  # WHY: the roster's Send again, kept apart from `request_response` because `Event#request_all_responses` runs that on every row and would mail everyone already asked. The `touch` is the record of the new request, since `updated_at` is the time the roster's dialog states and a resend changes no column; it skips validations, so the guards here are the only ones. The email waits for the outermost commit for the reason `request_response` gives.
+  def request_response_again
+    if response_requested? && member.active? && event.open_to_answers? && touch
+      ActiveRecord.after_all_transactions_commit { RegistrationMailer.response_requested(self).deliver_later }
+      true
+    else
+      false
+    end
+  end
+
   private
     def event_must_be_open_to_answers
       errors.add(:base, "This event is concluded or canceled, so it no longer takes replies.") unless event&.open_to_answers?
