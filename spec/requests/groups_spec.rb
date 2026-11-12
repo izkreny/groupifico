@@ -202,6 +202,28 @@ RSpec.describe "Groups", type: :request do
       end
     end
 
+    context "when signed in as a pending member" do
+      it "returns 404, exactly like a non-member" do
+        member = create(:member, :pending)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(response).to have_http_status :not_found
+      end
+
+      it "returns 404 on the group's member list and events too" do
+        member = create(:member, :pending)
+        sign_in_as(member.user)
+
+        get group_members_path(member.group)
+        expect(response).to have_http_status :not_found
+
+        get group_events_path(member.group)
+        expect(response).to have_http_status :not_found
+      end
+    end
+
     # The home's two states, and which controls each offers whom. `spec/system/group_home_spec.rb`
     # asserts that they paint and that "See all events" lands; none of that comes back here.
     describe "the group home" do
@@ -1006,6 +1028,17 @@ RSpec.describe "Groups", type: :request do
       # dom_id rather than the name: `_group.html.erb` renders `group.name.upcase`, so asserting
       # the name passes against a page that lists the group in capitals. Watched doing exactly
       # that, with the defect fully restored.
+      expect(response.body).not_to include "group_#{actor.group_id}"
+    end
+  end
+
+  describe "a pending member's group list" do
+    it "does not include the group they asked to join" do
+      actor = create(:member, :pending, group: create(:group, name: "Not Yet"))
+      sign_in_as(actor.user)
+
+      get groups_path
+
       expect(response.body).not_to include "group_#{actor.group_id}"
     end
   end

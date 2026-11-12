@@ -555,6 +555,15 @@ RSpec.describe Event, type: :model do
       expect(event.registrations.pluck(:member_id)).to eq [ event.creator_id ]
     end
 
+    it "leaves out a pending member" do
+      event = create(:event)
+      create(:member, :pending, group: event.group)
+
+      event.reserve_all_active_members
+
+      expect(event.registrations.pluck(:member_id)).to eq [ event.creator_id ]
+    end
+
     it "leaves an answer and a question as they were" do
       event = create(:event, status: :confirmed)
       answered = create(:registration, event:, member: event.creator, status: :no)
@@ -658,6 +667,15 @@ RSpec.describe Event, type: :model do
 
       expect(event.request_all_responses).to eq 0
       expect([ paused.reload.status, gone.reload.status ]).to eq %w[ reserved reserved ]
+    end
+
+    it "leaves a pending member's held place reserved, and emails them nothing" do
+      event = create(:event, status: :confirmed)
+      pending = create(:registration, event:, member: create(:member, :pending, group: event.group), status: :reserved)
+      create(:registration, event:, member: event.creator, status: :yes)
+
+      expect { event.request_all_responses }.not_to have_enqueued_mail(RegistrationMailer, :response_requested)
+      expect(pending.reload).to be_reserved
     end
 
     it "emails each member whose held place moved, once, and nobody else" do

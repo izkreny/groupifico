@@ -73,6 +73,13 @@ RSpec.describe User, type: :model do
       expect(member.user.solely_owned_groups).to contain_exactly(member.group)
     end
 
+    it "answers a group whose other holder of the owner role is pending, who has not been let in" do
+      member = create(:member, :owner)
+      create(:member, :owner, :pending, group: member.group)
+
+      expect(member.user.solely_owned_groups).to contain_exactly(member.group)
+    end
+
     it "answers every group the user owns alone, because each one has to be handed over" do
       member = create(:member, :owner)
       second = create(:member, :owner, user: member.user)

@@ -200,6 +200,13 @@ RSpec.describe Registration, type: :model do
       expect { gone.request_response }.not_to have_enqueued_mail(RegistrationMailer, :response_requested)
     end
 
+    it "leaves a pending member's held place reserved, and emails them nothing" do
+      pending = create(:registration, member: create(:member, :pending), status: :reserved)
+
+      expect { pending.request_response }.not_to have_enqueued_mail(RegistrationMailer, :response_requested)
+      expect(pending.reload).to be_reserved
+    end
+
     it "emails nobody when the transaction it ran in rolls back" do
       registration = create(:registration, status: :reserved)
 
