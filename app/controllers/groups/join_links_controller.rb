@@ -15,6 +15,6 @@ class Groups::JoinLinksController < ApplicationController
 
     @group.join_link&.destroy!
 
-    redirect_to edit_group_path(@group), notice: "Join link turned off."
+    redirect_to edit_group_path(@group), notice: "Join link turned off.", status: :see_other
   end
 end

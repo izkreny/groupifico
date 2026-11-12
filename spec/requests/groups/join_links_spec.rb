@@ -153,6 +153,16 @@ RSpec.describe "Groups::JoinLinks", type: :request do
         expect(JoinLink.find_by_token(token)).to be_nil
       end
 
+      it "answers 303, so the redirect is followed with a GET" do
+        actor = create(:member, :active, :owner)
+        JoinLink.mint(actor.group)
+        sign_in_as(actor.user)
+
+        delete group_join_link_path(actor.group)
+
+        expect(response).to have_http_status :see_other
+      end
+
       it "lands on the edit screen when the link is already off" do
         actor = create(:member, :active, :owner)
         sign_in_as(actor.user)
