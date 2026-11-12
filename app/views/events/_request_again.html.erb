@@ -1,0 +1,38 @@
+<%# locals: (event:, registration:, name:) %>
+<%#
+  A requested row's tinted paper plane and the dialog it opens, through the confirm sheet's own `shared/confirm_scope`: the plane is an ordinary form posting the request, the dialog controller opens the dialog in its place, and Send again submits that same form. With JavaScript off the plane asks again on the first press, as the confirm sheet's trigger deletes on its first.
+%>
+<% id = dom_id(registration, :request_again) %>
+<%= render layout: "shared/confirm_scope" do %>
+  <%= button_to group_event_registration_response_request_path(event.group, event, registration),
+        class: "btn btn-ghost btn-sm btn-square text-info",
+        title: registration_status_label(registration),
+        form: { id: "#{id}_form" },
+        data: { dialog_target: "trigger" },
+        aria: { label: "Response requested from #{name}" } do %>
+    <%= icon :response_requested, class: "size-icon-control" %>
+  <% end %>
+
+  <dialog id="<%= id %>" class="modal modal-bottom sm:modal-middle"
+          aria-labelledby="<%= id %>_title" aria-describedby="<%= id %>_body"
+          data-dialog-target="sheet">
+    <div class="modal-box text-start">
+      <h3 id="<%= id %>_title" class="text-lg font-bold">Ask <%= name %> again?</h3>
+      <p id="<%= id %>_body" class="py-4">The last request went out <%= response_requested_at(registration) %>.</p>
+
+      <div class="modal-action">
+        <form method="dialog">
+          <button class="btn btn-sm"><%= icon :cancel, class: "size-icon-control" %>Close</button>
+        </form>
+
+        <%= tag.button form: "#{id}_form", class: "btn btn-sm btn-primary" do %>
+          <%= icon :response_requested, class: "size-icon-control" %>Send again
+        <% end %>
+      </div>
+    </div>
+
+    <form method="dialog" class="modal-backdrop">
+      <button>close</button>
+    </form>
+  </dialog>
+<% end %>

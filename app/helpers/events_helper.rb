@@ -107,10 +107,15 @@ module EventsHelper
     members.map { [ it.full_name, it.id ] } + [ [ "nobody", "" ] ]
   end
 
+  # When a requested member was last asked, which the roster's Send again dialog states. It is `updated_at`, because a requested row changes no column but by being asked again, which touches it.
+  def response_requested_at(registration)
+    day_and_time(registration.updated_at)
+  end
+
   private
     # The day and the clock time of one instant, which is a whole reading on a compact row and
-    # half of one in a range. Private because no view states an instant: a view states an event,
-    # and which end of it the two readings above decide.
+    # half of one in a range. Private because no view states a bare instant: a view states an event
+    # or a request, and which instant of it the readings above decide.
     def day_and_time(at)
       "#{at.strftime(DATE_FORMAT)}#{DOT}#{at.strftime(TIME_FORMAT)}"
     end

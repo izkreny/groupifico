@@ -9,7 +9,7 @@
   `event.registrations.new`, which would join the loaded association `events/_counts` sizes.
 
   A row whose pills already say where it stands draws no status icon beside them. An unanswered row keeps
-  its status icon, because no pill is current there to tell `reserved` from `response_requested`. A reader who may request gets the paper plane beside it: plain on a `reserved` row, which it moves, and tinted on a `response_requested` one, which has moved already and stays as it is, where the plane alone says it, so the row draws no second one. A paused
+  its status icon, because no pill is current there to tell `reserved` from `response_requested`. A reader who may request gets the paper plane beside it: plain on a `reserved` row, which it moves, and tinted on a `response_requested` one, where the plane alone says it, so the row draws no second one. The tinted plane opens `events/request_again`, which says when that member was last asked and asks them once more on Send again. A paused
   or inactive member's row keeps its status icon alone, because they never get a request, and so does every row of an event no longer open to answers.
 
   The pills are `Event#available_registration_answers`, so once the event has ended a maybe given before it has no pill to light, and its row keeps the status icon as an unanswered one does.
@@ -70,11 +70,13 @@
                   </span>
                 <% end %>
 
-                <% if requestable %>
+                <% if requestable && requested %>
+                  <%= render "events/request_again", event:, registration:, name: %>
+                <% elsif requestable %>
                   <%= button_to group_event_registration_response_request_path(event.group, event, registration),
-                        class: "btn btn-ghost btn-sm btn-square #{requested ? "text-info" : "text-icon-muted"}",
+                        class: "btn btn-ghost btn-sm btn-square text-icon-muted",
                         title: registration_status_label(registration),
-                        aria: { label: requested ? "Response requested from #{name}" : "Request a response from #{name}" } do %>
+                        aria: { label: "Request a response from #{name}" } do %>
                     <%= icon :response_requested, class: "size-icon-control" %>
                   <% end %>
                 <% end %>

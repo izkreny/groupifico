@@ -984,6 +984,33 @@ RSpec.describe "Events", type: :request do
         end
       end
 
+      # WHY: #431 AC1, the tinted plane's dialog; that it opens and closes is the browser's, in `spec/system/event_detail_spec.rb`.
+      it "gives a requested row's plane a dialog saying when the last request went out, with Send again submitting the plane and a Close" do
+        owner = create(:member, :active, :owner)
+        event = travel_to(Time.zone.parse("2026-09-01 10:30")) { detailed_event(owner) }
+        sign_in_as(owner.user)
+
+        get group_event_path(event.group, event)
+
+        carla = Nokogiri::HTML(response.body).at_xpath("//tr[td[text()='Carla Duke']]")
+        plane_form = carla.at_css("button[aria-label='Response requested from Carla Duke']").ancestors("form").first
+        expect(carla.at_css("dialog").text.squish).to include "Ask Carla Duke again? The last request went out Tue 1 Sep · 10:30."
+        expect(carla.at_xpath(".//dialog//button[normalize-space()='Send again']")["form"]).to eq plane_form["id"]
+        expect(carla.at_css("dialog .modal-action form[method='dialog'] button").text.squish).to eq "Close"
+      end
+
+      it "draws no dialog on a held row, whose plane asks straight away" do
+        owner = create(:member, :active, :owner)
+        event = detailed_event(owner)
+        sign_in_as(owner.user)
+
+        get group_event_path(event.group, event)
+
+        ben = Nokogiri::HTML(response.body).at_xpath("//tr[td[text()='Ben Cole']]")
+        expect(ben.at_css("button[aria-label='Request a response from Ben Cole']")).to be_present
+        expect(ben.at_css("dialog")).to be_nil
+      end
+
       it "draws the status icon rather than the paper plane on a paused member's held row" do
         owner = create(:member, :active, :owner)
         event = detailed_event(owner)
