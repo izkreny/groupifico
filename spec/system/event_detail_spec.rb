@@ -484,7 +484,7 @@ RSpec.describe "The event detail", type: :system do
       expect(page).to have_text "Carla Duke's response was requested again."
       expect(page).to have_current_path group_event_path(event.group, event)
       click_button "Response requested from Carla Duke"
-      expect(page).to have_css "dialog[open]", text: "The last request went out Wed 2 Dec · 14:05."
+      expect(page).to have_css "dialog[open]", text: "The last request went out less than a minute ago (2 Dec)."
     end
   end
 
