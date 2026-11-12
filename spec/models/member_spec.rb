@@ -45,7 +45,7 @@ RSpec.describe Member, type: :model do
   end
 
   describe "(enums)" do
-    it { is_expected.to define_enum_for(:status).with_values(active: 0, paused: 1, inactive: 2, pending: 3).with_default(:active).validating }
+    it { is_expected.to define_enum_for(:status).with_values(pending: 3, active: 0, paused: 1, inactive: 2).with_default(:active).validating }
   end
 
   describe "#can_manage?" do
