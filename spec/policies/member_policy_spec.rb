@@ -249,13 +249,30 @@ RSpec.describe MemberPolicy, type: :policy do
         expect(scoped_for(owner)).to include record
       end
 
-      it "hides the pending member from every other column and keeps the rest of the group listed" do
-        others = %i[ administrator members_administrator events_administrator ].map { create(:member, it, group:) } << actor
+      it "hides the pending member from an administrator, and keeps the rest of the group listed" do
+        administrator = create(:member, :administrator, group:)
 
-        others.each do |other|
-          expect(scoped_for(other)).to include(actor)
-          expect(scoped_for(other)).not_to include(record)
-        end
+        expect(scoped_for(administrator)).to include(administrator)
+        expect(scoped_for(administrator)).not_to include(record)
+      end
+
+      it "hides the pending member from a members administrator, and keeps the rest of the group listed" do
+        members_administrator = create(:member, :members_administrator, group:)
+
+        expect(scoped_for(members_administrator)).to include(members_administrator)
+        expect(scoped_for(members_administrator)).not_to include(record)
+      end
+
+      it "hides the pending member from an events administrator, and keeps the rest of the group listed" do
+        events_administrator = create(:member, :events_administrator, group:)
+
+        expect(scoped_for(events_administrator)).to include(events_administrator)
+        expect(scoped_for(events_administrator)).not_to include(record)
+      end
+
+      it "hides the pending member from a member holding no role, and keeps the rest of the group listed" do
+        expect(scoped_for(actor)).to include(actor)
+        expect(scoped_for(actor)).not_to include(record)
       end
 
       it "hides the pending member from an owner of another group the same user is in" do
