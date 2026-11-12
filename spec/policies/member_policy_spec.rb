@@ -265,27 +265,32 @@ RSpec.describe MemberPolicy, type: :policy do
 
       it "hides the pending member from an administrator, and keeps the rest of the group listed" do
         administrator = create(:member, :administrator, group:)
+        listed = create(:member, group:)
 
-        expect(scoped_for(administrator)).to include(administrator)
+        expect(scoped_for(administrator)).to include(listed)
         expect(scoped_for(administrator)).not_to include(record)
       end
 
       it "hides the pending member from a members administrator, and keeps the rest of the group listed" do
         members_administrator = create(:member, :members_administrator, group:)
+        listed = create(:member, group:)
 
-        expect(scoped_for(members_administrator)).to include(members_administrator)
+        expect(scoped_for(members_administrator)).to include(listed)
         expect(scoped_for(members_administrator)).not_to include(record)
       end
 
       it "hides the pending member from an events administrator, and keeps the rest of the group listed" do
         events_administrator = create(:member, :events_administrator, group:)
+        listed = create(:member, group:)
 
-        expect(scoped_for(events_administrator)).to include(events_administrator)
+        expect(scoped_for(events_administrator)).to include(listed)
         expect(scoped_for(events_administrator)).not_to include(record)
       end
 
       it "hides the pending member from a member holding no role, and keeps the rest of the group listed" do
-        expect(scoped_for(actor)).to include(actor)
+        listed = create(:member, group:)
+
+        expect(scoped_for(actor)).to include(listed)
         expect(scoped_for(actor)).not_to include(record)
       end
 
