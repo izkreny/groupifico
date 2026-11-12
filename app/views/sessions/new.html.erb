@@ -6,6 +6,8 @@
   <h1 class="text-record">Sign in</h1>
 
   <%= form_with url: session_url, class: "contents" do |form| %>
+    <%= form.hidden_field :return_to, value: return_to %>
+
     <%# Not `AppFormBuilder#field`: this form has no model, so the builder's `object.errors` read
         has nothing to read. The label and the control carry the classes that helper would emit. %>
     <fieldset class="fieldset">

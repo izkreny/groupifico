@@ -411,7 +411,7 @@ RSpec.describe "The styleguide", type: :request do
       it "redirects to the login page" do
         get "/styleguide"
 
-        expect(response).to redirect_to new_session_path
+        expect(response).to redirect_to new_session_path(return_to: request.fullpath)
       end
     end
   end

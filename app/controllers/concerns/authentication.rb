@@ -3,7 +3,7 @@ module Authentication
 
   included do
     before_action :require_authentication
-    helper_method :authenticated?
+    helper_method :authenticated?, :return_to
   end
 
   class_methods do
@@ -15,6 +15,10 @@ module Authentication
   private
     def authenticated?
       resume_session
+    end
+
+    def return_to
+      url_from(params[:return_to])
     end
 
     def require_authentication
@@ -37,13 +41,9 @@ module Authentication
       Session.find_by(id: cookies.signed[:session_id]) if cookies.signed[:session_id]
     end
 
-    # Records nowhere to return to. Signing in resets the browser session, so a destination stored
-    # here could only be read back by defeating that reset - and nothing in a session distinguishes
-    # the person who was refused here from an attacker who planted the same key in their browser.
-    # Returning somebody to where they were needs a destination the old session cannot reach, which
-    # means carrying it in the emailed link.
+    # WHY: the destination rides the query string into the emailed link and never the browser session, which signing in resets and which nothing distinguishes from one an attacker planted; a path rather than a URL because the mail's host comes from mailer config, not the brand domain the request arrived on; only a GET has a page to return to, and the root is where sign-in lands anyway.
     def request_authentication
-      redirect_to new_session_path
+      redirect_to new_session_path(return_to: (request.fullpath if request.get? && request.path != root_path))
     end
 
     # `reset_session` first, so a browser session planted before sign-in does not survive it. The

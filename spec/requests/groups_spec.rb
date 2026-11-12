@@ -6,6 +6,13 @@ RSpec.describe "Groups", type: :request do
       it "redirects to the sign-in page" do
         get groups_path
 
+        expect(response).to redirect_to new_session_path(return_to: request.fullpath)
+      end
+
+      # WHY: the root is where sign-in lands anyway, so the commonest sign-in URL stays bare.
+      it "redirects from the root to the sign-in page carrying no destination" do
+        get root_path
+
         expect(response).to redirect_to new_session_path
       end
     end
@@ -143,7 +150,7 @@ RSpec.describe "Groups", type: :request do
       it "redirects to the sign-in page" do
         get group_path(create(:group))
 
-        expect(response).to redirect_to new_session_path
+        expect(response).to redirect_to new_session_path(return_to: request.fullpath)
       end
     end
 
@@ -448,7 +455,7 @@ RSpec.describe "Groups", type: :request do
       it "redirects to the sign-in page" do
         get new_group_path
 
-        expect(response).to redirect_to new_session_path
+        expect(response).to redirect_to new_session_path(return_to: request.fullpath)
       end
     end
 
@@ -519,7 +526,7 @@ RSpec.describe "Groups", type: :request do
       it "redirects to the sign-in page" do
         get edit_group_path(create(:group))
 
-        expect(response).to redirect_to new_session_path
+        expect(response).to redirect_to new_session_path(return_to: request.fullpath)
       end
     end
 
@@ -635,7 +642,8 @@ RSpec.describe "Groups", type: :request do
 
   describe "POST /groups" do
     context "when not signed in" do
-      it "redirects to the sign-in page" do
+      # WHY: a redirect can only replay a GET, so a refused POST has nowhere to return to.
+      it "redirects to the sign-in page carrying no destination" do
         post groups_path, params: { group: { name: "Choraliers" } }
 
         expect(response).to redirect_to new_session_path

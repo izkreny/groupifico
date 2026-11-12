@@ -20,6 +20,18 @@ RSpec.describe "Sessions", type: :request do
         expect(Nokogiri::HTML(response.body).at_css("input[type=email]")["value"]).to eq "added@example.com"
       end
 
+      it "carries the destination it is opened with in a hidden field" do
+        get new_session_path(return_to: "/groups/1/events/2")
+
+        expect(Nokogiri::HTML(response.body).at_css("input[type=hidden][name=return_to]")["value"]).to eq "/groups/1/events/2"
+      end
+
+      it "renders a form opened with a destination that is not a string, carrying none" do
+        get new_session_path(return_to: { a: "b" })
+
+        expect(Nokogiri::HTML(response.body).at_css("input[type=hidden][name=return_to]")["value"]).to be_blank
+      end
+
       # `www.` because only `request.domain` collapses it onto the branded domain, which `Brand` never sees.
       it "names the Chorifico brand in its application name and its masthead on www.chorifico.com" do
         host! "www.chorifico.com"
@@ -89,13 +101,44 @@ RSpec.describe "Sessions", type: :request do
 
   describe "POST /session" do
     context "when not signed in" do
-      it "enqueues the sign-in link for an address that has an account" do
+      it "enqueues the sign-in link, carrying no destination, for an address that has an account" do
         user = create(:user)
 
         expect { post session_path, params: { email: user.email } }
-          .to have_enqueued_mail(SignInMailer, :link).with(user)
+          .to have_enqueued_mail(SignInMailer, :link).with(user, return_to: nil)
 
         expect(response).to redirect_to new_session_path
+      end
+
+      it "hands the mail the destination the form carried" do
+        user = create(:user)
+
+        expect { post session_path, params: { email: user.email, return_to: "/groups/1/events/2" } }
+          .to have_enqueued_mail(SignInMailer, :link).with(user, return_to: "/groups/1/events/2")
+      end
+
+      # WHY: #430 AC1, since a member who mistypes their address asks again from the form this sends them back to, and the second link can only carry what that form kept.
+      it "sends the form back carrying the destination it was submitted with" do
+        post session_path, params: { email: build(:user).email, return_to: "/groups/1/events/2" }
+
+        expect(response).to redirect_to new_session_path(return_to: "/groups/1/events/2")
+      end
+
+      it "keeps the destination on the form when the rate limit refuses a submission" do
+        10.times { post session_path, params: { email: build(:user).email } }
+
+        post session_path, params: { email: build(:user).email, return_to: "/groups/1/events/2" }
+
+        expect(response).to redirect_to new_session_path(return_to: "/groups/1/events/2")
+        expect(flash[:alert]).to eq("Try again later.")
+      end
+
+      # WHY: #430 AC2's hygiene half; the guard that decides where somebody lands is the redemption's, and this keeps an off-site value out of the mail altogether.
+      it "drops a destination that is not a path inside the application" do
+        user = create(:user)
+
+        expect { post session_path, params: { email: user.email, return_to: "https://other.example/x" } }
+          .to have_enqueued_mail(SignInMailer, :link).with(user, return_to: nil)
       end
 
       # The response has to match in status, body and timing, so the mail is enqueued rather than

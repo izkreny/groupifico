@@ -4,9 +4,10 @@ class SignInMailer < ApplicationMailer
   # would be written into `solid_queue_jobs.arguments`, which is the kind of datastore the row's
   # digest column exists to keep it out of. It also starts the fifteen minutes when the mail is
   # actually built rather than when the request came in.
-  def link(user)
-    @user  = user
-    @token = SignInToken.mint(user)
+  def link(user, return_to: nil)
+    @user      = user
+    @token     = SignInToken.mint(user)
+    @return_to = return_to
 
     mail subject: "Your sign-in link", to: user.email
   end

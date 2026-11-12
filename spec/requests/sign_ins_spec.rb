@@ -35,6 +35,29 @@ RSpec.describe "SignIns", type: :request do
         expect(page_text(response.body)).to include(user.email)
       end
 
+      it "carries the destination the link names on its button" do
+        get sign_in_path(token: SignInToken.mint(create(:user)), return_to: "/groups/1/events/2")
+
+        expect(Nokogiri::HTML(response.body).at_css("form input[type=hidden][name=return_to]")["value"]).to eq "/groups/1/events/2"
+      end
+
+      it "renders a link whose destination is not a string, carrying none on its button" do
+        get sign_in_path(token: SignInToken.mint(create(:user)), return_to: { a: "b" })
+
+        expect(Nokogiri::HTML(response.body).at_css("form input[type=hidden][name=return_to]")["value"]).to be_blank
+      end
+
+      # WHY: #430 AC1, since an expired link sends the member back to ask for another, which has to carry the destination the expired one did.
+      it "keeps the destination on the form it refuses an expired link to" do
+        token = SignInToken.mint(create(:user))
+
+        travel_to SignInToken::EXPIRES_IN.from_now + 1.second do
+          get sign_in_path(token:, return_to: "/groups/1/events/2")
+        end
+
+        expect(response).to redirect_to new_session_path(return_to: "/groups/1/events/2")
+      end
+
       it "refuses a request carrying no token at all" do
         get sign_in_path
 
@@ -75,6 +98,39 @@ RSpec.describe "SignIns", type: :request do
         expect(response).to redirect_to root_url
       end
 
+      it "signs the person in and lands on the destination the link carried" do
+        get sign_in_path(token: SignInToken.mint(create(:user)))
+
+        post sign_in_path, params: { return_to: "/groups/1/events/2" }
+
+        expect(response).to redirect_to "/groups/1/events/2"
+      end
+
+      # WHY: #430 AC2's open-redirect guard is posted at straight, not through the form, because the link's query string and the button's hidden field are both anybody's to write, so this is the hop it has to hold at; browsers read the backslash form below as `//`.
+      it "lands on the root page for a URL on another host" do
+        get sign_in_path(token: SignInToken.mint(create(:user)))
+
+        post sign_in_path, params: { return_to: "https://other.example/x" }
+
+        expect(response).to redirect_to root_url
+      end
+
+      it "lands on the root page for a protocol-relative URL" do
+        get sign_in_path(token: SignInToken.mint(create(:user)))
+
+        post sign_in_path, params: { return_to: "//other.example" }
+
+        expect(response).to redirect_to root_url
+      end
+
+      it "lands on the root page for a path a browser reads as another host" do
+        get sign_in_path(token: SignInToken.mint(create(:user)))
+
+        post sign_in_path, params: { return_to: "/\\other.example" }
+
+        expect(response).to redirect_to root_url
+      end
+
       it "sets the session cookie HttpOnly and SameSite=Lax" do
         get sign_in_path(token: SignInToken.mint(create(:user)))
 
@@ -109,6 +165,25 @@ RSpec.describe "SignIns", type: :request do
         end
 
         expect(response).to redirect_to new_session_path
+      end
+
+      it "keeps the destination on the form when the link expires before the button is pressed" do
+        get sign_in_path(token: SignInToken.mint(create(:user)))
+
+        travel_to SignInToken::EXPIRES_IN.from_now + 1.second do
+          post sign_in_path, params: { return_to: "/groups/1/events/2" }
+        end
+
+        expect(response).to redirect_to new_session_path(return_to: "/groups/1/events/2")
+      end
+
+      it "keeps the destination on the form when the rate limit refuses a redemption" do
+        10.times { post sign_in_path }
+
+        post sign_in_path, params: { return_to: "/groups/1/events/2" }
+
+        expect(response).to redirect_to new_session_path(return_to: "/groups/1/events/2")
+        expect(flash[:alert]).to eq("Try again later.")
       end
 
       # Whether it worked or not, the token is spent from the browser's point of view. Leaving it
