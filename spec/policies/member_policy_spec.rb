@@ -234,6 +234,20 @@ RSpec.describe MemberPolicy, type: :policy do
       end
     end
 
+    describe_rule :edit? do
+      failed "for an owner, who is offered no edit form for a pending member" do
+        let(:actor) { create(:member, :owner, group:) }
+      end
+
+      failed "for a members administrator, who may not open a pending member's edit form" do
+        let(:actor) { create(:member, :members_administrator, group:) }
+      end
+
+      failed "for an administrator, who may not open a pending member's edit form" do
+        let(:actor) { create(:member, :administrator, group:) }
+      end
+    end
+
     describe "the relation scope" do
       def scoped_for(actor) = described_class.new(nil, user: actor.user).apply_scope(Member.all, type: :active_record_relation)
 

@@ -1215,6 +1215,26 @@ RSpec.describe "Members", type: :request do
         expect(response.body).to include pending.email
       end
 
+      it "draws no edit link on their page" do
+        owner   = create(:member, :active, :owner)
+        pending = create(:member, :pending, group: owner.group)
+        sign_in_as(owner.user)
+
+        get group_member_path(owner.group, pending)
+
+        expect(response.body).not_to include edit_group_member_path(owner.group, pending)
+      end
+
+      it "refuses their edit form" do
+        owner   = create(:member, :active, :owner)
+        pending = create(:member, :pending, group: owner.group)
+        sign_in_as(owner.user)
+
+        get edit_group_member_path(owner.group, pending)
+
+        expect(response).to redirect_to root_path
+      end
+
       it "refuses to change them, leaving them pending" do
         owner   = create(:member, :active, :owner)
         pending = create(:member, :pending, group: owner.group)
