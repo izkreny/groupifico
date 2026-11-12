@@ -39,6 +39,8 @@ Rails.application.routes.draw do
 
   resources :groups do
     resources :members
+    # WHY: one link per group, so a singular resource: `create` turns it on or regenerates it, `destroy` turns it off.
+    resource :join_link, only: %i[ create destroy ], module: :groups
     resources :events do
       get "duplicate", on: :member
       # The writes a roster row makes. Reading who is registered is the event's own screen rather
