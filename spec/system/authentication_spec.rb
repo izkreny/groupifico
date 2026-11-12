@@ -31,10 +31,7 @@ RSpec.describe "Authentication", type: :system do
     expect(page).to have_text "Riverside Choir"
   end
 
-  # #430 AC1 in the browser: the event link a response request mails lands a signed-out member on
-  # the sign-in form, and the link that form mails brings them back to the event. The link is read
-  # out of the delivered mail, so every hop is the real one. The event's creator is the member, since
-  # the factory makes them one of its group.
+  # WHY: #430 AC1 walked in the browser, with the link read out of the delivered mail so every hop is the real one; the event's creator is the member, since the factory makes them one of its group.
   it "returns a member who opened an event page signed out to it after signing in" do
     event = create(:event)
 

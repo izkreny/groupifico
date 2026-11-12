@@ -20,7 +20,6 @@ RSpec.describe "Sessions", type: :request do
         expect(Nokogiri::HTML(response.body).at_css("input[type=email]")["value"]).to eq "added@example.com"
       end
 
-      # #430: the page a signed-out member was bounced from rides this form into the emailed link.
       it "carries the destination it is opened with in a hidden field" do
         get new_session_path(return_to: "/groups/1/events/2")
 
@@ -118,8 +117,7 @@ RSpec.describe "Sessions", type: :request do
           .to have_enqueued_mail(SignInMailer, :link).with(user, return_to: "/groups/1/events/2")
       end
 
-      # #430 AC1: a member who mistypes their address asks again from the form this sends them back
-      # to, so that form has to keep the destination for the second link to carry it.
+      # WHY: #430 AC1, since a member who mistypes their address asks again from the form this sends them back to, and the second link can only carry what that form kept.
       it "sends the form back carrying the destination it was submitted with" do
         post session_path, params: { email: build(:user).email, return_to: "/groups/1/events/2" }
 
@@ -135,8 +133,7 @@ RSpec.describe "Sessions", type: :request do
         expect(flash[:alert]).to eq("Try again later.")
       end
 
-      # #430 AC2's hygiene half: the guard that decides where somebody lands is the redemption's,
-      # and this keeps an off-site value from being written into a mail at all.
+      # WHY: #430 AC2's hygiene half; the guard that decides where somebody lands is the redemption's, and this keeps an off-site value out of the mail altogether.
       it "drops a destination that is not a path inside the application" do
         user = create(:user)
 

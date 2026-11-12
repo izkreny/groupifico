@@ -41,16 +41,14 @@ RSpec.describe "SignIns", type: :request do
         expect(Nokogiri::HTML(response.body).at_css("form input[type=hidden][name=return_to]")["value"]).to eq "/groups/1/events/2"
       end
 
-      # #430 AC2: a nested `return_to[a]=b` arrives as parameters rather than a string, and must land
-      # on the root like any other value that is not a path, never answer 500.
+      # WHY: #430 AC2, since a nested `return_to[a]=b` arrives as parameters rather than a string and must carry no destination like any other value that is not a path, never answer 500.
       it "renders a link whose destination is not a string, carrying none on its button" do
         get sign_in_path(token: SignInToken.mint(create(:user)), return_to: { a: "b" })
 
         expect(Nokogiri::HTML(response.body).at_css("form input[type=hidden][name=return_to]")["value"]).to be_blank
       end
 
-      # #430 AC1: an expired link sends the member back to ask for another, and that one has to carry
-      # the destination the expired one did.
+      # WHY: #430 AC1, since an expired link sends the member back to ask for another, which has to carry the destination the expired one did.
       it "keeps the destination on the form it refuses an expired link to" do
         token = SignInToken.mint(create(:user))
 
@@ -101,7 +99,6 @@ RSpec.describe "SignIns", type: :request do
         expect(response).to redirect_to root_url
       end
 
-      # #430 AC1.
       it "signs the person in and lands on the destination the link carried" do
         get sign_in_path(token: SignInToken.mint(create(:user)))
 
@@ -110,10 +107,7 @@ RSpec.describe "SignIns", type: :request do
         expect(response).to redirect_to "/groups/1/events/2"
       end
 
-      # #430 AC2, the open-redirect guard. Posted straight at the redemption rather than through the
-      # form, because the link's query string and the button's hidden field are both anybody's to
-      # write, so this is the hop the guard has to hold at. The backslash form is one browsers read
-      # as `//`.
+      # WHY: #430 AC2's open-redirect guard is posted at straight, not through the form, because the link's query string and the button's hidden field are both anybody's to write, so this is the hop it has to hold at; browsers read the backslash form below as `//`.
       it "lands on the root page for a URL on another host" do
         get sign_in_path(token: SignInToken.mint(create(:user)))
 

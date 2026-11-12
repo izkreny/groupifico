@@ -42,13 +42,7 @@ module Authentication
       Session.find_by(id: cookies.signed[:session_id]) if cookies.signed[:session_id]
     end
 
-    # The destination rides the sign-in form's query string and from there the emailed link, never
-    # the browser session. Signing in resets that session, so a destination stored there could only
-    # be read back by defeating the reset - and nothing in a session distinguishes the person who
-    # was refused here from an attacker who planted the same key in their browser. A path rather
-    # than a URL, because the mail's host comes from mailer config and not from the brand domain the
-    # request arrived on. Only a GET has somewhere to return to, and the root is where sign-in lands
-    # anyway; `SignInsController#create` is where the value is checked.
+    # WHY: the destination rides the query string into the emailed link and never the browser session, which signing in resets and which nothing distinguishes from one an attacker planted; a path rather than a URL because the mail's host comes from mailer config, not the brand domain the request arrived on; only a GET has a page to return to, and the root is where sign-in lands anyway.
     def request_authentication
       redirect_to new_session_path(return_to: (request.fullpath if request.get? && request.path != root_path))
     end

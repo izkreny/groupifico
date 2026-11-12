@@ -4,9 +4,6 @@ class SignInMailer < ApplicationMailer
   # would be written into `solid_queue_jobs.arguments`, which is the kind of datastore the row's
   # digest column exists to keep it out of. It also starts the fifteen minutes when the mail is
   # actually built rather than when the request came in.
-  #
-  # `return_to` is the page to land on after signing in, carried in the link rather than the browser
-  # session for the reason `request_authentication` gives.
   def link(user, return_to: nil)
     @user      = user
     @token     = SignInToken.mint(user)
