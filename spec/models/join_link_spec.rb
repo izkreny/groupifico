@@ -6,17 +6,20 @@ RSpec.describe JoinLink, type: :model do
   end
 
   describe ".mint" do
-    # WHY: #445 N1, since a database read must leak no live link.
-    it "keeps no copy of the token it returns" do
-      token = described_class.mint(create(:group))
+    # WHY: the owner chose a token stored as it is over a digest on #453, so an owner can copy the link for as long as it is on.
+    it "stores the token it returns" do
+      group = create(:group)
 
-      expect(described_class.sole.attributes.values.map(&:to_s)).not_to include(token)
+      token = described_class.mint(group)
+
+      expect(group.reload.join_link.token).to eq token
     end
 
+    # WHY: `has_secure_token` draws from a 58-letter alphabet, so each character carries log2(58) bits.
     it "carries at least 128 bits of entropy" do
       token = described_class.mint(create(:group))
 
-      expect(Base64.urlsafe_decode64(token).bytesize * 8).to be >= 128
+      expect(token.length * Math.log2(58)).to be >= 128
     end
 
     it "leaves the group one link" do

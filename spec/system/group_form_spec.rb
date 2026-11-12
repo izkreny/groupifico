@@ -189,7 +189,7 @@ RSpec.describe "The group form", type: :system do
   # WHY: the join link's controls sit beneath this form on the edit screen. Which state draws which control is `spec/requests/groups_spec.rb`'s; what is left is that Copy puts the link on the clipboard and that each button lands where it says.
   context "with the join link" do
     # WHY: #445 AC1, walked in the browser, since only the browser can tell that Copy wrote the clipboard.
-    it "copies the link just turned on" do
+    it "copies the link" do
       member = create(:member, :active, :owner)
       sign_in_as member.user
 
@@ -197,7 +197,7 @@ RSpec.describe "The group form", type: :system do
       # WHY: reading the clipboard back needs its permission, granted in the browser context Cuprite opened for this session rather than Chrome's default one, where a grant reaches no page here.
       page.driver.browser.page.command("Browser.setPermission", origin: page.evaluate_script("location.origin"), browserContextId: page.driver.browser.page.context_id, permission: { name: "clipboard-read" }, setting: "granted")
       click_on "Turn on join link"
-      link = find_field("Share this link. It is shown only now, so copy it before you leave this page.").value
+      link = find_field("Anyone with this link can ask to join. Regenerate it to stop the old one working.").value
       click_on "Copy"
 
       expect(page).to have_css "[role='status']", text: "Copied"
@@ -211,11 +211,11 @@ RSpec.describe "The group form", type: :system do
 
       visit edit_group_path(member.group)
       click_on "Turn on join link"
-      first = find_field("Share this link. It is shown only now, so copy it before you leave this page.").value
+      first = find_field("Anyone with this link can ask to join. Regenerate it to stop the old one working.").value
       click_on "Regenerate"
 
-      expect(page).to have_field("Share this link. It is shown only now, so copy it before you leave this page.", with: /token=/)
-      expect(page).to have_no_field("Share this link. It is shown only now, so copy it before you leave this page.", with: first)
+      expect(page).to have_field("Anyone with this link can ask to join. Regenerate it to stop the old one working.", with: /token=/)
+      expect(page).to have_no_field("Anyone with this link can ask to join. Regenerate it to stop the old one working.", with: first)
     end
 
     # WHY: #445 AC2, walked in the browser: Turn off lands back on the edit screen offering to turn the link on.
@@ -231,31 +231,29 @@ RSpec.describe "The group form", type: :system do
       expect(page).to have_button "Turn on join link"
     end
 
-    it "paints the link just turned on in light, with no accessibility violations" do
+    it "paints a link that is off in light, with no accessibility violations" do
       member = create(:member, :active, :owner)
       sign_in_as member.user
       prefer_colour_scheme :light
       resize_to ViewportHelper::MOBILE
 
       visit edit_group_path(member.group)
-      click_on "Turn on join link"
 
       expect(rendered_colour_scheme).to eq "light"
-      expect(page).to paint "button[data-action='clipboard#copy']"
+      expect(page).to paint "form[action='#{group_join_link_path(member.group)}'] button.btn-primary"
       expect(page).to be_accessible
     end
 
-    it "paints the link just turned on in dark, with no accessibility violations" do
+    it "paints a link that is off in dark, with no accessibility violations" do
       member = create(:member, :active, :owner)
       sign_in_as member.user
       prefer_colour_scheme :dark
       resize_to ViewportHelper::MOBILE
 
       visit edit_group_path(member.group)
-      click_on "Turn on join link"
 
       expect(rendered_colour_scheme).to eq "dark"
-      expect(page).to paint "button[data-action='clipboard#copy']"
+      expect(page).to paint "form[action='#{group_join_link_path(member.group)}'] button.btn-primary"
       expect(page).to be_accessible
     end
 

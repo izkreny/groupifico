@@ -90,11 +90,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_12_120000) do
 
   create_table "join_links", force: :cascade do |t|
     t.integer "group_id", null: false
-    t.string "token_digest", null: false
+    t.string "token", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["group_id"], name: "index_join_links_on_group_id", unique: true
-    t.index ["token_digest"], name: "index_join_links_on_token_digest", unique: true
+    t.index ["token"], name: "index_join_links_on_token", unique: true
   end
 
   create_table "members", force: :cascade do |t|

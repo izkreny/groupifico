@@ -2,13 +2,12 @@
 class Groups::JoinLinksController < ApplicationController
   include GroupScoped
 
-  # WHY: the link rides the flash because only its digest is stored, so the page this lands on is the one moment the owner can copy it (#445 N1).
   def create
     authorize! @group, to: :update?
 
-    token = JoinLink.mint(@group)
+    JoinLink.mint(@group)
 
-    redirect_to edit_group_path(@group), flash: { join_link_url: new_join_request_url(token:) }
+    redirect_to edit_group_path(@group)
   end
 
   def destroy

@@ -1,17 +1,16 @@
-<%# locals: (group:, link_url:, namespace: nil) %>
-<%# `namespace` is the styleguide's, as on `groups/form`, since it draws this once per theme; every screen leaves it out and keeps its ids. %>
-<%# WHY: `link_url` is the flash's, and present only on the page that turning the link on or regenerating it lands on: only the token's digest is stored, so that page is the one place the whole link can be shown (#445 N1). %>
+<%# locals: (group:, join_link:, namespace: nil) %>
+<%# `namespace` is the styleguide's, as on `groups/form`, since it draws this once per theme; every screen leaves it out and keeps its ids. `join_link` arrives apart from `group` for the styleguide too, which draws a sample link rather than make one. %>
 <% heading_id = [ namespace, "join_link_heading" ].compact.join("_") %>
 <% url_id = [ namespace, "join_link_url" ].compact.join("_") %>
 <section class="fieldset mt-6" aria-labelledby="<%= heading_id %>">
   <h2 id="<%= heading_id %>" class="fieldset-legend">Join link</h2>
 
-  <% if link_url %>
+  <% if join_link %>
     <div class="flex flex-col gap-3" data-controller="clipboard">
-      <label class="text-meta" for="<%= url_id %>">Share this link. It is shown only now, so copy it before you leave this page.</label>
+      <label class="text-meta" for="<%= url_id %>">Anyone with this link can ask to join. Regenerate it to stop the old one working.</label>
 
       <div class="join w-full">
-        <input id="<%= url_id %>" class="input join-item flex-1 min-w-0" type="text" autocomplete="off" value="<%= link_url %>" readonly data-clipboard-target="source">
+        <input id="<%= url_id %>" class="input join-item flex-1 min-w-0" type="text" autocomplete="off" value="<%= new_join_request_url(token: join_link.token) %>" readonly data-clipboard-target="source">
 
         <button type="button" class="btn btn-primary join-item" data-action="clipboard#copy">
           <%= icon :copy, class: "size-icon-control" %>Copy
@@ -20,14 +19,12 @@
 
       <p class="text-meta" role="status" data-clipboard-target="status"></p>
     </div>
-  <% elsif group.join_link %>
-    <p>The join link is on. To copy it again, regenerate it: the link you shared stops working.</p>
   <% else %>
     <p>Share one link so people can ask to join this group.</p>
   <% end %>
 
   <div class="flex flex-wrap gap-2 mt-2">
-    <% if link_url || group.join_link %>
+    <% if join_link %>
       <%= button_to safe_join([ icon(:regenerate, class: "size-icon-control"), "Regenerate" ]), group_join_link_path(group), class: "btn" %>
       <%= button_to safe_join([ icon(:turn_off, class: "size-icon-control"), "Turn off" ]), group_join_link_path(group), method: :delete, class: "btn btn-ghost" %>
     <% else %>

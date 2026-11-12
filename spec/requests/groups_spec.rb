@@ -633,20 +633,18 @@ RSpec.describe "Groups", type: :request do
         expect(document.css("#join_link_url")).to be_empty
       end
 
-      # WHY: #445 AC1, the one page the whole link is shown on, since only its digest is stored.
-      it "shows the link just turned on, ready to copy" do
+      # WHY: #445 AC1, and the owner's call on #453 that the link stays copyable for as long as it is on, not only on the page that turned it on.
+      it "shows a link that is on, ready to copy, on every visit" do
         member = create(:member, :active, :owner)
+        token = JoinLink.mint(member.group)
         sign_in_as(member.user)
 
-        post group_join_link_path(member.group)
-        follow_redirect!
-        link = Nokogiri::HTML(response.body).at_css("#join_link_url")["value"]
+        get edit_group_path(member.group)
 
-        expect(JoinLink.find_by_token(Rack::Utils.parse_query(URI(link).query).fetch("token")).group).to eq member.group
-        expect(page_text(response.body)).to include("Copy").and include("Regenerate").and include("Turn off")
+        expect(Nokogiri::HTML(response.body).at_css("#join_link_url")["value"]).to eq new_join_request_url(token:)
       end
 
-      it "offers to regenerate or turn off a link that is on, without showing it again" do
+      it "offers to regenerate or turn off a link that is on" do
         member = create(:member, :active, :owner)
         JoinLink.mint(member.group)
         sign_in_as(member.user)
@@ -655,7 +653,6 @@ RSpec.describe "Groups", type: :request do
         document = Nokogiri::HTML(response.body)
 
         expect(document.css("form[action='#{group_join_link_path(member.group)}'] button").map { it.text.squish }).to eq [ "Regenerate", "Turn off" ]
-        expect(document.css("#join_link_url")).to be_empty
       end
 
       it "offers the delete to an owner who may destroy the group" do

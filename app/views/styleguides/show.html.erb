@@ -201,8 +201,8 @@
     <% end %>
 
     <%# A sample link rather than a minted one, so drawing the page retires nobody's link. %>
-    <%= render layout: "styleguides/section", locals: { title: "Join link, just turned on" } do |theme| %>
-      <%= render "groups/join_link", group: @group, link_url: new_join_request_url(token: "sample"), namespace: theme %>
+    <%= render layout: "styleguides/section", locals: { title: "Join link, on" } do |theme| %>
+      <%= render "groups/join_link", group: @group, join_link: JoinLink.new(group: @group, token: "sample"), namespace: theme %>
     <% end %>
   <% end %>
 
