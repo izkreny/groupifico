@@ -42,7 +42,7 @@
       <%= icon :email, class: "size-icon-control" %>
     <% end %>
 
-    <% if manages %>
+    <% if manages && !member.pending? %>
       <%= link_to edit_group_member_path(member.group, member), class: "btn btn-ghost btn-circle btn-sm text-primary", aria: { label: "Edit #{name}" } do %>
         <%= icon :edit, class: "size-icon-control" %>
       <% end %>

@@ -1,5 +1,11 @@
 class MemberPolicy < ApplicationPolicy
-  relation_scope { |relation| relation.where(group: user.current_groups) }
+  # A pending member is listed to the owners of their group alone, per docs/AUTHORIZATION.md. Owners rather than active owners, because seeing one is a read a paused owner keeps.
+  relation_scope do |relation|
+    relation.where(group: user.current_groups).where.not(status: :pending)
+      .or(relation.where(group: user.current_memberships.owners.select(:group_id)))
+  end
+
+  pre_check :conceal_pending_members!
 
   # The members table in docs/AUTHORIZATION.md, one rule per row. `can_manage?(:members)` matches
   # exactly the three columns those rows mark - `owner`, `administrator` and `members_administrator`
@@ -26,4 +32,14 @@ class MemberPolicy < ApplicationPolicy
 
   private
     def group_for(record) = record.group
+
+    # A pending member does not exist for anybody but an owner, who gets every read and no write: leaving `pending` is approving or declining, never a status written on the member form, per docs/AUTHORIZATION.md. Runs after the inherited pre-checks, so `membership` is already known to be current.
+    def conceal_pending_members!
+      return unless record.pending?
+      return deny! if membership.owner? && write_rule?
+      return if membership.owner?
+
+      details[:not_found] = true
+      deny!(:not_found)
+    end
 end
