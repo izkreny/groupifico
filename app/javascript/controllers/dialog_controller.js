@@ -18,8 +18,11 @@ export default class extends Controller {
   // straight away. The sheet's primary submits that same form, and its event bubbles back through
   // here, which is what the already-open sheet stands guard over. On an edit screen the scope also
   // holds the record's own form, whose save bubbles here too and is left alone.
+  //
+  // WHY: the primary closes the open sheet as it submits, because a submit that redirects back to this page is a refresh Turbo morphs, and a morph strips `open` without calling `close()`, which leaves the dialog modal and the whole page refusing clicks until a reload.
   open(event) {
-    if (event.target !== this.triggerTarget.form || this.sheetTarget.open) return
+    if (event.target !== this.triggerTarget.form) return
+    if (this.sheetTarget.open) return this.sheetTarget.close()
 
     event.preventDefault()
     this.sheetTarget.showModal()
