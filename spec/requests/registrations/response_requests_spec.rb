@@ -123,16 +123,20 @@ RSpec.describe "Registrations::ResponseRequests", type: :request do
         expect(answered.reload).to be_no
       end
 
-      # The plane stays pressable on a requested row, so a press there says why nothing changed.
-      it "says a member who has a question waiting already has a request" do
+      # WHY: #431 AC2, the tinted plane's Send again posts here, and asking again is what a press on a requested row does.
+      it "asks a member who has a question waiting again, and keeps their row requested" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, creator: actor, manager: actor)
-        requested = create(:registration, event:, member: create(:member, :active, group: event.group), status: :response_requested)
+        requested = travel_to(Time.zone.parse("2026-11-10 09:00")) { create(:registration, event:, member: create(:member, :active, group: event.group), status: :response_requested) }
         sign_in_as(actor.user)
 
-        post group_event_registration_response_request_path(event.group, event, requested)
+        travel_to Time.zone.parse("2026-11-12 14:05") do
+          expect { post group_event_registration_response_request_path(event.group, event, requested) }.to have_enqueued_mail(RegistrationMailer, :response_requested).with(requested).once
+        end
 
-        expect(flash[:notice]).to eq "#{requested.member.full_name}'s response was already requested."
+        expect(requested.reload).to be_response_requested
+        expect(requested.updated_at).to eq Time.zone.parse("2026-11-12 14:05")
+        expect(flash[:notice]).to eq "#{requested.member.full_name}'s response was requested again."
       end
     end
   end
