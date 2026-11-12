@@ -25,11 +25,8 @@ class User < ApplicationRecord
   has_many :groups, through: :members
   has_many :feedbacks, dependent: :destroy
 
-  # `groups` is every group ever joined. A member whose status is `inactive` has left and is
-  # refused exactly like a non-member, so the set anything may be authorized against is this one -
-  # `active` and `paused` both still belong, and the read/write split between them is a rule
-  # rather than a set. Every policy scope asks for this; none should ask for `groups`.
-  has_many :current_memberships, -> { where.not(status: :inactive) },
+  # `groups` is every group ever joined or asked to join. A member who is `inactive` has left and one who is `pending` has not been let in, and both are refused exactly like a non-member, so the set anything may be authorized against is `Member.current` - `active` and `paused` both belong, and the read/write split between them is a rule rather than a set. Every policy scope asks for this; none should ask for `groups`.
+  has_many :current_memberships, -> { current },
     class_name: "Member", inverse_of: :user, dependent: nil
   has_many :current_groups, through: :current_memberships, source: :group
 

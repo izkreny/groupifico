@@ -21,8 +21,9 @@ module MembersHelper
     end
   end
 
+  # WHY: `pending` is no choice the member form offers, because a member enters it only by asking to join and leaves it only by being approved or declined.
   def member_status_choices
-    Member.statuses.keys.map { [ it.capitalize, it ] }
+    Member.statuses.keys.excluding("pending").map { [ it.capitalize, it ] }
   end
 
   def member_joined_on(member)

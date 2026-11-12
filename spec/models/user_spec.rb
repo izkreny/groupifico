@@ -10,6 +10,18 @@ RSpec.describe User, type: :model do
     it { is_expected.to have_many(:feedbacks).dependent(:destroy) }
   end
 
+  describe "#current_groups" do
+    it "holds the groups the user is active or paused in, and neither one they left nor one they are pending in" do
+      user    = create(:user)
+      active  = create(:member, :active, user:).group
+      paused  = create(:member, :paused, user:).group
+      create(:member, :inactive, user:)
+      create(:member, :pending, user:)
+
+      expect(user.current_groups).to contain_exactly(active, paused)
+    end
+  end
+
   describe "(validations)" do
     it { is_expected.to normalize(:email).from(" NAME@XYZ.COM\t\n").to("name@xyz.com") }
     it { is_expected.to validate_presence_of(:email) }

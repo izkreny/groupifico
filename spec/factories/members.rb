@@ -52,6 +52,10 @@ FactoryBot.define do
       status { :inactive }
     end
 
+    trait :pending do
+      status { :pending }
+    end
+
     # WHY: a drawn status is for the seeds, never a spec, where chance would decide the outcome.
     trait :any_status do
       status { %i[ active active active active active active paused inactive ].sample } # Rig the odds for :active 🎲

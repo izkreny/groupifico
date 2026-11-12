@@ -40,7 +40,11 @@ class Member < ApplicationRecord
   has_many :created_events, class_name: "Event", foreign_key: "creator_id", inverse_of: :creator
   has_many :managed_events, class_name: "Event", foreign_key: "manager_id", inverse_of: :manager
 
-  enum :status, %i[ active paused inactive ], default: :active, validate: true
+  # WHY: `pending` is last because the column stores each value's position, so inserting it anywhere else would move the stored meaning of every member after it.
+  enum :status, %i[ active paused inactive pending ], default: :active, validate: true
+
+  # The members who belong to their group: `inactive` has left and `pending` has not been let in yet, so neither is one of the group's people nor reaches anything of it. One spelling, because the user's groups, the group's member count and the event list form all ask it, and a status added later has one place to be counted in or out.
+  scope :current, -> { where(status: %i[ active paused ]) }
 
   # The roles join, in one place, because both ends of the ownership invariant ask it: the group,
   # for whether anyone else still owns it, and the user, for which groups would be left without an
