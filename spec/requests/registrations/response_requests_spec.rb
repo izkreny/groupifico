@@ -123,6 +123,18 @@ RSpec.describe "Registrations::ResponseRequests", type: :request do
         expect(answered.reload).to be_no
       end
 
+      # The roster draws no plane on an answered row, so a press here comes from a page drawn before the member answered.
+      it "says why nothing was requested of a member who has already answered" do
+        actor = create(:member, :active)
+        event = create(:event, group: actor.group, creator: actor, manager: actor, status: :confirmed)
+        answered = create(:registration, event:, member: create(:member, :active, group: event.group), status: :no)
+        sign_in_as(actor.user)
+
+        post group_event_registration_response_request_path(event.group, event, answered)
+
+        expect(flash[:notice]).to eq "#{answered.member.full_name}'s response was already requested."
+      end
+
       # WHY: #431 AC2, the tinted plane's Send again posts here, and asking again is what a press on a requested row does.
       it "asks a member who has a question waiting again, and keeps their row requested" do
         actor = create(:member, :active)
