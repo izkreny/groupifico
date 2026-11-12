@@ -174,10 +174,6 @@ RSpec.describe "SignIns", type: :request do
         expect(response).to redirect_to new_session_path
       end
 
-      # Whether it worked or not, the token is spent from the browser's point of view. Leaving it
-      # behind on the failure path would hand a second attempt to whoever gets the session next.
-      # The failure is staged by expiry rather than by a bogus token, since the GET now refuses
-      # anything that resolves to nothing and a bogus one never reaches the session at all.
       it "keeps the destination on the form when the link expires before the button is pressed" do
         get sign_in_path(token: SignInToken.mint(create(:user)))
 
@@ -197,6 +193,10 @@ RSpec.describe "SignIns", type: :request do
         expect(flash[:alert]).to eq("Try again later.")
       end
 
+      # Whether it worked or not, the token is spent from the browser's point of view. Leaving it
+      # behind on the failure path would hand a second attempt to whoever gets the session next.
+      # The failure is staged by expiry rather than by a bogus token, since the GET now refuses
+      # anything that resolves to nothing and a bogus one never reaches the session at all.
       it "drops the token from the browser session on the failure path too" do
         get sign_in_path(token: SignInToken.mint(create(:user)))
 
