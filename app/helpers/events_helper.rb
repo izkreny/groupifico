@@ -109,7 +109,7 @@ module EventsHelper
 
   # When a requested member was last asked, which the roster's Send again dialog states. It is `updated_at`, because a requested row changes no column but by being asked again, which touches it.
   def response_requested_at(registration)
-    "#{time_ago_in_words(registration.updated_at)} ago (#{registration.updated_at.strftime("%-d %b")})"
+    "#{time_ago_in_words(registration.updated_at)} ago (#{registration.updated_at.strftime("%-d %b")})"
   end
 
   private

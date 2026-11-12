@@ -995,6 +995,8 @@ RSpec.describe "Events", type: :request do
         carla = Nokogiri::HTML(response.body).at_xpath("//tr[td[text()='Carla Duke']]")
         plane_form = carla.at_css("button[aria-label='Response requested from Carla Duke']").ancestors("form").first
         expect(carla.at_css("dialog").text.squish).to include "Ask Carla Duke again? The last request went out 2 days ago (1 Sep)."
+        # WHY: a non-breaking space, so a phone never wraps the date between its day and its month.
+        expect(carla.at_css("dialog").text).to include "(1 Sep)"
         expect(carla.at_xpath(".//dialog//button[normalize-space()='Send again']")["form"]).to eq plane_form["id"]
         expect(carla.at_css("dialog .modal-action form[method='dialog'] button").text.squish).to eq "Close"
       end
