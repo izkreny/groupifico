@@ -132,7 +132,7 @@ RSpec.describe "Registrations::ResponseRequests", type: :request do
 
         post group_event_registration_response_request_path(event.group, event, answered)
 
-        expect(flash[:notice]).to eq "#{answered.member.full_name} has already answered, so no response was requested."
+        expect(flash[:alert]).to eq "#{answered.member.full_name} has already answered, so no response was requested."
       end
 
       # WHY: #431 AC2, the tinted plane's Send again posts here, and asking again is what a press on a requested row does.
