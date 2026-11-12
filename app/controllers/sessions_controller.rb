@@ -25,7 +25,7 @@ class SessionsController < ApplicationController
 
   allow_unauthenticated_access only: %i[ new create ]
   before_action :refuse_authenticated, only: %i[ new create ]
-  rate_limit to: 10, within: 3.minutes, only: :create, with: -> { redirect_to new_session_path, alert: "Try again later." }
+  rate_limit to: 10, within: 3.minutes, only: :create, with: -> { redirect_to new_session_path(return_to:), alert: "Try again later." }
 
   def new
   end
@@ -37,7 +37,7 @@ class SessionsController < ApplicationController
       SignInMailer.link(user, return_to:).deliver_later
     end
 
-    redirect_to new_session_path, notice: LINK_SENT
+    redirect_to new_session_path(return_to:), notice: LINK_SENT
   end
 
   def destroy
