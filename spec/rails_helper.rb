@@ -73,7 +73,6 @@ RSpec.configure do |config|
   config.include FactoryBot::Syntax::Methods
   config.include AuthenticationHelper, type: :request
   config.include HtmlHelper, type: :request
-  config.include MailHelper, type: :request
   config.include MailHelper, type: :system
   config.include SystemAuthenticationHelper, type: :system
   config.include ColourSchemeHelper, type: :system

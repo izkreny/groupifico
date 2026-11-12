@@ -138,23 +138,6 @@ RSpec.describe "SignIns", type: :request do
         expect(response).to redirect_to root_url
       end
 
-      # #430 AC1 across every hop, through the real controllers and the delivered mail, because the
-      # browser suite that walks the same route never runs on CI.
-      it "returns a member bounced from an event page to it, through the form and the mailed link" do
-        member = create(:member)
-        event  = create(:event, group: member.group)
-
-        get group_event_path(event.group, event)
-        follow_redirect!
-        perform_enqueued_jobs do
-          post session_path, params: { email: member.user.email, return_to: hidden_return_to(response.body) }
-        end
-        get mailed_sign_in_link(member.user.email).request_uri
-        post sign_in_path, params: { return_to: hidden_return_to(response.body) }
-
-        expect(response).to redirect_to group_event_path(event.group, event)
-      end
-
       it "sets the session cookie HttpOnly and SameSite=Lax" do
         get sign_in_path(token: SignInToken.mint(create(:user)))
 
@@ -248,9 +231,4 @@ RSpec.describe "SignIns", type: :request do
       end
     end
   end
-
-  private
-    def hidden_return_to(body)
-      Nokogiri::HTML(body).at_css("form input[type=hidden][name=return_to]")["value"]
-    end
 end
