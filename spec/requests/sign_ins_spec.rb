@@ -114,14 +114,28 @@ RSpec.describe "SignIns", type: :request do
       # form, because the link's query string and the button's hidden field are both anybody's to
       # write, so this is the hop the guard has to hold at. The backslash form is one browsers read
       # as `//`.
-      [ "https://other.example/x", "//other.example", "/\\other.example" ].each do |destination|
-        it "lands on the root page for #{destination}, which is not a path inside the application" do
-          get sign_in_path(token: SignInToken.mint(create(:user)))
+      it "lands on the root page for a URL on another host" do
+        get sign_in_path(token: SignInToken.mint(create(:user)))
 
-          post sign_in_path, params: { return_to: destination }
+        post sign_in_path, params: { return_to: "https://other.example/x" }
 
-          expect(response).to redirect_to root_url
-        end
+        expect(response).to redirect_to root_url
+      end
+
+      it "lands on the root page for a protocol-relative URL" do
+        get sign_in_path(token: SignInToken.mint(create(:user)))
+
+        post sign_in_path, params: { return_to: "//other.example" }
+
+        expect(response).to redirect_to root_url
+      end
+
+      it "lands on the root page for a path a browser reads as another host" do
+        get sign_in_path(token: SignInToken.mint(create(:user)))
+
+        post sign_in_path, params: { return_to: "/\\other.example" }
+
+        expect(response).to redirect_to root_url
       end
 
       # #430 AC1 across every hop, through the real controllers and the delivered mail, because the
