@@ -258,5 +258,33 @@ RSpec.describe "The group form", type: :system do
       expect(page).to paint "button[data-action='clipboard#copy']"
       expect(page).to be_accessible
     end
+
+    it "paints a link that is on in light, with no accessibility violations" do
+      member = create(:member, :active, :owner)
+      JoinLink.mint(member.group)
+      sign_in_as member.user
+      prefer_colour_scheme :light
+      resize_to ViewportHelper::MOBILE
+
+      visit edit_group_path(member.group)
+
+      expect(rendered_colour_scheme).to eq "light"
+      expect(page).to paint "form[action='#{group_join_link_path(member.group)}'] button.btn:not(.btn-ghost)"
+      expect(page).to be_accessible
+    end
+
+    it "paints a link that is on in dark, with no accessibility violations" do
+      member = create(:member, :active, :owner)
+      JoinLink.mint(member.group)
+      sign_in_as member.user
+      prefer_colour_scheme :dark
+      resize_to ViewportHelper::MOBILE
+
+      visit edit_group_path(member.group)
+
+      expect(rendered_colour_scheme).to eq "dark"
+      expect(page).to paint "form[action='#{group_join_link_path(member.group)}'] button.btn:not(.btn-ghost)"
+      expect(page).to be_accessible
+    end
   end
 end
