@@ -23,3 +23,6 @@
           detached: true %>
   <% end %>
 <% end %>
+
+<%# WHY: beneath the form rather than inside it, since its buttons are forms of their own. %>
+<%= render "groups/join_link", group: @group, link_url: flash[:join_link_url] %>
