@@ -17,10 +17,7 @@ module Authentication
       resume_session
     end
 
-    # The page to land on after signing in, as it arrived in this request, or `nil` when it is not a
-    # path inside the application. `url_from` is Rails' open-redirect guard, and it also answers
-    # `nil` for a nested `return_to[a]=b`, which arrives as parameters rather than a string. Every
-    # hop reads it through here, so the form and the link never carry a value the redirect refuses.
+    # WHY: every hop reads the destination through Rails' open-redirect guard, so the form, the mail and the redirect all carry the same value: a path inside the application or a URL on this host, and `nil` for anything else, a nested `return_to[a]=b` included.
     def return_to
       url_from(params[:return_to])
     end

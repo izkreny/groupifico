@@ -32,9 +32,7 @@ class SignInsController < ApplicationController
 
     start_new_session_for user
 
-    # Checked again here, at the last hop, because the button's hidden field is anybody's to write.
-    # A value that is not a path inside the application, and no value at all, lands on the root.
-    # `request_authentication` carries why it never touches the browser session.
+    # WHY: checked again at the last hop, because the button's hidden field is anybody's to write; anything but a path inside the application or a URL on this host lands on the root, and `request_authentication` says why the destination never touches the browser session.
     redirect_to return_to || root_url
   rescue SignInToken::InvalidToken
     redirect_to new_session_path(return_to:), alert: INVALID_LINK
