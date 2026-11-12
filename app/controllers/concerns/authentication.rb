@@ -17,7 +17,6 @@ module Authentication
       resume_session
     end
 
-    # WHY: every hop reads the destination through Rails' open-redirect guard, so the form, the mail and the redirect all carry the same value: a path inside the application or a URL on this host, and `nil` for anything else, a nested `return_to[a]=b` included.
     def return_to
       url_from(params[:return_to])
     end
