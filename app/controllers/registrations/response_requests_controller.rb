@@ -15,7 +15,7 @@ class Registrations::ResponseRequestsController < ApplicationController
       notice = if @registration.request_response_again
         "#{member.full_name}'s response was requested again."
       elsif !@registration.request_response
-        "#{member.full_name}'s response was already requested."
+        "#{member.full_name} has already answered, so no response was requested."
       end
       redirect_back_or_to group_event_path(@group, @registration.event), status: :see_other, notice:
     elsif member.active?
