@@ -192,19 +192,45 @@ RSpec.describe MemberPolicy, type: :policy do
       end
     end
 
-    %i[ create? update? destroy? ].each do |rule|
-      describe_rule rule do
-        failed "for an owner, because leaving pending is never a member form's write" do
-          let(:actor) { create(:member, :owner, group:) }
-        end
+    describe_rule :create? do
+      failed "for an owner, who may not add somebody as pending through the member form" do
+        let(:actor) { create(:member, :owner, group:) }
+      end
 
-        failed "for a members administrator" do
-          let(:actor) { create(:member, :members_administrator, group:) }
-        end
+      failed "for a members administrator" do
+        let(:actor) { create(:member, :members_administrator, group:) }
+      end
 
-        failed "for an administrator" do
-          let(:actor) { create(:member, :administrator, group:) }
-        end
+      failed "for an administrator" do
+        let(:actor) { create(:member, :administrator, group:) }
+      end
+    end
+
+    describe_rule :update? do
+      failed "for an owner, who may not change a pending member through the member form" do
+        let(:actor) { create(:member, :owner, group:) }
+      end
+
+      failed "for a members administrator" do
+        let(:actor) { create(:member, :members_administrator, group:) }
+      end
+
+      failed "for an administrator" do
+        let(:actor) { create(:member, :administrator, group:) }
+      end
+    end
+
+    describe_rule :destroy? do
+      failed "for an owner, who may not remove a pending member through the member form" do
+        let(:actor) { create(:member, :owner, group:) }
+      end
+
+      failed "for a members administrator" do
+        let(:actor) { create(:member, :members_administrator, group:) }
+      end
+
+      failed "for an administrator" do
+        let(:actor) { create(:member, :administrator, group:) }
       end
     end
 
