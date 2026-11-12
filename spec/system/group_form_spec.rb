@@ -204,6 +204,19 @@ RSpec.describe "The group form", type: :system do
       expect(page.evaluate_async_script("navigator.clipboard.readText().then(arguments[0])")).to eq link
     end
 
+    it "says so when the browser refuses the copy" do
+      member = create(:member, :active, :owner)
+      JoinLink.mint(member.group)
+      sign_in_as member.user
+
+      visit edit_group_path(member.group)
+      # WHY: denied in the browser context Cuprite opened for this session, for the reason the copy example gives.
+      page.driver.browser.page.command("Browser.setPermission", origin: page.evaluate_script("location.origin"), browserContextId: page.driver.browser.page.context_id, permission: { name: "clipboard-write" }, setting: "denied")
+      click_on "Copy"
+
+      expect(page).to have_css "[role='status']", text: "Couldn't copy. Select the link and copy it yourself."
+    end
+
     # WHY: #445 AC3, walked in the browser: Regenerate lands back on the edit screen showing a link other than the one it retired.
     it "shows a new link once regenerated" do
       member = create(:member, :active, :owner)

@@ -4,7 +4,11 @@ export default class extends Controller {
   static targets = [ "source", "status" ]
 
   async copy() {
-    await navigator.clipboard.writeText(this.sourceTarget.value)
-    this.statusTarget.textContent = "Copied"
+    try {
+      await navigator.clipboard.writeText(this.sourceTarget.value)
+      this.statusTarget.textContent = "Copied"
+    } catch {
+      this.statusTarget.textContent = "Couldn't copy. Select the link and copy it yourself."
+    }
   }
 }
