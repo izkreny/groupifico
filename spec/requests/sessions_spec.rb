@@ -27,6 +27,12 @@ RSpec.describe "Sessions", type: :request do
         expect(Nokogiri::HTML(response.body).at_css("input[type=hidden][name=return_to]")["value"]).to eq "/groups/1/events/2"
       end
 
+      it "renders a form opened with a destination that is not a string, carrying none" do
+        get new_session_path(return_to: { a: "b" })
+
+        expect(Nokogiri::HTML(response.body).at_css("input[type=hidden][name=return_to]")["value"]).to be_blank
+      end
+
       # `www.` because only `request.domain` collapses it onto the branded domain, which `Brand` never sees.
       it "names the Chorifico brand in its application name and its masthead on www.chorifico.com" do
         host! "www.chorifico.com"

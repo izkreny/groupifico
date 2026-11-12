@@ -41,6 +41,14 @@ RSpec.describe "SignIns", type: :request do
         expect(Nokogiri::HTML(response.body).at_css("form input[type=hidden][name=return_to]")["value"]).to eq "/groups/1/events/2"
       end
 
+      # #430 AC2: a nested `return_to[a]=b` arrives as parameters rather than a string, and must land
+      # on the root like any other value that is not a path, never answer 500.
+      it "renders a link whose destination is not a string, carrying none on its button" do
+        get sign_in_path(token: SignInToken.mint(create(:user)), return_to: { a: "b" })
+
+        expect(Nokogiri::HTML(response.body).at_css("form input[type=hidden][name=return_to]")["value"]).to be_blank
+      end
+
       it "refuses a request carrying no token at all" do
         get sign_in_path
 

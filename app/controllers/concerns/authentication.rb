@@ -3,7 +3,7 @@ module Authentication
 
   included do
     before_action :require_authentication
-    helper_method :authenticated?
+    helper_method :authenticated?, :return_to
   end
 
   class_methods do
@@ -15,6 +15,14 @@ module Authentication
   private
     def authenticated?
       resume_session
+    end
+
+    # The page to land on after signing in, as it arrived in this request, or `nil` when it is not a
+    # path inside the application. `url_from` is Rails' open-redirect guard, and it also answers
+    # `nil` for a nested `return_to[a]=b`, which arrives as parameters rather than a string. Every
+    # hop reads it through here, so the form and the link never carry a value the redirect refuses.
+    def return_to
+      url_from(params[:return_to])
     end
 
     def require_authentication
