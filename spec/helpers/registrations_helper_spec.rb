@@ -31,6 +31,13 @@ RSpec.describe RegistrationsHelper, type: :helper do
       expect(helper.members_available(event.group, event)).to contain_exactly(event.creator)
     end
 
+    it "omits a pending member, who has not been let into the group yet" do
+      event = create(:event)
+      create(:member, :pending, group: event.group)
+
+      expect(helper.members_available(event.group, event)).to contain_exactly(event.creator)
+    end
+
     # The paused member is created first, so insertion order alone would list them first and an
     # unordered relation passes this example for the wrong reason.
     it "orders the tickable members before the paused ones" do

@@ -225,6 +225,14 @@ RSpec.describe Group, type: :model do
 
       expect(group.current_members.count).to eq 2
     end
+
+    it "leaves out a pending member, who has not been let in yet" do
+      group  = create(:group)
+      active = create(:member, :active, group:)
+      create(:member, :pending, group:)
+
+      expect(group.current_members).to contain_exactly(active)
+    end
   end
 
   describe "#owned_by_anyone_but?" do
@@ -242,6 +250,14 @@ RSpec.describe Group, type: :model do
       create(:member, :owner, group:)
 
       expect(group.owned_by_anyone_but?(owner)).to be true
+    end
+
+    it "answers false when the only other holder of the owner role is pending, who has not been let in" do
+      group = create(:group)
+      owner = create(:member, :owner, group:)
+      create(:member, :owner, :pending, group:)
+
+      expect(group.owned_by_anyone_but?(owner)).to be false
     end
   end
 end

@@ -39,6 +39,10 @@ RSpec.describe GroupPolicy, type: :policy do
     let(:context) { { user: member.user } }
 
     succeed "for a member holding no role, who may see the group and its details"
+
+    failed "for a pending member, who has not been let in yet, even holding the owner role" do
+      let(:member) { create(:member, :pending, :owner) }
+    end
   end
 
   describe_rule :update? do
@@ -135,6 +139,16 @@ RSpec.describe GroupPolicy, type: :policy do
 
       expect(scoped).to contain_exactly(kept)
       expect(scoped).not_to include left
+    end
+
+    it "excludes a group the user is pending in" do
+      user = create(:user)
+      create(:member, :pending, user:)
+      kept = create(:member, :active, user:).group
+
+      scoped = described_class.new(nil, user:).apply_scope(Group.all, type: :active_record_relation)
+
+      expect(scoped).to contain_exactly(kept)
     end
   end
 end

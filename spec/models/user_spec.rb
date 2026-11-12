@@ -10,6 +10,18 @@ RSpec.describe User, type: :model do
     it { is_expected.to have_many(:feedbacks).dependent(:destroy) }
   end
 
+  describe "#current_groups" do
+    it "holds the groups the user is active or paused in, and neither one they left nor one they are pending in" do
+      user    = create(:user)
+      active  = create(:member, :active, user:).group
+      paused  = create(:member, :paused, user:).group
+      create(:member, :inactive, user:)
+      create(:member, :pending, user:)
+
+      expect(user.current_groups).to contain_exactly(active, paused)
+    end
+  end
+
   describe "(validations)" do
     it { is_expected.to normalize(:email).from(" NAME@XYZ.COM\t\n").to("name@xyz.com") }
     it { is_expected.to validate_presence_of(:email) }
@@ -57,6 +69,13 @@ RSpec.describe User, type: :model do
     it "answers a group whose other owner is paused, who cannot restore themselves" do
       member = create(:member, :owner)
       create(:member, :owner, :paused, group: member.group)
+
+      expect(member.user.solely_owned_groups).to contain_exactly(member.group)
+    end
+
+    it "answers a group whose other holder of the owner role is pending, who has not been let in" do
+      member = create(:member, :owner)
+      create(:member, :owner, :pending, group: member.group)
 
       expect(member.user.solely_owned_groups).to contain_exactly(member.group)
     end

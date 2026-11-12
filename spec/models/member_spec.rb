@@ -45,7 +45,7 @@ RSpec.describe Member, type: :model do
   end
 
   describe "(enums)" do
-    it { is_expected.to define_enum_for(:status).with_values(active: 0, paused: 1, inactive: 2).with_default(:active).validating }
+    it { is_expected.to define_enum_for(:status).with_values(pending: 3, active: 0, paused: 1, inactive: 2).with_default(:active).validating }
   end
 
   describe "#can_manage?" do
@@ -285,6 +285,21 @@ RSpec.describe Member, type: :model do
       member = create(:member, :active)
 
       expect(member.update(status: :paused)).to be true
+    end
+  end
+
+  describe "the pending status" do
+    it "is where a membership may start" do
+      member = build(:member, :pending)
+
+      expect(member.save).to be true
+    end
+
+    it "refuses an update that moves a member into it" do
+      member = create(:member, :active)
+
+      expect(member.update(status: :pending)).to be false
+      expect(member.errors[:status]).to eq [ "cannot be changed to pending" ]
     end
   end
 

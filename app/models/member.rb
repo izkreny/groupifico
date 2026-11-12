@@ -40,12 +40,19 @@ class Member < ApplicationRecord
   has_many :created_events, class_name: "Event", foreign_key: "creator_id", inverse_of: :creator
   has_many :managed_events, class_name: "Event", foreign_key: "manager_id", inverse_of: :manager
 
-  enum :status, %i[ active paused inactive ], default: :active, validate: true
+  # WHY: each value names its stored integer, so the declaration can read in lifecycle order while the integers already in the column keep their meaning. `order(:status)` still sorts by those integers, `active` before `paused`.
+  enum :status, { pending: 3, active: 0, paused: 1, inactive: 2 }, default: :active, validate: true
+
+  # The members who belong to their group: `inactive` has left and `pending` has not been let in yet, so neither is one of the group's people nor reaches anything of it. One spelling, because the user's groups, the group's member count and the event list form all ask it, and a status added later has one place to be counted in or out.
+  scope :current, -> { where(status: %i[ active paused ]) }
 
   # The roles join, in one place, because both ends of the ownership invariant ask it: the group,
   # for whether anyone else still owns it, and the user, for which groups would be left without an
   # owner. Two spellings of one join are two places a later role change has to find.
   scope :owners, -> { joins(:roles).where(roles: { name: Role::OWNER }) }
+
+  # The members `#can_manage?` answers true for, asked in SQL, for a policy scope that cannot load each membership's roles.
+  scope :managing, ->(module_name) { joins(:roles).where(roles: { name: Role.granting(module_name) }) }
 
   scope :preloaded, -> { includes(:roles, :user, :profile, :group) }
 
@@ -83,6 +90,9 @@ class Member < ApplicationRecord
   # holds `can_manage?(:members)`. A validation rather than a `throw :abort` because this one has a
   # form to render the message on.
   validate :group_keeps_an_active_owner, on: :update
+
+  # WHY: `pending` is where a request to join starts and nothing else, so no update moves a member into it. A member with registrations set back to pending would keep their places on rosters every member reads, which is the one thing a pending member must never be seen on.
+  validate :not_moved_into_pending, on: :update
 
   # A membership is created for an address, which is how an owner or an administrator names
   # somebody they are adding. An address no account holds yet builds the user, and `belongs_to`
@@ -151,6 +161,10 @@ class Member < ApplicationRecord
       return if group.owned_by_anyone_but?(self)
 
       errors.add(:status, "cannot leave the group without an active owner")
+    end
+
+    def not_moved_into_pending
+      errors.add(:status, "cannot be changed to pending") if status_changed? && pending?
     end
 
     def ensure_the_group_keeps_an_owner

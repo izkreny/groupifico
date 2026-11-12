@@ -161,6 +161,148 @@ RSpec.describe MemberPolicy, type: :policy do
     end
   end
 
+  # The row that gives a pending member's sight to the columns that add a person, and the paragraph that leaves every column without a write on one.
+  describe "a pending member" do
+    let(:group)   { create(:group) }
+    let(:actor)   { create(:member, group:) }
+    let(:record)  { create(:member, :pending, group:) }
+    let(:context) { { user: actor.user } }
+
+    describe_rule :show? do
+      failed "for a member holding no role"
+
+      succeed "for an owner" do
+        let(:actor) { create(:member, :owner, group:) }
+      end
+
+      succeed "for a paused owner, because seeing a pending member is a read" do
+        let(:actor) { create(:member, :paused, :owner, group:) }
+      end
+
+      succeed "for an administrator" do
+        let(:actor) { create(:member, :administrator, group:) }
+      end
+
+      succeed "for a members administrator" do
+        let(:actor) { create(:member, :members_administrator, group:) }
+      end
+
+      succeed "for a paused members administrator, because seeing a pending member is a read" do
+        let(:actor) { create(:member, :paused, :members_administrator, group:) }
+      end
+
+      failed "for an events administrator, whose column the row leaves blank" do
+        let(:actor) { create(:member, :events_administrator, group:) }
+      end
+    end
+
+    describe_rule :create? do
+      failed "for an owner, who may not add somebody as pending through the member form" do
+        let(:actor) { create(:member, :owner, group:) }
+      end
+
+      failed "for a members administrator" do
+        let(:actor) { create(:member, :members_administrator, group:) }
+      end
+
+      failed "for an administrator" do
+        let(:actor) { create(:member, :administrator, group:) }
+      end
+    end
+
+    describe_rule :update? do
+      failed "for an owner, who may not change a pending member through the member form" do
+        let(:actor) { create(:member, :owner, group:) }
+      end
+
+      failed "for a members administrator" do
+        let(:actor) { create(:member, :members_administrator, group:) }
+      end
+
+      failed "for an administrator" do
+        let(:actor) { create(:member, :administrator, group:) }
+      end
+    end
+
+    describe_rule :destroy? do
+      failed "for an owner, who may not remove a pending member through the member form" do
+        let(:actor) { create(:member, :owner, group:) }
+      end
+
+      failed "for a members administrator" do
+        let(:actor) { create(:member, :members_administrator, group:) }
+      end
+
+      failed "for an administrator" do
+        let(:actor) { create(:member, :administrator, group:) }
+      end
+    end
+
+    describe_rule :edit? do
+      failed "for an owner, who is offered no edit form for a pending member" do
+        let(:actor) { create(:member, :owner, group:) }
+      end
+
+      failed "for a members administrator, who may not open a pending member's edit form" do
+        let(:actor) { create(:member, :members_administrator, group:) }
+      end
+
+      failed "for an administrator, who may not open a pending member's edit form" do
+        let(:actor) { create(:member, :administrator, group:) }
+      end
+    end
+
+    describe "the relation scope" do
+      def scoped_for(actor) = described_class.new(nil, user: actor.user).apply_scope(Member.all, type: :active_record_relation)
+
+      it "lists the pending member to an owner of their group" do
+        owner = create(:member, :owner, group:)
+
+        expect(scoped_for(owner)).to include record
+      end
+
+      it "lists the pending member to a paused owner, because the list is a read" do
+        owner = create(:member, :paused, :owner, group:)
+
+        expect(scoped_for(owner)).to include record
+      end
+
+      it "lists the pending member to an administrator of their group" do
+        administrator = create(:member, :administrator, group:)
+
+        expect(scoped_for(administrator)).to include record
+      end
+
+      it "lists the pending member to a members administrator of their group" do
+        members_administrator = create(:member, :members_administrator, group:)
+
+        expect(scoped_for(members_administrator)).to include record
+      end
+
+      it "hides the pending member from an events administrator, and keeps the rest of the group listed" do
+        events_administrator = create(:member, :events_administrator, group:)
+        listed = create(:member, group:)
+
+        expect(scoped_for(events_administrator)).to include(listed)
+        expect(scoped_for(events_administrator)).not_to include(record)
+      end
+
+      it "hides the pending member from a member holding no role, and keeps the rest of the group listed" do
+        listed = create(:member, group:)
+
+        expect(scoped_for(actor)).to include(listed)
+        expect(scoped_for(actor)).not_to include(record)
+      end
+
+      it "hides the pending member from an owner of another group the same user is in" do
+        owner = create(:member, :owner)
+        create(:member, user: owner.user, group:)
+
+        expect(scoped_for(owner)).not_to include record
+      end
+    end
+  end
+
   describe "the relation scope" do
     it "excludes members of a group the user has left" do
       user = create(:user)
