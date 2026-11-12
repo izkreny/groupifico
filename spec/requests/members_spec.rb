@@ -1179,7 +1179,7 @@ RSpec.describe "Members", type: :request do
     end
   end
 
-  # A pending member is the owners' alone to see, and nobody changes or removes one through the member form, per docs/AUTHORIZATION.md.
+  # A pending member is seen only by the columns that add a person, and nobody changes or removes one through the member form, per docs/AUTHORIZATION.md.
   describe "a pending member" do
     def row_of(member) = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(member, :row)}")
 
@@ -1268,41 +1268,52 @@ RSpec.describe "Members", type: :request do
     end
 
     context "when signed in as a members administrator" do
-      it "lists no pending member, with or without the members who have left" do
+      it "lists them tagged pending, with no edit link" do
         actor   = create(:member, :active, :members_administrator)
+        pending = create(:member, :pending, group: actor.group)
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group)
+
+        expect(row_of(pending).css(".badge").map(&:text)).to include "pending"
+        expect(response.body).not_to include edit_group_member_path(actor.group, pending)
+      end
+
+      it "shows their page" do
+        actor   = create(:member, :active, :members_administrator)
+        pending = create(:member, :pending, group: actor.group)
+        sign_in_as(actor.user)
+
+        get group_member_path(actor.group, pending)
+
+        expect(response.body).to include pending.email
+      end
+
+      it "refuses to change or remove them, leaving them pending" do
+        actor   = create(:member, :active, :members_administrator)
+        pending = create(:member, :pending, group: actor.group)
+        sign_in_as(actor.user)
+
+        patch group_member_path(actor.group, pending), params: { member: { status: "active" } }
+        expect(response).to redirect_to root_path
+
+        delete group_member_path(actor.group, pending)
+        expect(response).to redirect_to root_path
+        expect(pending.reload).to be_pending
+      end
+    end
+
+    context "when signed in as an events administrator" do
+      it "neither lists them nor shows their page" do
+        actor   = create(:member, :active, :events_administrator)
         pending = create(:member, :pending, group: actor.group)
         sign_in_as(actor.user)
 
         get group_members_path(actor.group)
         expect(row_of(pending)).to be_nil
 
-        get group_members_path(actor.group, inactive: 1)
-        expect(row_of(pending)).to be_nil
-      end
-
-      it "answers their page and their edit form as if they did not exist" do
-        actor   = create(:member, :active, :members_administrator)
-        pending = create(:member, :pending, group: actor.group)
-        sign_in_as(actor.user)
-
         get group_member_path(actor.group, pending)
         expect(response).to have_http_status :not_found
-
-        get edit_group_member_path(actor.group, pending)
-        expect(response).to have_http_status :not_found
-      end
-
-      it "answers a change and a removal as if they did not exist, leaving them pending" do
-        actor   = create(:member, :active, :members_administrator)
-        pending = create(:member, :pending, group: actor.group)
-        sign_in_as(actor.user)
-
-        patch group_member_path(actor.group, pending), params: { member: { status: "active" } }
-        expect(response).to have_http_status :not_found
-
-        delete group_member_path(actor.group, pending)
-        expect(response).to have_http_status :not_found
-        expect(pending.reload).to be_pending
       end
     end
 

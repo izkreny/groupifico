@@ -161,7 +161,7 @@ RSpec.describe MemberPolicy, type: :policy do
     end
   end
 
-  # The row that gives owners alone the sight of a pending member, and the paragraph that leaves every column without a write on one.
+  # The row that gives a pending member's sight to the columns that add a person, and the paragraph that leaves every column without a write on one.
   describe "a pending member" do
     let(:group)   { create(:group) }
     let(:actor)   { create(:member, group:) }
@@ -179,15 +179,19 @@ RSpec.describe MemberPolicy, type: :policy do
         let(:actor) { create(:member, :paused, :owner, group:) }
       end
 
-      failed "for an administrator" do
+      succeed "for an administrator" do
         let(:actor) { create(:member, :administrator, group:) }
       end
 
-      failed "for a members administrator" do
+      succeed "for a members administrator" do
         let(:actor) { create(:member, :members_administrator, group:) }
       end
 
-      failed "for an events administrator" do
+      succeed "for a paused members administrator, because seeing a pending member is a read" do
+        let(:actor) { create(:member, :paused, :members_administrator, group:) }
+      end
+
+      failed "for an events administrator, whose column the row leaves blank" do
         let(:actor) { create(:member, :events_administrator, group:) }
       end
     end
@@ -263,20 +267,16 @@ RSpec.describe MemberPolicy, type: :policy do
         expect(scoped_for(owner)).to include record
       end
 
-      it "hides the pending member from an administrator, and keeps the rest of the group listed" do
+      it "lists the pending member to an administrator of their group" do
         administrator = create(:member, :administrator, group:)
-        listed = create(:member, group:)
 
-        expect(scoped_for(administrator)).to include(listed)
-        expect(scoped_for(administrator)).not_to include(record)
+        expect(scoped_for(administrator)).to include record
       end
 
-      it "hides the pending member from a members administrator, and keeps the rest of the group listed" do
+      it "lists the pending member to a members administrator of their group" do
         members_administrator = create(:member, :members_administrator, group:)
-        listed = create(:member, group:)
 
-        expect(scoped_for(members_administrator)).to include(listed)
-        expect(scoped_for(members_administrator)).not_to include(record)
+        expect(scoped_for(members_administrator)).to include record
       end
 
       it "hides the pending member from an events administrator, and keeps the rest of the group listed" do

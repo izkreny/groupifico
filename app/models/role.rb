@@ -55,8 +55,11 @@ class Role < ApplicationRecord
   # Where `owner` implies `administrator`, and both imply every module role. One row per role a
   # member actually holds, and the implication lives here instead.
   def grants?(module_name)
-    name.in?([ "owner", "administrator", "#{module_name}_administrator" ])
+    name.in?(self.class.granting(module_name))
   end
+
+  # The role names that grant a module, for a query that has to ask in SQL what `#grants?` asks of a loaded row.
+  def self.granting(module_name) = [ OWNER, "administrator", "#{module_name}_administrator" ]
 
   # The question above cannot ask this one. It admits `administrator` for every module, so no
   # module name distinguishes the two, and several rows of the capability table are the owner's

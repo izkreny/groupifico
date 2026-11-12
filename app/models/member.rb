@@ -51,6 +51,9 @@ class Member < ApplicationRecord
   # owner. Two spellings of one join are two places a later role change has to find.
   scope :owners, -> { joins(:roles).where(roles: { name: Role::OWNER }) }
 
+  # The members `#can_manage?` answers true for, asked in SQL, for a policy scope that cannot load each membership's roles.
+  scope :managing, ->(module_name) { joins(:roles).where(roles: { name: Role.granting(module_name) }) }
+
   scope :preloaded, -> { includes(:roles, :user, :profile, :group) }
 
   # Members with no registration on the event, never added or taken off. The whole of what it
