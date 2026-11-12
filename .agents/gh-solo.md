@@ -50,7 +50,7 @@ Each section is a Before/After table with a desktop row at 1280×800 and a phone
 
 A criterion nothing on screen can show, such as an absence or an email, gets a section with no image that names the spec example proving it. Screens the branch changed outside any criterion go in a closing "Also changed" section.
 
-The comment is posted only once the review round has finished, which at the end of an `auto` or `go` chain means after the whole chain, never during implementation or before the reviewer has run. A screen that a later fix changes is taken again, and the comment carries the new image.
+The comment is posted only once the review round has finished, which at the end of an `auto` or `go` chain means after the whole chain, never during implementation or before the reviewer has run. A screen that a later fix changes is taken again, and a new comment carrying every section replaces the earlier one, which is deleted with `gh api -X DELETE repos/{owner}/{repo}/issues/comments/<comment-id>`.
 
 The images are attached with `gh`'s `--attach` flag on `gh pr comment`, which rewrites a `![alt](./before.png)` reference in the `--body-file` to the uploaded file's URL, resolving the path against the body file's directory.
 
