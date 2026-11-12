@@ -449,6 +449,45 @@ RSpec.describe "The event detail", type: :system do
     expect(page).to have_css "button[aria-label='Response requested from Ben Cole']"
   end
 
+  # WHY: #431 AC1, what the dialog says and carries is `spec/requests/events_spec.rb`'s; that the tinted plane opens it rather than posting is what a browser adds.
+  it "opens the Send again dialog from a requested row's tinted plane" do
+    owner, event, = rostered_event
+    sign_in_as owner.user
+
+    open_carlas_request(event)
+
+    expect(page).to have_css "dialog[open]", text: "Ask Carla Duke again?"
+    expect(page).to be_accessible
+  end
+
+  it "closes the dialog on Close without sending anything" do
+    owner, event, = rostered_event
+    sign_in_as owner.user
+    open_carlas_request(event)
+    record_what_gets_sent
+
+    within("dialog[open]") { click_button "Close" }
+
+    expect(page).to have_no_css "dialog[open]"
+    expect(page.evaluate_script("window.sent")).to eq []
+  end
+
+  # WHY: #431 AC2. The row is asked a day before the resend, so the reopened dialog's time can only be the resend's; `travel_to` stubs the clock process-wide, so the server's thread prints it too.
+  it "asks again from the dialog, lands back on the event, and the reopened dialog shows the new time" do
+    owner, event, = travel_to(Time.zone.parse("2026-12-01 09:00")) { rostered_event }
+
+    travel_to Time.zone.parse("2026-12-02 14:05") do
+      sign_in_as owner.user
+      open_carlas_request(event)
+      within("dialog[open]") { click_button "Send again" }
+
+      expect(page).to have_text "Carla Duke's response was requested again."
+      expect(page).to have_current_path group_event_path(event.group, event)
+      click_button "Response requested from Carla Duke"
+      expect(page).to have_css "dialog[open]", text: "The last request went out Wed 2 Dec · 14:05."
+    end
+  end
+
   it "requests the rest and lands back on the event" do
     owner, event, = rostered_event
     sign_in_as owner.user
@@ -553,6 +592,21 @@ RSpec.describe "The event detail", type: :system do
   def open_roster(sorted_by: nil)
     find("summary", text: "Who’s coming").click
     click_button sorted_by if sorted_by
+  end
+
+  # Carla is `rostered_event`'s requested row, so her tinted plane is the one that opens the Send again dialog.
+  def open_carlas_request(event)
+    visit group_event_path(event.group, event)
+    open_roster
+    click_button "Response requested from Carla Duke"
+  end
+
+  # WHY: #431 AC3. The submit event fires inside the click, so recording it is deterministic where reading the row back would race a request still in flight; a `method="dialog"` form is how the dialog closes, so only another form counts as sending.
+  def record_what_gets_sent
+    page.execute_script <<~JAVASCRIPT
+      window.sent = []
+      document.addEventListener("submit", event => { if (event.target.method !== "dialog") window.sent.push(event.target.action) }, true)
+    JAVASCRIPT
   end
 
   # Each sorted-header colour against a probe carrying the class the app uses for it elsewhere, and the gaps you see, name to up arrow and up arrow to down arrow, glyph to glyph and rounded to the pixel.
