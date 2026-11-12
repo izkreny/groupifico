@@ -49,6 +49,18 @@ RSpec.describe "SignIns", type: :request do
         expect(Nokogiri::HTML(response.body).at_css("form input[type=hidden][name=return_to]")["value"]).to be_blank
       end
 
+      # #430 AC1: an expired link sends the member back to ask for another, and that one has to carry
+      # the destination the expired one did.
+      it "keeps the destination on the form it refuses an expired link to" do
+        token = SignInToken.mint(create(:user))
+
+        travel_to SignInToken::EXPIRES_IN.from_now + 1.second do
+          get sign_in_path(token:, return_to: "/groups/1/events/2")
+        end
+
+        expect(response).to redirect_to new_session_path(return_to: "/groups/1/events/2")
+      end
+
       it "refuses a request carrying no token at all" do
         get sign_in_path
 
@@ -169,6 +181,25 @@ RSpec.describe "SignIns", type: :request do
       # behind on the failure path would hand a second attempt to whoever gets the session next.
       # The failure is staged by expiry rather than by a bogus token, since the GET now refuses
       # anything that resolves to nothing and a bogus one never reaches the session at all.
+      it "keeps the destination on the form when the link expires before the button is pressed" do
+        get sign_in_path(token: SignInToken.mint(create(:user)))
+
+        travel_to SignInToken::EXPIRES_IN.from_now + 1.second do
+          post sign_in_path, params: { return_to: "/groups/1/events/2" }
+        end
+
+        expect(response).to redirect_to new_session_path(return_to: "/groups/1/events/2")
+      end
+
+      it "keeps the destination on the form when the rate limit refuses a redemption" do
+        10.times { post sign_in_path }
+
+        post sign_in_path, params: { return_to: "/groups/1/events/2" }
+
+        expect(response).to redirect_to new_session_path(return_to: "/groups/1/events/2")
+        expect(flash[:alert]).to eq("Try again later.")
+      end
+
       it "drops the token from the browser session on the failure path too" do
         get sign_in_path(token: SignInToken.mint(create(:user)))
 
