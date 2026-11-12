@@ -88,6 +88,9 @@ class Member < ApplicationRecord
   # form to render the message on.
   validate :group_keeps_an_active_owner, on: :update
 
+  # WHY: `pending` is where a request to join starts and nothing else, so no update moves a member into it. A member with registrations set back to pending would keep their places on rosters every member reads, which is the one thing a pending member must never be seen on.
+  validate :not_moved_into_pending, on: :update
+
   # A membership is created for an address, which is how an owner or an administrator names
   # somebody they are adding. An address no account holds yet builds the user, and `belongs_to`
   # saves it inside this record's own save, so the user and the membership land together or not
@@ -155,6 +158,10 @@ class Member < ApplicationRecord
       return if group.owned_by_anyone_but?(self)
 
       errors.add(:status, "cannot leave the group without an active owner")
+    end
+
+    def not_moved_into_pending
+      errors.add(:status, "cannot be changed to pending") if status_changed? && pending?
     end
 
     def ensure_the_group_keeps_an_owner

@@ -288,6 +288,21 @@ RSpec.describe Member, type: :model do
     end
   end
 
+  describe "the pending status" do
+    it "is where a membership may start" do
+      member = build(:member, :pending)
+
+      expect(member.save).to be true
+    end
+
+    it "refuses an update that moves a member into it" do
+      member = create(:member, :active)
+
+      expect(member.update(status: :pending)).to be false
+      expect(member.errors[:status]).to eq [ "cannot be changed to pending" ]
+    end
+  end
+
   it { is_expected.to delegate_method(:full_name).to(:profile) }
   it { is_expected.to delegate_method(:short_name).to(:profile) }
   it { is_expected.to delegate_method(:initials).to(:profile) }

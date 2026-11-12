@@ -947,6 +947,17 @@ RSpec.describe "Members", type: :request do
         expect(response).to have_http_status :unprocessable_content
       end
 
+      it "refuses a posted pending status, which the form never offers" do
+        actor  = create(:member, :active, :members_administrator)
+        member = create(:member, :active, group: actor.group)
+        sign_in_as(actor.user)
+
+        patch group_member_path(member.group, member), params: { member: { status: "pending" } }
+
+        expect(response).to have_http_status :unprocessable_content
+        expect(member.reload).to be_active
+      end
+
       it "ignores a posted group_id, leaving the membership in its own group" do
         actor  = create(:member, :active, :members_administrator)
         member = create(:member, group: actor.group)
