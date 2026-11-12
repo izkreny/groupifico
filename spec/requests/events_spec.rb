@@ -8,6 +8,15 @@ RSpec.describe "Events", type: :request do
 
         expect(response).to redirect_to new_session_path(return_to: request.fullpath)
       end
+
+      # #430: the destination is the whole page, so a member bounced from the past list returns to it.
+      it "keeps the query string in the destination it carries to the sign-in page" do
+        group = create(:group)
+
+        get group_events_path(group, scope: "past")
+
+        expect(response).to redirect_to new_session_path(return_to: "/groups/#{group.id}/events?scope=past")
+      end
     end
 
     context "when signed in as a non-member" do
