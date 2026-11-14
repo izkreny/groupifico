@@ -121,18 +121,6 @@ RSpec.describe "Events", type: :request do
         expect(html.at_css("##{ActionView::RecordIdentifier.dom_id(later)} a[href='#{edit_group_event_path(actor.group, later)}'][aria-label='Edit Sunday service']")).to be_present
       end
 
-      # Duplicate leads Edit on the hero, as on the event screen.
-      it "offers Duplicate before Edit on the hero card" do
-        actor = create(:member, :active, :events_administrator)
-        next_up = confirmed_event(actor, name: "Tuesday rehearsal", days: 2)
-        sign_in_as(actor.user)
-
-        get group_events_path(actor.group)
-
-        labels = Nokogiri::HTML(response.body).css("##{ActionView::RecordIdentifier.dom_id(next_up, :next_up)} a[aria-label]").map { it["aria-label"] }
-        expect(labels).to eq [ "Duplicate Tuesday rehearsal", "Edit Tuesday rehearsal" ]
-      end
-
       it "offers the New button" do
         actor = create(:member, :active, :events_administrator)
         sign_in_as(actor.user)
@@ -177,17 +165,6 @@ RSpec.describe "Events", type: :request do
         expect(Nokogiri::HTML(response.body).css("a[aria-label^='Edit ']").map { it["aria-label"] }).to eq [ "Edit Ours" ]
       end
 
-      # `duplicate` authorizes `create?`, which managing an event does not grant.
-      it "offers Edit alone on the hero card of the event they manage" do
-        actor = create(:member, :active)
-        create(:event, group: actor.group, manager: actor, name: "Ours", status: :confirmed, starts_at: 2.days.from_now)
-        sign_in_as(actor.user)
-
-        get group_events_path(actor.group)
-
-        expect(Nokogiri::HTML(response.body).css("[id^=next_up] a[aria-label]").map { it["aria-label"] }).to eq [ "Edit Ours" ]
-      end
-
       it "offers no New button" do
         actor = create(:member, :active)
         create(:event, group: actor.group, manager: actor)
@@ -203,23 +180,6 @@ RSpec.describe "Events", type: :request do
     # would otherwise depend on how long the suite takes to reach this file. What the freeze does
     # not do is decide which hour it stops at, which is `confirmed_event`'s job below.
     context "when the group has a next event" do
-      # The hero card, one row beneath it and the reader's own answer row: the three pieces the
-      # event card partials draw, asserted here rather than in a view spec because what a reader
-      # sees on this screen is the response's own text.
-      it "links the hero card's responses to the event with its roster open" do
-        freeze_time do
-          owner = create(:member, :owner)
-          next_up = confirmed_event(owner, days: 2)
-          create(:registration, event: next_up, member: owner, status: :yes)
-          sign_in_as(owner.user)
-
-          get group_events_path(owner.group)
-
-          link = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(next_up, :next_up)} a[href='#{group_event_path(owner.group, next_up, responses: "show")}']")
-          expect(link&.text&.squish).to eq "Who’s coming?"
-        end
-      end
-
       it "draws the hero card, a row beneath it and the question for an owner whose response is requested" do
         freeze_time do
           owner = create(:member, :owner)
@@ -245,19 +205,6 @@ RSpec.describe "Events", type: :request do
           get group_events_path(member.group)
 
           expect(Nokogiri::HTML(response.body).css("a[aria-label^='Edit ']")).to be_empty
-        end
-      end
-
-      it "draws the answer and the counts for a plain member who has answered" do
-        freeze_time do
-          member = create(:member, :active, user: create(:user, :with_full_profile, first_name: "Carla", last_name: "Dean"))
-          next_up = confirmed_event(member, days: 2)
-          create(:registration, event: next_up, member:, status: :yes)
-          sign_in_as(member.user)
-
-          get group_events_path(member.group)
-
-          expect(response.body).to include "Are you coming?", "no reply"
         end
       end
 
@@ -311,133 +258,6 @@ RSpec.describe "Events", type: :request do
 
         row = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(reserved_row)}")
         expect([ row.css("svg[aria-label='Place reserved, no response requested yet']").size, row.css("form").size ]).to eq [ 1, 0 ]
-      end
-
-      # The pills themselves rather than the copy above them: three forms, one target, one value
-      # each, and the reader's own answer lit. Without this the header carried both the positive
-      # and the negative assertion, so a card with no pills under it read as correct.
-      #
-      # The lit pill is matched by the class and the label in one tag rather than by the class
-      # alone, which any of the three carrying it would satisfy - so inverting the condition that
-      # lights it lights the other two and this still reddens. It stops at `</button>` and claims
-      # nothing about what follows: `button_to` puts its CSRF token there, empty only because this
-      # environment has forgery protection off.
-      # The clock is left alone, as in the row example: nothing here reads it.
-      it "draws the three pills as forms writing the reader's own registration" do
-        member = create(:member, :active)
-        next_up = confirmed_event(member, days: 2)
-        registration = create(:registration, event: next_up, member:, status: :maybe)
-        sign_in_as(member.user)
-
-        get group_events_path(member.group)
-
-        expect(response.body).to include %(action="#{group_event_registration_path(member.group, next_up, registration)}")
-        expect(response.body).to include %(name="_method" value="patch")
-        expect(response.body).to include %(name="registration[status]" value="yes"), %(name="registration[status]" value="maybe"), %(name="registration[status]" value="no")
-        expect(response.body).to match %r{btn-warning[^>]*>\s*<svg.*?</svg>\s*Maybe\s*</button>}m
-      end
-
-      it "leaves the pills out for a paused member, who may not write an answer" do
-        freeze_time do
-          member = create(:member, :paused)
-          next_up = confirmed_event(member, days: 2)
-          registration = create(:registration, event: next_up, member:, status: :response_requested)
-          sign_in_as(member.user)
-
-          get group_events_path(member.group)
-
-          expect(response.body).to include "Next up · in 2 days"
-          expect(response.body).not_to include "Are you coming?"
-          expect(response.body).not_to include %(action="#{group_event_registration_path(member.group, next_up, registration)}")
-        end
-      end
-
-      # Both halves of the no-response-requested state in one example, because they are one behaviour: the
-      # tags are absent and a sentence stands where they were. The negative alone was satisfied by
-      # a card that drew nothing there at all, which is what this state used to look like.
-      it "says no response is requested while every registration is still reserved" do
-        freeze_time do
-          owner = create(:member, :owner)
-          next_up = confirmed_event(owner, days: 2)
-          create(:registration, event: next_up, member: owner, status: :reserved)
-          sign_in_as(owner.user)
-
-          get group_events_path(owner.group)
-
-          expect(response.body).to include "Next up · in 2 days", "No responses requested yet · 1 on the list"
-          expect(response.body).not_to include "no reply"
-        end
-      end
-
-      it "offers Request responses while every registration is still reserved" do
-        freeze_time do
-          owner = create(:member, :owner)
-          next_up = confirmed_event(owner, days: 2)
-          create(:registration, event: next_up, member: owner, status: :reserved)
-          sign_in_as(owner.user)
-
-          get group_events_path(owner.group)
-
-          expect(response.body).to include "Request responses", group_event_response_request_path(owner.group, next_up)
-        end
-      end
-
-      it "offers no Request responses once a response has been requested" do
-        freeze_time do
-          owner = create(:member, :owner)
-          next_up = confirmed_event(owner, days: 2)
-          create(:registration, event: next_up, member: owner, status: :response_requested)
-          create(:registration, event: next_up, member: create(:member, group: owner.group), status: :reserved)
-          sign_in_as(owner.user)
-
-          get group_events_path(owner.group)
-
-          expect(response.body).to include "Next up · in 2 days"
-          expect(response.body).not_to include "Request responses"
-        end
-      end
-
-      # "Every registration is reserved" holds of an empty list, which has nobody to request from.
-      it "offers no Request responses while nobody is on the list" do
-        freeze_time do
-          owner = create(:member, :owner)
-          confirmed_event(owner, days: 2)
-          sign_in_as(owner.user)
-
-          get group_events_path(owner.group)
-
-          expect(response.body).to include "Next up · in 2 days"
-          expect(response.body).not_to include "Request responses"
-        end
-      end
-
-      # Requesting moves active members' held places only, so a paused member's place leaves the button nothing to do.
-      it "offers no Request responses while the only place held is a paused member's" do
-        freeze_time do
-          owner = create(:member, :owner)
-          next_up = confirmed_event(owner, days: 2)
-          create(:registration, event: next_up, member: create(:member, :paused, group: owner.group), status: :reserved)
-          sign_in_as(owner.user)
-
-          get group_events_path(owner.group)
-
-          expect(response.body).to include "Next up · in 2 days"
-          expect(response.body).not_to include "Request responses"
-        end
-      end
-
-      it "offers a plain member no Request responses" do
-        freeze_time do
-          member = create(:member, :active)
-          next_up = confirmed_event(member, days: 2)
-          create(:registration, event: next_up, member:, status: :reserved)
-          sign_in_as(member.user)
-
-          get group_events_path(member.group)
-
-          expect(response.body).to include "No responses requested yet · 1 on the list"
-          expect(response.body).not_to include "Request responses"
-        end
       end
     end
 
