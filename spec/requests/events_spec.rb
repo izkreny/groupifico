@@ -422,7 +422,7 @@ RSpec.describe "Events", type: :request do
     context "when an event is under way" do
       it "keeps it on the upcoming list" do
         member = create(:member, :active)
-        running = running_event(member, status: :unconfirmed)
+        running = running_event(member)
         sign_in_as(member.user)
 
         get group_events_path(member.group)
@@ -432,7 +432,7 @@ RSpec.describe "Events", type: :request do
 
       it "keeps it off the past list" do
         member = create(:member, :active)
-        running = running_event(member, status: :unconfirmed)
+        running = running_event(member)
         sign_in_as(member.user)
 
         get group_events_path(member.group, scope: "past")
@@ -2185,9 +2185,8 @@ RSpec.describe "Events", type: :request do
   end
 
   # An event the reader is in the middle of: started, not yet ended.
-  def running_event(member, status:)
-    create(:event, group: member.group, creator: member, status: status,
-      starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
+  def running_event(member)
+    create(:event, group: member.group, creator: member, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
   end
 
   # The examples above need an event with a fixed name, place and offset rather than the factory's random ones, and `status:` is named because the base factory leaves it at the model default, `unconfirmed`.
