@@ -1,0 +1,27 @@
+<%# locals: (id:, url:, method:, glyph:, trigger:, confirm:, title:, body:, classes: nil) %>
+<%# WHY: not `shared/confirm_sheet`, which only deletes and draws a filled error trigger, because the join link asks first for a regenerate, which posts, as well as for a delete, and both triggers are plain buttons that sit side by side and wrap one per line when they do not fit. %>
+<%= render layout: "shared/confirm_scope", locals: { classes: "flex-[1_1_max-content]" } do %>
+  <%= button_to safe_join([ icon(glyph, class: "size-icon-control"), trigger ]), url, method:, class: [ "btn w-full", classes ],
+        form: { id: "#{id}_form" }, form_class: "w-full", data: { dialog_target: "trigger" } %>
+
+  <dialog id="<%= id %>" class="modal modal-bottom sm:modal-middle" aria-labelledby="<%= id %>_title" aria-describedby="<%= id %>_body" data-dialog-target="sheet">
+    <div class="modal-box text-start">
+      <h3 id="<%= id %>_title" class="text-lg font-bold"><%= title %></h3>
+      <p id="<%= id %>_body" class="py-4"><%= body %></p>
+
+      <div class="modal-action">
+        <form method="dialog">
+          <button class="btn btn-sm"><%= icon :cancel, class: "size-icon-control" %>Cancel</button>
+        </form>
+
+        <%= tag.button form: "#{id}_form", class: "btn btn-sm btn-error" do %>
+          <%= icon glyph, class: "size-icon-control" %><%= confirm %>
+        <% end %>
+      </div>
+    </div>
+
+    <form method="dialog" class="modal-backdrop">
+      <button>close</button>
+    </form>
+  </dialog>
+<% end %>

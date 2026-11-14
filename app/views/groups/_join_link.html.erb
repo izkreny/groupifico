@@ -1,0 +1,31 @@
+<%# locals: (group:, join_link:, namespace: nil) %>
+<%# `namespace` is the styleguide's, as on `groups/form`, since it draws this once per theme; every screen leaves it out and keeps its ids. `join_link` arrives apart from `group` for the styleguide too, which draws a sample link rather than make one. %>
+<% id = ->(name) { [ namespace, "join_link", name ].compact.join("_") } %>
+<h2 id="<%= id.(:heading) %>" class="text-lg font-bold">Join link</h2>
+
+<div class="flex flex-col gap-3 pt-4">
+  <% if join_link %>
+    <div class="flex flex-col gap-3" data-controller="clipboard">
+      <input id="<%= id.(:url) %>" class="input w-full text-ellipsis text-base-content/70" type="text" autocomplete="off" value="<%= new_join_request_url(token: join_link.token) %>" readonly
+             aria-labelledby="<%= id.(:heading) %>" aria-describedby="<%= id.(:hint) %>" data-clipboard-target="source">
+
+      <button type="button" class="btn btn-primary w-full" data-clipboard-target="button" data-action="clipboard#copy">
+        <span class="contents" data-clipboard-target="idle"><%= icon :copy, class: "size-icon-control" %>Copy link</span>
+        <span class="contents" hidden data-clipboard-target="done"><%= icon :copied, class: "size-icon-control" %>Link copied</span>
+      </button>
+
+      <p class="text-meta sr-only" role="status" data-clipboard-target="status"></p>
+    </div>
+
+    <div class="flex flex-wrap gap-2">
+      <%= render "groups/join_link_confirm", id: id.(:regenerate), url: group_join_link_path(group), method: :post, glyph: :regenerate, trigger: "Regenerate link", confirm: "Regenerate",
+            title: "Regenerate join link?", body: "The current link stops working straight away. Anyone who has it but has not asked to join yet will need the new one." %>
+      <%= render "groups/join_link_confirm", id: id.(:delete), url: group_join_link_path(group), method: :delete, glyph: :delete, trigger: "Delete link", confirm: "Delete link", classes: "text-error",
+            title: "Delete join link?", body: "The link stops working straight away. Anyone who has it but has not asked to join yet will not be able to. You can create a new link later." %>
+    </div>
+  <% else %>
+    <%= button_to safe_join([ icon(:invite_link, class: "size-icon-control"), "Create new join link" ]), group_join_link_path(group), class: "btn btn-primary w-full", form_class: "w-full" %>
+  <% end %>
+
+  <p id="<%= id.(:hint) %>" class="text-meta">Anyone with the link can ask to join. You approve each request.</p>
+</div>

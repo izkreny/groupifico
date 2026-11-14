@@ -199,6 +199,11 @@
     <%= render layout: "styleguides/section", locals: { title: "Group form" } do |theme| %>
       <%= render "groups/form", group: @group, namespace: "#{theme}_group" %>
     <% end %>
+
+    <%# A sample link rather than a minted one, so drawing the page retires nobody's link. %>
+    <%= render layout: "styleguides/section", locals: { title: "Join link, on" } do |theme| %>
+      <%= render "groups/join_link", group: @group, join_link: JoinLink.new(group: @group, token: "sample"), namespace: theme %>
+    <% end %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Address" } do %>

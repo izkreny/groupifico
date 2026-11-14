@@ -16,9 +16,16 @@
     <div class="flex items-center justify-between gap-2.5">
       <p><%= pluralize @group.current_members.count, "member" %></p>
 
-      <%= link_to new_group_member_path(@group), class: "btn btn-primary btn-sm" do %>
-        <%= icon :new, class: "size-icon-control" %>Invite member
-      <% end %>
+      <div class="flex items-center gap-2">
+        <%# WHY: beside Invite because the link is the other way in, and asked of the group rather than of `unattached` because the join link row is `GroupPolicy#update?`'s, the owner's alone. %>
+        <% if allowed_to?(:update?, @group) %>
+          <%= render "groups/join_link_dialog", group: @group, join_link: @group.join_link %>
+        <% end %>
+
+        <%= link_to new_group_member_path(@group), class: "btn btn-primary btn-sm" do %>
+          <%= icon :new, class: "size-icon-control" %>Invite member
+        <% end %>
+      </div>
     </div>
   <% end %>
 
