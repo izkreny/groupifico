@@ -7,7 +7,7 @@ class Groups::JoinLinksController < ApplicationController
 
     JoinLink.mint(@group)
 
-    redirect_to edit_group_path(@group)
+    redirect_to group_members_path(@group)
   end
 
   def destroy
@@ -15,6 +15,6 @@ class Groups::JoinLinksController < ApplicationController
 
     @group.join_link&.destroy!
 
-    redirect_to edit_group_path(@group), notice: "Join link turned off.", status: :see_other
+    redirect_to group_members_path(@group), notice: "Join link turned off.", status: :see_other
   end
 end

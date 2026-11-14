@@ -622,39 +622,6 @@ RSpec.describe "Groups", type: :request do
         expect(document.css("a[aria-label='Correct address']")).to be_empty
       end
 
-      it "offers to turn the join link on while it is off" do
-        member = create(:member, :active, :owner)
-        sign_in_as(member.user)
-
-        get edit_group_path(member.group)
-        document = Nokogiri::HTML(response.body)
-
-        expect(document.at_css("form[action='#{group_join_link_path(member.group)}'] button").text.squish).to eq "Turn on join link"
-        expect(document.css("#join_link_url")).to be_empty
-      end
-
-      # WHY: #445 AC1, and the owner's call on #453 that the link stays copyable for as long as it is on, not only on the page that turned it on.
-      it "shows a link that is on, ready to copy, on every visit" do
-        member = create(:member, :active, :owner)
-        token = JoinLink.mint(member.group)
-        sign_in_as(member.user)
-
-        get edit_group_path(member.group)
-
-        expect(Nokogiri::HTML(response.body).at_css("#join_link_url")["value"]).to eq new_join_request_url(token:)
-      end
-
-      it "offers to regenerate or turn off a link that is on" do
-        member = create(:member, :active, :owner)
-        JoinLink.mint(member.group)
-        sign_in_as(member.user)
-
-        get edit_group_path(member.group)
-        document = Nokogiri::HTML(response.body)
-
-        expect(document.css("form[action='#{group_join_link_path(member.group)}'] button").map { it.text.squish }).to eq [ "Regenerate", "Turn off" ]
-      end
-
       it "offers the delete to an owner who may destroy the group" do
         member = create(:member, :active, :owner)
         sign_in_as(member.user)

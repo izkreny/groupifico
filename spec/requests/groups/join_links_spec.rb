@@ -25,13 +25,13 @@ RSpec.describe "Groups::JoinLinks", type: :request do
     end
 
     context "when signed in as the owner" do
-      # WHY: #445 AC1, since the edit screen it lands on is where the owner copies the link from.
-      it "turns the link on and lands on the edit screen" do
+      # WHY: #445 AC1, since the members page it lands on is where the owner copies the link from.
+      it "turns the link on and lands on the members page" do
         actor = create(:member, :active, :owner)
         sign_in_as(actor.user)
 
         expect { post group_join_link_path(actor.group) }.to change { JoinLink.where(group: actor.group).count }.from(0).to(1)
-        expect(response).to redirect_to edit_group_path(actor.group)
+        expect(response).to redirect_to group_members_path(actor.group)
       end
 
       # WHY: #445 AC3, since regenerating is what retires a link that travelled too far.
@@ -149,7 +149,7 @@ RSpec.describe "Groups::JoinLinks", type: :request do
 
         delete group_join_link_path(actor.group)
 
-        expect(response).to redirect_to edit_group_path(actor.group)
+        expect(response).to redirect_to group_members_path(actor.group)
         expect(JoinLink.find_by_token(token)).to be_nil
       end
 
@@ -163,13 +163,13 @@ RSpec.describe "Groups::JoinLinks", type: :request do
         expect(response).to have_http_status :see_other
       end
 
-      it "lands on the edit screen when the link is already off" do
+      it "lands on the members page when the link is already off" do
         actor = create(:member, :active, :owner)
         sign_in_as(actor.user)
 
         delete group_join_link_path(actor.group)
 
-        expect(response).to redirect_to edit_group_path(actor.group)
+        expect(response).to redirect_to group_members_path(actor.group)
       end
     end
 

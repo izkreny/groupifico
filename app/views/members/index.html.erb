@@ -22,6 +22,11 @@
     </div>
   <% end %>
 
+  <%# WHY: beside Invite because the link is the other way in, and asked of the group rather than of `unattached` because the join link row is `GroupPolicy#update?`'s, the owner's alone. %>
+  <% if allowed_to?(:update?, @group) %>
+    <%= render "groups/join_link", group: @group, join_link: @group.join_link %>
+  <% end %>
+
   <% if @members.any? %>
     <ul id="members" class="list">
       <%= render partial: "members/member", collection: @members, locals: { manages:, oversees: } %>

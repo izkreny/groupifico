@@ -2,7 +2,7 @@
 <%# `namespace` is the styleguide's, as on `groups/form`, since it draws this once per theme; every screen leaves it out and keeps its ids. `join_link` arrives apart from `group` for the styleguide too, which draws a sample link rather than make one. %>
 <% heading_id = [ namespace, "join_link_heading" ].compact.join("_") %>
 <% url_id = [ namespace, "join_link_url" ].compact.join("_") %>
-<section class="fieldset mt-6" aria-labelledby="<%= heading_id %>">
+<section class="fieldset" aria-labelledby="<%= heading_id %>">
   <h2 id="<%= heading_id %>" class="fieldset-legend">Join link</h2>
 
   <% if join_link %>

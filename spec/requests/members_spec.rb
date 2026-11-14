@@ -259,6 +259,93 @@ RSpec.describe "Members", type: :request do
         expect(response.body).to include edit_group_member_path(actor.group, other)
         expect(response.body).to include "Show inactive"
       end
+
+      it "offers to turn the join link on while it is off" do
+        actor = create(:member, :active, :owner)
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group)
+        document = Nokogiri::HTML(response.body)
+
+        expect(document.at_css("form[action='#{group_join_link_path(actor.group)}'] button").text.squish).to eq "Turn on join link"
+        expect(document.css("#join_link_url")).to be_empty
+      end
+
+      # WHY: #445 AC1, and the owner's call on #453 that the link stays copyable for as long as it is on.
+      it "shows a join link that is on, ready to copy" do
+        actor = create(:member, :active, :owner)
+        token = JoinLink.mint(actor.group)
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group)
+
+        expect(Nokogiri::HTML(response.body).at_css("#join_link_url")["value"]).to eq new_join_request_url(token:)
+      end
+
+      it "offers to regenerate or turn off a join link that is on" do
+        actor = create(:member, :active, :owner)
+        JoinLink.mint(actor.group)
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group)
+        document = Nokogiri::HTML(response.body)
+
+        expect(document.css("form[action='#{group_join_link_path(actor.group)}'] button").map { it.text.squish }).to eq [ "Regenerate", "Turn off" ]
+      end
+
+      # WHY: #445 AC4, since turning the link on, off or regenerating it is a write a paused owner is refused, so no dead form is offered.
+      it "shows no join link while the owner is paused" do
+        actor = create(:member, :paused, :owner)
+        JoinLink.mint(actor.group)
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group)
+
+        expect(Nokogiri::HTML(response.body).css("#join_link_heading, #join_link_url")).to be_empty
+      end
+    end
+
+    # WHY: #445 AC4, one example per column the join link row leaves blank, each with a link on so its absence is the page's choice.
+    context "when signed in as a member who does not own the group" do
+      it "shows no join link to a member holding no role" do
+        actor = create(:member, :active)
+        JoinLink.mint(actor.group)
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group)
+
+        expect(Nokogiri::HTML(response.body).css("#join_link_heading, #join_link_url")).to be_empty
+      end
+
+      it "shows no join link to an administrator" do
+        actor = create(:member, :active, :administrator)
+        JoinLink.mint(actor.group)
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group)
+
+        expect(Nokogiri::HTML(response.body).css("#join_link_heading, #join_link_url")).to be_empty
+      end
+
+      it "shows no join link to an events administrator" do
+        actor = create(:member, :active, :events_administrator)
+        JoinLink.mint(actor.group)
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group)
+
+        expect(Nokogiri::HTML(response.body).css("#join_link_heading, #join_link_url")).to be_empty
+      end
+
+      it "shows no join link to a members administrator" do
+        actor = create(:member, :active, :members_administrator)
+        JoinLink.mint(actor.group)
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group)
+
+        expect(Nokogiri::HTML(response.body).css("#join_link_heading, #join_link_url")).to be_empty
+      end
     end
 
     context "when signed in as an administrator" do
