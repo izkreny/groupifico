@@ -80,8 +80,7 @@ RSpec.describe "Events::ResponseRequests", type: :request do
         expect(flash[:notice]).to eq "2 responses requested."
       end
 
-      # The events list and the group home draw the same Next up card, so pressing it there lands
-      # back there rather than on the event.
+      # The group home draws the Next up card, so pressing it there lands back there rather than on the event.
       it "returns to the page it was pressed on" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, creator: actor, manager: actor)

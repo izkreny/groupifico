@@ -2,8 +2,7 @@
 class Events::ResponseRequestsController < ApplicationController
   include EventScoped
 
-  # WHY: back to where it was pressed, because the roster, the events list and the group home all
-  # offer it; the event is the fallback for a request that names no page.
+  # WHY: back to where it was pressed, because the roster and the group home both offer it; the event is the fallback for a request that names no page.
   def create
     authorize! Registration.new(event: @event), to: :create?
 

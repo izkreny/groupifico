@@ -265,10 +265,7 @@ RSpec.describe "Groups", type: :request do
         end
       end
 
-      # The answer row is `events/_response`'s, and which of its states it draws is
-      # `spec/requests/events_spec.rb`'s question. What belongs here is that this screen hands the
-      # partial the reader's own registration at all: without `@membership`, `registration_for`
-      # gets nil and a reader whose response is requested never sees the question.
+      # The answer row is `events/_response`'s, and which of its states it draws is the card examples' question below. What belongs here is that this screen hands the partial the reader's own registration at all: without `@membership`, `registration_for` gets nil and a reader whose response is requested never sees the question.
       it "draws the question for the reader's own registration" do
         member = create(:member, group: create(:group))
         event = create(:event, group: member.group, creator: member, status: :confirmed,
@@ -279,6 +276,190 @@ RSpec.describe "Groups", type: :request do
         get group_path(member.group)
 
         expect(response.body).to include "Are you coming?"
+      end
+
+      # WHY: what a wrong filter looks like from the reader's side: an unconfirmed event is not a commitment, so no card is drawn at all. A model spec cannot show this - `#featured_event` answering the wrong record and the card being drawn anyway are the same thing there.
+      it "draws no card for a group whose only upcoming event is unconfirmed" do
+        owner = create(:member, :owner)
+        create(:event, group: owner.group, creator: owner, status: :unconfirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 1.hour)
+        sign_in_as(owner.user)
+
+        get group_path(owner.group)
+
+        expect(response.body).not_to include "Next up"
+      end
+
+      # WHY: the card states the distance to the event in words, so the examples that read it freeze the clock, or "in 2 days" would depend on how long the suite takes to reach this file.
+      it "states the card's distance to the event and its status" do
+        freeze_time do
+          owner = create(:member, :owner)
+          create(:event, group: owner.group, creator: owner, name: "Tuesday rehearsal", category: :rehearsal, status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+          sign_in_as(owner.user)
+
+          get group_path(owner.group)
+
+          expect(response.body).to include "Next up · in 2 days", "Confirmed rehearsal"
+        end
+      end
+
+      # WHY: Frame 4h's pencil, with Duplicate leading Edit as on the event screen, each leading to its own action.
+      it "offers an events administrator Duplicate before Edit on the card" do
+        actor = create(:member, :active, :events_administrator)
+        event = create(:event, group: actor.group, name: "Tuesday rehearsal", status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        sign_in_as(actor.user)
+
+        get group_path(actor.group)
+
+        links = Nokogiri::HTML(response.body).css("##{ActionView::RecordIdentifier.dom_id(event, :next_up)} a[aria-label]").map { [ it["aria-label"], it["href"] ] }
+        expect(links).to eq [ [ "Duplicate Tuesday rehearsal", duplicate_group_event_path(actor.group, event) ], [ "Edit Tuesday rehearsal", edit_group_event_path(actor.group, event) ] ]
+      end
+
+      # WHY: `duplicate` authorizes `create?`, which managing an event does not grant.
+      it "offers the manager of the event Edit alone on the card" do
+        actor = create(:member, :active)
+        create(:event, group: actor.group, manager: actor, name: "Ours", status: :confirmed, starts_at: 2.days.from_now)
+        sign_in_as(actor.user)
+
+        get group_path(actor.group)
+
+        expect(Nokogiri::HTML(response.body).css("[id^=next_up] a[aria-label]").map { it["aria-label"] }).to eq [ "Edit Ours" ]
+      end
+
+      it "links the card's responses to the event with its roster open" do
+        owner = create(:member, :owner)
+        event = confirmed_event_spanning(owner, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        create(:registration, event:, member: owner, status: :yes)
+        sign_in_as(owner.user)
+
+        get group_path(owner.group)
+
+        link = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(event, :next_up)} a[href='#{group_event_path(owner.group, event, responses: "show")}']")
+        expect(link&.text&.squish).to eq "Who’s coming?"
+      end
+
+      it "draws the answer and the counts for a plain member who has answered" do
+        member = create(:member, :active, user: create(:user, :with_full_profile, first_name: "Carla", last_name: "Dean"))
+        event = confirmed_event_spanning(member, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        create(:registration, event:, member:, status: :yes)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(response.body).to include "Are you coming?", "no reply"
+      end
+
+      # The pills themselves rather than the copy above them: three forms, one target, one value each, and the reader's own answer lit. Without this the header carried both the positive and the negative assertion, so a card with no pills under it read as correct.
+      #
+      # The lit pill is matched by the class and the label in one tag rather than by the class alone, which any of the three carrying it would satisfy - so inverting the condition that lights it lights the other two and this still reddens. It stops at `</button>` and claims nothing about what follows: `button_to` puts its CSRF token there, empty only because this environment has forgery protection off.
+      it "draws the three pills as forms writing the reader's own registration" do
+        member = create(:member, :active)
+        event = confirmed_event_spanning(member, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        registration = create(:registration, event:, member:, status: :maybe)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(response.body).to include %(action="#{group_event_registration_path(member.group, event, registration)}")
+        expect(response.body).to include %(name="_method" value="patch")
+        expect(response.body).to include %(name="registration[status]" value="yes"), %(name="registration[status]" value="maybe"), %(name="registration[status]" value="no")
+        expect(response.body).to match %r{btn-warning[^>]*>\s*<svg.*?</svg>\s*Maybe\s*</button>}m
+      end
+
+      it "leaves the pills out for a paused member, who may not write an answer" do
+        freeze_time do
+          member = create(:member, :paused)
+          event = confirmed_event_spanning(member, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+          registration = create(:registration, event:, member:, status: :response_requested)
+          sign_in_as(member.user)
+
+          get group_path(member.group)
+
+          expect(response.body).to include "Next up · in 2 days"
+          expect(response.body).not_to include "Are you coming?"
+          expect(response.body).not_to include %(action="#{group_event_registration_path(member.group, event, registration)}")
+        end
+      end
+
+      # Both halves of the no-response-requested state in one example, because they are one behaviour: the tags are absent and a sentence stands where they were. The negative alone was satisfied by a card that drew nothing there at all, which is what this state used to look like.
+      it "says no response is requested while every registration is still reserved" do
+        freeze_time do
+          owner = create(:member, :owner)
+          event = confirmed_event_spanning(owner, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+          create(:registration, event:, member: owner, status: :reserved)
+          sign_in_as(owner.user)
+
+          get group_path(owner.group)
+
+          expect(response.body).to include "Next up · in 2 days", "No responses requested yet · 1 on the list"
+          expect(response.body).not_to include "no reply"
+        end
+      end
+
+      it "offers Request responses while every registration is still reserved" do
+        owner = create(:member, :owner)
+        event = confirmed_event_spanning(owner, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        create(:registration, event:, member: owner, status: :reserved)
+        sign_in_as(owner.user)
+
+        get group_path(owner.group)
+
+        expect(response.body).to include "Request responses", group_event_response_request_path(owner.group, event)
+      end
+
+      it "offers no Request responses once a response has been requested" do
+        freeze_time do
+          owner = create(:member, :owner)
+          event = confirmed_event_spanning(owner, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+          create(:registration, event:, member: owner, status: :response_requested)
+          create(:registration, event:, member: create(:member, group: owner.group), status: :reserved)
+          sign_in_as(owner.user)
+
+          get group_path(owner.group)
+
+          expect(response.body).to include "Next up · in 2 days"
+          expect(response.body).not_to include "Request responses"
+        end
+      end
+
+      # "Every registration is reserved" holds of an empty list, which has nobody to request from.
+      it "offers no Request responses while nobody is on the list" do
+        freeze_time do
+          owner = create(:member, :owner)
+          confirmed_event_spanning(owner, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+          sign_in_as(owner.user)
+
+          get group_path(owner.group)
+
+          expect(response.body).to include "Next up · in 2 days"
+          expect(response.body).not_to include "Request responses"
+        end
+      end
+
+      # Requesting moves active members' held places only, so a paused member's place leaves the button nothing to do.
+      it "offers no Request responses while the only place held is a paused member's" do
+        freeze_time do
+          owner = create(:member, :owner)
+          event = confirmed_event_spanning(owner, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+          create(:registration, event:, member: create(:member, :paused, group: owner.group), status: :reserved)
+          sign_in_as(owner.user)
+
+          get group_path(owner.group)
+
+          expect(response.body).to include "Next up · in 2 days"
+          expect(response.body).not_to include "Request responses"
+        end
+      end
+
+      it "offers a plain member no Request responses" do
+        member = create(:member, :active)
+        event = confirmed_event_spanning(member, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        create(:registration, event:, member:, status: :reserved)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(response.body).to include "No responses requested yet · 1 on the list"
+        expect(response.body).not_to include "Request responses"
       end
 
       it "shows the first-run screen to an owner whose group has no events" do
@@ -1051,9 +1232,7 @@ RSpec.describe "Groups", type: :request do
     end
   end
 
-  # A confirmed event of this member's group, spanning the instants the caller names. Only the hero
-  # examples above need one, and what they vary is that pair: whether an event has started is the
-  # whole of what `Group#featured_event` answers differently before and after an event begins.
+  # A confirmed event of this member's group, spanning the instants the caller names, since the card examples above vary that pair: whether an event has started is the whole of what `Group#featured_event` answers differently before and after an event begins.
   #
   # Not `confirmed_event`, which `spec/requests/events_spec.rb` already holds for a differently
   # shaped thing - it takes `days:` as an offset either side of now, and keeps `running_event` for
