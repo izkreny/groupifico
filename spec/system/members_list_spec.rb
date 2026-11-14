@@ -96,22 +96,43 @@ RSpec.describe "The members list", type: :system do
     JS
   end
 
-  # WHY: the join link's controls sit beneath Invite on this page for an owner. Which state draws which control, and for whom, is `spec/requests/members_spec.rb`'s; what is left is that Copy puts the link on the clipboard and that each button lands where it says.
+  # WHY: the join link lives in a dialog the owner opens from beside Invite on this page. Which state draws which control, and for whom, is `spec/requests/members_spec.rb`'s; what is left is that the dialog stays open through each action, that Copy puts the link on the clipboard, and that Regenerate and Delete ask first.
   context "with the join link" do
-    # WHY: #445 AC1, walked in the browser, since only the browser can tell that Copy wrote the clipboard.
-    it "copies the link" do
+    def open_join_link
+      click_on "Join link"
+      expect(page).to have_css "dialog#join_link_dialog[open]"
+    end
+
+    def join_link_url = find_by_id("join_link_url").value
+
+    # WHY: #445 AC1, walked in the browser, since only the browser can tell that Copy wrote the clipboard, and that creating the link leaves its dialog open to copy from.
+    it "creates and copies the link" do
       member = create(:member, :active, :owner)
       sign_in_as member.user
 
       visit group_members_path(member.group)
       # WHY: reading the clipboard back needs its permission, granted in the browser context Cuprite opened for this session rather than Chrome's default one, where a grant reaches no page here.
       page.driver.browser.page.command("Browser.setPermission", origin: page.evaluate_script("location.origin"), browserContextId: page.driver.browser.page.context_id, permission: { name: "clipboard-read" }, setting: "granted")
-      click_on "Turn on join link"
-      link = find_field("Anyone with this link can ask to join. Regenerate it to stop the old one working.").value
-      click_on "Copy"
+      open_join_link
+      click_on "Create new join link"
+      click_on "Copy link"
 
-      expect(page).to have_css "[role='status']", text: "Copied"
-      expect(page.evaluate_async_script("navigator.clipboard.readText().then(arguments[0])")).to eq link
+      expect(page).to have_css "dialog#join_link_dialog[open]"
+      expect(page).to have_css "#join_link_dialog button.btn-secondary", exact_text: "Link copied"
+      expect(page.evaluate_async_script("navigator.clipboard.readText().then(arguments[0])")).to eq join_link_url
+    end
+
+    it "turns Link copied back into Copy link" do
+      member = create(:member, :active, :owner)
+      JoinLink.mint(member.group)
+      sign_in_as member.user
+
+      visit group_members_path(member.group)
+      open_join_link
+      click_on "Copy link"
+
+      expect(page).to have_css "#join_link_dialog button.btn-secondary", exact_text: "Link copied"
+      expect(page).to have_css "#join_link_dialog button.btn-primary", exact_text: "Copy link", wait: 4
     end
 
     it "says so when the browser refuses the copy" do
@@ -122,65 +143,103 @@ RSpec.describe "The members list", type: :system do
       visit group_members_path(member.group)
       # WHY: denied in the browser context Cuprite opened for this session, for the reason the copy example gives.
       page.driver.browser.page.command("Browser.setPermission", origin: page.evaluate_script("location.origin"), browserContextId: page.driver.browser.page.context_id, permission: { name: "clipboard-write" }, setting: "denied")
-      click_on "Copy"
+      open_join_link
+      click_on "Copy link"
 
-      expect(page).to have_css "[role='status']", text: "Couldn't copy. Select the link and copy it yourself."
+      expect(page).to have_css "[role='status']:not(.sr-only)", text: "Couldn't copy. Select the link and copy it yourself."
     end
 
-    # WHY: #445 AC3, walked in the browser: Regenerate lands back on the members page showing a link other than the one it retired.
-    it "shows a new link once regenerated" do
+    # WHY: #445 AC3, walked in the browser: Regenerate asks first, then shows a link other than the one it retired, in the dialog still open.
+    it "regenerates the link once confirmed" do
       member = create(:member, :active, :owner)
+      token = JoinLink.mint(member.group)
       sign_in_as member.user
 
       visit group_members_path(member.group)
-      click_on "Turn on join link"
-      first = find_field("Anyone with this link can ask to join. Regenerate it to stop the old one working.").value
-      click_on "Regenerate"
+      open_join_link
+      click_on "Regenerate link"
+      within("dialog#join_link_regenerate") { click_on "Regenerate" }
 
-      expect(page).to have_field("Anyone with this link can ask to join. Regenerate it to stop the old one working.", with: /token=/)
-      expect(page).to have_no_field("Anyone with this link can ask to join. Regenerate it to stop the old one working.", with: first)
+      expect(page).to have_no_field "join_link_url", with: new_join_request_url(token:)
+      expect(join_link_url).to include "token="
+      expect(page).to have_css "dialog#join_link_dialog[open]"
     end
 
-    # WHY: #445 AC2, walked in the browser: Turn off lands back on the members page offering to turn the link on.
-    it "offers to turn the link on again once turned off" do
+    # WHY: #445 AC2, walked in the browser: Delete asks first, then offers to create a new link in the dialog still open.
+    it "deletes the link once confirmed" do
       member = create(:member, :active, :owner)
       JoinLink.mint(member.group)
       sign_in_as member.user
 
       visit group_members_path(member.group)
-      click_on "Turn off"
+      open_join_link
+      click_on "Delete link"
+      within("dialog#join_link_delete") { click_on "Delete link" }
 
-      expect(page).to have_text "Join link turned off."
-      expect(page).to have_button "Turn on join link"
+      expect(page).to have_button "Create new join link"
+      expect(page).to have_css "dialog#join_link_dialog[open]"
+      expect(member.group.reload.join_link).to be_nil
     end
 
-    it "paints a link that is off in light, with no accessibility violations" do
+    # WHY: the owner's order on #453 that Regenerate asks first, so cancelling it leaves the link working.
+    it "keeps the link when Regenerate is cancelled" do
+      member = create(:member, :active, :owner)
+      token = JoinLink.mint(member.group)
+      sign_in_as member.user
+
+      visit group_members_path(member.group)
+      open_join_link
+      click_on "Regenerate link"
+      within("dialog#join_link_regenerate") { click_on "Cancel" }
+
+      expect(page).to have_no_css "dialog#join_link_regenerate[open]"
+      expect(member.group.reload.join_link.token).to eq token
+    end
+
+    # WHY: the owner's order on #453 that Delete asks first, so cancelling it leaves the link working.
+    it "keeps the link when Delete is cancelled" do
+      member = create(:member, :active, :owner)
+      token = JoinLink.mint(member.group)
+      sign_in_as member.user
+
+      visit group_members_path(member.group)
+      open_join_link
+      click_on "Delete link"
+      within("dialog#join_link_delete") { click_on "Cancel" }
+
+      expect(page).to have_no_css "dialog#join_link_delete[open]"
+      expect(member.group.reload.join_link.token).to eq token
+    end
+
+    it "paints the dialog with no link in light, with no accessibility violations" do
       member = create(:member, :active, :owner)
       sign_in_as member.user
       prefer_colour_scheme :light
       resize_to ViewportHelper::MOBILE
 
       visit group_members_path(member.group)
+      open_join_link
 
       expect(rendered_colour_scheme).to eq "light"
-      expect(page).to paint "form[action='#{group_join_link_path(member.group)}'] button.btn-primary"
+      expect(page).to paint "#join_link_dialog form button.btn-primary"
       expect(page).to be_accessible
     end
 
-    it "paints a link that is off in dark, with no accessibility violations" do
+    it "paints the dialog with no link in dark, with no accessibility violations" do
       member = create(:member, :active, :owner)
       sign_in_as member.user
       prefer_colour_scheme :dark
       resize_to ViewportHelper::MOBILE
 
       visit group_members_path(member.group)
+      open_join_link
 
       expect(rendered_colour_scheme).to eq "dark"
-      expect(page).to paint "form[action='#{group_join_link_path(member.group)}'] button.btn-primary"
+      expect(page).to paint "#join_link_dialog form button.btn-primary"
       expect(page).to be_accessible
     end
 
-    it "paints a link that is on in light, with no accessibility violations" do
+    it "paints the dialog with a link in light, with no accessibility violations" do
       member = create(:member, :active, :owner)
       JoinLink.mint(member.group)
       sign_in_as member.user
@@ -188,13 +247,14 @@ RSpec.describe "The members list", type: :system do
       resize_to ViewportHelper::MOBILE
 
       visit group_members_path(member.group)
+      open_join_link
 
       expect(rendered_colour_scheme).to eq "light"
-      expect(page).to paint "form[action='#{group_join_link_path(member.group)}'] button.btn:not(.btn-ghost)"
+      expect(page).to paint "#join_link_dialog button.btn-primary"
       expect(page).to be_accessible
     end
 
-    it "paints a link that is on in dark, with no accessibility violations" do
+    it "paints the dialog with a link in dark, with no accessibility violations" do
       member = create(:member, :active, :owner)
       JoinLink.mint(member.group)
       sign_in_as member.user
@@ -202,9 +262,10 @@ RSpec.describe "The members list", type: :system do
       resize_to ViewportHelper::MOBILE
 
       visit group_members_path(member.group)
+      open_join_link
 
       expect(rendered_colour_scheme).to eq "dark"
-      expect(page).to paint "form[action='#{group_join_link_path(member.group)}'] button.btn:not(.btn-ghost)"
+      expect(page).to paint "#join_link_dialog button.btn-primary"
       expect(page).to be_accessible
     end
   end

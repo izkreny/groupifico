@@ -26,7 +26,7 @@ RSpec.describe "Groups::JoinLinks", type: :request do
 
     context "when signed in as the owner" do
       # WHY: #445 AC1, since the members page it lands on is where the owner copies the link from.
-      it "turns the link on and lands on the members page" do
+      it "creates the link and lands on the members page" do
         actor = create(:member, :active, :owner)
         sign_in_as(actor.user)
 
@@ -141,8 +141,8 @@ RSpec.describe "Groups::JoinLinks", type: :request do
     end
 
     context "when signed in as the owner" do
-      # WHY: #445 AC2, since turning the link off is what an owner does to stop it working.
-      it "turns the link off" do
+      # WHY: #445 AC2, since deleting the link is what an owner does to stop it working.
+      it "deletes the link" do
         actor = create(:member, :active, :owner)
         token = JoinLink.mint(actor.group)
         sign_in_as(actor.user)
@@ -163,7 +163,7 @@ RSpec.describe "Groups::JoinLinks", type: :request do
         expect(response).to have_http_status :see_other
       end
 
-      it "lands on the members page when the link is already off" do
+      it "lands on the members page when there is no link to delete" do
         actor = create(:member, :active, :owner)
         sign_in_as(actor.user)
 

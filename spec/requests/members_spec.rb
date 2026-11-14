@@ -260,14 +260,14 @@ RSpec.describe "Members", type: :request do
         expect(response.body).to include "Show inactive"
       end
 
-      it "offers to turn the join link on while it is off" do
+      it "offers to create a join link while there is none" do
         actor = create(:member, :active, :owner)
         sign_in_as(actor.user)
 
         get group_members_path(actor.group)
         document = Nokogiri::HTML(response.body)
 
-        expect(document.at_css("form[action='#{group_join_link_path(actor.group)}'] button").text.squish).to eq "Turn on join link"
+        expect(document.at_css("form[action='#{group_join_link_path(actor.group)}'] button").text.squish).to eq "Create new join link"
         expect(document.css("#join_link_url")).to be_empty
       end
 
@@ -282,7 +282,7 @@ RSpec.describe "Members", type: :request do
         expect(Nokogiri::HTML(response.body).at_css("#join_link_url")["value"]).to eq new_join_request_url(token:)
       end
 
-      it "offers to regenerate or turn off a join link that is on" do
+      it "offers to regenerate or delete a join link that exists" do
         actor = create(:member, :active, :owner)
         JoinLink.mint(actor.group)
         sign_in_as(actor.user)
@@ -290,10 +290,10 @@ RSpec.describe "Members", type: :request do
         get group_members_path(actor.group)
         document = Nokogiri::HTML(response.body)
 
-        expect(document.css("form[action='#{group_join_link_path(actor.group)}'] button").map { it.text.squish }).to eq [ "Regenerate", "Turn off" ]
+        expect(document.css("form[action='#{group_join_link_path(actor.group)}'] button").map { it.text.squish }).to eq [ "Regenerate link", "Delete link" ]
       end
 
-      # WHY: #445 AC4, since turning the link on, off or regenerating it is a write a paused owner is refused, so no dead form is offered.
+      # WHY: #445 AC4, since creating, regenerating or deleting the link is a write a paused owner is refused, so no dead form is offered.
       it "shows no join link while the owner is paused" do
         actor = create(:member, :paused, :owner)
         JoinLink.mint(actor.group)
@@ -301,7 +301,7 @@ RSpec.describe "Members", type: :request do
 
         get group_members_path(actor.group)
 
-        expect(Nokogiri::HTML(response.body).css("#join_link_heading, #join_link_url")).to be_empty
+        expect(Nokogiri::HTML(response.body).css("#join_link_dialog, #join_link_heading, #join_link_url")).to be_empty
       end
     end
 
@@ -314,7 +314,7 @@ RSpec.describe "Members", type: :request do
 
         get group_members_path(actor.group)
 
-        expect(Nokogiri::HTML(response.body).css("#join_link_heading, #join_link_url")).to be_empty
+        expect(Nokogiri::HTML(response.body).css("#join_link_dialog, #join_link_heading, #join_link_url")).to be_empty
       end
 
       it "shows no join link to an administrator" do
@@ -324,7 +324,7 @@ RSpec.describe "Members", type: :request do
 
         get group_members_path(actor.group)
 
-        expect(Nokogiri::HTML(response.body).css("#join_link_heading, #join_link_url")).to be_empty
+        expect(Nokogiri::HTML(response.body).css("#join_link_dialog, #join_link_heading, #join_link_url")).to be_empty
       end
 
       it "shows no join link to an events administrator" do
@@ -334,7 +334,7 @@ RSpec.describe "Members", type: :request do
 
         get group_members_path(actor.group)
 
-        expect(Nokogiri::HTML(response.body).css("#join_link_heading, #join_link_url")).to be_empty
+        expect(Nokogiri::HTML(response.body).css("#join_link_dialog, #join_link_heading, #join_link_url")).to be_empty
       end
 
       it "shows no join link to a members administrator" do
@@ -344,7 +344,7 @@ RSpec.describe "Members", type: :request do
 
         get group_members_path(actor.group)
 
-        expect(Nokogiri::HTML(response.body).css("#join_link_heading, #join_link_url")).to be_empty
+        expect(Nokogiri::HTML(response.body).css("#join_link_dialog, #join_link_heading, #join_link_url")).to be_empty
       end
     end
 

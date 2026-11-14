@@ -1,0 +1,19 @@
+<%# locals: (group:, join_link:) %>
+<%# WHY: the dialog's content sits in a Turbo Frame, so creating, regenerating or deleting the link swaps the content in place and the dialog stays open rather than closing with a page load. %>
+<%= render layout: "shared/confirm_scope" do %>
+  <%= tag.button type: "button", class: "btn btn-ghost btn-circle btn-sm text-primary", aria: { label: "Join link" }, data: { dialog_target: "trigger", action: "dialog#show" } do %>
+    <%= icon :invite_link, class: "size-icon-control" %>
+  <% end %>
+
+  <dialog id="join_link_dialog" class="modal modal-bottom sm:modal-middle" aria-labelledby="join_link_heading" data-dialog-target="sheet">
+    <div class="modal-box">
+      <%= turbo_frame_tag "join_link" do %>
+        <%= render "groups/join_link", group:, join_link: %>
+      <% end %>
+    </div>
+
+    <form method="dialog" class="modal-backdrop">
+      <button>close</button>
+    </form>
+  </dialog>
+<% end %>

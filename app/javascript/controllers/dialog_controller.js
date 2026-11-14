@@ -28,6 +28,11 @@ export default class extends Controller {
     this.sheetTarget.showModal()
   }
 
+  // WHY: a trigger that stands in no form, such as the members page's join link button, has no submit to stand guard over, so it opens its dialog directly.
+  show() {
+    this.sheetTarget.showModal()
+  }
+
   // A reader who opens the sheet and then presses Back leaves the page with `<dialog open>` in it,
   // and Turbo caches that snapshot on the way out: Forward serves it back with no request, so the
   // panel returns opened by nobody and outside the top layer, where Escape no longer dismisses it.

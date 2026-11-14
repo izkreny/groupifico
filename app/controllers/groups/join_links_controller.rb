@@ -1,4 +1,4 @@
-# Turning a group's join link on, regenerating it, and turning it off. `create` does both of the first two, since either mints a link that retires the one before it. Both actions authorize `GroupPolicy#update?`, the owner's alone, which is the join link row of the Group table in `docs/AUTHORIZATION.md`.
+# Creating a group's join link, regenerating it, and deleting it. `create` does both of the first two, since either mints a link that retires the one before it. Both actions authorize `GroupPolicy#update?`, the owner's alone, which is the join link row of the Group table in `docs/AUTHORIZATION.md`.
 class Groups::JoinLinksController < ApplicationController
   include GroupScoped
 
@@ -15,6 +15,6 @@ class Groups::JoinLinksController < ApplicationController
 
     @group.join_link&.destroy!
 
-    redirect_to group_members_path(@group), notice: "Join link turned off.", status: :see_other
+    redirect_to group_members_path(@group), status: :see_other
   end
 end

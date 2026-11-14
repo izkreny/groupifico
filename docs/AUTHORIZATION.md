@@ -48,7 +48,7 @@ A cell marked `x` means the column grants the capability. A blank means it does 
 | Edit the group's name, type and description            |        |   x   |               |                      |                       |
 | Set or correct the group's home address                |        |   x   |               |                      |                       |
 | Delete the group and everything in it                  |        |   x   |               |                      |                       |
-| Turn the group's join link on or off, or regenerate it |        |   x   |               |                      |                       |
+| Create, regenerate or delete the group's join link     |        |   x   |               |                      |                       |
 
 ### Members
 
@@ -124,6 +124,6 @@ Each thing below sits outside the group axis entirely, and none takes a row abov
 
 **An address has no permissions of its own**, per the note above: it inherits from whichever group or event points at it, and from the group alone where a group calls it home.
 
-**Opening a join link asks no policy.** `JoinRequestsController#new` runs under `skip_verify_authorized` and answers whoever holds the link, signed in or not, because the link is the whole of the visitor's standing: a token no `JoinLink` row carries raises the `404` a missing record does, and a live one names the group it belongs to and nothing more. Who may turn the link on, off or regenerate it is the Group table's row.
+**Opening a join link asks no policy.** `JoinRequestsController#new` runs under `skip_verify_authorized` and answers whoever holds the link, signed in or not, because the link is the whole of the visitor's standing: a token no `JoinLink` row carries raises the `404` a missing record does, and a live one names the group it belongs to and nothing more. Who may create, regenerate or delete the link is the Group table's row.
 
 **The styleguide's member switcher asks no policy.** `Styleguides::SessionsController#create` runs under `skip_verify_authorized` and signs in as any member's user, because its route exists only in development and test and the action answers `404` anywhere else, so the environment and sign-in are its whole gate and a rule would have nothing to decide.
