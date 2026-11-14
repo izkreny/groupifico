@@ -20,7 +20,7 @@
 
   <% reader = Current.member %>
   <div id="events">
-    <% if @events.any? %>
+    <% if @events.load.any? %>
       <ul class="list">
         <% @events.each do |event| %>
           <%= render "events/row", event: event, registration: event.registration_for(reader) %>
