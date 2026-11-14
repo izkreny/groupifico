@@ -278,6 +278,17 @@ RSpec.describe "Groups", type: :request do
         expect(response.body).to include "Are you coming?"
       end
 
+      # WHY: what a wrong filter looks like from the reader's side: an unconfirmed event is not a commitment, so no card is drawn at all. A model spec cannot show this - `#featured_event` answering the wrong record and the card being drawn anyway are the same thing there.
+      it "draws no card for a group whose only upcoming event is unconfirmed" do
+        owner = create(:member, :owner)
+        create(:event, group: owner.group, creator: owner, status: :unconfirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 1.hour)
+        sign_in_as(owner.user)
+
+        get group_path(owner.group)
+
+        expect(response.body).not_to include "Next up"
+      end
+
       # WHY: the card states the distance to the event in words, so the examples that read it freeze the clock, or "in 2 days" would depend on how long the suite takes to reach this file.
       it "states the card's distance to the event and its status" do
         freeze_time do

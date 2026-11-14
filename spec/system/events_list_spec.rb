@@ -164,8 +164,7 @@ RSpec.describe "The events list", type: :system do
       ends_at: 9.days.ago + 2.hours)
   end
 
-  # The card states its own copy, so an event here has a fixed name, place and hour rather than the
-  # factory's random ones, and `status:` is named because the factory leaves it `unconfirmed`.
+  # An upcoming event for the list to draw, with a fixed name, place and hour rather than the factory's random ones, and `status:` named because the factory leaves it `unconfirmed`.
   def next_event_for(member)
     create(:event,
       group: member.group,

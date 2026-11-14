@@ -74,11 +74,6 @@ RSpec.describe "Events", type: :request do
       # `:from_the_future` rather than the bare factory, whose `starts_at` is a random point in a
       # year either side of today: this list shows the upcoming events, so half of those rolls put
       # the event this example is looking for on the other list.
-      #
-      # `status:` is named on top of the trait, which rolls its own: a confirmed roll makes the
-      # event `Group#featured_event`, and it then draws as the hero rather than as a row. And the match
-      # carries `id="` so the hero could not satisfy it if it did - `dom_id` alone is a substring
-      # of the hero's `next_up_event_N`, which is what let the roll go unnoticed.
       it "lists only events from groups the acting user belongs to" do
         member = create(:member, :active)
         own_event = create(:event, :from_the_future, status: :unconfirmed, group: member.group, creator: member)
@@ -107,17 +102,17 @@ RSpec.describe "Events", type: :request do
     end
 
     context "when signed in as an events administrator" do
-      # Frame 4h's pencil, on the hero card and on the row beneath it alike.
-      it "offers an Edit button on the hero card and on each row" do
+      # Frame 4h's pencil, on every row.
+      it "offers an Edit button on each row" do
         actor = create(:member, :active, :events_administrator)
-        next_up = confirmed_event(actor, name: "Tuesday rehearsal", days: 2)
+        sooner = confirmed_event(actor, name: "Tuesday rehearsal", days: 2)
         later = confirmed_event(actor, name: "Sunday service", days: 5)
         sign_in_as(actor.user)
 
         get group_events_path(actor.group)
 
         html = Nokogiri::HTML(response.body)
-        expect(html.at_css("##{ActionView::RecordIdentifier.dom_id(next_up, :next_up)} a[href='#{edit_group_event_path(actor.group, next_up)}'][aria-label='Edit Tuesday rehearsal']")).to be_present
+        expect(html.at_css("##{ActionView::RecordIdentifier.dom_id(sooner)} a[href='#{edit_group_event_path(actor.group, sooner)}'][aria-label='Edit Tuesday rehearsal']")).to be_present
         expect(html.at_css("##{ActionView::RecordIdentifier.dom_id(later)} a[href='#{edit_group_event_path(actor.group, later)}'][aria-label='Edit Sunday service']")).to be_present
       end
 
@@ -176,61 +171,47 @@ RSpec.describe "Events", type: :request do
       end
     end
 
-    # Times are frozen because the card states the distance to the event in words, so "in 2 days"
-    # would otherwise depend on how long the suite takes to reach this file. What the freeze does
-    # not do is decide which hour it stops at, which is `confirmed_event`'s job below.
     context "when the group has a next event" do
-      it "draws the hero card, a row beneath it and the question for an owner whose response is requested" do
-        freeze_time do
-          owner = create(:member, :owner)
-          next_up = confirmed_event(owner, name: "Tuesday rehearsal", category: :rehearsal, days: 2)
-          later = confirmed_event(owner, name: "Sunday service", days: 5)
-          create(:registration, event: next_up, member: owner, status: :response_requested)
-          sign_in_as(owner.user)
+      # WHY: #457 AC1 and AC2. The confirmed event `Group#featured_event` answers sits between an unconfirmed event before it and a later one, so its row standing second is what proves the list draws it as an ordinary row in date order rather than lifting it out into a card.
+      it "draws the group's next event as a row, in date order" do
+        member = create(:member, :active)
+        earlier = create(:event, group: member.group, creator: member, status: :unconfirmed, starts_at: 1.day.from_now, ends_at: 1.day.from_now + 2.hours)
+        featured = confirmed_event(member, days: 2)
+        later = confirmed_event(member, days: 5)
+        sign_in_as(member.user)
 
-          get group_events_path(owner.group)
+        get group_events_path(member.group)
 
-          expect(response.body).to include "Next up · in 2 days", "Tuesday rehearsal", "Confirmed rehearsal", "Are you coming?"
-          expect(response.body).to include ActionView::RecordIdentifier.dom_id(later)
-        end
+        expect(Nokogiri::HTML(response.body).css("#events li[id]").map { it["id"] }).to eq [ earlier, featured, later ].map { ActionView::RecordIdentifier.dom_id(it) }
       end
 
       it "offers a plain member no Edit button" do
-        freeze_time do
-          member = create(:member, :active)
-          confirmed_event(member, days: 2)
-          confirmed_event(member, days: 5)
-          sign_in_as(member.user)
+        member = create(:member, :active)
+        confirmed_event(member, days: 2)
+        confirmed_event(member, days: 5)
+        sign_in_as(member.user)
 
-          get group_events_path(member.group)
+        get group_events_path(member.group)
 
-          expect(Nokogiri::HTML(response.body).css("a[aria-label^='Edit ']")).to be_empty
-        end
+        expect(Nokogiri::HTML(response.body).css("a[aria-label^='Edit ']")).to be_empty
       end
 
-      # Where the question stands, which is the one thing about it this screen decides: inside the
-      # hero's own card, and again under any row with the reader's response requested. `id="events"` is the
-      # list's wrapper, so a match that crosses it has one copy on each side of the list's start.
-      #
-      # The count is what makes the order mean anything. Either copy alone satisfies the match on
-      # its own, which is what the screen looked like when the answer row sat once below the list.
-      it "puts the question inside the hero card and again under a requested row" do
+      # Where the question stands, which is the one thing about it this screen decides: under each row with the reader's response requested, inside the list's wrapper, `id="events"`. The count is what makes "each" mean anything, since either copy alone satisfies the match.
+      it "puts the question under every requested row" do
         owner = create(:member, :owner)
-        next_up = confirmed_event(owner, days: 2, name: "Tuesday rehearsal")
+        sooner = confirmed_event(owner, days: 2, name: "Tuesday rehearsal")
         later = confirmed_event(owner, days: 5, name: "Sunday service")
-        create(:registration, event: next_up, member: owner, status: :response_requested)
+        create(:registration, event: sooner, member: owner, status: :response_requested)
         create(:registration, event: later, member: owner, status: :response_requested)
         sign_in_as(owner.user)
 
         get group_events_path(owner.group)
 
-        expect(response.body).to match(/Tuesday rehearsal.*Are you coming\?.*id="events".*Sunday service.*Are you coming\?/m)
+        expect(response.body).to match(/id="events".*Tuesday rehearsal.*Are you coming\?.*Sunday service.*Are you coming\?/m)
         expect(response.body.scan("Are you coming?").size).to eq 2
       end
 
       # The row's own answer is an icon and nothing else, so what it carries is the icon's name.
-      # The clock is left alone here, unlike the examples around it: this one asserts no copy that
-      # states a distance in time, and every event it creates is upcoming at whatever hour it runs.
       it "shows the reader's answer as an icon on a compact row, and nothing where there is none" do
         member = create(:member, :active)
         confirmed_event(member, days: 2)
@@ -265,7 +246,7 @@ RSpec.describe "Events", type: :request do
     # from now in either direction, and an event that started nine days ago ended eight days and
     # twenty-two hours ago, which is what `Event.past` reads.
     context "when the past list is requested" do
-      it "lists the group's past events newest first, with no hero card" do
+      it "lists the group's past events newest first" do
         member = create(:member, :active)
         confirmed_event(member, days: 2, name: "Tuesday rehearsal")
         confirmed_event(member, days: -9, name: "Spring concert")
@@ -275,7 +256,7 @@ RSpec.describe "Events", type: :request do
         get group_events_path(member.group, scope: "past")
 
         expect(response.body).to match(/Summer gig.*Spring concert/m)
-        expect(response.body).not_to include "Next up", "Tuesday rehearsal"
+        expect(response.body).not_to include "Tuesday rehearsal"
       end
 
       # An event that has ended and that nobody concluded is still worth a roster, so the question
@@ -375,7 +356,7 @@ RSpec.describe "Events", type: :request do
 
     # WHY: `confirmed_event` and then the status, because a registration takes an answer only while its event is open to answers, so a member answers before the event is called off.
     context "when the canceled list is requested" do
-      it "lists the group's canceled events newest first, whatever their dates, with no hero card" do
+      it "lists the group's canceled events newest first, whatever their dates" do
         member = create(:member, :active)
         confirmed_event(member, days: 2, name: "Tuesday rehearsal")
         confirmed_event(member, days: -9, name: "Spring concert").update!(status: :canceled)
@@ -385,7 +366,7 @@ RSpec.describe "Events", type: :request do
         get group_events_path(member.group, scope: "canceled")
 
         expect(response.body).to match(/Autumn gig.*Spring concert/m)
-        expect(response.body).not_to include "Next up", "Tuesday rehearsal"
+        expect(response.body).not_to include "Tuesday rehearsal"
       end
 
       it "names the canceled list in the list menu and marks its link" do
@@ -437,10 +418,7 @@ RSpec.describe "Events", type: :request do
       end
     end
 
-    # The gap the two scopes left between them, and what the hero does about it. The row examples
-    # use an `unconfirmed` event so `Group#featured_event` cannot claim it for the card: what they
-    # are about is `Event.current_and_upcoming` carrying it at all, and a hero that swallowed it would make
-    # the delimited id assertion pass for the wrong reason.
+    # The gap the two scopes left between them.
     context "when an event is under way" do
       it "keeps it on the upcoming list" do
         member = create(:member, :active)
@@ -461,25 +439,6 @@ RSpec.describe "Events", type: :request do
 
         expect(response.body).not_to include %(id="#{ActionView::RecordIdentifier.dom_id(running)}")
       end
-
-      # The screen's largest element used to name a later event than the one the reader was at.
-      # Both halves in one example because they are one behaviour: the running event takes the card
-      # and the later one is demoted to a row, and asserting either alone passes on a screen that
-      # drew both as heroes or neither.
-      it "gives the hero to the running event and leaves the later one a row" do
-        freeze_time do
-          member = create(:member, :active)
-          running = running_event(member, status: :confirmed)
-          later = confirmed_event(member, days: 1, name: "Sunday service")
-          sign_in_as(member.user)
-
-          get group_events_path(member.group)
-
-          expect(response.body).to include "Happening now · ends in about 1 hour",
-            %(id="#{ActionView::RecordIdentifier.dom_id(running, :next_up)}"), %(id="#{ActionView::RecordIdentifier.dom_id(later)}")
-          expect(response.body).not_to include "Next up ·"
-        end
-      end
     end
 
     # The empty state, one sentence per list, asserted both ways round: the positive alone was
@@ -487,6 +446,7 @@ RSpec.describe "Events", type: :request do
     # neither. Swapping the two literals reddens both examples, which is the mutation the pair
     # exists for.
     context "when the group has nothing on the list being requested" do
+      # WHY: #457 AC3, the empty sentence stands on whether the list has rows, with no card left to stand in for them.
       it "says nothing is coming up on an empty upcoming list" do
         member = create(:member, :active)
         sign_in_as(member.user)
@@ -546,24 +506,6 @@ RSpec.describe "Events", type: :request do
 
         expect(response.body).to include "Nothing coming up."
         expect(response.body).not_to include "Autumn gig"
-      end
-    end
-
-    context "when the group's only upcoming event is unconfirmed" do
-      # What a wrong filter looks like from the reader's side: an unconfirmed event is not a
-      # commitment, so no card is drawn at all. A model spec cannot show this - `#featured_event`
-      # answering the wrong record and the card being drawn anyway are the same thing there.
-      it "draws no hero card" do
-        freeze_time do
-          owner = create(:member, :owner)
-          create(:event, group: owner.group, creator: owner, status: :unconfirmed,
-            starts_at: 2.days.from_now, ends_at: 2.days.from_now + 1.hour)
-          sign_in_as(owner.user)
-
-          get group_events_path(owner.group)
-
-          expect(response.body).not_to include "Next up"
-        end
       end
     end
   end
@@ -2242,21 +2184,13 @@ RSpec.describe "Events", type: :request do
     event
   end
 
-  # An event the reader is in the middle of: started, not yet ended. `status:` is the caller's,
-  # because whether `Group#featured_event` may claim it for the hero is exactly what the examples
-  # around it differ on.
+  # An event the reader is in the middle of: started, not yet ended.
   def running_event(member, status:)
     create(:event, group: member.group, creator: member, status: status,
       starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
   end
 
-  # The card states its own copy, so the examples above need an event with a fixed name, place and
-  # offset rather than the factory's random ones. `status:` is named because the base factory
-  # leaves it at the model default, `unconfirmed`, which `Group#featured_event` deliberately excludes.
-  #
-  # The offset is exact, never an hour of its own day. The kicker rounds the distance to the
-  # nearest day, so an event pinned to 19:00 is "in 2 days" or "in 3 days" depending on the hour
-  # the suite starts at, and `freeze_time` cannot help: it stops the clock rather than setting it.
+  # The examples above need an event with a fixed name, place and offset rather than the factory's random ones, and `status:` is named because the base factory leaves it at the model default, `unconfirmed`.
   def confirmed_event(member, days:, name: "Autumn concert", category: :other)
     create(:event,
       group: member.group,

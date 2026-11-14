@@ -19,19 +19,14 @@
   </div>
 
   <% reader = Current.member %>
-  <% if @featured_event %>
-    <%= render "events/next_up", event: @featured_event, registration: @featured_event.registration_for(reader) %>
-  <% end %>
-
   <div id="events">
-    <% rows = @events.reject { it.id == @featured_event&.id } %>
-    <% if rows.any? %>
+    <% if @events.any? %>
       <ul class="list">
-        <% rows.each do |event| %>
+        <% @events.each do |event| %>
           <%= render "events/row", event: event, registration: event.registration_for(reader) %>
         <% end %>
       </ul>
-    <% elsif @featured_event.nil? %>
+    <% else %>
       <p class="text-meta"><%= { "past" => "No past events.", "canceled" => "No canceled events." }.fetch(@list, "Nothing coming up.") %></p>
     <% end %>
   </div>
