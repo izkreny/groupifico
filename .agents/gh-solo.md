@@ -42,6 +42,18 @@ They run in parallel and stay separate deliberately. Merging them into one job c
 
 The local gate is `bin/ci`, a superset of every required job that also replants the test seeds. Never invent a check command for this repository; it is that one.
 
+## Screenshots per criterion
+
+A pull request whose issue carries `frontend` or `fullstack` gets one comment of screenshots, so every acceptance criterion can be judged on screen without checking out the branch. Each section is one screen state as it looked before the branch and after it, headed by the key of every acceptance criterion that state shows, as in `### AC1, AC3 - the dialog opens`: criteria one state shows share its section, a criterion that needs a state of its own gets one, and every key heads at least one section.
+
+Each section is a Before/After table with a desktop row at 1280×800 and a phone row at 390×844, in the light theme. "Before" is `main`'s code on the same data, so the two columns differ only by the branch, and a state that did not exist before the branch says so in its Before cell instead of an image. Under every screenshot sits the page's route path with its parameters named, as in `/groups/:group_id/events/:id`, never a record id or a local URL.
+
+A criterion nothing on screen can show, such as an absence or an email, gets a section with no image that names the spec example proving it. Screens the branch changed outside any criterion go in a closing "Also changed" section.
+
+The comment is posted only once the review round has finished, which at the end of an `auto` or `go` chain means after the whole chain, never during implementation or before the reviewer has run. A screen that a later fix changes is taken again, and a new comment carrying every section replaces the earlier one, which is deleted with `gh api -X DELETE repos/{owner}/{repo}/issues/comments/<comment-id>`.
+
+The images are attached with `gh`'s `--attach` flag on `gh pr comment`, which rewrites a `![alt](./before.png)` reference in the `--body-file` to the uploaded file's URL, resolving the path against the body file's directory.
+
 ## Dependencies
 
 [`dependencies.md`](dependencies.md) owns dependency work: the update order, the `BUNDLED WITH` trap, the gems held below their latest release, and everything about Dependabot including what its pull requests are for and why their labels are left alone.

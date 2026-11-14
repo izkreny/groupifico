@@ -123,16 +123,29 @@ RSpec.describe "Registrations::ResponseRequests", type: :request do
         expect(answered.reload).to be_no
       end
 
-      # The plane stays pressable on a requested row, so a press there says why nothing changed.
-      it "says a member who has a question waiting already has a request" do
+      # The roster draws no plane on an answered row, so a press here comes from a page drawn before the member answered.
+      it "says why nothing was requested of a member who has already answered" do
+        actor = create(:member, :active)
+        event = create(:event, group: actor.group, creator: actor, manager: actor, status: :confirmed)
+        answered = create(:registration, event:, member: create(:member, :active, group: event.group), status: :no)
+        sign_in_as(actor.user)
+
+        post group_event_registration_response_request_path(event.group, event, answered)
+
+        expect(flash[:alert]).to eq "#{answered.member.full_name} has already answered, so no response was requested."
+      end
+
+      # WHY: #431 AC2, the tinted plane's Send again posts here, and asking again is what a press on a requested row does.
+      it "asks a member who has a question waiting again, and keeps their row requested" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, creator: actor, manager: actor)
         requested = create(:registration, event:, member: create(:member, :active, group: event.group), status: :response_requested)
         sign_in_as(actor.user)
 
-        post group_event_registration_response_request_path(event.group, event, requested)
+        expect { post group_event_registration_response_request_path(event.group, event, requested) }.to have_enqueued_mail(RegistrationMailer, :response_requested)
 
-        expect(flash[:notice]).to eq "#{requested.member.full_name}'s response was already requested."
+        expect(requested.reload).to be_response_requested
+        expect(flash[:notice]).to eq "#{requested.member.full_name}'s response was requested again."
       end
     end
   end

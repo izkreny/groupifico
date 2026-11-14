@@ -218,4 +218,55 @@ RSpec.describe Registration, type: :model do
       }.not_to have_enqueued_mail(RegistrationMailer, :response_requested)
     end
   end
+
+  describe "#request_response_again" do
+    # WHY: #431 AC2, the roster's dialog states `updated_at` as the last request, so asking again has to move it.
+    it "emails the member again and records the new request's time, leaving the row requested" do
+      registration = travel_to(Time.zone.parse("2026-11-10 09:00")) { create(:registration, status: :response_requested) }
+
+      travel_to Time.zone.parse("2026-11-12 14:05") do
+        expect { registration.request_response_again }.to have_enqueued_mail(RegistrationMailer, :response_requested).with(registration).once
+      end
+
+      expect(registration.reload).to be_response_requested
+      expect(registration.updated_at).to eq Time.zone.parse("2026-11-12 14:05")
+    end
+
+    it "asks nobody whose place is only held or who already answered" do
+      held = create(:registration, status: :reserved)
+      answered = create(:registration, event: create(:event, status: :confirmed), status: :yes)
+
+      expect { held.request_response_again }.not_to have_enqueued_mail(RegistrationMailer, :response_requested)
+      expect { answered.request_response_again }.not_to have_enqueued_mail(RegistrationMailer, :response_requested)
+      expect([ held.reload.status, answered.reload.status ]).to eq %w[ reserved yes ]
+    end
+
+    it "asks no paused or inactive member again" do
+      paused = create(:registration, member: create(:member, :paused), status: :response_requested)
+      gone = create(:registration, member: create(:member, :inactive), status: :response_requested)
+
+      expect { paused.request_response_again }.not_to have_enqueued_mail(RegistrationMailer, :response_requested)
+      expect { gone.request_response_again }.not_to have_enqueued_mail(RegistrationMailer, :response_requested)
+    end
+
+    it "asks nobody again on a concluded or canceled event, and leaves the last request's time as it was" do
+      concluded = travel_to(Time.zone.parse("2026-11-10 09:00")) { create(:registration, event: create(:event, status: :concluded), status: :response_requested) }
+      canceled = create(:registration, event: create(:event, status: :canceled), status: :response_requested)
+
+      expect { concluded.request_response_again }.not_to have_enqueued_mail(RegistrationMailer, :response_requested)
+      expect { canceled.request_response_again }.not_to have_enqueued_mail(RegistrationMailer, :response_requested)
+      expect(concluded.reload.updated_at).to eq Time.zone.parse("2026-11-10 09:00")
+    end
+
+    it "emails nobody when the transaction it ran in rolls back" do
+      registration = create(:registration, status: :response_requested)
+
+      expect {
+        described_class.transaction do
+          registration.request_response_again
+          raise ActiveRecord::Rollback
+        end
+      }.not_to have_enqueued_mail(RegistrationMailer, :response_requested)
+    end
+  end
 end
