@@ -76,8 +76,8 @@ RSpec.describe "Events", type: :request do
       # the event this example is looking for on the other list.
       it "lists only events from groups the acting user belongs to" do
         member = create(:member, :active)
-        own_event = create(:event, :from_the_future, status: :unconfirmed, group: member.group, creator: member)
-        other_event = create(:event, :from_the_future, status: :unconfirmed)
+        own_event = create(:event, :from_the_future, group: member.group, creator: member)
+        other_event = create(:event, :from_the_future)
         sign_in_as(member.user)
 
         get group_events_path(member.group)
