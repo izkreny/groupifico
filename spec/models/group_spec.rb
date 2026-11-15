@@ -160,8 +160,8 @@ RSpec.describe Group, type: :model do
       freeze_time do
         group = create(:group)
         creator = create(:member, group:)
-        create(:event, group:, creator:, status: :confirmed, starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour)
-        running = create(:event, group:, creator:, status: :confirmed, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
+        create(:event, :gig, group:, creator:, status: :confirmed, starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour)
+        running = create(:event, :gig, group:, creator:, status: :confirmed, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
 
         expect(group.featured_event).to eq running
       end
@@ -171,8 +171,8 @@ RSpec.describe Group, type: :model do
       freeze_time do
         group = create(:group)
         creator = create(:member, group:)
-        create(:event, group:, creator:, status: :confirmed, starts_at: 10.days.from_now, ends_at: 10.days.from_now + 1.hour)
-        soonest = create(:event, group:, creator:, status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 1.hour)
+        create(:event, :gig, group:, creator:, status: :confirmed, starts_at: 10.days.from_now, ends_at: 10.days.from_now + 1.hour)
+        soonest = create(:event, :gig, group:, creator:, status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 1.hour)
 
         expect(group.featured_event).to eq soonest
       end
@@ -184,7 +184,7 @@ RSpec.describe Group, type: :model do
       freeze_time do
         group = create(:group)
         creator = create(:member, group:)
-        create(:event, group:, creator:, status: :unconfirmed, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
+        create(:event, :gig, group:, creator:, status: :unconfirmed, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
 
         expect(group.featured_event).to be_nil
       end
@@ -194,7 +194,7 @@ RSpec.describe Group, type: :model do
       freeze_time do
         group = create(:group)
         creator = create(:member, group:)
-        create(:event, group:, creator:, status: :confirmed, starts_at: 2.days.ago, ends_at: 2.days.ago + 1.hour)
+        create(:event, :gig, group:, creator:, status: :confirmed, starts_at: 2.days.ago, ends_at: 2.days.ago + 1.hour)
 
         expect(group.featured_event).to be_nil
       end
@@ -204,8 +204,8 @@ RSpec.describe Group, type: :model do
       freeze_time do
         group = create(:group)
         creator = create(:member, group:)
-        create(:event, group:, creator:, status: :canceled, starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour)
-        confirmed = create(:event, group:, creator:, status: :confirmed, starts_at: 5.days.from_now, ends_at: 5.days.from_now + 1.hour)
+        create(:event, :gig, group:, creator:, status: :canceled, starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour)
+        confirmed = create(:event, :gig, group:, creator:, status: :confirmed, starts_at: 5.days.from_now, ends_at: 5.days.from_now + 1.hour)
 
         expect(group.featured_event).to eq confirmed
       end

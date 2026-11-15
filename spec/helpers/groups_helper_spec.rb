@@ -20,7 +20,7 @@ RSpec.describe GroupsHelper, type: :helper do
     it "names the day the group next meets, with no clock time" do
       freeze_time do
         group = create(:group)
-        create(:event, group:, status: :confirmed,
+        create(:event, :gig, group:, status: :confirmed,
           starts_at: 2.days.from_now.change(hour: 19), ends_at: 2.days.from_now.change(hour: 21))
 
         expect(helper.featured_event_line(group)).to eq "next: #{2.days.from_now.strftime('%a %-d %b')}"
@@ -32,7 +32,7 @@ RSpec.describe GroupsHelper, type: :helper do
     it "says the group is meeting right now for an event under way" do
       freeze_time do
         group = create(:group)
-        create(:event, group:, status: :confirmed, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
+        create(:event, :gig, group:, status: :confirmed, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
 
         expect(helper.featured_event_line(group)).to eq "happening now"
       end

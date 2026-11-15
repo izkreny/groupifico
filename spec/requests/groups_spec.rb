@@ -124,7 +124,7 @@ RSpec.describe "Groups", type: :request do
           member = create(:member, group: create(:group))
           create(:member, group: member.group)
           create(:member, :inactive, group: member.group) # has left, so is not one of the people
-          create(:event, group: member.group, creator: member, status: :confirmed,
+          create(:event, :gig, group: member.group, creator: member, status: :confirmed,
             starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
           sign_in_as(member.user)
 
@@ -236,7 +236,7 @@ RSpec.describe "Groups", type: :request do
     describe "the group home" do
       it "leads with the next event and a way into the whole list" do
         member = create(:member, group: create(:group))
-        event = create(:event, group: member.group, name: "Tuesday rehearsal", status: :confirmed,
+        event = create(:event, :rehearsal, group: member.group, name: "Tuesday rehearsal", status: :confirmed,
           starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
         sign_in_as(member.user)
 
@@ -268,7 +268,7 @@ RSpec.describe "Groups", type: :request do
       # The answer row is `events/_response`'s, and which of its states it draws is the card examples' question below. What belongs here is that this screen hands the partial the reader's own registration at all: without `@membership`, `registration_for` gets nil and a reader whose response is requested never sees the question.
       it "draws the question for the reader's own registration" do
         member = create(:member, group: create(:group))
-        event = create(:event, group: member.group, creator: member, status: :confirmed,
+        event = create(:event, :rehearsal, group: member.group, creator: member, status: :confirmed,
           starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
         create(:registration, event:, member:, status: :response_requested)
         sign_in_as(member.user)
@@ -281,7 +281,7 @@ RSpec.describe "Groups", type: :request do
       # WHY: what a wrong filter looks like from the reader's side: an unconfirmed event is not a commitment, so no card is drawn at all. A model spec cannot show this - `#featured_event` answering the wrong record and the card being drawn anyway are the same thing there.
       it "draws no card for a group whose only upcoming event is unconfirmed" do
         owner = create(:member, :owner)
-        create(:event, group: owner.group, creator: owner, status: :unconfirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 1.hour)
+        create(:event, :rehearsal, group: owner.group, creator: owner, status: :unconfirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 1.hour)
         sign_in_as(owner.user)
 
         get group_path(owner.group)
@@ -293,7 +293,7 @@ RSpec.describe "Groups", type: :request do
       it "states the card's distance to the event and its status" do
         freeze_time do
           owner = create(:member, :owner)
-          create(:event, group: owner.group, creator: owner, name: "Tuesday rehearsal", category: :rehearsal, status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+          create(:event, :rehearsal, group: owner.group, creator: owner, name: "Tuesday rehearsal", status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
           sign_in_as(owner.user)
 
           get group_path(owner.group)
@@ -305,7 +305,7 @@ RSpec.describe "Groups", type: :request do
       # WHY: Frame 4h's pencil, with Duplicate leading Edit as on the event screen, each leading to its own action.
       it "offers an events administrator Duplicate before Edit on the card" do
         actor = create(:member, :active, :events_administrator)
-        event = create(:event, group: actor.group, name: "Tuesday rehearsal", status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        event = create(:event, :rehearsal, group: actor.group, name: "Tuesday rehearsal", status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
         sign_in_as(actor.user)
 
         get group_path(actor.group)
@@ -317,7 +317,7 @@ RSpec.describe "Groups", type: :request do
       # WHY: `duplicate` authorizes `create?`, which managing an event does not grant.
       it "offers the manager of the event Edit alone on the card" do
         actor = create(:member, :active)
-        create(:event, group: actor.group, manager: actor, name: "Ours", status: :confirmed, starts_at: 2.days.from_now)
+        create(:event, :rehearsal, group: actor.group, manager: actor, name: "Ours", status: :confirmed, starts_at: 2.days.from_now)
         sign_in_as(actor.user)
 
         get group_path(actor.group)
@@ -1239,7 +1239,7 @@ RSpec.describe "Groups", type: :request do
   # the started-but-not-ended case the first caller here builds. Two files covering the same card
   # with one name for two shapes is a name that tells the next reader the wrong thing.
   def confirmed_event_spanning(member, starts_at:, ends_at:)
-    create(:event, group: member.group, creator: member, status: :confirmed,
+    create(:event, :rehearsal, group: member.group, creator: member, status: :confirmed,
       starts_at: starts_at, ends_at: ends_at)
   end
 end

@@ -253,11 +253,10 @@ RSpec.describe "The group home", type: :system do
 
   # The card states its own copy, so an event here has a fixed name, place and hour rather than the factory's random ones: a confirmed one, upcoming, so `Group#featured_event` answers it rather than whatever the factory rolled.
   def next_event_for(member)
-    create(:event,
+    create(:event, :rehearsal,
       group: member.group,
       creator: member,
       name: "Tuesday rehearsal",
-      category: :rehearsal,
       status: :confirmed,
       address: create(:address, name: "Community Hall"),
       starts_at: 2.days.from_now.change(hour: 19),
