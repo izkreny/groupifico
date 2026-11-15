@@ -116,7 +116,7 @@ RSpec.describe "JoinRequests", type: :request do
         expect { post join_request_path, params: { join_request: details } }.not_to change(Session, :count)
       end
 
-      # WHY: AC3, so the page cannot be used to learn whether an address has an account; one address both times keeps the copy comparable word for word.
+      # WHY: #446 AC3, so the page cannot be used to learn whether an address has an account; one address both times keeps the copy comparable word for word.
       it "answers an address a user already holds exactly as an unknown one" do
         get new_join_request_path(token: JoinLink.mint(create(:group)))
         post join_request_path, params: { join_request: details }
@@ -165,7 +165,7 @@ RSpec.describe "JoinRequests", type: :request do
         expect(field_errors(response.body)).to eq("join_request_email" => "Email is invalid", "join_request_mobile_phone" => "Mobile phone is invalid")
       end
 
-      # WHY: AC5, since a link turned off while the form was open must stop working on the submission too, not only on the page.
+      # WHY: #446 AC5, since a link turned off while the form was open must stop working on the submission too, not only on the page.
       it "answers 404 for a link turned off after the form opened, and enqueues nothing" do
         group = create(:group)
         get new_join_request_path(token: JoinLink.mint(group))
