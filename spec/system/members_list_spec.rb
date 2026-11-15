@@ -192,6 +192,21 @@ RSpec.describe "The members list", type: :system do
       expect(page).to have_css "dialog#join_link_dialog[open]"
     end
 
+    # WHY: a refusal redirects to a page with no `join_link` frame, which Turbo would answer with "Content missing" inside the dialog, so the refusal has to reach the page it redirected to.
+    it "shows the refusal when the owner is paused after opening the dialog" do
+      member = create(:member, :active, :owner)
+      create(:member, :active, :owner, group: member.group)
+      sign_in_as member.user
+
+      visit group_members_path(member.group)
+      open_join_link
+      member.update!(status: :paused)
+      click_on "Create new join link"
+
+      expect(page).to have_text "You are not allowed to do that."
+      expect(page).to have_no_css "dialog#join_link_dialog[open]"
+    end
+
     # WHY: the owner's order on #453 that Regenerate asks first, so cancelling it leaves the link working.
     it "keeps the link when Regenerate is cancelled" do
       member = create(:member, :active, :owner)

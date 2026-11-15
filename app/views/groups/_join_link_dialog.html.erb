@@ -7,7 +7,7 @@
 
   <dialog id="join_link_dialog" class="modal modal-bottom sm:modal-middle" aria-labelledby="join_link_heading" data-dialog-target="sheet">
     <div class="modal-box">
-      <%= turbo_frame_tag "join_link" do %>
+      <%= turbo_frame_tag "join_link", data: { action: "turbo:frame-missing->dialog#visit" } do %>
         <%= render "groups/join_link", group:, join_link: %>
       <% end %>
     </div>

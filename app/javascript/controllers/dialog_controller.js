@@ -33,6 +33,12 @@ export default class extends Controller {
     this.sheetTarget.showModal()
   }
 
+  // WHY: a frame inside the dialog, such as the join link's, whose response carries no matching frame - a refusal or a lapsed session redirecting elsewhere - is followed as a whole visit, so the reader lands where the redirect pointed, alert and all, instead of reading "Content missing" in the dialog.
+  visit(event) {
+    event.preventDefault()
+    event.detail.visit(event.detail.response)
+  }
+
   // A reader who opens the sheet and then presses Back leaves the page with `<dialog open>` in it,
   // and Turbo caches that snapshot on the way out: Forward serves it back with no request, so the
   // panel returns opened by nobody and outside the top layer, where Escape no longer dismisses it.
