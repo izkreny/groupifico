@@ -1,0 +1,7 @@
+Confirm your request to join <%= @group_name %>:
+<%= join_request_confirmation_url(token: @token) %>
+
+The link works once and expires in <%= distance_of_time_in_words(0, JoinRequest::EXPIRES_IN) %>.
+Once you confirm, the group still has to approve you before you see anything of it.
+
+If you did not ask to join <%= @group_name %>, ignore this message and the link expires unused.
