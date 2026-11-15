@@ -110,14 +110,11 @@ RSpec.describe Event::Filter do
     end
   end
 
-  describe "#save_to" do
-    it "writes what is on and clears what is not" do
-      cookies = ActionDispatch::Request.empty.cookie_jar
-      cookies[:events_answers] = "yes"
+  describe "#to_cookies" do
+    it "names what is on and leaves what is not blank, so the cookies read back as the same filter" do
+      filter = described_class.new(member, list: "canceled", categories: %w[ other rehearsal ])
 
-      described_class.new(member, list: "canceled", categories: %w[ other ]).save_to(cookies)
-
-      expect(cookies.to_hash.slice("events_list", "events_categories", "events_answers", "events_managed")).to eq("events_list" => "canceled", "events_categories" => "other")
+      expect(filter.to_cookies).to eq(events_list: "canceled", events_categories: "rehearsal,other", events_answers: "", events_managed: nil)
     end
   end
 end

@@ -1,10 +1,8 @@
-# What the events list shows its reader: one list, and any categories, answers and the reader's own managed events within it. Read from the URL when it carries any of the list's parameters, so a link shows what it names for that visit, and otherwise from the cookies the last applied choice wrote.
-#
-# WHY: every value the list does not offer is dropped on the way in rather than carried, the way `EventsHelper#roster_order` drops an order, so nothing outside these lists ever reaches a query or a cookie.
+# WHY: one object decides what the events list shows, so the list, its chips, the funnel and the sheet cannot disagree. Every value the list does not offer is dropped on the way in, the way `EventsHelper#roster_order` drops an order, so nothing outside these lists reaches a query or a cookie.
 class Event::Filter
-  # `nil` is the upcoming list, the screen's own URL.
+  # WHY: `nil` is the upcoming list because that list is the screen's own URL, with no `scope`.
   LISTS = { nil => "Upcoming", "past" => "Past", "canceled" => "Canceled" }.freeze
-  # In the order the sheet offers them, which is also the order their chips take.
+  # WHY: in the sheet's order rather than the enum's, so the chips read in the order the sheet offers them.
   CATEGORIES = { "gig" => "Gig", "rehearsal" => "Rehearsal", "other" => "Other" }.freeze
   ANSWERS = { "yes" => "Yes", "maybe" => "Maybe", "no" => "No", "not_answered" => "Not answered" }.freeze
   MANAGED = "Only events I manage".freeze
@@ -14,6 +12,7 @@ class Event::Filter
 
   PARAMS = %w[ scope category answer managed ].freeze
 
+  # WHY: a URL carrying any of the list's parameters replaces the saved choice whole rather than merging with it, so a link shows exactly what it names, for that visit alone.
   def self.read(member, params:, cookies:)
     if params.keys.intersect?(PARAMS)
       new(member, list: params[:scope], categories: params[:category], answers: params[:answer], managed: params[:managed])
@@ -40,7 +39,7 @@ class Event::Filter
     @managed_offered
   end
 
-  # Whether anything hides events from the chosen list; the list itself never counts, so the funnel says the same thing whichever list is open.
+  # WHY: the list never counts, so the funnel says the same thing whichever list is open, and needs no idea of a default list that #462 will make depend on role.
   def narrowed?
     categories.any? || answers.any? || managed?
   end
@@ -61,7 +60,7 @@ class Event::Filter
 
   def list_name = LISTS.fetch(list)
 
-  # Each filter that is on, as the chip names it and the parameters that leave every other one standing.
+  # WHY: each chip carries the parameters that leave every other filter on, so its ✕ applies what remains rather than knowing how to remove itself.
   def chips
     categories.map { [ CATEGORIES[it], without(category: it) ] } +
       answers.map { [ ANSWERS[it], without(answer: it) ] } +
@@ -70,14 +69,8 @@ class Event::Filter
 
   def to_params = without
 
-  def save_to(cookies)
-    { events_list: list, events_categories: categories.join(","), events_answers: answers.join(","), events_managed: (managed? ? "true" : nil) }.each do |name, value|
-      if value.present?
-        cookies.permanent[name] = value
-      else
-        cookies.delete(name)
-      end
-    end
+  def to_cookies
+    { events_list: list, events_categories: categories.join(","), events_answers: answers.join(","), events_managed: ("true" if managed?) }
   end
 
   private
