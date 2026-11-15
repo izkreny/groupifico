@@ -1,8 +1,6 @@
 <% content_for :title, "Events" %>
 
-<%#
-  The group's events. The shell's header carries the group's name, so this screen's own title is "Events", and what the list shows is chosen in one place: the funnel opens a sheet holding the list and every filter, and the chips under the title say what is on.
-%>
+<%# WHY: the list and every filter are chosen in one place, the funnel's sheet, so the screen needs no list menu and its title is simply "Events"; the chips under it say what is on. %>
 <div class="flex flex-col gap-3">
   <div class="flex flex-col gap-3" data-controller="dialog" data-action="turbo:before-cache@document->dialog#close">
     <div class="flex items-center justify-between gap-2.5">

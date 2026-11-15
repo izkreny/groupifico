@@ -375,8 +375,6 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include "Did you go?"
       end
 
-      # The list menu states which list is open, so a reader who lands on the past one by a typed URL
-      # sees the control agreeing with what is under it.
       # WHY: a scope naming no list is the upcoming list, which is what keeps a mistyped URL a screen rather than an error, with the list's chip agreeing with what is under it.
       it "reads an unknown scope as the upcoming list" do
         member = create(:member, :active)

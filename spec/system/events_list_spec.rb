@@ -145,7 +145,7 @@ RSpec.describe "The events list", type: :system do
     expect(page).to have_css "dialog#event_filter_dialog[open]"
   end
 
-  # WHY: #460 AC12.
+  # WHY: #460 AC12. The sheet is only in the accessibility tree while it is open, which only a browser can make it, and its picks paint differently in each theme.
   it "passes axe with the filter sheet open, in organic and organic-dark" do
     member = create(:member, :owner)
     next_event_for(member)

@@ -1,5 +1,5 @@
 <%# locals: (group:, filter:, count:) %>
-<%# The sheet that chooses what the events list shows, a bottom sheet on a phone and a centred dialog wider up. What it holds is `events/filter_form`, which the styleguide draws on its own. %>
+<%# WHY: a bottom sheet on a phone and a centred dialog wider up, as the join link's is, so the app's dialogs open one way. %>
 <dialog id="event_filter_dialog" class="modal modal-bottom sm:modal-middle" aria-labelledby="event_filter_heading" data-dialog-target="sheet">
   <div class="modal-box flex flex-col gap-4">
     <%= render "events/filter_form", group:, filter:, count: %>
