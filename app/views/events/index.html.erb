@@ -18,7 +18,8 @@
         <% end %>
 
         <%# WHY: primary only while a filter hides events from the list picked, and muted otherwise, whichever list is open, since the list's own chip already names it. %>
-        <%= tag.button type: "button", class: [ "btn btn-ghost btn-circle btn-sm", @filter.narrowed? ? "text-primary" : "text-icon-muted" ], aria: { label: "Filter events" }, data: { dialog_target: "trigger", action: "dialog#show" } do %>
+        <% funnel_ink = @filter.narrowed? ? "text-primary" : "text-icon-muted" %>
+        <%= tag.button type: "button", class: [ "btn btn-ghost btn-circle btn-sm", funnel_ink ], aria: { label: "Filter events" }, data: { dialog_target: "trigger", action: "dialog#show" } do %>
           <%= icon :filter, class: "size-icon-control" %>
         <% end %>
       </div>
