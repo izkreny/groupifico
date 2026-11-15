@@ -7,7 +7,7 @@
 %>
 <div class="flex flex-col gap-3">
   <div class="flex items-center justify-between gap-2.5">
-    <%= render "events/scope_menu", group: @group, list: @list %>
+    <%= render "events/scope_menu", group: @group, list: @filter.list %>
 
     <%# Checked against a new event rather than the group, because that is the record `EventPolicy`
         writes the rule against. A refused reader gets no button rather than a disabled one. %>
@@ -27,7 +27,7 @@
         <% end %>
       </ul>
     <% else %>
-      <p class="text-meta"><%= { "past" => "No past events.", "canceled" => "No canceled events." }.fetch(@list, "Nothing coming up.") %></p>
+      <p class="text-meta"><%= { "past" => "No past events.", "canceled" => "No canceled events." }.fetch(@filter.list, "Nothing coming up.") %></p>
     <% end %>
   </div>
 </div>

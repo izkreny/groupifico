@@ -45,6 +45,7 @@ class Event::Filter
     categories.any? || answers.any? || managed?
   end
 
+  # WHY: ordered here because the list had no order of its own: the rows were whatever the database happened to return, which is the same list in a different sequence on a different day.
   def apply(events)
     events = case list
     when "past" then events.past.order(starts_at: :desc)

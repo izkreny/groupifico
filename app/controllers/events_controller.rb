@@ -11,23 +11,15 @@ class EventsController < ApplicationController
   def index
     authorize! @group, to: :show?
 
-    # WHY: picked from literals rather than naming a scope from the parameter, because `params[:scope]` is a member's input, and anything built out of it and sent to the relation is a door onto every scope the model has. Anything else is `nil`, the upcoming list, so a mistyped URL degrades to the default list. The values are spelled again in `events/_scope_menu` and in the empty text of `events/index`.
-    @list = params[:scope].presence_in(%w[ past canceled ])
+    # WHY: `Event::Filter` picks the list and every filter from its own literals, because the parameters and cookies are a member's input, and anything built out of them and sent to the relation is a door onto every scope the model has. Anything it does not offer is dropped, so a mistyped URL degrades to the upcoming list.
+    @filter = Event::Filter.read(Current.member, params:, cookies:)
 
     # Preloaded because every row reads the event for the reader's own registration and its place,
     # and `Event#registration_for` reads the loaded association: without this the list costs a
     # query per row for each.
     #
-    # Ordered here because the list had no order at all: the rows were whatever the database
-    # happened to return, which is the same list in a different sequence on a different day.
-    #
-    # The scopes partition the group's events between them, so an event it is in the middle of is on the upcoming list rather than on none: still ahead of its members, not behind them.
-    events = authorized_scope(@group.events).preloaded
-    @events = case @list
-    when "past" then events.past.order(starts_at: :desc)
-    when "canceled" then events.canceled.order(starts_at: :desc)
-    else events.current_and_upcoming.order(:starts_at)
-    end
+    # The list's scopes partition the group's events between them, so an event it is in the middle of is on the upcoming list rather than on none: still ahead of its members, not behind them.
+    @events = @filter.apply(authorized_scope(@group.events).preloaded)
   end
 
   def show

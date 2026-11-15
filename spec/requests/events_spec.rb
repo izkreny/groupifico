@@ -355,6 +355,47 @@ RSpec.describe "Events", type: :request do
       end
     end
 
+    context "when the member has applied a filter" do
+      # WHY: #460 AC9. The list and filters applied through the sheet live in this browser's cookies, so the next visit shows them.
+      it "lists what the applied filter keeps" do
+        member = create(:member, :active)
+        confirmed_event(member, days: 3, name: "Advent concert", category: :gig)
+        confirmed_event(member, days: 4, name: "Section rehearsal", category: :rehearsal)
+        sign_in_as(member.user)
+        patch group_event_filter_path(member.group, category: %w[ gig ])
+
+        get group_events_path(member.group)
+
+        expect([ response.body.include?("Advent concert"), response.body.include?("Section rehearsal") ]).to eq [ true, false ]
+      end
+
+      # WHY: #460 AC10. A link carrying a filter shows it for that visit, and the next plain visit is back to what was applied.
+      it "shows a filter the URL carries for that visit alone, leaving the applied one saved" do
+        member = create(:member, :active)
+        confirmed_event(member, days: 3, name: "Advent concert", category: :gig)
+        confirmed_event(member, days: 4, name: "Section rehearsal", category: :rehearsal)
+        sign_in_as(member.user)
+        patch group_event_filter_path(member.group, category: %w[ rehearsal ])
+
+        get group_events_path(member.group, category: %w[ gig ])
+        linked = [ response.body.include?("Advent concert"), response.body.include?("Section rehearsal") ]
+        get group_events_path(member.group)
+
+        expect([ linked, [ response.body.include?("Advent concert"), response.body.include?("Section rehearsal") ], cookies[:events_categories] ]).to eq [ [ true, false ], [ false, true ], "rehearsal" ]
+      end
+
+      # WHY: #460 AC11. A category the sheet does not offer narrows nothing.
+      it "ignores a category the list does not offer" do
+        member = create(:member, :active)
+        confirmed_event(member, days: 3, name: "Advent concert", category: :gig)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group, category: %w[ party ])
+
+        expect(response.body).to include "Advent concert"
+      end
+    end
+
     # WHY: `confirmed_event` and then the status, because a registration takes an answer only while its event is open to answers, so a member answers before the event is called off.
     context "when the canceled list is requested" do
       it "lists the group's canceled events newest first, whatever their dates" do
