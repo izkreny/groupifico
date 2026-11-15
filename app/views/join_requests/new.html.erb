@@ -2,4 +2,23 @@
 
 <div class="grow flex flex-col gap-5">
   <h1 class="text-record text-center break-words">Join <span class="block text-secondary"><%= @group.name %></span></h1>
+
+  <%= form_with model: @join_request, url: join_request_path, class: "contents" do |form| %>
+    <%= form.with_error_summary do %>
+      <fieldset class="fieldset">
+        <%= form.field :first_name, required: true, autofocus: true, autocomplete: "given-name" %>
+        <%= form.field :last_name, required: true, autocomplete: "family-name" %>
+        <%= form.field :email, as: :email_field, label: "Your email", required: true, autocomplete: "email",
+              placeholder: "you@example.com", hint: "We send a link here to confirm it is yours." %>
+        <%= form.field :mobile_phone, as: :telephone_field, label: "Mobile", required: true, autocomplete: "tel",
+              hint: "Shown to members of the group." %>
+      </fieldset>
+    <% end %>
+
+    <%= form.button class: "btn btn-primary btn-block" do %>
+      <%= icon :email, class: "size-icon-control" %> Send my confirmation link
+    <% end %>
+  <% end %>
+
+  <p class="text-meta text-center mt-auto">The group approves you before you see anything of it.</p>
 </div>
