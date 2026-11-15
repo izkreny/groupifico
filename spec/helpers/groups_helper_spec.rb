@@ -38,6 +38,19 @@ RSpec.describe GroupsHelper, type: :helper do
       end
     end
 
+    # WHY: #459 AC6. The rehearsal comes first, so a line that read any category would name its day instead.
+    it "names the next gig's day, not an earlier rehearsal's" do
+      freeze_time do
+        group = create(:group)
+        create(:event, :rehearsal, group:, status: :confirmed,
+          starts_at: 1.day.from_now.change(hour: 19), ends_at: 1.day.from_now.change(hour: 21))
+        create(:event, :gig, group:, status: :confirmed,
+          starts_at: 4.days.from_now.change(hour: 20), ends_at: 4.days.from_now.change(hour: 22))
+
+        expect(helper.featured_event_line(group)).to eq "next: #{4.days.from_now.strftime('%a %-d %b')}"
+      end
+    end
+
     it "says nothing is scheduled for a group with no event ahead of it" do
       expect(helper.featured_event_line(create(:group))).to eq "nothing scheduled"
     end

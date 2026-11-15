@@ -107,11 +107,13 @@ RSpec.describe "The group home", type: :system do
   end
 
   # daisyUI grows every paragraph in a card body, so the question would stretch and push the buttons to the card's far edge.
+  #
+  # WHY: 700px wide, between the column's full 640px and `md`, the one range where the card spans the whole column: on a phone and from `md` up, where the cards sit two to a row, the buttons wrap under the question and no gap after it exists to measure.
   it "sets the card's answer buttons 16px after the question, as on the event screen" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
     create(:registration, event: next_event_for(member), member:, status: :yes)
     sign_in_as member.user
-    page.driver.resize(1280, 900)
+    page.current_window.resize_to(700, 900)
 
     visit group_path(member.group)
 
@@ -247,6 +249,49 @@ RSpec.describe "The group home", type: :system do
   end
 
   # Whether the page scrolls sideways, which is the one overflow a reader on a phone notices first.
+  # WHY: #459 AC10. Which card leads is the request spec's; where the two land is geometry, one column on a phone and two from `md` up, and only a browser lays them out. The gig starts first, so the rehearsal leading is the screen's order rather than the calendar's.
+  it "stacks the rehearsal card above the gig card on a phone" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    rehearsal = next_event_for(member)
+    gig = next_gig_for(member)
+    sign_in_as member.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_path(member.group)
+
+    expect(card_box(rehearsal)["bottom"]).to be <= card_box(gig)["top"]
+    expect(overflowing?).to be false
+  end
+
+  # WHY: #459 AC10, the desktop half: two columns of 296px each inside the 640px shell, measured to fit before the plan was written.
+  it "sets the rehearsal card to the left of the gig card on a desktop" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    rehearsal = next_event_for(member)
+    gig = next_gig_for(member)
+    sign_in_as member.user
+    resize_to ViewportHelper::DESKTOP
+
+    visit group_path(member.group)
+
+    expect([ card_box(rehearsal)["right"] <= card_box(gig)["left"], card_box(rehearsal)["top"] == card_box(gig)["top"] ]).to eq [ true, true ]
+    expect(overflowing?).to be false
+  end
+
+  # WHY: #459 AC9. The empty slot is a surface of its own, `base-200` over the page, and its line is dimmed with a theme colour, so whether it paints and stays legible is the browser's to say.
+  it "paints the empty rehearsal slot, with no accessibility violations" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    next_gig_for(member)
+    sign_in_as member.user
+    prefer_colour_scheme :light
+    resize_to ViewportHelper::MOBILE
+
+    visit group_path(member.group)
+
+    expect(page).to have_text "No rehearsal coming up"
+    expect(page).to paint "#no_rehearsal"
+    expect(page).to be_accessible
+  end
+
   def overflowing?
     page.evaluate_script("document.documentElement.scrollWidth > document.documentElement.clientWidth")
   end
@@ -261,5 +306,21 @@ RSpec.describe "The group home", type: :system do
       address: create(:address, name: "Community Hall"),
       starts_at: 2.days.from_now.change(hour: 19),
       ends_at: 2.days.from_now.change(hour: 21))
+  end
+
+  # A confirmed gig the day before `next_event_for`'s rehearsal, with fixed copy for the same reason.
+  def next_gig_for(member)
+    create(:event, :gig,
+      group: member.group,
+      creator: member,
+      name: "Winter concert",
+      status: :confirmed,
+      starts_at: 1.day.from_now.change(hour: 20),
+      ends_at: 1.day.from_now.change(hour: 22))
+  end
+
+  # The rendered box of an event's hero card, as the browser laid it out.
+  def card_box(event)
+    page.evaluate_script("document.getElementById('#{ActionView::RecordIdentifier.dom_id(event, :next_up)}').getBoundingClientRect().toJSON()")
   end
 end

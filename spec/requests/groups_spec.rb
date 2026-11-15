@@ -462,6 +462,97 @@ RSpec.describe "Groups", type: :request do
         expect(response.body).not_to include "Request responses"
       end
 
+      # WHY: #459 AC1, AC2 and AC7. The `other` event comes first and the gig before the rehearsal, so a home that read any category, or one card for the soonest event, would draw the wrong events.
+      it "draws the next rehearsal and the next gig in a card each, and no other event" do
+        member = create(:member, :active)
+        create(:event, group: member.group, creator: member, name: "Committee meeting", category: :other, status: :confirmed, starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour)
+        gig = create(:event, :gig, group: member.group, creator: member, status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        rehearsal = confirmed_event_spanning(member, starts_at: 5.days.from_now, ends_at: 5.days.from_now + 2.hours)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(card_ids).to match_array [ rehearsal, gig ].map { ActionView::RecordIdentifier.dom_id(it, :next_up) }
+        expect(response.body).not_to include "Committee meeting"
+      end
+
+      # WHY: #459 AC10. The gig starts first, so the rehearsal card leading the markup is the screen's order rather than the calendar's.
+      it "draws the rehearsal card before the gig card" do
+        member = create(:member, :active)
+        gig = create(:event, :gig, group: member.group, creator: member, status: :confirmed, starts_at: 1.day.from_now, ends_at: 1.day.from_now + 2.hours)
+        rehearsal = confirmed_event_spanning(member, starts_at: 3.days.from_now, ends_at: 3.days.from_now + 2.hours)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(card_ids).to eq [ rehearsal, gig ].map { ActionView::RecordIdentifier.dom_id(it, :next_up) }
+      end
+
+      # WHY: #459 AC3. The running rehearsal began first, so a single card for the soonest event would give it to the rehearsal and leave the gig out.
+      it "gives the gig card to a gig under way, with its Happening now kicker" do
+        freeze_time do
+          member = create(:member, :active)
+          confirmed_event_spanning(member, starts_at: 2.hours.ago, ends_at: 2.hours.from_now)
+          gig = create(:event, :gig, group: member.group, creator: member, status: :confirmed, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
+          sign_in_as(member.user)
+
+          get group_path(member.group)
+
+          expect(card_text(gig)).to include "Happening now · ends in about 1 hour"
+        end
+      end
+
+      # WHY: #459 AC8, the same case for the rehearsal card, under a gig that began first.
+      it "gives the rehearsal card to a rehearsal under way, with its Happening now kicker" do
+        freeze_time do
+          member = create(:member, :active)
+          create(:event, :gig, group: member.group, creator: member, status: :confirmed, starts_at: 2.hours.ago, ends_at: 2.hours.from_now)
+          rehearsal = confirmed_event_spanning(member, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
+          sign_in_as(member.user)
+
+          get group_path(member.group)
+
+          expect(card_text(rehearsal)).to include "Happening now · ends in about 1 hour"
+        end
+      end
+
+      # WHY: #459 AC4. A rehearsal and an `other` event are both ahead, so the gig's slot saying so is what proves neither stands in for a gig; "See all events" under the pair is the link to the group's events.
+      it "says no gig is coming up when only a rehearsal and an other event are ahead" do
+        member = create(:member, :active)
+        confirmed_event_spanning(member, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        create(:event, group: member.group, creator: member, category: :other, status: :confirmed, starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(Nokogiri::HTML(response.body).at_css("#no_gig")&.text&.squish).to eq "No gig coming up"
+        expect(response.body).to include group_events_path(member.group)
+      end
+
+      # WHY: #459 AC9.
+      it "says no rehearsal is coming up when only a gig is ahead" do
+        member = create(:member, :active)
+        create(:event, :gig, group: member.group, creator: member, status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(Nokogiri::HTML(response.body).at_css("#no_rehearsal")&.text&.squish).to eq "No rehearsal coming up"
+      end
+
+      # WHY: #459 AC5's boundary. The first-run screen is for a group with no events at all, so one whose only event is over gets the two empty slots instead of an invitation to add its first rehearsal.
+      it "draws the two empty slots rather than the first-run screen for a group whose only event is past" do
+        member = create(:member, :owner)
+        create(:event, :rehearsal, group: member.group, creator: member, status: :concluded, starts_at: 3.days.ago, ends_at: 3.days.ago + 2.hours)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(response.body).to include "No rehearsal coming up", "No gig coming up"
+        expect(response.body).not_to include "Nothing in the diary"
+      end
+
+      # WHY: #459 AC5.
       it "shows the first-run screen to an owner whose group has no events" do
         member = create(:member, :owner)
         sign_in_as(member.user)
@@ -1230,6 +1321,16 @@ RSpec.describe "Groups", type: :request do
 
       expect(response.body).not_to include "group_#{actor.group_id}"
     end
+  end
+
+  # The ids of the hero cards the last response drew, in the order it drew them.
+  def card_ids
+    Nokogiri::HTML(response.body).css("[id^=next_up]").map { it["id"] }
+  end
+
+  # One hero card's text, squished, so an assertion about its kicker reads that card and not its neighbour.
+  def card_text(event)
+    Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(event, :next_up)}")&.text&.squish
   end
 
   # A confirmed event of this member's group, spanning the instants the caller names, since the card examples above vary that pair: whether an event has started is the whole of what `Group#featured_event` answers differently before and after an event begins.

@@ -14,13 +14,11 @@ class GroupsController < ApplicationController
   def show
     authorize! @group
 
-    # `Current.member` answers nil here: `GroupScoped` assigns `Current.group` from
-    # `params[:group_id]`, and this controller is not nested under a group. The membership cannot be
-    # nil by the time this runs - `GroupPolicy`'s membership pre-check raises 404 for a non-member
-    # above - and the hero tolerates nil anyway, through `Event#registration_for`'s `member&.id`.
+    # `Current.member` answers nil here: `GroupScoped` assigns `Current.group` from `params[:group_id]`, and this controller is not nested under a group. The membership cannot be nil by the time this runs - `GroupPolicy`'s membership pre-check raises 404 for a non-member above - and the cards tolerate nil anyway, through `Event#registration_for`'s `member&.id`.
     @membership = @group.members.find_by(user: Current.user)
-    # The group decides which event is next, not the screen. No preload: the hero's "said yes" line queries with the names included itself, and its counts are one grouped query, so the only association a screen leaves it to load is `registrations`.
-    @featured_event = @group.featured_event
+    # The group decides which rehearsal and which gig are next, not the screen. No preload: each card's "said yes" line queries with the names included itself, and its counts are one grouped query, so the only association a screen leaves it to load is `registrations`.
+    @next_rehearsal = @group.featured_event(:rehearsal)
+    @next_gig       = @group.featured_event(:gig)
   end
 
   def new
