@@ -1,0 +1,69 @@
+<%# locals: (group:, filter:, count:) %>
+<%#
+  The sheet that chooses what the events list shows, headed like the join link's dialog. Nothing applies until "Show N events" submits it, and the count on that button follows the picks as they change, through `events_filter_controller.js`.
+%>
+<% legend = "mb-2 text-meta font-semibold uppercase tracking-wide text-muted" %>
+<% pick = "btn btn-sm rounded-full checked:btn-primary" %>
+<dialog id="event_filter_dialog" class="modal modal-bottom sm:modal-middle" aria-labelledby="event_filter_heading" data-dialog-target="sheet">
+  <div class="modal-box flex flex-col gap-4">
+    <div class="flex items-center justify-between gap-2">
+      <h2 id="event_filter_heading" class="text-lg font-bold">Filter events</h2>
+
+      <form method="dialog">
+        <button class="btn btn-ghost btn-circle btn-sm" aria-label="Close"><%= icon :cancel, class: "size-icon-control" %></button>
+      </form>
+    </div>
+
+    <%# WHY: the dialog closes as the form submits, because applying redirects back to this list, a refresh Turbo morphs, and a morph strips `open` without calling `close()`, which leaves the dialog modal and the page refusing clicks. %>
+    <%= form_with url: group_event_filter_path(group), method: :patch, class: "flex flex-col gap-4", data: { controller: "events-filter", action: "change->events-filter#refresh submit->dialog#close", events_filter_url_value: group_events_path(group) } do %>
+      <fieldset>
+        <legend class="<%= legend %>">Show</legend>
+        <div class="flex flex-wrap gap-2">
+          <% Event::Filter::LISTS.each do |value, name| %>
+            <%= radio_button_tag :scope, value.to_s, filter.list == value, id: "event_filter_scope_#{value || "upcoming"}", class: pick, aria: { label: name } %>
+          <% end %>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend class="<%= legend %>">Category</legend>
+        <div class="flex flex-wrap gap-2">
+          <% Event::Filter::CATEGORIES.each do |value, name| %>
+            <%= check_box_tag "category[]", value, filter.categories.include?(value), id: "event_filter_category_#{value}", class: pick, aria: { label: name } %>
+          <% end %>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend class="<%= legend %>">My answer</legend>
+        <div class="flex flex-wrap gap-2">
+          <% Event::Filter::ANSWERS.each do |value, name| %>
+            <%= check_box_tag "answer[]", value, filter.answers.include?(value), id: "event_filter_answer_#{value}", class: pick, aria: { label: name } %>
+          <% end %>
+        </div>
+      </fieldset>
+
+      <% if filter.managed_offered? %>
+        <fieldset>
+          <legend class="<%= legend %>">Other</legend>
+          <div class="flex flex-wrap gap-2">
+            <%= check_box_tag :managed, "1", filter.managed?, id: "event_filter_managed", class: pick, aria: { label: Event::Filter::MANAGED } %>
+          </div>
+        </fieldset>
+      <% end %>
+
+      <%# WHY: `flex-wrap-reverse` keeps Reset on the left while both fit, and puts "Show N events" on top, full width, once they no longer do. %>
+      <div class="flex flex-wrap-reverse gap-2">
+        <button type="button" class="btn grow" data-action="events-filter#reset"><%= icon :reset, class: "size-icon-control" %>Reset</button>
+
+        <%= turbo_frame_tag "event_filter_count", class: "flex grow", data: { events_filter_target: "count" } do %>
+          <button class="btn btn-primary grow"><%= icon :apply, class: "size-icon-control" %>Show <%= pluralize count, "event" %></button>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <form method="dialog" class="modal-backdrop">
+    <button>close</button>
+  </form>
+</dialog>

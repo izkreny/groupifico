@@ -1,0 +1,14 @@
+<%# locals: (group:, filter:) %>
+<%#
+  What the list shows, as a row of chips. Every chip is primary, the list's included, and only a filter's chip carries a ✕: that is what tells the list it is filtering from the filters that narrow it. Pressing a chip anywhere but its ✕ opens the sheet, and the ✕ applies everything else that was on, so removing a filter saves like applying one.
+%>
+<div class="flex flex-wrap gap-2">
+  <button type="button" class="rounded-full bg-primary px-3 py-1 text-sm text-primary-content cursor-pointer" data-action="dialog#show"><%= filter.list_name %></button>
+
+  <% filter.chips.each do |name, params| %>
+    <div class="inline-flex items-center rounded-full bg-primary text-primary-content">
+      <button type="button" class="ps-3 py-1 text-sm cursor-pointer" data-action="dialog#show"><%= name %></button>
+      <%= button_to icon(:remove, class: "size-icon-inline"), group_event_filter_path(group), method: :patch, params:, form_class: "contents", class: "btn btn-ghost btn-circle btn-xs text-primary-content", aria: { label: "Remove #{name}" } %>
+    </div>
+  <% end %>
+</div>

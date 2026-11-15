@@ -39,16 +39,61 @@ RSpec.describe "Events", type: :request do
         expect(response).to have_http_status :ok
       end
 
-      # WHY: the list menu is the screen's title as well as its filter, so what proves the title is there is the menu naming the open list and linking every list, rather than a heading above them.
-      it "titles the screen with the menu that links the lists, the open one marked" do
+      # WHY: #460 AC1. The screen's title names it, and the list is chosen through the funnel beside the +, which carries no text, so its accessible name is the only label it has.
+      it "titles the screen Events, with an icon-only funnel named Filter events and no list menu" do
         member = create(:member, :active)
         sign_in_as(member.user)
 
         get group_events_path(member.group)
 
-        menu = Nokogiri::HTML(response.body).at_css("details#scope")
-        expect(menu.at_css("summary").text.squish).to eq "Upcoming events"
-        expect(menu.css("a").map { [ it.text, it[:href], it["aria-current"] ] }).to eq [ [ "Upcoming events", group_events_path(member.group), "true" ], [ "Past events", group_events_path(member.group, scope: "past"), nil ], [ "Canceled events", group_events_path(member.group, scope: "canceled"), nil ] ]
+        page = Nokogiri::HTML(response.body)
+        funnel = page.at_css("button[aria-label='Filter events']")
+        expect([ page.at_css("main h2")&.text, funnel.text.strip, funnel.at_css("svg").present?, page.at_css("details#scope").present? ]).to eq [ "Events", "", true, false ]
+      end
+
+      # WHY: #460 AC2. One sheet, headed and closable like the join link's, holds the list and every filter.
+      it "offers the filter sheet's groups and buttons" do
+        member = create(:member, :active)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group)
+
+        sheet = Nokogiri::HTML(response.body).at_css("dialog#event_filter_dialog")
+        expect([ sheet.at_css("h2").text, sheet.at_css("form[method=dialog] button[aria-label=Close]").present? ]).to eq [ "Filter events", true ]
+        expect(sheet.css("fieldset").map { [ it.at_css("legend").text, it.css("input").map { |input| input["aria-label"] } ] }).to eq [
+          [ "Show", %w[ Upcoming Past Canceled ] ], [ "Category", %w[ Gig Rehearsal Other ] ], [ "My answer", [ "Yes", "Maybe", "No", "Not answered" ] ]
+        ]
+        expect(sheet.css("button.btn").map { it.text.squish }.last(2)).to eq [ "Reset", "Show 0 events" ]
+      end
+
+      # WHY: #460 AC3. "Only events I manage" narrows nothing for someone who manages none of the group's events, so they are not offered it.
+      it "offers the Other group only to a member who manages one of the group's events" do
+        member = create(:member, :active)
+        sign_in_as(member.user)
+        get group_events_path(member.group)
+        unoffered = Nokogiri::HTML(response.body).css("dialog legend").map(&:text)
+        confirmed_event(member, days: 3).update!(manager: member)
+
+        get group_events_path(member.group)
+
+        offered = Nokogiri::HTML(response.body).css("dialog fieldset").last
+        expect([ unoffered.include?("Other"), offered.at_css("legend").text, offered.at_css("input")["aria-label"] ]).to eq [ false, "Other", "Only events I manage" ]
+      end
+
+      # WHY: #460 AC5. The list's chip names it with no ✕, and each filter's chip carries a ✕ that applies everything else still on.
+      it "shows the list and each filter as chips, only the filters removable" do
+        member = create(:member, :active)
+        sign_in_as(member.user)
+        patch group_event_filter_path(member.group, scope: "past", category: %w[ gig ], answer: %w[ yes ])
+
+        get group_events_path(member.group)
+
+        page = Nokogiri::HTML(response.body)
+        removals = page.css("button[aria-label^='Remove ']").map do |button|
+          [ button["aria-label"], button.ancestors("form").first.css("input[type=hidden]").map { [ it[:name], it[:value] ] }.reject { |name, _| %w[ _method authenticity_token ].include?(name) }.sort ]
+        end
+        expect(page.css("main button[data-action='dialog#show']").map { it.text.strip }.reject(&:empty?)).to eq %w[ Past Gig Yes ]
+        expect(removals).to eq [ [ "Remove Gig", [ %w[ answer[] yes ], %w[ scope past ] ] ], [ "Remove Yes", [ %w[ category[] gig ], %w[ scope past ] ] ] ]
       end
 
       # WHY: #458 AC1 and AC2. Who may create an event is `EventPolicy#create?`, and the + carries no text of its own, so its accessible name is the only label it has.
@@ -332,17 +377,7 @@ RSpec.describe "Events", type: :request do
 
       # The list menu states which list is open, so a reader who lands on the past one by a typed URL
       # sees the control agreeing with what is under it.
-      it "names the past list in the list menu and marks its link" do
-        member = create(:member, :active)
-        sign_in_as(member.user)
-
-        get group_events_path(member.group, scope: "past")
-
-        menu = Nokogiri::HTML(response.body).at_css("details#scope")
-        expect([ menu.at_css("summary").text.squish, menu.at_css("a[aria-current]").text ]).to eq [ "Past events", "Past events" ]
-      end
-
-      # WHY: a scope naming no list is the upcoming list, which is what keeps a mistyped URL a screen rather than an error, with the pill agreeing with what is under it.
+      # WHY: a scope naming no list is the upcoming list, which is what keeps a mistyped URL a screen rather than an error, with the list's chip agreeing with what is under it.
       it "reads an unknown scope as the upcoming list" do
         member = create(:member, :active)
         confirmed_event(member, days: -2, name: "Summer gig")
@@ -350,7 +385,7 @@ RSpec.describe "Events", type: :request do
 
         get group_events_path(member.group, scope: "sideways")
 
-        expect(Nokogiri::HTML(response.body).at_css("details#scope summary").text.squish).to eq "Upcoming events"
+        expect(Nokogiri::HTML(response.body).at_css("main button[data-action='dialog#show']:not([aria-label])").text.strip).to eq "Upcoming"
         expect(response.body).not_to include "Summer gig"
       end
     end
@@ -409,16 +444,6 @@ RSpec.describe "Events", type: :request do
 
         expect(response.body).to match(/Autumn gig.*Spring concert/m)
         expect(response.body).not_to include "Tuesday rehearsal"
-      end
-
-      it "names the canceled list in the list menu and marks its link" do
-        member = create(:member, :active)
-        sign_in_as(member.user)
-
-        get group_events_path(member.group, scope: "canceled")
-
-        menu = Nokogiri::HTML(response.body).at_css("details#scope")
-        expect([ menu.at_css("summary").text.squish, menu.at_css("a[aria-current]").text ]).to eq [ "Canceled events", "Canceled events" ]
       end
 
       it "shows the answer a member gave" do

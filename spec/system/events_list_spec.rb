@@ -2,7 +2,7 @@ require "rails_helper"
 
 # Only what a browser adds. Which rows a given reader sees, and what each carries, is `spec/requests/events_spec.rb`'s assertion, and per the duplication rule in `.agents/testing.md` it does not come back here. The card the group's next event gets is `spec/system/group_home_spec.rb`'s.
 #
-# What no request spec can reach is how a row is laid out, whether the list menu paints, and where pressing a row's answer or a menu link lands.
+# What no request spec can reach is how a row is laid out, where pressing a row's answer lands, and the filter sheet: its count following the picks, Reset, the chips' ✕ and how its buttons stack.
 RSpec.describe "The events list", type: :system do
   # A row puts its question in place, so answering it turns the question into the answer's icon at the row's end without leaving the list.
   it "answers a row in place, its question replaced by the answer's icon" do
@@ -18,51 +18,6 @@ RSpec.describe "The events list", type: :system do
     expect(page).to have_css "##{ActionView::RecordIdentifier.dom_id(event)} > svg[aria-label='you said maybe']"
     expect(page).to have_current_path group_events_path(member.group)
     expect(page).to have_no_css "##{ActionView::RecordIdentifier.dom_id(event)} form"
-  end
-
-  # The list menu is this screen's title as well as its filter, so whether it paints as a surface of
-  # its own is what tells a pill from one whose classes compiled to nothing.
-  it "paints the list menu" do
-    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
-    next_event_for(member)
-    sign_in_as member.user
-    resize_to ViewportHelper::MOBILE
-
-    visit group_events_path(member.group)
-
-    expect(page).to paint "#scope summary"
-    expect(page).to be_accessible
-  end
-
-  # The menu's rows are links, so landing on the past list is a click on one, which only a browser follows through the opened `<details>`.
-  it "lands on the past list from the list menu" do
-    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
-    next_event_for(member)
-    past_event_for(member)
-    sign_in_as member.user
-    resize_to ViewportHelper::MOBILE
-
-    visit group_events_path(member.group)
-    find("#scope summary").click
-    within("#scope") { click_link "Past events" }
-
-    expect(page).to have_current_path group_events_path(member.group, scope: "past")
-    expect(page).to have_text("Spring concert").and be_accessible
-  end
-
-  it "lands on the canceled list from the list menu" do
-    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
-    next_event_for(member)
-    create(:event, :from_the_future, group: member.group, creator: member, name: "Autumn gig", status: :canceled)
-    sign_in_as member.user
-    resize_to ViewportHelper::MOBILE
-
-    visit group_events_path(member.group)
-    find("#scope summary").click
-    within("#scope") { click_link "Canceled events" }
-
-    expect(page).to have_current_path group_events_path(member.group, scope: "canceled")
-    expect(page).to have_text("Autumn gig").and be_accessible
   end
 
   # A list row is a grid whose cells start at its top, so the status icon would sit level with the name rather than with the name and its meta line together.
@@ -173,6 +128,143 @@ RSpec.describe "The events list", type: :system do
 
     expect(find_by_id(ActionView::RecordIdentifier.dom_id(event)).evaluate_script(<<~JS)).to eq 20
       Math.round(this.querySelector("a[aria-label^='Edit '] svg").getBoundingClientRect().left - this.querySelector(":scope > svg[aria-label^='you said']").getBoundingClientRect().right)
+    JS
+  end
+
+  # WHY: #460 AC2 and AC6. The funnel and every chip open the same sheet.
+  it "opens the filter sheet from the funnel and from a chip" do
+    member = create(:member, :owner)
+    sign_in_as member.user
+
+    visit group_events_path(member.group)
+    click_button "Filter events"
+    expect(page).to have_css "dialog#event_filter_dialog[open]"
+    within("#event_filter_dialog") { click_button "Close" }
+    click_button "Upcoming"
+
+    expect(page).to have_css "dialog#event_filter_dialog[open]"
+  end
+
+  # WHY: #460 AC12.
+  it "passes axe with the filter sheet open, in organic and organic-dark" do
+    member = create(:member, :owner)
+    next_event_for(member)
+    sign_in_as member.user
+    resize_to ViewportHelper::MOBILE
+
+    %i[ light dark ].each do |scheme|
+      prefer_colour_scheme scheme
+      visit group_events_path(member.group)
+      click_button "Filter events"
+      expect(page).to have_css("dialog#event_filter_dialog[open]").and be_accessible
+    end
+  end
+
+  # WHY: #460 AC4. The count is fetched as the picks change, so only a browser sees it follow them.
+  it "counts the events the sheet's picks would show as they change, then applies them" do
+    member = create(:member, :owner)
+    next_event_for(member)
+    create(:event, :from_the_future, group: member.group, creator: member, name: "Advent concert", category: :gig, status: :confirmed)
+    sign_in_as member.user
+
+    visit group_events_path(member.group)
+    pick_in_sheet "Gig"
+
+    expect(page).to have_button "Show 1 event"
+    click_button "Show 1 event"
+    expect(page).to have_text("Advent concert").and have_no_text("Tuesday rehearsal")
+    expect(page).to have_button "Remove Gig"
+  end
+
+  # WHY: #460 AC5. A chip's ✕ applies everything else that was on, so only its own filter goes.
+  it "removes one filter with its chip's ✕, leaving the others on" do
+    member = create(:member, :owner)
+    next_event_for(member)
+    sign_in_as member.user
+
+    visit group_events_path(member.group)
+    pick_in_sheet "Rehearsal", "Not answered"
+    click_button "Show 0 events"
+    click_button "Remove Rehearsal"
+
+    expect(page).to have_button("Remove Not answered").and have_no_button("Remove Rehearsal")
+  end
+
+  # WHY: #460 AC8. Reset returns the sheet, not the list, to Upcoming with no filters, and the count follows.
+  it "returns the sheet to Upcoming with no filters on Reset" do
+    member = create(:member, :owner)
+    next_event_for(member)
+    sign_in_as member.user
+
+    visit group_events_path(member.group)
+    pick_in_sheet "Past", "Gig"
+    expect(page).to have_button "Show 0 events"
+    click_button "Reset"
+
+    expect(page).to have_button "Show 1 event"
+    expect(find_by_id("event_filter_dialog").evaluate_script("[ ...this.querySelectorAll('input:checked') ].map(input => input.getAttribute('aria-label'))")).to eq %w[ Upcoming ]
+  end
+
+  # WHY: #460 AC9. What the sheet applies is kept per browser, so a later visit shows it.
+  it "keeps the list applied for the next visit" do
+    member = create(:member, :owner)
+    past_event_for(member)
+    sign_in_as member.user
+
+    visit group_events_path(member.group)
+    pick_in_sheet "Past"
+    click_button "Show 1 event"
+    expect(page).to have_text "Spring concert"
+    visit group_events_path(member.group)
+
+    expect(page).to have_text("Spring concert").and have_button("Past")
+  end
+
+  # WHY: #460 AC7. Muted while nothing hides events from the list picked, primary once a filter does, and either way clearing 3:1 as an icon must.
+  it "paints the funnel muted with no filter on and primary with one" do
+    member = create(:member, :owner)
+    next_event_for(member)
+    sign_in_as member.user
+
+    visit group_events_path(member.group)
+    muted = funnel_ink("text-icon-muted")
+    pick_in_sheet "Rehearsal"
+    click_button "Show 1 event"
+    expect(page).to have_button "Remove Rehearsal"
+
+    expect([ muted, funnel_ink("text-primary") ]).to eq [ [ true, true ], [ true, true ] ]
+  end
+
+  # WHY: #460 AC2. Side by side while both fit, Reset on the left; once they do not, "Show N events" goes first, full width, and Reset under it.
+  it "stacks the sheet's buttons Show first once they no longer fit side by side" do
+    member = create(:member, :owner)
+    sign_in_as member.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_events_path(member.group)
+    click_button "Filter events"
+    reset, show = sheet_buttons
+    resize_to [ 260, 700 ]
+    narrow_reset, narrow_show = sheet_buttons
+
+    expect([ reset.top == show.top && reset.left < show.left, narrow_show.top < narrow_reset.top ]).to eq [ true, true ]
+  end
+
+  def pick_in_sheet(*labels)
+    click_button "Filter events"
+    labels.each { find_by_id("event_filter_dialog").find("input[aria-label='#{it}']").click }
+  end
+
+  # Whether the funnel carries the named ink and still clears 3:1 as an icon.
+  def funnel_ink(ink)
+    funnel = "button[aria-label='Filter events']"
+    [ find(funnel)[:class].include?(ink), text_contrast(funnel) >= ContrastHelper::WCAG_NON_TEXT ]
+  end
+
+  # Reset and "Show N events", the sheet's last two labelled buttons, each as its rounded top and left.
+  def sheet_buttons
+    find_by_id("event_filter_dialog").evaluate_script(<<~JS).map { Data.define(:top, :left).new(*it) }
+      [ ...this.querySelectorAll("button.btn:not([aria-label])") ].slice(-2).map(button => button.getBoundingClientRect()).map(rect => [ Math.round(rect.top), Math.round(rect.left) ])
     JS
   end
 
