@@ -30,7 +30,6 @@
 # * `join_link_id` (_ON DELETE => cascade ON UPDATE => cascade_):
 #     * **`join_link_id => join_links.id`**
 #
-# A visitor's request to join a group through its join link, carrying the emailed token that confirms it. Nothing joins the group until #447 redeems it.
 class JoinRequest < ApplicationRecord
   include Redeemable
 
