@@ -248,7 +248,6 @@ RSpec.describe "The group home", type: :system do
     JS
   end
 
-  # Whether the page scrolls sideways, which is the one overflow a reader on a phone notices first.
   # WHY: #459 AC10. Which card leads is the request spec's; where the two land is geometry, one column on a phone and two from `md` up, and only a browser lays them out. The gig starts first, so the rehearsal leading is the screen's order rather than the calendar's.
   it "stacks the rehearsal card above the gig card on a phone" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
@@ -292,6 +291,7 @@ RSpec.describe "The group home", type: :system do
     expect(page).to be_accessible
   end
 
+  # Whether the page scrolls sideways, which is the one overflow a reader on a phone notices first.
   def overflowing?
     page.evaluate_script("document.documentElement.scrollWidth > document.documentElement.clientWidth")
   end
