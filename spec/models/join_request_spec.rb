@@ -17,7 +17,7 @@ RSpec.describe JoinRequest, type: :model do
     it { is_expected.not_to allow_values("Full.Name.at.another.bizarre.domain", "username").for(:email) }
 
     it { is_expected.to allow_values("+385 91 123 4567", "(01) 234-5678", "091.123.4567", "0911234567").for(:mobile_phone) }
-    it { is_expected.not_to allow_values("call me", "+385 91 abc 4567", "12345", "++385911234567").for(:mobile_phone) }
+    it { is_expected.not_to allow_values("call me", "+385 91 abc 4567", "12345", "++385911234567", "------", "+(1) 2-3").for(:mobile_phone) }
   end
 
   describe "(associations)" do

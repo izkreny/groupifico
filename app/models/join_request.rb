@@ -40,6 +40,6 @@ class JoinRequest < ApplicationRecord
 
   validates :email, presence: true, length: { maximum: 250 }, format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :first_name, :last_name, presence: true, length: { maximum: 250 }
-  # WHY: shape only, an optional "+" then digits and the separators people type, because `UserProfile` checks no format yet; its uniqueness is left to confirmation, since refusing a taken number here would tell the visitor someone holds it.
-  validates :mobile_phone, presence: true, length: { maximum: 50 }, format: { with: /\A\+?[\d ().-]{6,}\z/ }
+  # WHY: shape only, an optional "+" then at least six digits among the separators people type, because `UserProfile` checks no format yet; its uniqueness is left to confirmation, since refusing a taken number here would tell the visitor someone holds it.
+  validates :mobile_phone, presence: true, length: { maximum: 50 }, format: { with: /\A\+?(?=(?:\D*\d){6})[\d ().-]+\z/ }
 end
