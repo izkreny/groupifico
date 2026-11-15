@@ -122,6 +122,18 @@ RSpec.describe "The members list", type: :system do
       expect(page.evaluate_async_script("navigator.clipboard.readText().then(arguments[0])")).to eq join_link_url
     end
 
+    # WHY: the frame swap replaces the control that had focus, so the new state's primary control has to take it.
+    it "focuses Copy link once the link is created" do
+      member = create(:member, :active, :owner)
+      sign_in_as member.user
+
+      visit group_members_path(member.group)
+      open_join_link
+      click_on "Create new join link"
+
+      expect(page).to have_css "#join_link_dialog button:focus", exact_text: "Copy link"
+    end
+
     it "turns Link copied back into Copy link" do
       member = create(:member, :active, :owner)
       JoinLink.mint(member.group)
@@ -176,7 +188,7 @@ RSpec.describe "The members list", type: :system do
       click_on "Delete link"
       within("dialog#join_link_delete") { click_on "Delete link" }
 
-      expect(page).to have_button "Create new join link"
+      expect(page).to have_css "#join_link_dialog button:focus", exact_text: "Create new join link"
       expect(page).to have_css "dialog#join_link_dialog[open]"
     end
 
