@@ -15,6 +15,8 @@ Rails.application.routes.draw do
   end
   # WHY: a group's join link opens here, carrying its token in the query string for the reason `resource :sign_in` gives; `path: "join"` because the URL is pasted into a group chat for people to read.
   resource :join_request, only: :new, path: "join"
+  # WHY: the emailed link a join request carries opens here, its token in the query string for the reason `resource :sign_in` gives.
+  resource :join_request_confirmation, only: :show
   # An address exists only as a detail of the group or event that points at it: both build one
   # through `accepts_nested_attributes_for :address`, and `EventsController` picks an existing one
   # out of `group.addresses`. So there is nothing to create standalone - an address pointed at by
