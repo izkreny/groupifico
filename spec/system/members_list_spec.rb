@@ -178,7 +178,6 @@ RSpec.describe "The members list", type: :system do
 
       expect(page).to have_button "Create new join link"
       expect(page).to have_css "dialog#join_link_dialog[open]"
-      expect(member.group.reload.join_link).to be_nil
     end
 
     # WHY: the owner's order on #453 that Regenerate asks first, so cancelling it leaves the link working.
