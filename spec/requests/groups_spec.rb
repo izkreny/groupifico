@@ -526,7 +526,7 @@ RSpec.describe "Groups", type: :request do
         get group_path(member.group)
 
         expect(Nokogiri::HTML(response.body).at_css("#no_gig")&.text&.squish).to eq "No gig coming up"
-        expect(response.body).to include group_events_path(member.group)
+        expect(Nokogiri::HTML(response.body).css("a[href='#{group_events_path(member.group)}']").map { it.text.squish }).to include "See all events"
       end
 
       # WHY: #459 AC9.
