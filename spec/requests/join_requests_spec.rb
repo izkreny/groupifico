@@ -305,6 +305,14 @@ RSpec.describe "JoinRequests", type: :request do
         expect(page_text(response.body)).to include("Riverside Choir", "ana@example.com")
       end
 
+      it "sends a visitor who submitted nothing back to the form rather than saying a link is on its way" do
+        token = JoinLink.mint(create(:group))
+
+        get join_request_path(token:)
+
+        expect(response).to redirect_to new_join_request_path(token:)
+      end
+
       it "answers 404 for a request carrying no token" do
         JoinLink.mint(create(:group))
 

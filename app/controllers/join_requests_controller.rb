@@ -33,7 +33,9 @@ class JoinRequestsController < ApplicationController
     end
   end
 
+  # WHY: the address a submission leaves in the flash is the only sign one happened, so without it the page would say a link is on its way when none is; the form is where such a visitor belongs.
   def show
+    redirect_to new_join_request_path(token: params[:token]) unless flash[:sent_to]
   end
 
   private
