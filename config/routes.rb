@@ -13,6 +13,8 @@ Rails.application.routes.draw do
     resource :sign_up, only: %i[ new create ]
     resource :sign_up_confirmation, only: %i[ show create ]
   end
+  # WHY: a group's join link opens here, carrying its token in the query string for the reason `resource :sign_in` gives; `path: "join"` because the URL is pasted into a group chat for people to read.
+  resource :join_request, only: :new, path: "join"
   # An address exists only as a detail of the group or event that points at it: both build one
   # through `accepts_nested_attributes_for :address`, and `EventsController` picks an existing one
   # out of `group.addresses`. So there is nothing to create standalone - an address pointed at by
@@ -37,6 +39,8 @@ Rails.application.routes.draw do
 
   resources :groups do
     resources :members
+    # WHY: one link per group, so a singular resource: `create` turns it on or regenerates it, `destroy` turns it off.
+    resource :join_link, only: %i[ create destroy ], module: :groups
     resources :events do
       get "duplicate", on: :member
       # The writes a roster row makes. Reading who is registered is the event's own screen rather

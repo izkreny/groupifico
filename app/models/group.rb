@@ -29,6 +29,7 @@ class Group < ApplicationRecord
   has_many :events, dependent: :destroy
   # TODO: add order by `counter_cache` aka Adress field `events_count`
   has_many :events_addresses, -> { distinct }, through: :events, source: :address
+  has_one :join_link, dependent: :delete
 
   enum :group_type, %i[ general choir band ], validate: true
 

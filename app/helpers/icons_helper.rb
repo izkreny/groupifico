@@ -52,6 +52,10 @@ module IconsHelper
     add_member: "user-plus",
     send_invite: "paper-airplane",
     invite_link: "link",
+    # WHY: the legend draws none of the join link's own actions, so they are Heroicons' own; `regenerate` is `resend`'s glyph under its own meaning, because minting a new link is not sending one again.
+    copy: "clipboard-document",
+    regenerate: "arrow-path",
+    copied: "check",
 
     # States the reader is told about. The four alert kinds are named as daisyUI names them, so `shared/_alert` draws the kind it colours.
     success: "check-circle",
