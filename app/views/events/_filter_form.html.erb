@@ -1,9 +1,5 @@
 <%# locals: (group:, filter:, count:, namespace: nil) %>
-<%#
-  What the events filter sheet holds, headed like the join link's dialog. Nothing applies until "Show N events" submits it, and the count on that button follows the picks as they change, through `events_filter_controller.js`.
-
-  `namespace` is the styleguide's, as on `groups/join_link`, since it draws this once per theme; the events list leaves it out and keeps its ids, the count frame's among them, which the list's own response has to match.
-%>
+<%# WHY: apart from `events/filter_sheet` so the styleguide can draw it without a dialog. `namespace` is the styleguide's, as on `groups/join_link`, since it draws this once per theme; the events list leaves it out and keeps its ids, the count frame's among them, which the list's own response has to match, and only the list's copy gets the URL its count reads. %>
 <% id = ->(name) { [ namespace, "event_filter", name ].compact.join("_") } %>
 <% legend = "mb-2 text-meta font-semibold uppercase tracking-wide text-muted" %>
 <% pick = "btn btn-sm rounded-full checked:btn-primary" %>
@@ -16,7 +12,7 @@
 </div>
 
 <%# WHY: the dialog closes as the form submits, because applying redirects back to this list, a refresh Turbo morphs, and a morph strips `open` without calling `close()`, which leaves the dialog modal and the page refusing clicks. %>
-<%= form_with url: group_event_filter_path(group), method: :patch, class: "flex flex-col gap-4", data: { controller: "events-filter", action: "change->events-filter#refresh submit->dialog#close", events_filter_url_value: group_events_path(group) } do %>
+<%= form_with url: group_event_filter_path(group), method: :patch, class: "flex flex-col gap-4", data: { controller: "events-filter", action: "change->events-filter#refresh submit->dialog#close", events_filter_url_value: (group_events_path(group) unless namespace) } do %>
   <fieldset>
     <legend class="<%= legend %>">Show</legend>
     <div class="flex flex-wrap gap-2">
