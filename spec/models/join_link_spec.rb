@@ -81,5 +81,12 @@ RSpec.describe JoinLink, type: :model do
 
       expect(described_class.find_by_token([ "malformed" ])).to be_nil
     end
+
+    # WHY: a Hash is the one shape `token[x]=1` sends that `find_by` raises on rather than answering nil, so it is what proves the string guard.
+    it "finds nothing for a token sent as a hash, rather than raising" do
+      described_class.mint(create(:group))
+
+      expect(described_class.find_by_token({ "x" => "1" })).to be_nil
+    end
   end
 end

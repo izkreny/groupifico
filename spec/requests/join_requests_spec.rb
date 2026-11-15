@@ -48,6 +48,14 @@ RSpec.describe "JoinRequests", type: :request do
 
         expect(response).to have_http_status :not_found
       end
+
+      it "answers 404 for a token sent as a hash" do
+        JoinLink.mint(create(:group))
+
+        get new_join_request_path, params: { token: { x: "1" } }
+
+        expect(response).to have_http_status :not_found
+      end
     end
 
     context "when signed in" do
