@@ -51,18 +51,19 @@ RSpec.describe "Events", type: :request do
         expect(menu.css("a").map { [ it.text, it[:href], it["aria-current"] ] }).to eq [ [ "Upcoming events", group_events_path(member.group), "true" ], [ "Past events", group_events_path(member.group, scope: "past"), nil ], [ "Canceled events", group_events_path(member.group, scope: "canceled"), nil ] ]
       end
 
-      # Who may create an event is `EventPolicy#create?`, and a refused reader gets no control
-      # rather than a disabled one - so the assertion is the route's absence, not a class.
-      it "offers the New event button to a reader who may create events" do
+      # WHY: #458 AC1 and AC2. Who may create an event is `EventPolicy#create?`, and the + carries no text of its own, so its accessible name is the only label it has.
+      it "offers a member who may create events an icon-only + named New event, linking the new event form" do
         owner = create(:member, :owner)
         sign_in_as(owner.user)
 
         get group_events_path(owner.group)
 
-        expect(Nokogiri::HTML(response.body).at_css("a[href='#{new_group_event_path(owner.group)}']").text.strip).to eq "New event"
+        link = Nokogiri::HTML(response.body).at_css("a[href='#{new_group_event_path(owner.group)}']")
+        expect([ link["aria-label"], link.text.strip, link.css("svg").size ]).to eq [ "New event", "", 1 ]
       end
 
-      it "offers a plain member no New button" do
+      # WHY: #458 AC3. A refused member gets no control rather than a disabled one, so the assertion is the route's absence, not a class.
+      it "offers a plain member no +" do
         member = create(:member, :active)
         sign_in_as(member.user)
 

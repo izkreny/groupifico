@@ -15,7 +15,7 @@ module StyleguidesHelper
     no: "An answer: the reply button and badge on a roster row, its count in Who's coming and on the next-up card, and the reader's own answer on the events list.",
     when: "When an event happens: the time line on the next-up card and on the event screen.",
     where: "Where an event happens: the address line on the next-up card and on the event screen.",
-    new: "Creating a record: New on the events list, New event on an empty Home, New group on the groups list and in the Me menu, Invite on the members list, and Add screenshot on the feedback form.",
+    new: "Creating a record: the + on the events list, New event on an empty Home, New group on the groups list and in the Me menu, Invite on the members list, and Add screenshot on the feedback form.",
     edit: "Editing a record: the group's name in the header, the event screen, a member's row and screen, the address on the group form, and Correct on the address screen.",
     duplicate: "Copying an event: Duplicate on the event screen.",
     delete: "Removing a registration, an event, a group, a member or an account: Delete or Remove first in an edit form's button row, Delete my account, Delete link in the join link's dialog, and the primary on every confirm sheet.",
