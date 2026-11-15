@@ -126,6 +126,30 @@ RSpec.describe "The events list", type: :system do
     expect([ find(status)[:class].include?("text-icon-muted"), text_contrast(status) >= ContrastHelper::WCAG_NON_TEXT ]).to eq [ true, true ]
   end
 
+  # WHY: #458 AC2. The + carries no text, so pressing it by name is what proves its accessible name reaches the browser.
+  it "lands on the new event form from the +" do
+    member = create(:member, :owner)
+    sign_in_as member.user
+
+    visit group_events_path(member.group)
+    click_link "New event"
+
+    expect(page).to have_current_path new_group_event_path(member.group)
+  end
+
+  # The hero card's Duplicate and Edit are a 32px box around a 20px glyph, and the + is drawn as their sibling.
+  it "draws the + as a 32px box around a 20px glyph" do
+    member = create(:member, :owner)
+    sign_in_as member.user
+
+    visit group_events_path(member.group)
+
+    expect(find("a[aria-label='New event']").evaluate_script(<<~JS)).to eq [ 32, 32, 20 ]
+      ((box, glyph) => [ box.width, box.height, glyph.width ])(this.getBoundingClientRect(), this.querySelector("svg").getBoundingClientRect())
+    JS
+    expect(page).to be_accessible
+  end
+
   it "draws a row's pencil at 20px" do
     member = create(:member, :owner)
     next_event_for(member)
