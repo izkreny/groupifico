@@ -1,7 +1,13 @@
 <%# locals: (group:, join_link:, namespace: nil) %>
 <%# `namespace` is the styleguide's, as on `groups/form`, since it draws this once per theme; every screen leaves it out and keeps its ids. `join_link` arrives apart from `group` for the styleguide too, which draws a sample link rather than make one. %>
 <% id = ->(name) { [ namespace, "join_link", name ].compact.join("_") } %>
-<h2 id="<%= id.(:heading) %>" class="text-lg font-bold">Join link</h2>
+<div class="flex items-center justify-between gap-2">
+  <h2 id="<%= id.(:heading) %>" class="text-lg font-bold">Join link</h2>
+
+  <form method="dialog">
+    <button class="btn btn-ghost btn-circle btn-sm" aria-label="Close"><%= icon :cancel, class: "size-icon-control" %></button>
+  </form>
+</div>
 
 <div class="flex flex-col gap-3 pt-4">
   <% if join_link %>

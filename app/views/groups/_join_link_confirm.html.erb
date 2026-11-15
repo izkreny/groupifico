@@ -6,7 +6,13 @@
 
   <dialog id="<%= id %>" class="modal modal-bottom sm:modal-middle" aria-labelledby="<%= id %>_title" aria-describedby="<%= id %>_body" data-dialog-target="sheet">
     <div class="modal-box text-start">
-      <h3 id="<%= id %>_title" class="text-lg font-bold"><%= title %></h3>
+      <div class="flex items-center justify-between gap-2">
+        <h3 id="<%= id %>_title" class="text-lg font-bold"><%= title %></h3>
+
+        <form method="dialog">
+          <button class="btn btn-ghost btn-circle btn-sm" aria-label="Close"><%= icon :cancel, class: "size-icon-control" %></button>
+        </form>
+      </div>
       <p id="<%= id %>_body" class="py-4"><%= body %></p>
 
       <div class="modal-action">

@@ -211,6 +211,32 @@ RSpec.describe "The members list", type: :system do
       expect(member.group.reload.join_link.token).to eq token
     end
 
+    # WHY: the owner's order on #453 that every modal closes from an x beside its title, since neither the sheet nor the dialog can be swiped away.
+    it "closes the dialog from its x" do
+      member = create(:member, :active, :owner)
+      sign_in_as member.user
+
+      visit group_members_path(member.group)
+      open_join_link
+      within("dialog#join_link_dialog") { click_on "Close" }
+
+      expect(page).to have_no_css "dialog#join_link_dialog[open]"
+    end
+
+    it "closes a confirmation from its x, keeping the join link dialog open" do
+      member = create(:member, :active, :owner)
+      JoinLink.mint(member.group)
+      sign_in_as member.user
+
+      visit group_members_path(member.group)
+      open_join_link
+      click_on "Delete link"
+      within("dialog#join_link_delete") { click_on "Close" }
+
+      expect(page).to have_no_css "dialog#join_link_delete[open]"
+      expect(page).to have_css "dialog#join_link_dialog[open]"
+    end
+
     it "paints the dialog with no link in light, with no accessibility violations" do
       member = create(:member, :active, :owner)
       sign_in_as member.user
