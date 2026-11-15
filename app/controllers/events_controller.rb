@@ -28,11 +28,6 @@ class EventsController < ApplicationController
     when "canceled" then events.canceled.order(starts_at: :desc)
     else events.current_and_upcoming.order(:starts_at)
     end
-
-    # The group decides which event the hero draws, not the list: the filter is
-    # `Group#featured_event`'s, and picking it out of `@events` here would be that rule written a
-    # second time. Only the upcoming list has such an event, so no other looks one up.
-    @featured_event = @group.featured_event unless @list
   end
 
   def show

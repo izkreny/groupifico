@@ -35,7 +35,7 @@ RSpec.describe "Addresses", type: :request do
         expect(page_text(response.body)).to include "Community Hall", "Obala 14 10000 Zagreb HR", "Riverside Choir · home address"
       end
 
-      # A map is somewhere else, so every link to one opens in a new tab and leaves the member's page where it was: the address, the event screen, and the events list's hero and rows.
+      # A map is somewhere else, so every link to one opens in a new tab and leaves the member's page where it was: the address, the event screen, the group home's card and the events list's rows.
       it "opens the address's map link in a new tab" do
         member = create(:member, :active)
         address = create(:address, name: "Community Hall", street_name: "Obala", building_number: "14")
@@ -58,7 +58,18 @@ RSpec.describe "Addresses", type: :request do
         expect(Nokogiri::HTML(response.body).css("a[href^='https://www.google.com/maps/']").map { it["target"] }).to eq [ "_blank" ]
       end
 
-      it "opens the events list's map links, hero and row, in a new tab" do
+      it "opens the group home card's map link in a new tab" do
+        member = create(:member, :active)
+        address = create(:address, name: "Community Hall", street_name: "Obala", building_number: "14")
+        create(:event, group: member.group, creator: member, address:, status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(Nokogiri::HTML(response.body).css("a[href^='https://www.google.com/maps/']").map { it["target"] }).to eq [ "_blank" ]
+      end
+
+      it "opens the events list's map links, one per row, in a new tab" do
         member = create(:member, :active)
         address = create(:address, name: "Community Hall", street_name: "Obala", building_number: "14")
         [ 2, 9 ].each { create(:event, group: member.group, creator: member, address:, status: :confirmed, starts_at: it.days.from_now, ends_at: it.days.from_now + 2.hours) }

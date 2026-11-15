@@ -5,7 +5,7 @@ module StyleguidesHelper
   # Where the app draws each legend meaning, for the legend table. Kept by hand, so a meaning added to `IconsHelper::ICONS` fails the page until it is described here, while one that moves screens is not caught.
   ICON_USES = {
     unconfirmed: "An event's status: the Status choice on the event form, the event's row on the events list, and the status line on the event screen.",
-    confirmed: "An event's status: the Status choice on the event form, the event's row on the events list, the status line on the event screen, and the next-up card on Home and the events list.",
+    confirmed: "An event's status: the Status choice on the event form, the event's row on the events list, the status line on the event screen, and the next-up card on Home.",
     concluded: "An event's status: the Status choice on the event form, the event's row on the events list, and the status line on the event screen.",
     canceled: "An event's status: the Status choice on the event form, the event's row on the events list, and the status line on the event screen.",
     reserved: "A registration with no response requested yet: the badge beside a name on the event's roster, for a reader who cannot request one, Reserve a place for everyone under the roster, and the reserved count in the tally on the next-up card and the event screen.",

@@ -19,9 +19,7 @@ class GroupsController < ApplicationController
     # nil by the time this runs - `GroupPolicy`'s membership pre-check raises 404 for a non-member
     # above - and the hero tolerates nil anyway, through `Event#registration_for`'s `member&.id`.
     @membership = @group.members.find_by(user: Current.user)
-    # The group decides which event is next, not the screen - the same reading `events#index` takes.
-    # No preload: the hero's "said yes" line queries with the names included itself, and its counts
-    # are one grouped query, so the only association a screen leaves it to load is `registrations`.
+    # The group decides which event is next, not the screen. No preload: the hero's "said yes" line queries with the names included itself, and its counts are one grouped query, so the only association a screen leaves it to load is `registrations`.
     @featured_event = @group.featured_event
   end
 

@@ -73,10 +73,7 @@ class Group < ApplicationRecord
   # event, so neither belongs under a group's name. `status` defaults to `unconfirmed`, so a newly
   # created event stays out of here until somebody confirms it.
   #
-  # WHY: `strict_loading(false)` because the screens that draw this event as a hero read its
-  # associations once per page. `groups#index` calls it once per card, and the card reads only the
-  # event's own columns, so preloading here would charge every card for reads it never makes; a card
-  # that starts reading an association must preload it rather than lean on this opt-out.
+  # WHY: `strict_loading(false)` because the group home, which draws this event as a hero, reads its associations once per page. `groups#index` calls it once per card, and the card reads only the event's own columns, so preloading here would charge every card for reads it never makes; a card that starts reading an association must preload it rather than lean on this opt-out.
   def featured_event
     events.strict_loading(false).confirmed.current_and_upcoming.order(:starts_at).first
   end
