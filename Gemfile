@@ -64,7 +64,7 @@ group :development, :test do
   # Testing
   gem "factory_bot_rails"
   gem "faker"
-  gem "rspec-rails", "~> 8.0.0"
+  gem "rspec-rails", "~> 8.1.0"
   gem "shoulda-matchers", "~> 8.0"
 end
 
