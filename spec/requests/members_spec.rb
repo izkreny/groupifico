@@ -136,6 +136,17 @@ RSpec.describe "Members", type: :request do
     end
 
     context "when signed in as a members administrator" do
+      # WHY: #445 AC4, since the join link row marks the columns that add a person.
+      it "shows the join link to a members administrator" do
+        actor = create(:member, :active, :members_administrator)
+        token = JoinLink.mint(actor.group)
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group)
+
+        expect(Nokogiri::HTML(response.body).at_css("#join_link_url")["value"]).to eq new_join_request_url(token:)
+      end
+
       it "marks a member who has never signed in" do
         actor = create(:member, :active, :members_administrator)
         added = create(:member, group: actor.group, user: create(:user, first_signed_in_at: nil))
@@ -306,19 +317,9 @@ RSpec.describe "Members", type: :request do
     end
 
     # WHY: #445 AC4, one example per column the join link row leaves blank, each with a link on so its absence is the page's choice.
-    context "when signed in as a member who does not own the group" do
+    context "when signed in as a member who may not add a person" do
       it "shows no join link to a member holding no role" do
         actor = create(:member, :active)
-        JoinLink.mint(actor.group)
-        sign_in_as(actor.user)
-
-        get group_members_path(actor.group)
-
-        expect(Nokogiri::HTML(response.body).css("#join_link_dialog, #join_link_heading, #join_link_url")).to be_empty
-      end
-
-      it "shows no join link to an administrator" do
-        actor = create(:member, :active, :administrator)
         JoinLink.mint(actor.group)
         sign_in_as(actor.user)
 
@@ -336,19 +337,20 @@ RSpec.describe "Members", type: :request do
 
         expect(Nokogiri::HTML(response.body).css("#join_link_dialog, #join_link_heading, #join_link_url")).to be_empty
       end
+    end
 
-      it "shows no join link to a members administrator" do
-        actor = create(:member, :active, :members_administrator)
-        JoinLink.mint(actor.group)
+    context "when signed in as an administrator" do
+      # WHY: #445 AC4, since the join link row marks the columns that add a person.
+      it "shows the join link to an administrator" do
+        actor = create(:member, :active, :administrator)
+        token = JoinLink.mint(actor.group)
         sign_in_as(actor.user)
 
         get group_members_path(actor.group)
 
-        expect(Nokogiri::HTML(response.body).css("#join_link_dialog, #join_link_heading, #join_link_url")).to be_empty
+        expect(Nokogiri::HTML(response.body).at_css("#join_link_url")["value"]).to eq new_join_request_url(token:)
       end
-    end
 
-    context "when signed in as an administrator" do
       it "offers Invite, each member's edit form and the inactive toggle" do
         actor = create(:member, :active, :administrator)
         other = create(:member, group: actor.group)

@@ -47,17 +47,14 @@ RSpec.describe "Groups::JoinLinks", type: :request do
       end
     end
 
-    # WHY: #445 AC4, one context per Group table column the join link row leaves blank, and a paused owner, since the row is a write.
+    # WHY: #445 AC4, one context per Members table column the join link row marks or leaves blank, and a paused owner, since the row is a write.
     context "when signed in as an administrator" do
-      it "refuses and leaves the link working" do
+      it "creates the link" do
         actor = create(:member, :active, :administrator)
-        token = JoinLink.mint(actor.group)
         sign_in_as(actor.user)
 
-        post group_join_link_path(actor.group)
-
-        expect(response).to redirect_to root_path
-        expect(JoinLink.find_by_token(token)).to be_present
+        expect { post group_join_link_path(actor.group) }.to change { JoinLink.where(group: actor.group).count }.from(0).to(1)
+        expect(response).to redirect_to group_members_path(actor.group)
       end
     end
 
@@ -75,15 +72,12 @@ RSpec.describe "Groups::JoinLinks", type: :request do
     end
 
     context "when signed in as a members administrator" do
-      it "refuses and leaves the link working" do
+      it "creates the link" do
         actor = create(:member, :active, :members_administrator)
-        token = JoinLink.mint(actor.group)
         sign_in_as(actor.user)
 
-        post group_join_link_path(actor.group)
-
-        expect(response).to redirect_to root_path
-        expect(JoinLink.find_by_token(token)).to be_present
+        expect { post group_join_link_path(actor.group) }.to change { JoinLink.where(group: actor.group).count }.from(0).to(1)
+        expect(response).to redirect_to group_members_path(actor.group)
       end
     end
 
@@ -175,15 +169,15 @@ RSpec.describe "Groups::JoinLinks", type: :request do
 
     # WHY: #445 AC4, as for POST above.
     context "when signed in as an administrator" do
-      it "refuses and leaves the link working" do
+      it "deletes the link" do
         actor = create(:member, :active, :administrator)
-        token = JoinLink.mint(actor.group)
         sign_in_as(actor.user)
+        token = JoinLink.mint(actor.group)
 
         delete group_join_link_path(actor.group)
 
-        expect(response).to redirect_to root_path
-        expect(JoinLink.find_by_token(token)).to be_present
+        expect(response).to redirect_to group_members_path(actor.group)
+        expect(JoinLink.find_by_token(token)).to be_nil
       end
     end
 
@@ -201,15 +195,15 @@ RSpec.describe "Groups::JoinLinks", type: :request do
     end
 
     context "when signed in as a members administrator" do
-      it "refuses and leaves the link working" do
+      it "deletes the link" do
         actor = create(:member, :active, :members_administrator)
-        token = JoinLink.mint(actor.group)
         sign_in_as(actor.user)
+        token = JoinLink.mint(actor.group)
 
         delete group_join_link_path(actor.group)
 
-        expect(response).to redirect_to root_path
-        expect(JoinLink.find_by_token(token)).to be_present
+        expect(response).to redirect_to group_members_path(actor.group)
+        expect(JoinLink.find_by_token(token)).to be_nil
       end
     end
 

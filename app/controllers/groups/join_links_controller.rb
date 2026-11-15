@@ -1,9 +1,9 @@
-# Creating a group's join link, regenerating it, and deleting it. `create` does both of the first two, since either mints a link that retires the one before it. Both actions authorize `GroupPolicy#update?`, the owner's alone, which is the join link row of the Group table in `docs/AUTHORIZATION.md`.
+# Creating a group's join link, regenerating it, and deleting it. `create` does both of the first two, since either mints a link that retires the one before it. Both actions authorize `MemberPolicy#create?`, asked of a member with nothing on it but the group, because the join link row of the Members table in `docs/AUTHORIZATION.md` marks the three columns that add a person.
 class Groups::JoinLinksController < ApplicationController
   include GroupScoped
 
   def create
-    authorize! @group, to: :update?
+    authorize! Member.new(group: @group), to: :create?
 
     JoinLink.mint(@group)
 
@@ -11,7 +11,7 @@ class Groups::JoinLinksController < ApplicationController
   end
 
   def destroy
-    authorize! @group, to: :update?
+    authorize! Member.new(group: @group), to: :create?
 
     @group.join_link&.destroy!
 
