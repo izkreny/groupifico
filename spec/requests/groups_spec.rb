@@ -254,8 +254,8 @@ RSpec.describe "Groups", type: :request do
       it "gives the card to a running event rather than the next one" do
         freeze_time do
           member = create(:member, group: create(:group))
-          confirmed_event_spanning(member, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
-          confirmed_event_spanning(member, starts_at: 1.day.from_now, ends_at: 1.day.from_now + 2.hours)
+          confirmed_rehearsal_spanning(member, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
+          confirmed_rehearsal_spanning(member, starts_at: 1.day.from_now, ends_at: 1.day.from_now + 2.hours)
           sign_in_as(member.user)
 
           get group_path(member.group)
@@ -327,7 +327,7 @@ RSpec.describe "Groups", type: :request do
 
       it "links the card's responses to the event with its roster open" do
         owner = create(:member, :owner)
-        event = confirmed_event_spanning(owner, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        event = confirmed_rehearsal_spanning(owner, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
         create(:registration, event:, member: owner, status: :yes)
         sign_in_as(owner.user)
 
@@ -339,7 +339,7 @@ RSpec.describe "Groups", type: :request do
 
       it "draws the answer and the counts for a plain member who has answered" do
         member = create(:member, :active, user: create(:user, :with_full_profile, first_name: "Carla", last_name: "Dean"))
-        event = confirmed_event_spanning(member, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        event = confirmed_rehearsal_spanning(member, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
         create(:registration, event:, member:, status: :yes)
         sign_in_as(member.user)
 
@@ -353,7 +353,7 @@ RSpec.describe "Groups", type: :request do
       # The lit pill is matched by the class and the label in one tag rather than by the class alone, which any of the three carrying it would satisfy - so inverting the condition that lights it lights the other two and this still reddens. It stops at `</button>` and claims nothing about what follows: `button_to` puts its CSRF token there, empty only because this environment has forgery protection off.
       it "draws the three pills as forms writing the reader's own registration" do
         member = create(:member, :active)
-        event = confirmed_event_spanning(member, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        event = confirmed_rehearsal_spanning(member, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
         registration = create(:registration, event:, member:, status: :maybe)
         sign_in_as(member.user)
 
@@ -368,7 +368,7 @@ RSpec.describe "Groups", type: :request do
       it "leaves the pills out for a paused member, who may not write an answer" do
         freeze_time do
           member = create(:member, :paused)
-          event = confirmed_event_spanning(member, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+          event = confirmed_rehearsal_spanning(member, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
           registration = create(:registration, event:, member:, status: :response_requested)
           sign_in_as(member.user)
 
@@ -384,7 +384,7 @@ RSpec.describe "Groups", type: :request do
       it "says no response is requested while every registration is still reserved" do
         freeze_time do
           owner = create(:member, :owner)
-          event = confirmed_event_spanning(owner, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+          event = confirmed_rehearsal_spanning(owner, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
           create(:registration, event:, member: owner, status: :reserved)
           sign_in_as(owner.user)
 
@@ -397,7 +397,7 @@ RSpec.describe "Groups", type: :request do
 
       it "offers Request responses while every registration is still reserved" do
         owner = create(:member, :owner)
-        event = confirmed_event_spanning(owner, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        event = confirmed_rehearsal_spanning(owner, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
         create(:registration, event:, member: owner, status: :reserved)
         sign_in_as(owner.user)
 
@@ -409,7 +409,7 @@ RSpec.describe "Groups", type: :request do
       it "offers no Request responses once a response has been requested" do
         freeze_time do
           owner = create(:member, :owner)
-          event = confirmed_event_spanning(owner, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+          event = confirmed_rehearsal_spanning(owner, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
           create(:registration, event:, member: owner, status: :response_requested)
           create(:registration, event:, member: create(:member, group: owner.group), status: :reserved)
           sign_in_as(owner.user)
@@ -425,7 +425,7 @@ RSpec.describe "Groups", type: :request do
       it "offers no Request responses while nobody is on the list" do
         freeze_time do
           owner = create(:member, :owner)
-          confirmed_event_spanning(owner, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+          confirmed_rehearsal_spanning(owner, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
           sign_in_as(owner.user)
 
           get group_path(owner.group)
@@ -439,7 +439,7 @@ RSpec.describe "Groups", type: :request do
       it "offers no Request responses while the only place held is a paused member's" do
         freeze_time do
           owner = create(:member, :owner)
-          event = confirmed_event_spanning(owner, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+          event = confirmed_rehearsal_spanning(owner, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
           create(:registration, event:, member: create(:member, :paused, group: owner.group), status: :reserved)
           sign_in_as(owner.user)
 
@@ -452,7 +452,7 @@ RSpec.describe "Groups", type: :request do
 
       it "offers a plain member no Request responses" do
         member = create(:member, :active)
-        event = confirmed_event_spanning(member, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        event = confirmed_rehearsal_spanning(member, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
         create(:registration, event:, member:, status: :reserved)
         sign_in_as(member.user)
 
@@ -467,7 +467,7 @@ RSpec.describe "Groups", type: :request do
         member = create(:member, :active)
         create(:event, group: member.group, creator: member, name: "Committee meeting", category: :other, status: :confirmed, starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour)
         gig = create(:event, :gig, group: member.group, creator: member, status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
-        rehearsal = confirmed_event_spanning(member, starts_at: 5.days.from_now, ends_at: 5.days.from_now + 2.hours)
+        rehearsal = confirmed_rehearsal_spanning(member, starts_at: 5.days.from_now, ends_at: 5.days.from_now + 2.hours)
         sign_in_as(member.user)
 
         get group_path(member.group)
@@ -480,7 +480,7 @@ RSpec.describe "Groups", type: :request do
       it "draws the rehearsal card before the gig card" do
         member = create(:member, :active)
         gig = create(:event, :gig, group: member.group, creator: member, status: :confirmed, starts_at: 1.day.from_now, ends_at: 1.day.from_now + 2.hours)
-        rehearsal = confirmed_event_spanning(member, starts_at: 3.days.from_now, ends_at: 3.days.from_now + 2.hours)
+        rehearsal = confirmed_rehearsal_spanning(member, starts_at: 3.days.from_now, ends_at: 3.days.from_now + 2.hours)
         sign_in_as(member.user)
 
         get group_path(member.group)
@@ -492,7 +492,7 @@ RSpec.describe "Groups", type: :request do
       it "gives the gig card to a gig under way, with its Happening now kicker" do
         freeze_time do
           member = create(:member, :active)
-          confirmed_event_spanning(member, starts_at: 2.hours.ago, ends_at: 2.hours.from_now)
+          confirmed_rehearsal_spanning(member, starts_at: 2.hours.ago, ends_at: 2.hours.from_now)
           gig = create(:event, :gig, group: member.group, creator: member, status: :confirmed, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
           sign_in_as(member.user)
 
@@ -507,7 +507,7 @@ RSpec.describe "Groups", type: :request do
         freeze_time do
           member = create(:member, :active)
           create(:event, :gig, group: member.group, creator: member, status: :confirmed, starts_at: 2.hours.ago, ends_at: 2.hours.from_now)
-          rehearsal = confirmed_event_spanning(member, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
+          rehearsal = confirmed_rehearsal_spanning(member, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
           sign_in_as(member.user)
 
           get group_path(member.group)
@@ -519,7 +519,7 @@ RSpec.describe "Groups", type: :request do
       # WHY: #459 AC4. A rehearsal and an `other` event are both ahead, so the gig's slot saying so is what proves neither stands in for a gig; "See all events" under the pair is the link to the group's events.
       it "says no gig is coming up when only a rehearsal and an other event are ahead" do
         member = create(:member, :active)
-        confirmed_event_spanning(member, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        confirmed_rehearsal_spanning(member, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
         create(:event, group: member.group, creator: member, category: :other, status: :confirmed, starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour)
         sign_in_as(member.user)
 
@@ -1333,13 +1333,10 @@ RSpec.describe "Groups", type: :request do
     Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(event, :next_up)}")&.text&.squish
   end
 
-  # A confirmed event of this member's group, spanning the instants the caller names, since the card examples above vary that pair: whether an event has started is the whole of what `Group#featured_event` answers differently before and after an event begins.
+  # A confirmed rehearsal of this member's group, spanning the instants the caller names, since the card examples above vary that pair: whether an event has started is the whole of what `Group#featured_event` answers differently before and after an event begins. A rehearsal, and named for it, because the home draws a rehearsal card and a gig card, so which one an example reads depends on the category.
   #
-  # Not `confirmed_event`, which `spec/requests/events_spec.rb` already holds for a differently
-  # shaped thing - it takes `days:` as an offset either side of now, and keeps `running_event` for
-  # the started-but-not-ended case the first caller here builds. Two files covering the same card
-  # with one name for two shapes is a name that tells the next reader the wrong thing.
-  def confirmed_event_spanning(member, starts_at:, ends_at:)
+  # Not `confirmed_event`, which `spec/requests/events_spec.rb` already holds for a differently shaped thing - it takes `days:` as an offset either side of now, and keeps `running_event` for the started-but-not-ended case the first caller here builds.
+  def confirmed_rehearsal_spanning(member, starts_at:, ends_at:)
     create(:event, :rehearsal, group: member.group, creator: member, status: :confirmed,
       starts_at: starts_at, ends_at: ends_at)
   end
