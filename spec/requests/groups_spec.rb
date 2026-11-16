@@ -243,7 +243,7 @@ RSpec.describe "Groups", type: :request do
         get group_path(member.group)
 
         expect(response.body).to include "Tuesday rehearsal"
-        expect(response.body).to include "Next up"
+        expect(response.body).to include "Next rehearsal"
       end
 
       # The home reads `Group#featured_event`, so an event already running takes
@@ -260,7 +260,7 @@ RSpec.describe "Groups", type: :request do
           get group_path(member.group)
 
           expect(response.body).to include "Happening now · ends in about 1 hour"
-          expect(response.body).not_to include "Next up ·"
+          expect(response.body).not_to include "Next rehearsal ·"
         end
       end
 
@@ -297,7 +297,7 @@ RSpec.describe "Groups", type: :request do
 
           get group_path(owner.group)
 
-          expect(response.body).to include "Next up · in 2 days", "Confirmed rehearsal"
+          expect(response.body).to include "Next rehearsal · in 2 days", "Confirmed rehearsal"
         end
       end
 
@@ -373,7 +373,7 @@ RSpec.describe "Groups", type: :request do
 
           get group_path(member.group)
 
-          expect(response.body).to include "Next up · in 2 days"
+          expect(response.body).to include "Next rehearsal · in 2 days"
           expect(response.body).not_to include "Are you coming?"
           expect(response.body).not_to include %(action="#{group_event_registration_path(member.group, event, registration)}")
         end
@@ -389,7 +389,7 @@ RSpec.describe "Groups", type: :request do
 
           get group_path(owner.group)
 
-          expect(response.body).to include "Next up · in 2 days", "No responses requested yet · 1 on the list"
+          expect(response.body).to include "Next rehearsal · in 2 days", "No responses requested yet · 1 on the list"
           expect(response.body).not_to include "no reply"
         end
       end
@@ -415,7 +415,7 @@ RSpec.describe "Groups", type: :request do
 
           get group_path(owner.group)
 
-          expect(response.body).to include "Next up · in 2 days"
+          expect(response.body).to include "Next rehearsal · in 2 days"
           expect(response.body).not_to include "Request responses"
         end
       end
@@ -429,7 +429,7 @@ RSpec.describe "Groups", type: :request do
 
           get group_path(owner.group)
 
-          expect(response.body).to include "Next up · in 2 days"
+          expect(response.body).to include "Next rehearsal · in 2 days"
           expect(response.body).not_to include "Request responses"
         end
       end
@@ -444,7 +444,7 @@ RSpec.describe "Groups", type: :request do
 
           get group_path(owner.group)
 
-          expect(response.body).to include "Next up · in 2 days"
+          expect(response.body).to include "Next rehearsal · in 2 days"
           expect(response.body).not_to include "Request responses"
         end
       end
@@ -498,6 +498,20 @@ RSpec.describe "Groups", type: :request do
           get group_path(member.group)
 
           expect(card_text(gig)).to include "Happening now · ends in about 1 hour"
+        end
+      end
+
+      # WHY: #459 AC11. Both events are ahead, so each card's kicker names its own category rather than the old "Next up".
+      it "names each card's category in its kicker" do
+        freeze_time do
+          member = create(:member, :active)
+          rehearsal = confirmed_rehearsal_spanning(member, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+          gig = create(:event, :gig, group: member.group, creator: member, status: :confirmed, starts_at: 5.days.from_now, ends_at: 5.days.from_now + 2.hours)
+          sign_in_as(member.user)
+
+          get group_path(member.group)
+
+          expect([ card_text(rehearsal), card_text(gig) ]).to match [ a_string_including("Next rehearsal · in 2 days"), a_string_including("Next gig · in 5 days") ]
         end
       end
 

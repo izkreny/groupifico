@@ -52,11 +52,13 @@ module EventsHelper
   # already begun. The countdown is `time_ago_in_words`, which measures a distance and never a
   # direction, so pointing it at `starts_at` once the event has started counts the wrong way; while
   # it runs, the distance worth stating is the one to the end.
+  #
+  # Ahead of the event, a rehearsal or a gig names its category, because the group home draws one card of each and the kicker is what tells them apart; `other` is the category that says nothing, so it keeps "Next up".
   def event_kicker(event)
     if event.ongoing?
       "Happening now#{DOT}ends in #{time_ago_in_words event.ends_at}"
     else
-      "Next up#{DOT}in #{time_ago_in_words event.starts_at}"
+      "Next #{event.other? ? "up" : event.category}#{DOT}in #{time_ago_in_words event.starts_at}"
     end
   end
 
