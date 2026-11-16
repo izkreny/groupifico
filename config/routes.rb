@@ -14,7 +14,10 @@ Rails.application.routes.draw do
     resource :sign_up_confirmation, only: %i[ show create ]
   end
   # WHY: a group's join link opens here, carrying its token in the query string for the reason `resource :sign_in` gives; `path: "join"` because the URL is pasted into a group chat for people to read.
-  resource :join_request, only: :new, path: "join"
+  resource :join_request, only: :new, path: "join" do
+    # WHY: a visitor who is not signed in asks here for a sign-in link that brings them back to the join page; its own resource because `create` on the join request is the signed-in ask itself, and `show` is the check-your-inbox page `create` redirects to so a reload never resubmits.
+    resource :sign_in_link, only: %i[ show create ], module: :join_requests
+  end
   # An address exists only as a detail of the group or event that points at it: both build one
   # through `accepts_nested_attributes_for :address`, and `EventsController` picks an existing one
   # out of `group.addresses`. So there is nothing to create standalone - an address pointed at by

@@ -10,5 +10,7 @@ class JoinRequestsController < ApplicationController
   def new
     @group = JoinLink.find_by_token(params[:token])&.group
     raise ActiveRecord::RecordNotFound unless @group
+
+    @user = User.new
   end
 end
