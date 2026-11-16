@@ -135,6 +135,14 @@ RSpec.describe "JoinRequests::SignInLinks", type: :request do
         expect(flash[:alert]).to eq("Try again later.")
       end
 
+      it "answers 400 for a body whose user is not a set of fields" do
+        token = JoinLink.mint(create(:group))
+
+        post join_request_sign_in_link_path, params: { token:, user: "x" }
+
+        expect(response).to have_http_status :bad_request
+      end
+
       it "starts no session, because the link has not been followed yet" do
         token = JoinLink.mint(create(:group))
 

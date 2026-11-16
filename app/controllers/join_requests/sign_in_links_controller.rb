@@ -11,7 +11,7 @@ class JoinRequests::SignInLinksController < ApplicationController
   rate_limit to: 10, within: 3.minutes, only: :create, name: "by-ip",
     with: -> { redirect_to new_join_request_path(token: params[:token]), alert: "Try again later." }
   rate_limit to: 3, within: SignInToken::EXPIRES_IN, only: :create, name: "by-address",
-    by: -> { params.dig(:user, :email).to_s.strip.downcase.presence || request.remote_ip },
+    by: -> { params.expect(user: [ :email ])[:email].to_s.strip.downcase.presence || request.remote_ip },
     with: -> { redirect_to new_join_request_path(token: params[:token]), alert: "Try again later." }
 
   before_action :set_group, only: :create
