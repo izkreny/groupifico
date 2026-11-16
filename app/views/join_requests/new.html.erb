@@ -2,4 +2,23 @@
 
 <div class="grow flex flex-col gap-5">
   <h1 class="text-record text-center break-words">Join <span class="block text-secondary"><%= @group.name %></span></h1>
+
+  <% unless authenticated? %>
+    <%= form_with model: @user, url: join_request_sign_in_link_path, class: "contents" do |form| %>
+      <%= hidden_field_tag :token, params[:token] %>
+
+      <%= form.with_error_summary do %>
+        <fieldset class="fieldset">
+          <%= form.field :email, as: :email_field, label: "Your email", required: true, autofocus: true,
+                autocomplete: "username", placeholder: "you@example.com" %>
+        </fieldset>
+      <% end %>
+
+      <%= form.button class: "btn btn-primary btn-block" do %>
+        <%= icon :email, class: "size-icon-control" %> Email me a sign-in link
+      <% end %>
+    <% end %>
+
+    <p class="text-meta text-center mt-auto">No passwords. The link in the mail signs you in and brings you back here.</p>
+  <% end %>
 </div>
