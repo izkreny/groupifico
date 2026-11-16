@@ -13,8 +13,8 @@
   success, maybe in warning, no in error and no reply in info; reserved, a place with no response
   requested yet, in the page's ink.
 
-  A fact line like the ones above it, led by the people icon. `roster_link` makes "Who's coming?" a link
-  to the event screen with its roster unfolded, for the next-up card. `inline` draws the tags alone,
+  A fact line like the ones above it, led by the people icon. `roster_link` makes the whole line, tags included, a link
+  to the event screen with its roster unfolded, for the next-up card, lifted above that card's stretched link to its event. `inline` draws the tags alone,
   for the event screen's Who's coming row, whose heading already says what they count.
 %>
 <% counts = event.answer_counts %>
@@ -31,15 +31,19 @@
   <% if inline %>
     <%= tags %>
   <% else %>
-    <p class="flex flex-wrap items-center gap-x-icon-text gap-y-1">
+    <% line = capture do %>
       <%= icon :members, class: "size-icon-inline flex-none text-icon-muted" %>
-      <% if roster_link %>
-        <%= link_to "Who’s coming?", group_event_path(event.group, event, responses: "show"), class: "link link-hover mr-tally-rest" %>
-      <% else %>
-        <span class="mr-tally-rest">Who&rsquo;s coming?</span>
-      <% end %>
+      <span class="mr-tally-rest<%= " group-hover:underline" if roster_link %>">Who&rsquo;s coming?</span>
 
       <%= tags %>
+    <% end %>
+
+    <p class="flex flex-wrap items-center gap-x-icon-text gap-y-1">
+      <% if roster_link %>
+        <%= link_to line, group_event_path(event.group, event, responses: "show"), class: "group relative z-1 flex grow flex-wrap items-center gap-x-icon-text gap-y-1" %>
+      <% else %>
+        <%= line %>
+      <% end %>
     </p>
   <% end %>
 <% else %>

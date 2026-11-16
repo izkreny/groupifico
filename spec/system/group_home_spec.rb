@@ -78,6 +78,18 @@ RSpec.describe "The group home", type: :system do
     expect(page).to have_css "##{ActionView::RecordIdentifier.dom_id(registration, :roster)}", visible: :visible
   end
 
+  # WHY: #473 AC2. A tag is the part of the line the words never covered, so pressing one is what proves the whole line is the link.
+  it "lands on the event with Who’s coming unfolded from a tag on the card" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    registration = create(:registration, event: next_event_for(member), member:, status: :yes)
+    sign_in_as member.user
+
+    visit group_path(member.group)
+    find("[id^=next_up] [aria-label='yes']").find(:xpath, "..").click
+
+    expect(page).to have_css "##{ActionView::RecordIdentifier.dom_id(registration, :roster)}", visible: :visible
+  end
+
   # The 12px the event screen keeps between Who’s coming? and its tags, and between the tags.
   it "spaces the card's Who’s coming? link and its tags 12px apart" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
@@ -86,7 +98,7 @@ RSpec.describe "The group home", type: :system do
 
     visit group_path(member.group)
 
-    gaps = find("a", text: "Who’s coming?").evaluate_script(<<~JS)
+    gaps = find("[id^=next_up] a span", exact_text: "Who’s coming?").evaluate_script(<<~JS)
       (label => { const items = [ label, ...[ "yes", "maybe" ].map(l => label.parentElement.querySelector(`[aria-label='${l}']`).parentElement) ]; return items.slice(1).map((el, i) => el.getBoundingClientRect().left - items[i].getBoundingClientRect().right) })(this)
     JS
     expect(gaps).to all(be_within(0.5).of(12))
