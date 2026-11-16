@@ -85,10 +85,11 @@ RSpec.describe "JoinRequests::SignInLinks", type: :request do
       end
 
       # WHY: AC6. Each limit is driven to its own threshold on its own key with the other kept clear, and the last accepted submission is asserted as well as the first refused one, for the reasons `spec/requests/sign_ups_spec.rb` gives.
-      it "accepts three submissions for one address and refuses the fourth, however the IP moves" do
+      # WHY: spelled three ways, because the key must normalise as `User` does or one inbox gets a bucket per spelling.
+      it "accepts three submissions for one address and refuses the fourth, however the IP or the spelling moves" do
         token = JoinLink.mint(create(:group))
-        post join_request_sign_in_link_path, params: { token:, user: { email: "flooded@example.com" } }, headers: { "REMOTE_ADDR" => "10.0.0.1" }
-        post join_request_sign_in_link_path, params: { token:, user: { email: "flooded@example.com" } }, headers: { "REMOTE_ADDR" => "10.0.0.2" }
+        post join_request_sign_in_link_path, params: { token:, user: { email: "Flooded@Example.com" } }, headers: { "REMOTE_ADDR" => "10.0.0.1" }
+        post join_request_sign_in_link_path, params: { token:, user: { email: "flooded@example.com " } }, headers: { "REMOTE_ADDR" => "10.0.0.2" }
         post join_request_sign_in_link_path, params: { token:, user: { email: "flooded@example.com" } }, headers: { "REMOTE_ADDR" => "10.0.0.3" }
 
         expect(response).to redirect_to join_request_sign_in_link_path
@@ -133,6 +134,17 @@ RSpec.describe "JoinRequests::SignInLinks", type: :request do
 
         expect(response).to redirect_to new_join_request_path(token:)
         expect(flash[:alert]).to eq("Try again later.")
+      end
+
+      # WHY: a blank address gives the address limit a blank key, which `rate_limit` would make one counter every such request shares; four from four IPs stay inside the limit, so the fourth is refused on its own merits.
+      it "buckets a blank-address submission by IP rather than into one shared counter" do
+        token = JoinLink.mint(create(:group))
+        post join_request_sign_in_link_path, params: { token:, user: { email: "" } }, headers: { "REMOTE_ADDR" => "10.2.0.1" }
+        post join_request_sign_in_link_path, params: { token:, user: { email: "" } }, headers: { "REMOTE_ADDR" => "10.2.0.2" }
+        post join_request_sign_in_link_path, params: { token:, user: { email: "" } }, headers: { "REMOTE_ADDR" => "10.2.0.3" }
+        post join_request_sign_in_link_path, params: { token:, user: { email: "" } }, headers: { "REMOTE_ADDR" => "10.2.0.4" }
+
+        expect(response).to have_http_status :unprocessable_content
       end
 
       it "answers 400 for a body whose user is not a set of fields" do
