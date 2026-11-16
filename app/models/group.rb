@@ -68,7 +68,7 @@ class Group < ApplicationRecord
 
   # The event of one category a group is at, or heading for: the one already running where there is one, and the soonest upcoming otherwise. No fallback branch for that pair, because a running event's `starts_at` is in the past and so sorts ahead of everything that has not begun.
   #
-  # Asked per category because the group home draws its next rehearsal and its next gig side by side, and the groups list states the next gig alone; `other` is asked by nobody.
+  # Asked per category because the group home draws its next rehearsal and its next gig in a card each, and the groups list states the next gig alone; `other` is asked by nobody.
   #
   # `confirmed` alone: an unconfirmed event is not yet a commitment and a canceled one is not an
   # event, so neither belongs under a group's name. `status` defaults to `unconfirmed`, so a newly
