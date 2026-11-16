@@ -41,4 +41,4 @@ None.
 
 ## Settled
 
-None yet.
+- ::Q1:: Should the events list remember a member's filters between visits? Settled by the owner on 2026-11-16: no, filters live in the URL alone. A remembered filter that a link visit left untouched read as a hidden second state, and Mobbin showed no app saving filters silently. So the sheet is a GET to the events list, a chip's ✕ is a link, and the controller, route and cookies of S2 go.
