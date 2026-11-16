@@ -424,6 +424,17 @@ RSpec.describe "Events", type: :request do
 
         expect(response.body).to include "Advent concert"
       end
+
+      # WHY: a filtered list that keeps nothing says the filters hid everything, since "Nothing coming up." would be untrue while events are coming up.
+      it "says no events match when the URL's filter keeps none" do
+        member = create(:member, :active)
+        confirmed_event(member, days: 3, name: "Section rehearsal", category: :rehearsal)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group, category: %w[ gig ])
+
+        expect([ response.body.include?("No events match these filters."), response.body.include?("Nothing coming up.") ]).to eq [ true, false ]
+      end
     end
 
     # WHY: `confirmed_event` and then the status, because a registration takes an answer only while its event is open to answers, so a member answers before the event is called off.

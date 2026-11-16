@@ -96,6 +96,13 @@ RSpec.describe Event::Filter do
     it "is false for a list alone and true once a filter is on" do
       expect([ described_class.new(member, list: "past").narrowed?, described_class.new(member, list: "past", answers: %w[ maybe ]).narrowed? ]).to eq [ false, true ]
     end
+
+    # WHY: #460 AC7 names the managed filter as one of the three that turn the funnel primary.
+    it "is true with only the managed filter on" do
+      upcoming(manager: member)
+
+      expect(described_class.new(member, managed: "1").narrowed?).to be true
+    end
   end
 
   describe "#chips" do
@@ -107,6 +114,13 @@ RSpec.describe Event::Filter do
         [ "Rehearsal", { scope: "past", category: %w[ gig ], answer: %w[ no ] } ],
         [ "No", { scope: "past", category: %w[ gig rehearsal ] } ]
       ]
+    end
+
+    # WHY: #460 AC5. The managed chip's ✕ has to drop the managed filter alone, like every other chip's.
+    it "gives the managed chip the parameters that drop it alone" do
+      upcoming(manager: member)
+
+      expect(described_class.new(member, categories: %w[ gig ], managed: "1").chips.last).to eq [ "Only events I manage", { category: %w[ gig ] } ]
     end
   end
 end
