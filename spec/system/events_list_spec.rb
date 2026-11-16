@@ -146,18 +146,30 @@ RSpec.describe "The events list", type: :system do
   end
 
   # WHY: #460 AC12. The sheet is only in the accessibility tree while it is open, which only a browser can make it, and its picks paint differently in each theme.
-  it "passes axe with the filter sheet open, in organic and organic-dark" do
+  it "passes axe with the filter sheet open, in organic" do
     member = create(:member, :owner)
     next_event_for(member)
     sign_in_as member.user
     resize_to ViewportHelper::MOBILE
+    prefer_colour_scheme :light
 
-    %i[ light dark ].each do |scheme|
-      prefer_colour_scheme scheme
-      visit group_events_path(member.group)
-      click_button "Filter events"
-      expect(page).to have_css("dialog#event_filter_dialog[open]").and be_accessible
-    end
+    visit group_events_path(member.group)
+    click_button "Filter events"
+
+    expect(page).to have_css("dialog#event_filter_dialog[open]").and be_accessible
+  end
+
+  it "passes axe with the filter sheet open, in organic-dark" do
+    member = create(:member, :owner)
+    next_event_for(member)
+    sign_in_as member.user
+    resize_to ViewportHelper::MOBILE
+    prefer_colour_scheme :dark
+
+    visit group_events_path(member.group)
+    click_button "Filter events"
+
+    expect(page).to have_css("dialog#event_filter_dialog[open]").and be_accessible
   end
 
   # WHY: #460 AC4. The count is fetched as the picks change, so only a browser sees it follow them.
