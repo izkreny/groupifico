@@ -12,7 +12,7 @@
         <%= render "events/next_up", event:, registration: event.registration_for(@membership) %>
       <% else %>
         <div id="no_<%= category %>" class="card card-sm bg-base-200">
-          <p class="card-body text-base-content/70">No <%= category %> coming up</p>
+          <p class="card-body text-xs font-semibold uppercase tracking-wider text-base-content/70">No <%= category %> coming up</p>
         </div>
       <% end %>
     <% end %>
