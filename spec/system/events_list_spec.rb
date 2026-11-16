@@ -236,6 +236,19 @@ RSpec.describe "The events list", type: :system do
   end
 
   # WHY: #460 AC2. Side by side while both fit, Reset on the left; once they do not, "Show N events" goes first, full width, and Reset under it.
+  # WHY: #460 AC4. A count whose response is the sign-in page has no frame to swap in, so the sheet follows it rather than replacing "Show N events" with "Content missing".
+  it "follows a lapsed session to sign-in from the sheet's count" do
+    member = create(:member, :owner)
+    sign_in_as member.user
+
+    visit group_events_path(member.group)
+    click_button "Filter events"
+    member.user.sessions.destroy_all
+    find_by_id("event_filter_dialog").find("input[aria-label='Gig']").click
+
+    expect(page).to have_current_path new_session_path, ignore_query: true
+  end
+
   it "stacks the sheet's buttons Show first once they no longer fit side by side" do
     member = create(:member, :owner)
     sign_in_as member.user
