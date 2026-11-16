@@ -11,19 +11,19 @@ RSpec.describe Event::Filter do
     filter.apply(member.group.events).map(&:name)
   end
 
-  describe ".read" do
-    # WHY: #460 AC10. A link carrying a filter shows it for that visit, so the URL wins over what the cookies saved, wholesale rather than merged.
-    it "reads the URL rather than the cookies when the URL carries a filter" do
-      filter = described_class.read(member, params: ActionController::Parameters.new(category: [ "gig" ]), cookies: { events_list: "past", events_answers: "yes" })
-
-      expect([ filter.list, filter.categories, filter.answers ]).to eq [ nil, %w[ gig ], [] ]
-    end
-
-    # WHY: #460 AC9. With nothing in the URL, the list and filters a member applied are what the screen shows.
-    it "reads the cookies when the URL carries no filter" do
-      filter = described_class.read(member, params: ActionController::Parameters.new(group_id: member.group_id), cookies: { events_list: "past", events_categories: "rehearsal,gig", events_answers: "not_answered" })
+  describe ".from" do
+    # WHY: #460 AC10. The URL is the only place a filter lives, so a link's parameters are the whole filter.
+    it "reads the list and filters from the URL's parameters" do
+      filter = described_class.from(member, ActionController::Parameters.new(scope: "past", category: %w[ rehearsal gig ], answer: %w[ not_answered ]))
 
       expect([ filter.list, filter.categories, filter.answers ]).to eq [ "past", %w[ gig rehearsal ], %w[ not_answered ] ]
+    end
+
+    # WHY: #460 AC9. A URL with no filter in it is Upcoming with nothing on.
+    it "is Upcoming with no filters when the URL carries none" do
+      filter = described_class.from(member, ActionController::Parameters.new(group_id: member.group_id))
+
+      expect([ filter.list, filter.categories, filter.answers, filter.managed?, filter.narrowed? ]).to eq [ nil, [], [], false, false ]
     end
   end
 
@@ -107,14 +107,6 @@ RSpec.describe Event::Filter do
         [ "Rehearsal", { scope: "past", category: %w[ gig ], answer: %w[ no ] } ],
         [ "No", { scope: "past", category: %w[ gig rehearsal ] } ]
       ]
-    end
-  end
-
-  describe "#to_cookies" do
-    it "names what is on and leaves what is not blank, so the cookies read back as the same filter" do
-      filter = described_class.new(member, list: "canceled", categories: %w[ other rehearsal ])
-
-      expect(filter.to_cookies).to eq(events_list: "canceled", events_categories: "rehearsal,other", events_answers: "", events_managed: nil)
     end
   end
 end

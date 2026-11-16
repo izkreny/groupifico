@@ -80,20 +80,19 @@ RSpec.describe "Events", type: :request do
         expect([ unoffered.include?("Other"), offered.at_css("legend").text, offered.at_css("input")["aria-label"] ]).to eq [ false, "Other", "Only events I manage" ]
       end
 
-      # WHY: #460 AC5. The list's chip names it with no ✕, and each filter's chip carries a ✕ that applies everything else still on.
+      # WHY: #460 AC5. The list's chip names it with no ✕, and each filter's chip carries a ✕ linking the list with everything else still on.
       it "shows the list and each filter as chips, only the filters removable" do
         member = create(:member, :active)
         sign_in_as(member.user)
-        patch group_event_filter_path(member.group, scope: "past", category: %w[ gig ], answer: %w[ yes ])
 
-        get group_events_path(member.group)
+        get group_events_path(member.group, scope: "past", category: %w[ gig ], answer: %w[ yes ])
 
         page = Nokogiri::HTML(response.body)
-        removals = page.css("button[aria-label^='Remove ']").map do |button|
-          [ button["aria-label"], button.ancestors("form").first.css("input[type=hidden]").map { [ it[:name], it[:value] ] }.reject { |name, _| %w[ _method authenticity_token ].include?(name) }.sort ]
-        end
         expect(page.css("main button[data-action='dialog#show']").map { it.text.strip }.reject(&:empty?)).to eq %w[ Past Gig Yes ]
-        expect(removals).to eq [ [ "Remove Gig", [ %w[ answer[] yes ], %w[ scope past ] ] ], [ "Remove Yes", [ %w[ category[] gig ], %w[ scope past ] ] ] ]
+        expect(page.css("a[aria-label^='Remove ']").map { [ it["aria-label"], it[:href] ] }).to eq [
+          [ "Remove Gig", group_events_path(member.group, scope: "past", answer: %w[ yes ]) ],
+          [ "Remove Yes", group_events_path(member.group, scope: "past", category: %w[ gig ]) ]
+        ]
       end
 
       # WHY: #458 AC1 and AC2. Who may create an event is `EventPolicy#create?`, and the + carries no text of its own, so its accessible name is the only label it has.
@@ -388,33 +387,31 @@ RSpec.describe "Events", type: :request do
       end
     end
 
-    context "when the member has applied a filter" do
-      # WHY: #460 AC9. The list and filters applied through the sheet live in this browser's cookies, so the next visit shows them.
-      it "lists what the applied filter keeps" do
+    context "when the URL carries a filter" do
+      # WHY: #460 AC10. The URL is the only place a filter lives, so a link shows what it names.
+      it "lists what the URL's filter keeps" do
         member = create(:member, :active)
         confirmed_event(member, days: 3, name: "Advent concert", category: :gig)
         confirmed_event(member, days: 4, name: "Section rehearsal", category: :rehearsal)
         sign_in_as(member.user)
-        patch group_event_filter_path(member.group, category: %w[ gig ])
 
-        get group_events_path(member.group)
+        get group_events_path(member.group, category: %w[ gig ])
 
         expect([ response.body.include?("Advent concert"), response.body.include?("Section rehearsal") ]).to eq [ true, false ]
       end
 
-      # WHY: #460 AC10. A link carrying a filter shows it for that visit, and the next plain visit is back to what was applied.
-      it "shows a filter the URL carries for that visit alone, leaving the applied one saved" do
+      # WHY: #460 AC9. Nothing is remembered, so a plain visit after a filtered one opens on Upcoming with no filters.
+      it "opens a later visit without a filter on Upcoming with nothing on" do
         member = create(:member, :active)
         confirmed_event(member, days: 3, name: "Advent concert", category: :gig)
         confirmed_event(member, days: 4, name: "Section rehearsal", category: :rehearsal)
         sign_in_as(member.user)
-        patch group_event_filter_path(member.group, category: %w[ rehearsal ])
+        get group_events_path(member.group, scope: "past", category: %w[ gig ])
 
-        get group_events_path(member.group, category: %w[ gig ])
-        linked = [ response.body.include?("Advent concert"), response.body.include?("Section rehearsal") ]
         get group_events_path(member.group)
 
-        expect([ linked, [ response.body.include?("Advent concert"), response.body.include?("Section rehearsal") ], cookies[:events_categories] ]).to eq [ [ true, false ], [ false, true ], "rehearsal" ]
+        page = Nokogiri::HTML(response.body)
+        expect([ response.body.include?("Section rehearsal"), page.css("main button[data-action='dialog#show']").map { it.text.strip }.reject(&:empty?) ]).to eq [ true, %w[ Upcoming ] ]
       end
 
       # WHY: #460 AC11. A category the sheet does not offer narrows nothing.

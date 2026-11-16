@@ -1,4 +1,4 @@
-# WHY: one object decides what the events list shows, so the list, its chips, the funnel and the sheet cannot disagree. Every value the list does not offer is dropped on the way in, the way `EventsHelper#roster_order` drops an order, so nothing outside these lists reaches a query or a cookie.
+# WHY: one object decides what the events list shows, so the list, its chips, the funnel and the sheet cannot disagree. Every value the list does not offer is dropped on the way in, the way `EventsHelper#roster_order` drops an order, so nothing outside these lists reaches a query or a link.
 class Event::Filter
   # WHY: `nil` is the upcoming list because that list is the screen's own URL, with no `scope`.
   LISTS = { nil => "Upcoming", "past" => "Past", "canceled" => "Canceled" }.freeze
@@ -10,15 +10,9 @@ class Event::Filter
   # WHY: "Not answered" is a place on the event's list with no answer yet, so an event the reader is not listed on has no answer of theirs to match.
   STATUSES = { "yes" => %w[ yes ], "maybe" => %w[ maybe ], "no" => %w[ no ], "not_answered" => %w[ reserved response_requested ] }.freeze
 
-  PARAMS = %w[ scope category answer managed ].freeze
-
-  # WHY: a URL carrying any of the list's parameters replaces the saved choice whole rather than merging with it, so a link shows exactly what it names, for that visit alone.
-  def self.read(member, params:, cookies:)
-    if params.keys.intersect?(PARAMS)
-      new(member, list: params[:scope], categories: params[:category], answers: params[:answer], managed: params[:managed])
-    else
-      new(member, list: cookies[:events_list], categories: cookies[:events_categories]&.split(","), answers: cookies[:events_answers]&.split(","), managed: cookies[:events_managed])
-    end
+  # WHY: the URL is the only place a filter lives, so a link shows exactly what it names and a plain visit opens on Upcoming with nothing on, with no remembered state to surprise anyone.
+  def self.from(member, params)
+    new(member, list: params[:scope], categories: params[:category], answers: params[:answer], managed: params[:managed])
   end
 
   attr_reader :member, :list, :categories, :answers
@@ -68,10 +62,6 @@ class Event::Filter
   end
 
   def to_params = without
-
-  def to_cookies
-    { events_list: list, events_categories: categories.join(","), events_answers: answers.join(","), events_managed: ("true" if managed?) }
-  end
 
   private
     def without(category: nil, answer: nil, managed: false)

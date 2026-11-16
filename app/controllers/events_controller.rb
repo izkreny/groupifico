@@ -11,8 +11,8 @@ class EventsController < ApplicationController
   def index
     authorize! @group, to: :show?
 
-    # WHY: `Event::Filter` picks the list and every filter from its own literals, because the parameters and cookies are a member's input, and anything built out of them and sent to the relation is a door onto every scope the model has. Anything it does not offer is dropped, so a mistyped URL degrades to the upcoming list.
-    @filter = Event::Filter.read(Current.member, params:, cookies:)
+    # WHY: `Event::Filter` picks the list and every filter from its own literals, because the parameters are a member's input, and anything built out of them and sent to the relation is a door onto every scope the model has. Anything it does not offer is dropped, so a mistyped URL degrades to the upcoming list.
+    @filter = Event::Filter.from(Current.member, params)
 
     # Preloaded because every row reads the event for the reader's own registration and its place,
     # and `Event#registration_for` reads the loaded association: without this the list costs a

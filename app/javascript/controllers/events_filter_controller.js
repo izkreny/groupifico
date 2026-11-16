@@ -1,6 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 
-// WHY: the count is a Turbo Frame pointed at the events list's own URL carrying the sheet's picks, which `EventsController#index` reads for that request alone, so it counts with the very query the list would run and saves nothing.
+// WHY: the count is a Turbo Frame pointed at the events list's own URL carrying the sheet's picks, so it counts with the very query applying the sheet would run.
 export default class extends Controller {
   static targets = ["count"]
   static values = { url: String }
@@ -10,8 +10,6 @@ export default class extends Controller {
     if (!this.urlValue) return
 
     const picks = new URLSearchParams(new FormData(this.element))
-    picks.delete("_method")
-    picks.delete("authenticity_token")
     this.countTarget.src = `${this.urlValue}?${picks}`
   }
 

@@ -173,10 +173,10 @@ RSpec.describe "The events list", type: :system do
     expect(page).to have_button "Show 1 event"
     click_button "Show 1 event"
     expect(page).to have_text("Advent concert").and have_no_text("Tuesday rehearsal")
-    expect(page).to have_button "Remove Gig"
+    expect(page).to have_link "Remove Gig"
   end
 
-  # WHY: #460 AC5. A chip's ✕ applies everything else that was on, so only its own filter goes.
+  # WHY: #460 AC5. A chip's ✕ links the list with everything else still on, so only its own filter goes.
   it "removes one filter with its chip's ✕, leaving the others on" do
     member = create(:member, :owner)
     next_event_for(member)
@@ -185,9 +185,9 @@ RSpec.describe "The events list", type: :system do
     visit group_events_path(member.group)
     pick_in_sheet "Rehearsal", "Not answered"
     click_button "Show 0 events"
-    click_button "Remove Rehearsal"
+    click_link "Remove Rehearsal"
 
-    expect(page).to have_button("Remove Not answered").and have_no_button("Remove Rehearsal")
+    expect(page).to have_link("Remove Not answered").and have_no_link("Remove Rehearsal")
   end
 
   # WHY: #460 AC8. Reset returns the sheet, not the list, to Upcoming with no filters, and the count follows.
@@ -205,8 +205,8 @@ RSpec.describe "The events list", type: :system do
     expect(find_by_id("event_filter_dialog").evaluate_script("[ ...this.querySelectorAll('input:checked') ].map(input => input.getAttribute('aria-label'))")).to eq %w[ Upcoming ]
   end
 
-  # WHY: #460 AC9. What the sheet applies is kept per browser, so a later visit shows it.
-  it "keeps the list applied for the next visit" do
+  # WHY: #460 AC9. The sheet's picks travel in the URL and nowhere else, so the next plain visit opens on Upcoming with nothing on.
+  it "applies the sheet's picks through the URL alone, remembering nothing for the next visit" do
     member = create(:member, :owner)
     past_event_for(member)
     sign_in_as member.user
@@ -214,10 +214,10 @@ RSpec.describe "The events list", type: :system do
     visit group_events_path(member.group)
     pick_in_sheet "Past"
     click_button "Show 1 event"
-    expect(page).to have_text "Spring concert"
+    expect(page).to have_current_path(/scope=past/).and have_text("Spring concert")
     visit group_events_path(member.group)
 
-    expect(page).to have_text("Spring concert").and have_button("Past")
+    expect(page).to have_button("Upcoming").and have_no_text("Spring concert")
   end
 
   # WHY: #460 AC7. Muted while nothing hides events from the list picked, primary once a filter does, and either way clearing 3:1 as an icon must.
@@ -230,7 +230,7 @@ RSpec.describe "The events list", type: :system do
     muted = funnel_ink("text-icon-muted")
     pick_in_sheet "Rehearsal"
     click_button "Show 1 event"
-    expect(page).to have_button "Remove Rehearsal"
+    expect(page).to have_link "Remove Rehearsal"
 
     expect([ muted, funnel_ink("text-primary") ]).to eq [ [ true, true ], [ true, true ] ]
   end

@@ -1,12 +1,12 @@
 <%# locals: (group:, filter:) %>
-<%# WHY: every chip is primary, the list's included, so only the ✕ tells the list apart from the filters that narrow it, which the owner judged enough. The ✕ applies everything else that was on, so removing a filter saves like applying one. %>
+<%# WHY: every chip is primary, the list's included, so only the ✕ tells the list apart from the filters that narrow it, which the owner judged enough. The ✕ is a link to the list with everything else still on, since the URL is the only place a filter lives. %>
 <div class="flex flex-wrap gap-2">
   <button type="button" class="rounded-full bg-primary px-3 py-1 text-sm text-primary-content cursor-pointer" data-action="dialog#show"><%= filter.list_name %></button>
 
   <% filter.chips.each do |name, params| %>
     <div class="inline-flex items-center rounded-full bg-primary text-primary-content">
       <button type="button" class="ps-3 py-1 text-sm cursor-pointer" data-action="dialog#show"><%= name %></button>
-      <%= button_to icon(:remove, class: "size-icon-inline"), group_event_filter_path(group), method: :patch, params:, form_class: "contents", class: "btn btn-ghost btn-circle btn-xs text-primary-content", aria: { label: "Remove #{name}" } %>
+      <%= link_to icon(:remove, class: "size-icon-inline"), group_events_path(group, params), class: "btn btn-ghost btn-circle btn-xs text-primary-content", aria: { label: "Remove #{name}" } %>
     </div>
   <% end %>
 </div>
