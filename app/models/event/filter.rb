@@ -61,8 +61,6 @@ class Event::Filter
       (managed? ? [ [ MANAGED, without(managed: true) ] ] : [])
   end
 
-  def to_params = without
-
   private
     def without(category: nil, answer: nil, managed: false)
       { scope: list, category: categories - [ category ], answer: answers - [ answer ], managed: ("1" if managed? && !managed) }.compact_blank
