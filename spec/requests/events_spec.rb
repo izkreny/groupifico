@@ -173,7 +173,7 @@ RSpec.describe "Events", type: :request do
     end
 
     context "when the group has a next event" do
-      # WHY: #457 AC1 and AC2. The confirmed event `Group#featured_event` answers sits between an unconfirmed event before it and a later one, so its row standing second is what proves the list draws it as an ordinary row in date order rather than lifting it out into a card.
+      # WHY: #457 AC1 and AC2. The soonest confirmed event sits between an unconfirmed event before it and a later one, so its row standing second is what proves the list draws it as an ordinary row in date order rather than lifting it out into a card.
       it "draws the group's next event as a row, in date order" do
         member = create(:member, :active)
         earlier = create(:event, group: member.group, creator: member, status: :unconfirmed, starts_at: 1.day.from_now, ends_at: 1.day.from_now + 2.hours)

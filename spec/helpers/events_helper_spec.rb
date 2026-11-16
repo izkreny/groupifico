@@ -24,6 +24,16 @@ RSpec.describe EventsHelper, type: :helper do
       end
     end
 
+    # WHY: #459 AC11. The home's two cards are told apart by their kicker, so each names its category.
+    it "names the category of a rehearsal or a gig still ahead" do
+      freeze_time do
+        rehearsal = build(:event, :rehearsal, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 1.hour)
+        gig = build(:event, :gig, starts_at: 5.days.from_now, ends_at: 5.days.from_now + 1.hour)
+
+        expect([ helper.event_kicker(rehearsal), helper.event_kicker(gig) ]).to eq [ "Next rehearsal · in 2 days", "Next gig · in 5 days" ]
+      end
+    end
+
     # The distance to the end rather than to the start: `time_ago_in_words` measures a distance and
     # never a direction, so the old line read "in about 1 hour" about an hour that had already gone.
     it "counts down to the end of an event that is running" do

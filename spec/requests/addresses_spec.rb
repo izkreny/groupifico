@@ -61,7 +61,7 @@ RSpec.describe "Addresses", type: :request do
       it "opens the group home card's map link in a new tab" do
         member = create(:member, :active)
         address = create(:address, name: "Community Hall", street_name: "Obala", building_number: "14")
-        create(:event, group: member.group, creator: member, address:, status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        create(:event, :rehearsal, group: member.group, creator: member, address:, status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
         sign_in_as(member.user)
 
         get group_path(member.group)

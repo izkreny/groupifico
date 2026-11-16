@@ -160,10 +160,10 @@ RSpec.describe Group, type: :model do
       freeze_time do
         group = create(:group)
         creator = create(:member, group:)
-        create(:event, group:, creator:, status: :confirmed, starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour)
-        running = create(:event, group:, creator:, status: :confirmed, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
+        create(:event, :gig, group:, creator:, status: :confirmed, starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour)
+        running = create(:event, :gig, group:, creator:, status: :confirmed, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
 
-        expect(group.featured_event).to eq running
+        expect(group.featured_event(:gig)).to eq running
       end
     end
 
@@ -171,10 +171,10 @@ RSpec.describe Group, type: :model do
       freeze_time do
         group = create(:group)
         creator = create(:member, group:)
-        create(:event, group:, creator:, status: :confirmed, starts_at: 10.days.from_now, ends_at: 10.days.from_now + 1.hour)
-        soonest = create(:event, group:, creator:, status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 1.hour)
+        create(:event, :gig, group:, creator:, status: :confirmed, starts_at: 10.days.from_now, ends_at: 10.days.from_now + 1.hour)
+        soonest = create(:event, :gig, group:, creator:, status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 1.hour)
 
-        expect(group.featured_event).to eq soonest
+        expect(group.featured_event(:gig)).to eq soonest
       end
     end
 
@@ -184,9 +184,9 @@ RSpec.describe Group, type: :model do
       freeze_time do
         group = create(:group)
         creator = create(:member, group:)
-        create(:event, group:, creator:, status: :unconfirmed, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
+        create(:event, :gig, group:, creator:, status: :unconfirmed, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
 
-        expect(group.featured_event).to be_nil
+        expect(group.featured_event(:gig)).to be_nil
       end
     end
 
@@ -194,9 +194,9 @@ RSpec.describe Group, type: :model do
       freeze_time do
         group = create(:group)
         creator = create(:member, group:)
-        create(:event, group:, creator:, status: :confirmed, starts_at: 2.days.ago, ends_at: 2.days.ago + 1.hour)
+        create(:event, :gig, group:, creator:, status: :confirmed, starts_at: 2.days.ago, ends_at: 2.days.ago + 1.hour)
 
-        expect(group.featured_event).to be_nil
+        expect(group.featured_event(:gig)).to be_nil
       end
     end
 
@@ -204,15 +204,53 @@ RSpec.describe Group, type: :model do
       freeze_time do
         group = create(:group)
         creator = create(:member, group:)
-        create(:event, group:, creator:, status: :canceled, starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour)
-        confirmed = create(:event, group:, creator:, status: :confirmed, starts_at: 5.days.from_now, ends_at: 5.days.from_now + 1.hour)
+        create(:event, :gig, group:, creator:, status: :canceled, starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour)
+        confirmed = create(:event, :gig, group:, creator:, status: :confirmed, starts_at: 5.days.from_now, ends_at: 5.days.from_now + 1.hour)
 
-        expect(group.featured_event).to eq confirmed
+        expect(group.featured_event(:gig)).to eq confirmed
+      end
+    end
+
+    # WHY: #459 AC1 and AC2. The rehearsal and the `other` event both start first, so only the category filter keeps them out of the gig's answer.
+    it "is the soonest gig, ahead of a rehearsal and an other event that start before it" do
+      freeze_time do
+        group = create(:group)
+        creator = create(:member, group:)
+        create(:event, :rehearsal, group:, creator:, status: :confirmed, starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour)
+        create(:event, group:, creator:, category: :other, status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 1.hour)
+        gig = create(:event, :gig, group:, creator:, status: :confirmed, starts_at: 5.days.from_now, ends_at: 5.days.from_now + 1.hour)
+
+        expect(group.featured_event(:gig)).to eq gig
+      end
+    end
+
+    # WHY: #459 AC7, the same filter asked for the other category.
+    it "is the soonest rehearsal, ahead of a gig and an other event that start before it" do
+      freeze_time do
+        group = create(:group)
+        creator = create(:member, group:)
+        create(:event, :gig, group:, creator:, status: :confirmed, starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour)
+        create(:event, group:, creator:, category: :other, status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 1.hour)
+        rehearsal = create(:event, :rehearsal, group:, creator:, status: :confirmed, starts_at: 5.days.from_now, ends_at: 5.days.from_now + 1.hour)
+
+        expect(group.featured_event(:rehearsal)).to eq rehearsal
+      end
+    end
+
+    # WHY: #459 AC8. A gig under way since before the rehearsal began would take the answer if the category were not asked.
+    it "is the rehearsal already running, though a running gig began before it" do
+      freeze_time do
+        group = create(:group)
+        creator = create(:member, group:)
+        create(:event, :gig, group:, creator:, status: :confirmed, starts_at: 2.hours.ago, ends_at: 2.hours.from_now)
+        running = create(:event, :rehearsal, group:, creator:, status: :confirmed, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
+
+        expect(group.featured_event(:rehearsal)).to eq running
       end
     end
 
     it "is nil for a group with no events at all" do
-      expect(create(:group).featured_event).to be_nil
+      expect(create(:group).featured_event(:gig)).to be_nil
     end
   end
 

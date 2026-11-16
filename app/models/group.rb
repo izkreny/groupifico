@@ -66,17 +66,17 @@ class Group < ApplicationRecord
     Address.where(id: events.select(:address_id)).or(Address.where(id: address_id))
   end
 
-  # The event a group is at, or heading for: the one already running where there is one, and the
-  # soonest upcoming otherwise. No fallback branch for that pair, because a running event's
-  # `starts_at` is in the past and so sorts ahead of everything that has not begun.
+  # The event of one category a group is at, or heading for: the one already running where there is one, and the soonest upcoming otherwise. No fallback branch for that pair, because a running event's `starts_at` is in the past and so sorts ahead of everything that has not begun.
+  #
+  # Asked per category because the group home draws its next rehearsal and its next gig in a card each, and the groups list states the next gig alone; `other` is asked by nobody.
   #
   # `confirmed` alone: an unconfirmed event is not yet a commitment and a canceled one is not an
   # event, so neither belongs under a group's name. `status` defaults to `unconfirmed`, so a newly
   # created event stays out of here until somebody confirms it.
   #
-  # WHY: `strict_loading(false)` because the group home, which draws this event as a hero, reads its associations once per page. `groups#index` calls it once per card, and the card reads only the event's own columns, so preloading here would charge every card for reads it never makes; a card that starts reading an association must preload it rather than lean on this opt-out.
-  def featured_event
-    events.strict_loading(false).confirmed.current_and_upcoming.order(:starts_at).first
+  # WHY: `strict_loading(false)` because the group home, which draws each of its two answers as a hero card, reads their associations once per page. `groups#index` calls it once per card, and the card reads only the event's own columns, so preloading here would charge every card for reads it never makes; a card that starts reading an association must preload it rather than lean on this opt-out.
+  def featured_event(category)
+    events.strict_loading(false).confirmed.where(category:).current_and_upcoming.order(:starts_at).first
   end
 
   # Whoever starts a group owns it, and both routes to a group say so through here rather than

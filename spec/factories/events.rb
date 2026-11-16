@@ -67,6 +67,11 @@ FactoryBot.define do
       category { :rehearsal }
     end
 
+    trait :gig do
+      name     { "Gig - #{Faker::TvShows::Simpsons.episode_title}" }
+      category { :gig }
+    end
+
     trait :with_all_attributes do
       description { Faker::TvShows::Simpsons.quote }
       address     { association :address, :with_all_attributes }

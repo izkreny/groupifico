@@ -5,7 +5,7 @@ require "rails_helper"
 # `.agents/testing.md` none of it comes back here. The chrome above the screen - the mark, the
 # switcher, the tabs - is `spec/system/group_shell_spec.rb`'s and is not repeated either.
 #
-# What no request spec can reach: whether either state paints at all, whether the card's lit pill is distinguishable from its neighbours, how the card is spaced and whether it fits, and where pressing one of its controls or "See all events" lands.
+# What no request spec can reach: whether either state paints at all, whether the card's lit pill is distinguishable from its neighbours, how the card is spaced and whether it fits, and where pressing one of its controls lands.
 #
 # The paint targets are surfaces the matcher can judge: the hero is a `base-200` card over the page's own `base-100`, the pills carry theirs over the card's, and the first-run screen's own surfaces are the button and the note beneath it. `.card` rather than `.card.bg-base-200`, so the assertion reads the rendered colour rather than the class that requests it - with the class in the selector, an untinted card fails as "does not exist" instead of as the ratio of 1 it actually paints. `body` and anything carrying `bg-base-100` would composite to 1.0 in light and read as painting nothing.
 RSpec.describe "The group home", type: :system do
@@ -54,20 +54,6 @@ RSpec.describe "The group home", type: :system do
     expect(page).to paint ".btn-primary"
     expect(page).to paint ".bg-base-200"
     expect(page).to be_accessible
-  end
-
-  # A Turbo navigation, which is the one thing no request spec asserts: that the link is usable and
-  # lands where it says rather than merely carrying the right href.
-  it "lands on the events list when See all events is used" do
-    member = create(:member, :owner, group: create(:group))
-    next_event_for(member)
-    sign_in_as member.user
-    resize_to ViewportHelper::MOBILE
-
-    visit group_path(member.group)
-    click_link "See all events"
-
-    expect(page).to have_current_path group_events_path(member.group)
   end
 
   it "lands on the event form when the first-run call to action is used" do
@@ -143,6 +129,20 @@ RSpec.describe "The group home", type: :system do
       ((style, probe) => [ style.color === getComputedStyle(probe).color, style.textTransform, style.fontWeight, style.letterSpacing, probe.remove() ].slice(0, 4))(getComputedStyle(this), document.body.appendChild(Object.assign(document.createElement("span"), { className: "text-secondary" })))
     JS
     expect(kicker).to eq [ true, "uppercase", "600", "0.6px" ]
+  end
+
+  # WHY: the owner's order on #470: an empty slot's line is set as the kicker it stands in for, in the muted ink rather than the secondary one, so it reads as the same eyebrow with nothing under it.
+  it "sets an empty slot's line as a muted eyebrow" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    next_gig_for(member)
+    sign_in_as member.user
+
+    visit group_path(member.group)
+
+    line = find("#no_rehearsal p").evaluate_script(<<~JS)
+      ((style, probe) => [ style.color === getComputedStyle(probe).color, style.textTransform, style.fontWeight, style.letterSpacing, probe.remove() ].slice(0, 4))(getComputedStyle(this), document.body.appendChild(Object.assign(document.createElement("span"), { className: "text-base-content/70" })))
+    JS
+    expect(line).to eq [ true, "uppercase", "600", "0.6px" ]
   end
 
   it "shows the lit pill by its label in light" do
@@ -246,6 +246,49 @@ RSpec.describe "The group home", type: :system do
     JS
   end
 
+  # WHY: #459 AC10. Which card leads is the request spec's; that each takes its own row is geometry, and only a browser lays it out. The gig starts first, so the rehearsal leading is the screen's order rather than the calendar's.
+  it "stacks the rehearsal card above the gig card on a phone" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    rehearsal = next_event_for(member)
+    gig = next_gig_for(member)
+    sign_in_as member.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_path(member.group)
+
+    expect(card_box(rehearsal)["bottom"]).to be <= card_box(gig)["top"]
+    expect(overflowing?).to be false
+  end
+
+  # WHY: #459 AC10, the desktop half: the column is wide enough for two cards side by side, and they still take a row each.
+  it "stacks the rehearsal card above the gig card on a desktop too" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    rehearsal = next_event_for(member)
+    gig = next_gig_for(member)
+    sign_in_as member.user
+    resize_to ViewportHelper::DESKTOP
+
+    visit group_path(member.group)
+
+    expect(card_box(rehearsal)["bottom"]).to be <= card_box(gig)["top"]
+    expect(overflowing?).to be false
+  end
+
+  # WHY: #459 AC9. The empty slot is a surface of its own, `base-200` over the page, and its line is dimmed with a theme colour, so whether it paints and stays legible is the browser's to say.
+  it "paints the empty rehearsal slot, with no accessibility violations" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    next_gig_for(member)
+    sign_in_as member.user
+    prefer_colour_scheme :light
+    resize_to ViewportHelper::MOBILE
+
+    visit group_path(member.group)
+
+    expect(page).to have_text "NO REHEARSAL COMING UP"
+    expect(page).to paint "#no_rehearsal"
+    expect(page).to be_accessible
+  end
+
   # Whether the page scrolls sideways, which is the one overflow a reader on a phone notices first.
   def overflowing?
     page.evaluate_script("document.documentElement.scrollWidth > document.documentElement.clientWidth")
@@ -253,14 +296,29 @@ RSpec.describe "The group home", type: :system do
 
   # The card states its own copy, so an event here has a fixed name, place and hour rather than the factory's random ones: a confirmed one, upcoming, so `Group#featured_event` answers it rather than whatever the factory rolled.
   def next_event_for(member)
-    create(:event,
+    create(:event, :rehearsal,
       group: member.group,
       creator: member,
       name: "Tuesday rehearsal",
-      category: :rehearsal,
       status: :confirmed,
       address: create(:address, name: "Community Hall"),
       starts_at: 2.days.from_now.change(hour: 19),
       ends_at: 2.days.from_now.change(hour: 21))
+  end
+
+  # A confirmed gig the day before `next_event_for`'s rehearsal, with fixed copy for the same reason.
+  def next_gig_for(member)
+    create(:event, :gig,
+      group: member.group,
+      creator: member,
+      name: "Winter concert",
+      status: :confirmed,
+      starts_at: 1.day.from_now.change(hour: 20),
+      ends_at: 1.day.from_now.change(hour: 22))
+  end
+
+  # The rendered box of an event's hero card, as the browser laid it out.
+  def card_box(event)
+    page.evaluate_script("document.getElementById('#{ActionView::RecordIdentifier.dom_id(event, :next_up)}').getBoundingClientRect().toJSON()")
   end
 end
