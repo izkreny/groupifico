@@ -47,6 +47,22 @@ RSpec.describe "Authentication", type: :system do
     expect(page).to have_current_path group_event_path(event.group, event)
   end
 
+  # WHY: #446 AC7 walked in the browser, a visitor nobody has heard of yet following a join link and coming back to it, with the link read out of the delivered mail so every hop is the real one; landing on the join page from the Sign in button is the session having started, since a refused link lands on the sign-in form.
+  it "returns a visitor who asked from a join link to the join page, signed in" do
+    token = JoinLink.mint(create(:group))
+
+    visit new_join_request_path(token:)
+    fill_in "Your email", with: "visitor@example.com"
+    perform_enqueued_jobs do
+      click_button "Email me a sign-in link"
+      expect(page).to have_text "Check your inbox"
+    end
+    visit mailed_sign_in_link("visitor@example.com").request_uri
+    click_button "Sign in"
+
+    expect(page).to have_current_path new_join_request_path(token:)
+  end
+
   # Guards the helper every other system spec depends on: a cookie the browser rejects would make
   # each of them fail as though its own subject were broken.
   it "signs in without the browser when the cookie helper is used" do
