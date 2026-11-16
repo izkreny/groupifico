@@ -93,13 +93,11 @@ RSpec.describe "The group home", type: :system do
   end
 
   # daisyUI grows every paragraph in a card body, so the question would stretch and push the buttons to the card's far edge.
-  #
-  # WHY: 700px wide, between the column's full 640px and `md`, the one range where the card spans the whole column: on a phone and from `md` up, where the cards sit two to a row, the buttons wrap under the question and no gap after it exists to measure.
   it "sets the card's answer buttons 16px after the question, as on the event screen" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
     create(:registration, event: next_event_for(member), member:, status: :yes)
     sign_in_as member.user
-    page.current_window.resize_to(700, 900)
+    page.driver.resize(1280, 900)
 
     visit group_path(member.group)
 
@@ -234,7 +232,7 @@ RSpec.describe "The group home", type: :system do
     JS
   end
 
-  # WHY: #459 AC10. Which card leads is the request spec's; where the two land is geometry, one column on a phone and two from `md` up, and only a browser lays them out. The gig starts first, so the rehearsal leading is the screen's order rather than the calendar's.
+  # WHY: #459 AC10. Which card leads is the request spec's; that each takes its own row is geometry, and only a browser lays it out. The gig starts first, so the rehearsal leading is the screen's order rather than the calendar's.
   it "stacks the rehearsal card above the gig card on a phone" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
     rehearsal = next_event_for(member)
@@ -248,8 +246,8 @@ RSpec.describe "The group home", type: :system do
     expect(overflowing?).to be false
   end
 
-  # WHY: #459 AC10, the desktop half: two columns of 296px each inside the 640px shell, measured to fit before the plan was written.
-  it "sets the rehearsal card to the left of the gig card on a desktop" do
+  # WHY: #459 AC10, the desktop half: the column is wide enough for two cards side by side, and they still take a row each.
+  it "stacks the rehearsal card above the gig card on a desktop too" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
     rehearsal = next_event_for(member)
     gig = next_gig_for(member)
@@ -258,7 +256,7 @@ RSpec.describe "The group home", type: :system do
 
     visit group_path(member.group)
 
-    expect([ card_box(rehearsal)["right"] <= card_box(gig)["left"], card_box(rehearsal)["top"] == card_box(gig)["top"] ]).to eq [ true, true ]
+    expect(card_box(rehearsal)["bottom"]).to be <= card_box(gig)["top"]
     expect(overflowing?).to be false
   end
 

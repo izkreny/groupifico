@@ -6,7 +6,7 @@
 %>
 <%# The first-run screen is for a group with no events at all, so a group whose events are all past, unconfirmed or `other` still gets the two cards, each saying nothing of its kind is ahead. %>
 <% if @group.events.exists? %>
-  <div class="grid gap-4 md:grid-cols-2">
+  <div class="flex flex-col gap-4">
     <% [ [ "rehearsal", @next_rehearsal ], [ "gig", @next_gig ] ].each do |category, event| %>
       <% if event %>
         <%= render "events/next_up", event:, registration: event.registration_for(@membership) %>
