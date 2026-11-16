@@ -40,6 +40,17 @@ RSpec.describe "JoinRequests::SignInLinks", type: :request do
         expect(answers.uniq).to eq [ [ 302, join_request_sign_in_link_url, {} ] ]
       end
 
+      # WHY: the losing side of two requests racing for one new address, whose `find_by` missed the row the other then created; the row is inserted raw and differently cased because that is the one way to reach the same state without a second thread, and the winner is what mails.
+      it "answers the request that lost a race for a new address like any other, mailing nothing" do
+        token = JoinLink.mint(create(:group))
+        User.connection.execute("INSERT INTO users (email, created_at, updated_at) VALUES ('Racer@Example.com', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)")
+
+        expect { post join_request_sign_in_link_path, params: { token:, user: { email: "racer@example.com" } } }
+          .not_to have_enqueued_mail(SignInMailer, :link)
+
+        expect(response).to redirect_to join_request_sign_in_link_path
+      end
+
       it "refuses a blank address with the error on the field and mails nothing" do
         token = JoinLink.mint(create(:group))
 

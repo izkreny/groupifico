@@ -19,12 +19,12 @@ class JoinRequests::SignInLinksController < ApplicationController
   def show
   end
 
-  # WHY: found or created in the request, never built and saved, so an address that already has an account comes back as that account rather than as a uniqueness error, and the answer cannot tell the two apart.
+  # WHY: found or created in the request, never built and saved, so an address that already has an account comes back as that account rather than as a uniqueness error, and the answer cannot tell the two apart; the one uniqueness error left is the request that lost a race for a new address, answered alike and mailing nothing, since the winner mailed that inbox.
   def create
     @user = User.find_or_create_by(email: params.expect(user: [ :email ])[:email])
 
-    if @user.persisted?
-      SignInMailer.link(@user, return_to: new_join_request_path(token: params[:token])).deliver_later
+    if @user.persisted? || @user.errors.of_kind?(:email, :taken)
+      SignInMailer.link(@user, return_to: new_join_request_path(token: params[:token])).deliver_later if @user.persisted?
 
       redirect_to join_request_sign_in_link_path
     else
