@@ -206,7 +206,7 @@
     <% end %>
   <% end %>
 
-  <%# WHY: a sample filter rather than the reader's, so the chips show a list and two removable filters whatever this browser applied. %>
+  <%# WHY: a sample filter rather than the reader's, so the chips show a list and two removable filters whatever the styleguide's own URL carries. %>
   <%= render layout: "styleguides/section", locals: { title: "Events filter" } do |theme| %>
     <% sample = Event::Filter.new(@owner, list: "past", categories: %w[ gig ], answers: %w[ yes ]) %>
     <div class="flex flex-col gap-4">
