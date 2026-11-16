@@ -247,7 +247,6 @@ RSpec.describe "The events list", type: :system do
     expect([ muted, funnel_ink("text-primary") ]).to eq [ [ true, true ], [ true, true ] ]
   end
 
-  # WHY: #460 AC2. Side by side while both fit, Reset on the left; once they do not, "Show N events" goes first, full width, and Reset under it.
   # WHY: #460 AC4. A count whose response is the sign-in page has no frame to swap in, so the sheet follows it rather than replacing "Show N events" with "Content missing".
   it "follows a lapsed session to sign-in from the sheet's count" do
     member = create(:member, :owner)
@@ -261,6 +260,7 @@ RSpec.describe "The events list", type: :system do
     expect(page).to have_current_path new_session_path, ignore_query: true
   end
 
+  # WHY: #460 AC2. Side by side while both fit, Reset on the left; once they do not, "Show N events" goes first, full width, and Reset under it.
   it "stacks the sheet's buttons Show first once they no longer fit side by side" do
     member = create(:member, :owner)
     sign_in_as member.user
