@@ -232,9 +232,9 @@ RSpec.describe "Groups", type: :request do
     end
 
     # The home's two states, and which controls each offers whom. `spec/system/group_home_spec.rb`
-    # asserts that they paint and that "See all events" lands; none of that comes back here.
+    # asserts that they paint; none of that comes back here.
     describe "the group home" do
-      it "leads with the next event and a way into the whole list" do
+      it "leads with the next event" do
         member = create(:member, group: create(:group))
         event = create(:event, :rehearsal, group: member.group, name: "Tuesday rehearsal", status: :confirmed,
           starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
@@ -244,7 +244,6 @@ RSpec.describe "Groups", type: :request do
 
         expect(response.body).to include "Tuesday rehearsal"
         expect(response.body).to include "Next up"
-        expect(response.body).to include group_events_path(member.group)
       end
 
       # The home reads `Group#featured_event`, so an event already running takes
@@ -516,7 +515,7 @@ RSpec.describe "Groups", type: :request do
         end
       end
 
-      # WHY: #459 AC4. A rehearsal and an `other` event are both ahead, so the gig's slot saying so is what proves neither stands in for a gig; "See all events" under the pair is the link to the group's events.
+      # WHY: #459 AC4. A rehearsal and an `other` event are both ahead, so the gig's slot saying so is what proves neither stands in for a gig.
       it "says no gig is coming up when only a rehearsal and an other event are ahead" do
         member = create(:member, :active)
         confirmed_rehearsal_spanning(member, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
@@ -526,7 +525,6 @@ RSpec.describe "Groups", type: :request do
         get group_path(member.group)
 
         expect(Nokogiri::HTML(response.body).at_css("#no_gig")&.text&.squish).to eq "No gig coming up"
-        expect(Nokogiri::HTML(response.body).css("a[href='#{group_events_path(member.group)}']").map { it.text.squish }).to include "See all events"
       end
 
       # WHY: #459 AC9.

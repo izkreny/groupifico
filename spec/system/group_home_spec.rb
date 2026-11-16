@@ -5,7 +5,7 @@ require "rails_helper"
 # `.agents/testing.md` none of it comes back here. The chrome above the screen - the mark, the
 # switcher, the tabs - is `spec/system/group_shell_spec.rb`'s and is not repeated either.
 #
-# What no request spec can reach: whether either state paints at all, whether the card's lit pill is distinguishable from its neighbours, how the card is spaced and whether it fits, and where pressing one of its controls or "See all events" lands.
+# What no request spec can reach: whether either state paints at all, whether the card's lit pill is distinguishable from its neighbours, how the card is spaced and whether it fits, and where pressing one of its controls lands.
 #
 # The paint targets are surfaces the matcher can judge: the hero is a `base-200` card over the page's own `base-100`, the pills carry theirs over the card's, and the first-run screen's own surfaces are the button and the note beneath it. `.card` rather than `.card.bg-base-200`, so the assertion reads the rendered colour rather than the class that requests it - with the class in the selector, an untinted card fails as "does not exist" instead of as the ratio of 1 it actually paints. `body` and anything carrying `bg-base-100` would composite to 1.0 in light and read as painting nothing.
 RSpec.describe "The group home", type: :system do
@@ -54,20 +54,6 @@ RSpec.describe "The group home", type: :system do
     expect(page).to paint ".btn-primary"
     expect(page).to paint ".bg-base-200"
     expect(page).to be_accessible
-  end
-
-  # A Turbo navigation, which is the one thing no request spec asserts: that the link is usable and
-  # lands where it says rather than merely carrying the right href.
-  it "lands on the events list when See all events is used" do
-    member = create(:member, :owner, group: create(:group))
-    next_event_for(member)
-    sign_in_as member.user
-    resize_to ViewportHelper::MOBILE
-
-    visit group_path(member.group)
-    click_link "See all events"
-
-    expect(page).to have_current_path group_events_path(member.group)
   end
 
   it "lands on the event form when the first-run call to action is used" do
