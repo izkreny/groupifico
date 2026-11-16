@@ -120,7 +120,10 @@ RSpec.describe Event::Filter do
     it "gives the managed chip the parameters that drop it alone" do
       upcoming(manager: member)
 
-      expect(described_class.new(member, categories: %w[ gig ], managed: "1").chips.last).to eq [ "Only events I manage", { category: %w[ gig ] } ]
+      expect(described_class.new(member, categories: %w[ gig ], managed: "1").chips).to eq [
+        [ "Gig", { managed: "1" } ],
+        [ "Only events I manage", { category: %w[ gig ] } ]
+      ]
     end
   end
 end
