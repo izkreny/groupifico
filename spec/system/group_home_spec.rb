@@ -90,6 +90,50 @@ RSpec.describe "The group home", type: :system do
     expect(page).to have_css "##{ActionView::RecordIdentifier.dom_id(registration, :roster)}", visible: :visible
   end
 
+  # WHY: #473 AC1. The status line is a quiet fact, no control, so pressing it is pressing the card itself. Pressed by its coordinates, because Cuprite refuses to click an element something else covers, and being covered by the event's link is the point.
+  it "lands on the event from a fact on the card" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    event = next_event_for(member)
+    sign_in_as member.user
+
+    visit group_path(member.group)
+    x, y = find("[id^=next_up] p", text: "Confirmed rehearsal").evaluate_script("(box => [ box.left + box.width / 2, box.top + box.height / 2 ])(this.getBoundingClientRect())")
+    page.driver.browser.mouse.click(x:, y:)
+
+    expect(page).to have_current_path group_event_path(member.group, event)
+  end
+
+  # WHY: #473 AC3. The name's link is stretched over the card, so each control is pressed to prove it still sits above that overlay.
+  it "lands on Duplicate's form and on Edit's from the card's controls" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    event = next_event_for(member)
+    sign_in_as member.user
+
+    visit group_path(member.group)
+    click_link "Duplicate Tuesday rehearsal"
+    duplicated = page.current_path
+    visit group_path(member.group)
+    click_link "Edit Tuesday rehearsal"
+
+    expect([ duplicated, page.current_path ]).to eq [ duplicate_group_event_path(member.group, event), edit_group_event_path(member.group, event) ]
+  end
+
+  # WHY: #473 AC3. A press lands on whatever is topmost under it, so every control on the card, the map link and the Who's coming line included, has to be the topmost element at its own centre rather than the name's overlay.
+  it "keeps every control on the card above the link to its event" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    event = next_event_for(member)
+    create(:registration, event:, member:, status: :yes)
+    sign_in_as member.user
+    page.driver.resize(1280, 900)
+
+    visit group_path(member.group)
+
+    topmost = find("[id^=next_up]").evaluate_script(<<~JS)
+      [...this.querySelectorAll("a, button")].filter(control => !control.closest("h2")).map(control => (box => [ control.getAttribute("aria-label") || control.textContent.replace(/\\s+/g, " ").trim(), control.contains(document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2)) ])(control.getBoundingClientRect()))
+    JS
+    expect(topmost).to eq [ [ "Duplicate Tuesday rehearsal", true ], [ "Edit Tuesday rehearsal", true ], [ "Community Hall", true ], [ "Who’s coming? 1 0 0 0 0", true ], [ "Yes", true ], [ "Maybe", true ], [ "No", true ] ]
+  end
+
   # The 12px the event screen keeps between Who’s coming? and its tags, and between the tags.
   it "spaces the card's Who’s coming? link and its tags 12px apart" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
@@ -200,6 +244,7 @@ RSpec.describe "The group home", type: :system do
   end
 
   # An answer keeps the reader where they pressed it: the card morphs in place, its question turned into the answer.
+  # WHY: #473 AC3. Staying on the home is also what proves the press reached the answer button rather than the card's link to its event.
   it "writes the card's answer and stays on the home" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
     event = next_event_for(member)
@@ -216,6 +261,7 @@ RSpec.describe "The group home", type: :system do
   end
 
   # Frame 4n. Which reader is offered it is `spec/requests/groups_spec.rb`'s; that its label shows and where pressing it lands is what a browser adds. No `paint` assertion, measured rather than assumed: it is a plain `btn`, whose base-200 face sits on the card's own base-200 and scores exactly 1, as Request the rest does on the event's roster, so its label carries the claim instead.
+  # WHY: #473 AC3, for the same reason as the answer above.
   it "shows Request responses by its label, and lands back on the home" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
     create(:registration, event: next_event_for(member), member:, status: :reserved)

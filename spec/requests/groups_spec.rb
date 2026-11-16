@@ -324,6 +324,18 @@ RSpec.describe "Groups", type: :request do
         expect(Nokogiri::HTML(response.body).css("[id^=next_up] a[aria-label]").map { it["aria-label"] }).to eq [ "Edit Ours" ]
       end
 
+      # WHY: #473 AC4. The card opens its event through the name's link stretched over it, so a screen reader meets that one link by the event's name rather than the whole card read out as a link.
+      it "links the card to its event through the event's name alone" do
+        owner = create(:member, :owner)
+        event = create(:event, :rehearsal, group: owner.group, name: "Tuesday rehearsal", status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        sign_in_as(owner.user)
+
+        get group_path(owner.group)
+
+        card = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(event, :next_up)}")
+        expect([ card.ancestors("a").size, card.css("a[href='#{group_event_path(owner.group, event)}']").map { it.text.squish } ]).to eq [ 0, [ "Tuesday rehearsal" ] ]
+      end
+
       # WHY: #473 AC2 and AC4. The whole line is one roster link, so a screen reader meets its tags inside that link rather than beside it.
       it "links the card's whole Who’s coming line, tags included, to the event with its roster open" do
         owner = create(:member, :owner)
