@@ -563,7 +563,7 @@ RSpec.describe "Groups", type: :request do
 
         get group_path(member.group)
 
-        expect(Nokogiri::HTML(response.body).at_css("#no_gig p")&.text&.squish).to eq "No gig coming up"
+        expect(Nokogiri::HTML(response.body).at_css("#no_gig")&.text&.squish).to eq "No gig coming up"
       end
 
       # WHY: #461 AC1. The link belongs to the gig card alone, so the rehearsal card above it carries no link to the list; the list's own path is compared without its query, since every event link on a card shares its prefix.
@@ -579,17 +579,6 @@ RSpec.describe "Groups", type: :request do
         last = document.at_css("##{ActionView::RecordIdentifier.dom_id(gig, :next_up)} .card-body > :last-child")
         expect([ last.name, last.text.squish, last[:href] ]).to eq [ "a", "See all upcoming gigs", group_events_path(member.group, category: %w[ gig ]) ]
         expect(document.css("##{ActionView::RecordIdentifier.dom_id(rehearsal, :next_up)} a").map { URI(it[:href]).path }).not_to include group_events_path(member.group)
-      end
-
-      # WHY: #461 AC4. The empty gig slot leads to the whole list, unfiltered, since there is no gig ahead for a gigs filter to show.
-      it "links the empty gig slot to the unfiltered events list" do
-        member = create(:member, :active)
-        confirmed_rehearsal_spanning(member, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
-        sign_in_as(member.user)
-
-        get group_path(member.group)
-
-        expect(Nokogiri::HTML(response.body).css("#no_gig a").map { [ it.text.squish, it[:href] ] }).to eq [ [ "See all events", group_events_path(member.group) ] ]
       end
 
       # WHY: #459 AC9.

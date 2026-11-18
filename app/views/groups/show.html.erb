@@ -12,15 +12,7 @@
         <%= render "events/next_up", event:, registration: event.registration_for(@membership) %>
       <% else %>
         <div id="no_<%= category %>" class="card card-sm bg-base-200">
-          <div class="card-body">
-            <p class="text-xs font-semibold uppercase tracking-wider text-base-content/70">No <%= category %> coming up</p>
-
-            <% if category == "gig" %>
-              <%= link_to group_events_path(@group), class: "link link-hover inline-flex items-center gap-1 text-card-fact self-start" do %>
-                See all events<%= icon :go_to, class: "size-icon-inline" %>
-              <% end %>
-            <% end %>
-          </div>
+          <p class="card-body text-xs font-semibold uppercase tracking-wider text-base-content/70">No <%= category %> coming up</p>
         </div>
       <% end %>
     <% end %>
