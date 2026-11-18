@@ -16,14 +16,14 @@ class MembersController < ApplicationController
   def index
     authorize! @group, to: :show?
 
-    @inactive_shown = params[:inactive].present?
-    authorize! Member.new(group: @group), to: :oversee? if @inactive_shown
+    # WHY: `Member::Filter` picks the tab and every filter from its own literals, as `Event::Filter` does for the events list. Pending and Inactive are `MemberPolicy#oversee?` reads, asked of a member with nothing on it but the group, and a reader not offered them gets the Active list rather than a refusal, the way an unknown event list degrades to Upcoming.
+    @filter = Member::Filter.from(Current.member, params, oversees: allowed_to?(:oversee?, Member.new(group: @group)))
 
+    members = authorized_scope(@group.members)
+    @counts = @filter.counts(members)
     # WHY: sorted in Ruby rather than ordered in SQL, because `full_name` falls back to the address
     # when the profile has no name, and ordering on the profile's columns would misplace that member.
-    # WHY: everyone who has not left rather than `current_members`, so an owner's list holds the pending members `MemberPolicy`'s scope keeps for owners alone.
-    members  = @inactive_shown ? @group.members : @group.members.where.not(status: :inactive)
-    @members = authorized_scope(members).preloaded.sort_by { it.full_name.downcase }
+    @members = @filter.apply(members).preloaded.sort_by { it.full_name.downcase }
   end
 
   def show

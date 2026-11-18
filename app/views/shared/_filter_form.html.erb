@@ -21,6 +21,8 @@
   <% case filter %>
   <% when Event::Filter %>
     <%= render "events/filter_fields", filter:, id: %>
+  <% when Member::Filter %>
+    <%= render "members/filter_fields", filter:, id: %>
   <% end %>
 
   <%# WHY: `flex-wrap-reverse` keeps "Clear all" on the left while both fit, and puts "Show N" on top, full width, once they no longer do. %>

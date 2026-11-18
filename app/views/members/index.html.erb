@@ -1,43 +1,37 @@
 <% content_for :title, "Members" %>
+<%# WHY: never snapshotted, as the events list is not, so Back asks the server for the list as it stands rather than restoring the sheet's unapplied picks. %>
+<% turbo_exempts_page_from_cache %>
 
 <%#
-  The group's roster. The shell's header already carries the group's name, so this tab draws no
-  title of its own.
+  The group's roster, on the events list's structure so a member who has learned one list knows the other.
 
-  Each capability is the acting member's rather than a row's, so each is asked once, of a member with nothing on it but the group: a per-row `allowed_to?` builds a policy and looks up the acting member's membership for every member. `create?` decides the count, Invite and the join link, and `edit?` the pencil; both are write rules, so a paused manager sees neither. `oversee?` decides the inactive toggle and the "not signed in yet" mark, and is a read a paused manager keeps.
+  Each capability is the acting member's rather than a row's, so each is asked once, of a member with nothing on it but the group: a per-row `allowed_to?` builds a policy and looks up the acting member's membership for every member. `create?` decides the join link and the +, and `edit?` the pencil; both are write rules, so a paused manager sees neither. `oversee?`, which the filter already asked, decides the Pending and Inactive tabs and the "not signed in yet" mark and filter, and is a read a paused manager keeps.
 %>
 <% unattached = Member.new(group: @group) %>
 <% may_add = allowed_to?(:create?, unattached) %>
 <% manages = allowed_to?(:edit?, unattached) %>
-<% oversees = allowed_to?(:oversee?, unattached) %>
 
 <div class="flex flex-col gap-3">
-  <% if may_add %>
-    <div class="flex items-center justify-between gap-2.5">
-      <p><%= pluralize @group.current_members.count, "member" %></p>
+  <%= render layout: "shared/filter_bar", locals: { group: @group, filter: @filter, counts: @counts, count: @members.size } do %>
+    <% if may_add %>
+      <%# WHY: beside the + because the link is the other way in, and decided by the same `create?`, since the join link row marks the columns that add a person. %>
+      <%= render "groups/join_link_dialog", group: @group, join_link: @group.join_link %>
 
-      <div class="flex items-center gap-2">
-        <%# WHY: beside Invite because the link is the other way in, and decided by the same `create?`, since the join link row marks the columns that add a person. %>
-        <%= render "groups/join_link_dialog", group: @group, join_link: @group.join_link %>
-
-        <%= link_to new_group_member_path(@group), class: "btn btn-primary btn-sm" do %>
-          <%= icon :new, class: "size-icon-control" %>Invite member
-        <% end %>
-      </div>
-    </div>
+      <%= link_to new_group_member_path(@group), class: "btn btn-ghost btn-circle btn-sm text-primary", aria: { label: "Invite member" } do %>
+        <%= icon :new, class: "size-icon-control" %>
+      <% end %>
+    <% end %>
   <% end %>
 
-  <% if @members.any? %>
-    <ul id="members" class="list">
-      <%= render partial: "members/member", collection: @members, locals: { manages:, oversees: } %>
-    </ul>
-  <% else %>
-    <p>No members found.</p>
-  <% end %>
-
-  <% if oversees %>
-    <%= link_to (@inactive_shown ? "Hide inactive" : "Show inactive"),
-          group_members_path(@group, inactive: (1 unless @inactive_shown)),
-          class: "link link-hover self-start" %>
-  <% end %>
+  <div id="members">
+    <% if @members.any? %>
+      <%= render layout: "shared/filter_list" do %>
+        <%= render partial: "members/member", collection: @members, locals: { manages:, oversees: @filter.oversees? } %>
+      <% end %>
+    <% elsif @filter.narrowed? %>
+      <p class="text-meta">No members match these filters.</p>
+    <% else %>
+      <p class="text-meta">No <%= @filter.offered_tabs[@filter.tab].downcase %> members.</p>
+    <% end %>
+  </div>
 </div>

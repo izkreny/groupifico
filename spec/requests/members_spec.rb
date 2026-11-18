@@ -63,7 +63,8 @@ RSpec.describe "Members", type: :request do
         expect(names).to eq [ "Alice Bird", "ben Cole", "Carla Duke" ]
       end
 
-      it "lists active and paused members and leaves inactive ones out" do
+      # WHY: #484 AC2 and AC7. A plain visit opens on Active, so the paused and the inactive are each on a tab of their own.
+      it "opens on the Active tab, listing the active members alone" do
         reader   = create(:member, :active)
         paused   = create(:member, :paused, group: reader.group)
         inactive = create(:member, :inactive, group: reader.group)
@@ -71,8 +72,20 @@ RSpec.describe "Members", type: :request do
 
         get group_members_path(reader.group)
 
-        expect(response.body).to include ActionView::RecordIdentifier.dom_id(paused, :row)
-        expect(response.body).not_to include ActionView::RecordIdentifier.dom_id(inactive, :row)
+        page = Nokogiri::HTML(response.body)
+        expect(page.css("#members li[id]").map { it["id"] }).to eq [ ActionView::RecordIdentifier.dom_id(reader, :row) ]
+        expect(page.at_css("nav[aria-label='Member lists'] a[aria-current=page]").text).to eq "Active (1 member)"
+        expect([ response.body.include?(ActionView::RecordIdentifier.dom_id(paused, :row)), response.body.include?(ActionView::RecordIdentifier.dom_id(inactive, :row)) ]).to eq [ false, false ]
+      end
+
+      it "lists the paused members on the Paused tab" do
+        reader = create(:member, :active)
+        paused = create(:member, :paused, group: reader.group)
+        sign_in_as(reader.user)
+
+        get group_members_path(reader.group, status: "paused")
+
+        expect(Nokogiri::HTML(response.body).css("#members li[id]").map { it["id"] }).to eq [ ActionView::RecordIdentifier.dom_id(paused, :row) ]
       end
 
       it "tags a paused member with their status" do
@@ -80,21 +93,99 @@ RSpec.describe "Members", type: :request do
         paused = create(:member, :paused, group: reader.group)
         sign_in_as(reader.user)
 
-        get group_members_path(reader.group)
+        get group_members_path(reader.group, status: "paused")
 
         row = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(paused, :row)}")
         expect(row.css(".badge").map(&:text)).to include "paused"
       end
 
-      # Seeing who has left is `MemberPolicy#oversee?`, so the URL refuses a plain member rather than leaving the hidden toggle as the only guard.
-      it "refuses the inactive members to a member who may not oversee the list" do
+      # WHY: #484 AC8. Who has left and who is waiting are `MemberPolicy#oversee?` reads, so a member not offered those tabs gets the Active list from their URLs, as an unknown events list degrades to Upcoming.
+      it "lists the active members to a member who may not oversee the list opening the Pending or Inactive tab's URL" do
         member = create(:member, :active)
-        create(:member, :inactive, group: member.group)
+        inactive = create(:member, :inactive, group: member.group)
         sign_in_as(member.user)
 
-        get group_members_path(member.group, inactive: 1)
+        get group_members_path(member.group, status: "inactive")
+        inactive_tab = Nokogiri::HTML(response.body).at_css("nav[aria-label='Member lists'] a[aria-current=page]").text
+        get group_members_path(member.group, status: "pending")
 
-        expect(response).to redirect_to root_path
+        expect([ inactive_tab, Nokogiri::HTML(response.body).at_css("nav[aria-label='Member lists'] a[aria-current=page]").text ]).to eq [ "Active (1 member)", "Active (1 member)" ]
+        expect(response.body).not_to include ActionView::RecordIdentifier.dom_id(inactive, :row)
+      end
+
+      # WHY: #484 AC8. A role the sheet does not offer narrows nothing.
+      it "ignores a role the list does not offer" do
+        reader = create(:member, :active)
+        sign_in_as(reader.user)
+
+        get group_members_path(reader.group, role: %w[ treasurer ])
+
+        expect([ response.body.include?(ActionView::RecordIdentifier.dom_id(reader, :row)), Nokogiri::HTML(response.body).css("a[aria-label^='Remove ']").size ]).to eq [ true, 0 ]
+      end
+
+      # WHY: #484 AC1. The screen's title names it, and the funnel carries no text, so its accessible name is the only label it has.
+      it "titles the screen Members, with an icon-only funnel named Filter members" do
+        member = create(:member, :active)
+        sign_in_as(member.user)
+
+        get group_members_path(member.group)
+
+        page = Nokogiri::HTML(response.body)
+        funnel = page.at_css("button[aria-label='Filter members']")
+        expect([ page.at_css("main h2")&.text, funnel.text.strip, funnel.at_css("svg").present? ]).to eq [ "Members", "", true ]
+      end
+
+      # WHY: #484 AC3, AC4 and AC5. One sheet, headed and closable like the events sheet, holds every filter a member who may not add people is offered.
+      it "offers the filter sheet's Role and Miscellaneous groups and its buttons" do
+        member = create(:member, :active)
+        sign_in_as(member.user)
+
+        get group_members_path(member.group)
+
+        sheet = Nokogiri::HTML(response.body).at_css("dialog#member_filter_dialog")
+        expect([ sheet.at_css("h2").text, sheet.at_css("form[method=dialog] button[aria-label=Close]").present? ]).to eq [ "Filter members", true ]
+        expect(sheet.css("fieldset").map { [ it.at_css("legend").text, it.css("input").map { |input| input["aria-label"] } ] }).to eq [
+          [ "Role", [ "Owner", "Administrator", "Events administrator", "Members administrator" ] ], [ "Miscellaneous", [ "Manages events" ] ]
+        ]
+        expect(sheet.css("button.btn").map { it.text.squish }.last(2)).to eq [ "Clear all", "Show 1 member" ]
+      end
+
+      # WHY: #484 AC7. The URL is the only place a filter lives, so a link shows what it names, as a chip.
+      it "lists what the URL's filter keeps, showing it as a chip" do
+        reader = create(:member, :active)
+        owner  = create(:member, :active, :owner, group: reader.group)
+        sign_in_as(reader.user)
+
+        get group_members_path(reader.group, role: %w[ owner ])
+
+        page = Nokogiri::HTML(response.body)
+        expect(page.css("#members li[id]").map { it["id"] }).to eq [ ActionView::RecordIdentifier.dom_id(owner, :row) ]
+        expect(page.css("a[aria-label^='Remove ']").map { it["aria-label"] }).to eq [ "Remove Owner" ]
+      end
+
+      # WHY: #484 AC7. Each tab is a link carrying every filter on, so switching tabs keeps them.
+      it "links each tab to its list with every filter still on" do
+        reader = create(:member, :active)
+        sign_in_as(reader.user)
+
+        get group_members_path(reader.group, status: "paused", role: %w[ owner ], manages: "1")
+
+        expect(Nokogiri::HTML(response.body).css("nav[aria-label='Member lists'] a").map { it[:href] }).to eq [
+          group_members_path(reader.group, role: %w[ owner ], manages: "1"),
+          group_members_path(reader.group, status: "paused", role: %w[ owner ], manages: "1")
+        ]
+      end
+
+      # WHY: #484 AC12 and AC13. Each tab counts what it would list with every filter on, zero included, and the count's noun is for a screen reader alone.
+      it "names each tab with how many members it would list under the filters on" do
+        reader = create(:member, :active, :owner)
+        create(:member, :active, group: reader.group)
+        create(:member, :paused, :owner, group: reader.group)
+        sign_in_as(reader.user)
+
+        get group_members_path(reader.group, role: %w[ owner ])
+
+        expect(Nokogiri::HTML(response.body).css("nav[aria-label='Member lists'] a").map { [ it.text, it.at_css(".sr-only")&.text ] }.first(2)).to eq [ [ "Active (1 member)", " member" ], [ "Paused (1 member)", " member" ] ]
       end
 
       it "tags each member with the roles they hold, by their short names" do
@@ -121,7 +212,8 @@ RSpec.describe "Members", type: :request do
         expect(html.at_css("##{ActionView::RecordIdentifier.dom_id(without, :row)} a[href='mailto:#{without.email}']")).to be_present
       end
 
-      it "offers no count, no Invite, no edit link and no inactive toggle" do
+      # WHY: #484 AC1 and AC2. Adding people and overseeing the list are the members columns', so a member holding no role gets neither the + nor the Pending and Inactive tabs.
+      it "offers no +, no edit link, and only the Active and Paused tabs" do
         reader = create(:member, :active)
         other  = create(:member, group: reader.group)
         sign_in_as(reader.user)
@@ -130,8 +222,7 @@ RSpec.describe "Members", type: :request do
 
         expect(response.body).not_to include new_group_member_path(reader.group)
         expect(response.body).not_to include edit_group_member_path(reader.group, other)
-        expect(response.body).not_to include "Show inactive"
-        expect(response.body).not_to include "2 members"
+        expect(Nokogiri::HTML(response.body).css("nav[aria-label='Member lists'] a").map { it.text[/\A\w+/] }).to eq %w[ Active Paused ]
       end
     end
 
@@ -170,22 +261,22 @@ RSpec.describe "Members", type: :request do
         expect(row.text).to include "not signed in yet"
       end
 
-      it "lists inactive members when asked to" do
+      it "lists the inactive members on the Inactive tab" do
         actor    = create(:member, :active, :members_administrator)
         inactive = create(:member, :inactive, group: actor.group)
         sign_in_as(actor.user)
 
-        get group_members_path(actor.group, inactive: 1)
+        get group_members_path(actor.group, status: "inactive")
 
         expect(response.body).to include ActionView::RecordIdentifier.dom_id(inactive, :row)
       end
 
-      it "still lists inactive members while the member is paused" do
+      it "still lists the inactive members while the member is paused" do
         actor    = create(:member, :paused, :members_administrator)
         inactive = create(:member, :inactive, group: actor.group)
         sign_in_as(actor.user)
 
-        get group_members_path(actor.group, inactive: 1)
+        get group_members_path(actor.group, status: "inactive")
 
         expect(response.body).to include ActionView::RecordIdentifier.dom_id(inactive, :row)
       end
@@ -201,20 +292,21 @@ RSpec.describe "Members", type: :request do
         expect(row.text).not_to include "not signed in yet"
       end
 
-      it "counts the current members and offers Invite" do
+      # WHY: #484 AC1. The + carries no text, so its accessible name is the only label it has, and the old count line goes with the old title row.
+      it "offers an icon-only + named Invite member, linking the invite form, and no member count" do
         actor = create(:member, :active, :members_administrator)
         create(:member, :paused, group: actor.group)
-        create(:member, :inactive, group: actor.group)
         sign_in_as(actor.user)
 
         get group_members_path(actor.group)
 
-        html = Nokogiri::HTML(response.body)
-        expect(html.text).to include "2 members"
-        expect(html.at_css("a[href='#{new_group_member_path(actor.group)}']").text.strip).to eq "Invite member"
+        plus = Nokogiri::HTML(response.body).at_css("a[href='#{new_group_member_path(actor.group)}']")
+        expect([ plus["aria-label"], plus.text.strip, plus.at_css("svg").present? ]).to eq [ "Invite member", "", true ]
+        expect(response.body).not_to include "2 members"
       end
 
-      it "offers each member's edit form and the inactive toggle" do
+      # WHY: #484 AC2. Pending and Inactive are the tabs of a member who may add people.
+      it "offers each member's edit form and the Active, Paused, Pending and Inactive tabs" do
         actor = create(:member, :active, :members_administrator)
         other = create(:member, group: actor.group)
         sign_in_as(actor.user)
@@ -223,16 +315,20 @@ RSpec.describe "Members", type: :request do
 
         html = Nokogiri::HTML(response.body)
         expect(html.at_css("a[href='#{edit_group_member_path(actor.group, other)}']")).to be_present
-        expect(html.at_css("a[href='#{group_members_path(actor.group, inactive: 1)}']").text).to eq "Show inactive"
+        expect(html.css("nav[aria-label='Member lists'] a").map { it.text[/\A\w+/] }).to eq %w[ Active Paused Pending Inactive ]
       end
 
-      it "offers to hide inactive members once they are shown" do
-        actor = create(:member, :active, :members_administrator)
+      # WHY: #484 AC4. Who has not signed in yet is the overseers' read, as the row's mark is.
+      it "offers the Not signed in yet filter, narrowing the list to the members who have never signed in" do
+        actor  = create(:member, :active, :members_administrator, user: create(:user, first_signed_in_at: 1.day.ago))
+        added  = create(:member, group: actor.group, user: create(:user, first_signed_in_at: nil))
         sign_in_as(actor.user)
 
-        get group_members_path(actor.group, inactive: 1)
+        get group_members_path(actor.group, not_signed_in: "1")
 
-        expect(Nokogiri::HTML(response.body).at_css("main a.link[href='#{group_members_path(actor.group)}']").text).to eq "Hide inactive"
+        page = Nokogiri::HTML(response.body)
+        expect(page.css("dialog#member_filter_dialog fieldset").last.css("input").map { it["aria-label"] }).to eq [ "Manages events", "Not signed in yet" ]
+        expect(page.css("#members li[id]").map { it["id"] }).to eq [ ActionView::RecordIdentifier.dom_id(added, :row) ]
       end
 
       it "offers no Invite while the reader is paused" do
@@ -244,7 +340,7 @@ RSpec.describe "Members", type: :request do
         expect(response.body).not_to include new_group_member_path(actor.group)
       end
 
-      it "keeps the inactive toggle and offers no edit link while the member is paused" do
+      it "keeps the Pending and Inactive tabs and offers no edit link while the member is paused" do
         actor = create(:member, :paused, :members_administrator)
         other = create(:member, group: actor.group)
         sign_in_as(actor.user)
@@ -252,14 +348,14 @@ RSpec.describe "Members", type: :request do
         get group_members_path(actor.group)
 
         expect(response.body).not_to include edit_group_member_path(actor.group, other)
-        expect(response.body).to include "Show inactive"
+        expect(Nokogiri::HTML(response.body).css("nav[aria-label='Member lists'] a").map { it.text[/\A\w+/] }).to eq %w[ Active Paused Pending Inactive ]
       end
     end
 
     # The three columns the members table marks for adding, changing and removing a member are
     # `owner`, `administrator` and `members_administrator`; the last is proven above.
     context "when signed in as an owner" do
-      it "offers Invite, each member's edit form and the inactive toggle" do
+      it "offers Invite, each member's edit form and the Inactive tab" do
         actor = create(:member, :active, :owner)
         other = create(:member, group: actor.group)
         sign_in_as(actor.user)
@@ -268,7 +364,7 @@ RSpec.describe "Members", type: :request do
 
         expect(response.body).to include new_group_member_path(actor.group)
         expect(response.body).to include edit_group_member_path(actor.group, other)
-        expect(response.body).to include "Show inactive"
+        expect(Nokogiri::HTML(response.body).css("nav[aria-label='Member lists'] a").map { it.text[/\A\w+/] }).to include "Inactive"
       end
 
       it "offers to create a join link while there is none" do
@@ -351,7 +447,7 @@ RSpec.describe "Members", type: :request do
         expect(Nokogiri::HTML(response.body).at_css("#join_link_url")["value"]).to eq new_join_request_url(token:)
       end
 
-      it "offers Invite, each member's edit form and the inactive toggle" do
+      it "offers Invite, each member's edit form and the Inactive tab" do
         actor = create(:member, :active, :administrator)
         other = create(:member, group: actor.group)
         sign_in_as(actor.user)
@@ -360,12 +456,12 @@ RSpec.describe "Members", type: :request do
 
         expect(response.body).to include new_group_member_path(actor.group)
         expect(response.body).to include edit_group_member_path(actor.group, other)
-        expect(response.body).to include "Show inactive"
+        expect(Nokogiri::HTML(response.body).css("nav[aria-label='Member lists'] a").map { it.text[/\A\w+/] }).to include "Inactive"
       end
     end
 
     context "when signed in as an events administrator" do
-      it "offers no Invite, no edit link and no inactive toggle" do
+      it "offers no Invite, no edit link and no Inactive tab" do
         actor = create(:member, :active, :events_administrator)
         other = create(:member, group: actor.group)
         sign_in_as(actor.user)
@@ -374,7 +470,7 @@ RSpec.describe "Members", type: :request do
 
         expect(response.body).not_to include new_group_member_path(actor.group)
         expect(response.body).not_to include edit_group_member_path(actor.group, other)
-        expect(response.body).not_to include "Show inactive"
+        expect(Nokogiri::HTML(response.body).css("nav[aria-label='Member lists'] a").map { it.text[/\A\w+/] }).to eq %w[ Active Paused ]
       end
     end
   end
@@ -1273,25 +1369,26 @@ RSpec.describe "Members", type: :request do
     def row_of(member) = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(member, :row)}")
 
     context "when signed in as an owner" do
-      it "lists them tagged pending, with no edit link" do
+      it "lists them on the Pending tab, tagged pending, with no edit link" do
         owner   = create(:member, :active, :owner)
         pending = create(:member, :pending, group: owner.group)
         sign_in_as(owner.user)
 
-        get group_members_path(owner.group)
+        get group_members_path(owner.group, status: "pending")
 
         expect(row_of(pending).css(".badge").map(&:text)).to include "pending"
         expect(response.body).not_to include edit_group_member_path(owner.group, pending)
       end
 
-      it "leaves them out of the member count" do
+      # WHY: #484 AC12. A pending member is counted on the Pending tab alone.
+      it "counts them on the Pending tab, not the Active one" do
         owner = create(:member, :active, :owner)
         create(:member, :pending, group: owner.group)
         sign_in_as(owner.user)
 
         get group_members_path(owner.group)
 
-        expect(response.body).to include "1 member"
+        expect(Nokogiri::HTML(response.body).css("nav[aria-label='Member lists'] a").map(&:text).values_at(0, 2)).to eq [ "Active (1 member)", "Pending (1 member)" ]
       end
 
       it "shows their page" do
@@ -1357,12 +1454,12 @@ RSpec.describe "Members", type: :request do
     end
 
     context "when signed in as a members administrator" do
-      it "lists them tagged pending, with no edit link" do
+      it "lists them on the Pending tab, tagged pending, with no edit link" do
         actor   = create(:member, :active, :members_administrator)
         pending = create(:member, :pending, group: actor.group)
         sign_in_as(actor.user)
 
-        get group_members_path(actor.group)
+        get group_members_path(actor.group, status: "pending")
 
         expect(row_of(pending).css(".badge").map(&:text)).to include "pending"
         expect(response.body).not_to include edit_group_member_path(actor.group, pending)
@@ -1398,7 +1495,7 @@ RSpec.describe "Members", type: :request do
         pending = create(:member, :pending, group: actor.group)
         sign_in_as(actor.user)
 
-        get group_members_path(actor.group)
+        get group_members_path(actor.group, status: "pending")
         expect(row_of(pending)).to be_nil
 
         get group_member_path(actor.group, pending)

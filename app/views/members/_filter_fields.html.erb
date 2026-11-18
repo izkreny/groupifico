@@ -1,0 +1,14 @@
+<%# locals: (filter:, id:) %>
+<%= render layout: "shared/filter_fieldset", locals: { legend: "Role" } do %>
+  <% Member::Filter::ROLES.each do |value, name| %>
+    <%= render "shared/filter_pick", name: "role[]", value:, checked: filter.roles.include?(value), caption: name, id: id.("role_#{value}") %>
+  <% end %>
+<% end %>
+
+<%= render layout: "shared/filter_fieldset", locals: { legend: "Miscellaneous" } do %>
+  <%= render "shared/filter_pick", name: "manages", value: "1", checked: filter.manages?, caption: Member::Filter::MISCELLANEOUS["manages"], id: id.(:manages) %>
+
+  <% if filter.oversees? %>
+    <%= render "shared/filter_pick", name: "not_signed_in", value: "1", checked: filter.not_signed_in?, caption: Member::Filter::MISCELLANEOUS["not_signed_in"], id: id.(:not_signed_in) %>
+  <% end %>
+<% end %>

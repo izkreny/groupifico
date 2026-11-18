@@ -216,6 +216,16 @@
     </div>
   <% end %>
 
+  <%# WHY: an overseer's sample, so the tabs and the sheet show everything the members filter offers. %>
+  <%= render layout: "styleguides/section", locals: { title: "Members filter" } do |theme| %>
+    <% sample = Member::Filter.new(@owner, oversees: true, status: "paused", roles: %w[ owner ], not_signed_in: "1") %>
+    <div class="flex flex-col gap-4">
+      <%= render "shared/filter_tabs", group: @group, filter: sample, counts: { nil => 19, "paused" => 2, "pending" => 1, "inactive" => 0 } %>
+      <%= render "shared/filter_chips", group: @group, filter: sample %>
+      <%= render "shared/filter_form", group: @group, filter: sample, count: 2, namespace: theme %>
+    </div>
+  <% end %>
+
   <%= render layout: "styleguides/section", locals: { title: "Address" } do %>
     <%= render "addresses/address", address: @group.address %>
   <% end %>

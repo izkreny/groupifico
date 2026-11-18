@@ -1,7 +1,7 @@
 require "rails_helper"
 
-# Only what a browser adds. Who sees the "not signed in yet" mark, the count, Invite, the pencil
-# and the toggle, which members are listed and in what order, are `spec/requests/members_spec.rb`'s
+# Only what a browser adds. Who sees the "not signed in yet" mark, the +, the pencil and which
+# tabs and filters, which members are listed and in what order, are `spec/requests/members_spec.rb`'s
 # assertions. What is left: that the tags and the buttons paint, that a dimmed row stays readable,
 # which axe-core measures here since the dim is a theme colour with its own alpha, and that the
 # name and the pencil land where they say.
@@ -19,31 +19,29 @@ RSpec.describe "The members list", type: :system do
 
   it "paints the roster in light, its paused row dimmed and still readable" do
     actor  = create(:member, :active, :owner, :with_all_attributes)
-    paused = create(:member, :paused, :with_all_attributes, group: actor.group)
+    paused = create(:member, :paused, :owner, :with_all_attributes, group: actor.group)
     sign_in_as actor.user
     prefer_colour_scheme :light
     resize_to ViewportHelper::MOBILE
 
-    visit group_members_path(actor.group)
+    visit group_members_path(actor.group, status: "paused")
 
     expect(rendered_colour_scheme).to eq "light"
-    expect(page).to paint "##{ActionView::RecordIdentifier.dom_id(actor, :row)} .badge"
-    expect(page).to have_css "##{ActionView::RecordIdentifier.dom_id(paused, :row)}"
+    expect(page).to paint "##{ActionView::RecordIdentifier.dom_id(paused, :row)} .badge"
     expect(page).to be_accessible
   end
 
   it "paints the roster in dark, its paused row dimmed and still readable" do
     actor  = create(:member, :active, :owner, :with_all_attributes)
-    paused = create(:member, :paused, :with_all_attributes, group: actor.group)
+    paused = create(:member, :paused, :owner, :with_all_attributes, group: actor.group)
     sign_in_as actor.user
     prefer_colour_scheme :dark
     resize_to ViewportHelper::MOBILE
 
-    visit group_members_path(actor.group)
+    visit group_members_path(actor.group, status: "paused")
 
     expect(rendered_colour_scheme).to eq "dark"
-    expect(page).to paint "##{ActionView::RecordIdentifier.dom_id(actor, :row)} .badge"
-    expect(page).to have_css "##{ActionView::RecordIdentifier.dom_id(paused, :row)}"
+    expect(page).to paint "##{ActionView::RecordIdentifier.dom_id(paused, :row)} .badge"
     expect(page).to be_accessible
   end
 
