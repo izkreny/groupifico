@@ -2,7 +2,7 @@ require "rails_helper"
 
 # Only what a browser adds. Which rows a given reader sees, and what each carries, is `spec/requests/events_spec.rb`'s assertion, and per the duplication rule in `.agents/testing.md` it does not come back here. The card the group's next event gets is `spec/system/group_home_spec.rb`'s.
 #
-# What no request spec can reach is how a row is laid out, where pressing a row's answer lands, and the filter sheet: its count following the picks, Reset, the chips' ✕ and how its buttons stack.
+# What no request spec can reach is how a row is laid out, where pressing a row's answer lands, and the filter sheet: its count following the picks, Clear all, the chips' ✕ and how its buttons stack.
 RSpec.describe "The events list", type: :system do
   # A row puts its question in place, so answering it turns the question into the answer's icon at the row's end without leaving the list.
   it "answers a row in place, its question replaced by the answer's icon" do
@@ -302,7 +302,7 @@ RSpec.describe "The events list", type: :system do
     expect(page).to have_current_path new_session_path, ignore_query: true
   end
 
-  # WHY: #460 AC2. Side by side while both fit, Reset on the left; once they do not, "Show N events" goes first, full width, and Reset under it.
+  # WHY: #460 AC2. Side by side while both fit, Clear all on the left; once they do not, "Show N events" goes first, full width, and Clear all under it.
   it "stacks the sheet's buttons Show first once they no longer fit side by side" do
     member = create(:member, :owner)
     sign_in_as member.user
@@ -328,7 +328,7 @@ RSpec.describe "The events list", type: :system do
     [ find(funnel)[:class].include?(ink), text_contrast(funnel) >= ContrastHelper::WCAG_NON_TEXT ]
   end
 
-  # Reset and "Show N events", the sheet's last two labelled buttons, each as its rounded top and left.
+  # Clear all and "Show N events", the sheet's last two labelled buttons, each as its rounded top and left.
   def sheet_buttons
     find_by_id("event_filter_dialog").evaluate_script(<<~JS).map { Data.define(:top, :left).new(*it) }
       [ ...this.querySelectorAll("button.btn:not([aria-label])") ].slice(-2).map(button => button.getBoundingClientRect()).map(rect => [ Math.round(rect.top), Math.round(rect.left) ])
