@@ -5,6 +5,17 @@ export default class extends Controller {
   static targets = ["count"]
   static values = { url: String }
 
+  connect() {
+    this.drawnCount = this.countTarget.innerHTML
+  }
+
+  // WHY: Back restores the list from Turbo's snapshot without a request, and a snapshot copies ticked boxes and a fetched count as they stood, so unapplied picks are undone before the page is cached.
+  restore() {
+    this.element.reset()
+    this.countTarget.removeAttribute("src")
+    this.countTarget.innerHTML = this.drawnCount
+  }
+
   // WHY: the styleguide's copies leave the URL out, because their namespaced frames have no match in the list's response and would read "Content missing".
   refresh() {
     if (!this.urlValue) return

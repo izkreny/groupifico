@@ -195,6 +195,25 @@ RSpec.describe "The events list", type: :system do
     expect(page).to have_css("dialog#event_filter_dialog[open]").and be_accessible
   end
 
+  # WHY: #460 AC9. Back restores the list from Turbo's snapshot without a request, so picks left unapplied would come back in the sheet, disagreeing with the list and the chips under it.
+  it "drops the sheet's unapplied picks when the list is left and come back to" do
+    member = create(:member, :owner)
+    next_event_for(member)
+    sign_in_as member.user
+
+    visit group_events_path(member.group)
+    pick_in_sheet "Gig"
+    expect(page).to have_button "Show 0 events"
+    within("#event_filter_dialog") { click_button "Close" }
+    click_link "New event"
+    expect(page).to have_current_path new_group_event_path(member.group)
+    go_back
+    click_button "Filter events"
+
+    expect(page).to have_button "Show 1 event"
+    expect(find_by_id("event_filter_dialog").evaluate_script("this.querySelectorAll('input:checked').length")).to eq 0
+  end
+
   # WHY: #460 AC4. The count is fetched as the picks change, so only a browser sees it follow them.
   it "counts the events the sheet's picks would show as they change, then applies them" do
     member = create(:member, :owner)
