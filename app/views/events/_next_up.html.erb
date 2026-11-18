@@ -2,7 +2,7 @@
 <%#
   The group home's hero card, tinted. Status, when and where are quiet facts: their icons and plain text colour, no accent. It renders the counts and the answer row itself, because the legend's matrix gives every cell that shows tags the answer row under them, and a screen that had to remember to render all three would be a screen that can forget.
 %>
-<%# WHY: the name's link is stretched over the whole card, so pressing anywhere on it opens the event while a screen reader still meets one link; every control on the card, the Who's coming line in `events/_counts` and the answer buttons in `events/_response` included, is lifted above that overlay with `relative z-1`, each control on its own so the gaps between them still open the event. %>
+<%# WHY: the name's link is stretched over the whole card, so pressing anywhere on it opens the event while a screen reader still meets one link; every control on the card, the address line, the Who's coming line in `events/_counts` and the answer buttons in `events/_response` included, is lifted above that overlay with `relative z-1`, each control on its own so the gaps between them still open the event. %>
 <div id="<%= dom_id event, :next_up %>" class="card card-sm relative bg-base-200">
   <div class="card-body gap-card-row">
     <p class="text-xs font-semibold uppercase tracking-wider text-secondary"><%= event_kicker event %></p>
@@ -38,7 +38,9 @@
 
     <% if event.address %>
       <p class="flex items-center gap-icon-text">
-        <%= icon :where, class: "size-icon-inline text-icon-muted" %><%= link_to event.address.name, address_map_url(event.address), class: "link link-hover relative z-1", target: "_blank" %>
+        <%= link_to address_map_url(event.address), class: "group relative z-1 flex grow items-center gap-icon-text", target: "_blank" do %>
+          <%= icon :where, class: "size-icon-inline text-icon-muted" %><span class="group-hover:underline"><%= event.address.name %></span>
+        <% end %>
       </p>
     <% end %>
 

@@ -336,6 +336,18 @@ RSpec.describe "Groups", type: :request do
         expect([ card.ancestors("a").size, card.css("a[href='#{group_event_path(owner.group, event)}']").map { it.text.squish } ]).to eq [ 0, [ "Tuesday rehearsal" ] ]
       end
 
+      # WHY: #473 AC6. The whole address line is the one map link, so its icon sits inside it as the Who's coming line's tags sit inside the roster link.
+      it "links the card's whole address line, its icon included, to the map in a new tab" do
+        owner = create(:member, :owner)
+        event = create(:event, :rehearsal, group: owner.group, status: :confirmed, address: create(:address, name: "Community Hall"), starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        sign_in_as(owner.user)
+
+        get group_path(owner.group)
+
+        links = Nokogiri::HTML(response.body).css("##{ActionView::RecordIdentifier.dom_id(event, :next_up)} a[target='_blank']")
+        expect(links.map { [ it.text.squish, it.css("svg").size ] }).to eq [ [ "Community Hall", 1 ] ]
+      end
+
       # WHY: #473 AC2 and AC4. The whole line is one roster link, so a screen reader meets its tags inside that link rather than beside it.
       it "links the card's whole Who’s coming line, tags included, to the event with its roster open" do
         owner = create(:member, :owner)

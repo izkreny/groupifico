@@ -103,6 +103,19 @@ RSpec.describe "The group home", type: :system do
     expect(page).to have_current_path group_event_path(member.group, event)
   end
 
+  # WHY: #473 AC6. The far end of the address line is past the place's name, so only a line that is wholly the map link answers a press there with the map rather than the event.
+  it "opens the map from the far end of the card's address line" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    next_event_for(member)
+    sign_in_as member.user
+    page.driver.resize(1280, 900)
+
+    visit group_path(member.group)
+
+    target = find("[id^=next_up] p", text: "Community Hall").evaluate_script("(box => document.elementFromPoint(box.right - 4, box.top + box.height / 2).closest('a')?.target)(this.getBoundingClientRect())")
+    expect(target).to eq "_blank"
+  end
+
   # WHY: #473 AC3. The name's link is stretched over the card, so each control is pressed to prove it still sits above that overlay.
   it "lands on Duplicate's form and on Edit's from the card's controls" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
