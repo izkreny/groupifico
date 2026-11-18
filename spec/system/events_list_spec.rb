@@ -288,7 +288,7 @@ RSpec.describe "The events list", type: :system do
     click_button "Show 0 events"
     click_link "Remove Rehearsal"
 
-    expect(page).to have_link("Remove Not answered").and have_no_link("Remove Rehearsal")
+    expect(page).to have_no_link("Remove Rehearsal").and have_link("Remove Not answered")
   end
 
   # WHY: #460 AC8. Clear all unticks the sheet's picks, not the list's, and the count follows; applying it leaves the tab as it is.
