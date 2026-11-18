@@ -71,7 +71,7 @@ Both get the same shape, history included: a list of allowed transitions, a verb
 
 ### Still open: plain Rails or `state_machines`
 
-Plain Rails expresses the pattern with an enum, a constant of allowed transitions, and the verb methods, using only what Rails 8.1 ships. The `state_machines` family covers the transitions, the guards and the after-commit email, and nothing in it covers the dated, editable history, which is hand-built either way. The findings are under *Alternatives considered*. The maintainers have been asked about the gaps, and the answer decides this one choice.
+Plain Rails expresses the pattern with an enum, a constant of allowed transitions, and the verb methods, using only what Rails 8.1 ships. The `state_machines` family covers the transitions, the guards and the after-commit email, and its audit trail can write a row per transition into the app's own history model, but editing, deleting and importing that history are hand-built either way. The findings are under *Alternatives considered*. The maintainers have been asked about the gaps, and the answer decides this one choice.
 
 ## Alternatives considered
 
@@ -85,7 +85,7 @@ Plain Rails expresses the pattern with an enum, a constant of allowed transition
 - Beside an enum it generates prefixed methods, 16 per model for four statuses (`status_active?`, `status_active!`, `status_active`, `not_status_active`), and prints a method-conflict warning for each enum predicate when the class loads. In 0.304.0 the prefix and the scopes are fixed rather than configurable.
 - `direct_assignment: :allow`, the default, leaves plain `update` and `update_columns` outside the machine, so imports stay silent.
 - Its releases 0.300 to 0.305 shipped between 15 and 17 November 2026, two of them changing behaviour, among them the `around_transition` semantics and the `direct_assignment` default.
-- `state_machines-audit_trail` 4.0.0 is an append-only log stamped with the save time, with no way to backdate, edit or delete a row, so it can sit beside a history but cannot be one.
+- `state_machines-audit_trail` 4.0.0 writes a row per transition inside the save's transaction, into a model the app chooses with `class:`, and a `context:` method that takes the transition can fill columns such as a start date and an updater from the event's arguments. It never touches a row afterwards, so backdating, editing, deleting and importing stay the app's own writes, and it always assigns `event`, `from` and `to`, which a model without those columns would need setters for.
 
 **Other state-machine gems.** In the public real-world-rails corpus, about 39 of 239 applications use one: aasm in 14, the `state_machines` family in about 10, and Statesman, workflow and transitions in a few each. None of the 37signals applications (Fizzy, Campfire, Writebook) uses one, and neither does Hitobito, the association-management application closest to this domain. Statesman keeps a transitions table, and Sharetribe still writes the current state back onto the parent row, which is the copy this record keeps. None of the gem-using applications read backdates a transition. The comments in the applications that use a gem record its costs: callbacks skipped by bulk writes and copied by hand (GitLab), a callback returning `false` silently stopping the chain (Gumroad), and `skip_callbacks` flags (Catarse).
 
