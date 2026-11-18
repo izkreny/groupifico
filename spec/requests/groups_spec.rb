@@ -608,6 +608,18 @@ RSpec.describe "Groups", type: :request do
         expect(card_text(gig)).to end_with "All upcoming gigs (2)"
       end
 
+      # WHY: the owner's 99+ cap, through `ApplicationHelper#count_label`, reached on the home itself so the row is seen to use it.
+      it "caps the gig card's count at 99+" do
+        member = create(:member, :active)
+        gig = create(:event, :gig, group: member.group, creator: member, status: :confirmed, starts_at: 1.day.from_now, ends_at: 1.day.from_now + 2.hours)
+        create_list(:event, 99, :gig, group: member.group, creator: member, status: :unconfirmed, starts_at: 5.days.from_now, ends_at: 5.days.from_now + 2.hours)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(card_text(gig)).to end_with "All upcoming gigs (99+)"
+      end
+
       # WHY: #459 AC9.
       it "says no rehearsal is coming up when only a gig is ahead" do
         member = create(:member, :active)
