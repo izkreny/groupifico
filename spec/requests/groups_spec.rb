@@ -566,6 +566,18 @@ RSpec.describe "Groups", type: :request do
         expect(Nokogiri::HTML(response.body).at_css("#no_gig")&.text&.squish).to eq "No gig coming up"
       end
 
+      # WHY: the owner's rule for a slot with no confirmed gig while unconfirmed ones are ahead: it says no confirmed gig is coming and leads to the gigs list with its count, where a slot with no gig at all, above, says no gig and leads nowhere.
+      it "says no confirmed gig is coming up, and counts the unconfirmed ones, when only unconfirmed gigs are ahead" do
+        member = create(:member, :active)
+        create(:event, :gig, group: member.group, creator: member, status: :unconfirmed, starts_at: 5.days.from_now, ends_at: 5.days.from_now + 2.hours)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        slot = Nokogiri::HTML(response.body).at_css("#no_gig")
+        expect([ slot&.at_css("p")&.text&.squish, slot&.css("a")&.map { [ it.text.squish, it[:href] ] } ]).to eq [ "No confirmed gig coming up", [ [ "All upcoming gigs (1)", group_events_path(member.group, category: %w[ gig ]) ] ] ]
+      end
+
       # WHY: #461 AC1. The link belongs to the gig card alone, so the rehearsal card above it carries no link to the list; the list's own path is compared without its query, since every event link on a card shares its prefix.
       it "ends the gig card with a link to the upcoming gigs, and gives the rehearsal card none" do
         member = create(:member, :active)

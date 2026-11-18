@@ -388,6 +388,22 @@ RSpec.describe "The group home", type: :system do
     expect(page).to be_accessible
   end
 
+  # WHY: the owner's rule for unconfirmed gigs ahead of no confirmed one: the empty gig slot gains the gig card's footer row, so whether the slot still paints, stays legible and draws that row at its 44px is the browser's to say.
+  it "paints the empty gig slot with its footer row while unconfirmed gigs are ahead, with no accessibility violations" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    next_event_for(member)
+    create(:event, :gig, group: member.group, creator: member, name: "Spring concert", status: :unconfirmed, starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours)
+    sign_in_as member.user
+    prefer_colour_scheme :light
+    resize_to ViewportHelper::MOBILE
+
+    visit group_path(member.group)
+
+    expect([ page.has_text?("NO CONFIRMED GIG COMING UP"), find_by_id("no_gig").find_link("All upcoming gigs (1)").evaluate_script("Math.round(this.getBoundingClientRect().height)") ]).to eq [ true, 44 ]
+    expect(page).to paint "#no_gig"
+    expect(page).to be_accessible
+  end
+
   # Whether the page scrolls sideways, which is the one overflow a reader on a phone notices first.
   def overflowing?
     page.evaluate_script("document.documentElement.scrollWidth > document.documentElement.clientWidth")

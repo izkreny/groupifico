@@ -57,11 +57,8 @@
     <%= render "events/response", event: event, registration: registration, classes: "mt-[calc(var(--spacing-card-break)-var(--spacing-card-row))]" %>
 
     <%# Only the gig card leads on to the gigs ahead, so only the home's gig slot passes the count: the rehearsal card and the styleguide's sample pass none. %>
-    <%# WHY: the card's footer row, in the kicker's type so the kicker that opens the card has a twin closing it; the hairline and the 44px row, the WCAG 2.5.5 target, part it from the answer row above, which the `card-break` margin also clears. %>
     <% if upcoming_gig_count %>
-      <%= link_to group_events_path(event.group, category: [ "gig" ]), class: "group relative z-1 mt-[calc(var(--spacing-card-break)-var(--spacing-card-row))] flex min-h-11 items-center justify-between border-t border-base-content/10 pt-1 text-xs font-semibold uppercase tracking-wider" do %>
-        <span class="group-hover:underline">All upcoming gigs (<%= upcoming_gig_count %>)</span><%= icon :go_to, class: "size-icon-inline" %>
-      <% end %>
+      <%= render "events/upcoming_gigs", group: event.group, count: upcoming_gig_count %>
     <% end %>
   </div>
 </div>

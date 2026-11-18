@@ -11,8 +11,16 @@
       <% if event %>
         <%= render "events/next_up", event:, registration: event.registration_for(@membership), upcoming_gig_count: (@upcoming_gig_count if category == "gig") %>
       <% else %>
+        <%# The gig slot with no confirmed gig still leads to the unconfirmed ones when any are ahead, and says it is the confirmed kind that is missing; with none ahead it says no gig and leads nowhere. The rehearsal slot never counts. %>
+        <% unconfirmed_ahead = category == "gig" ? @upcoming_gig_count : 0 %>
         <div id="no_<%= category %>" class="card card-sm bg-base-200">
-          <p class="card-body text-xs font-semibold uppercase tracking-wider text-base-content/70">No <%= category %> coming up</p>
+          <div class="card-body gap-card-row">
+            <p class="text-xs font-semibold uppercase tracking-wider text-base-content/70">No <%= "confirmed " if unconfirmed_ahead.positive? %><%= category %> coming up</p>
+
+            <% if unconfirmed_ahead.positive? %>
+              <%= render "events/upcoming_gigs", group: @group, count: unconfirmed_ahead %>
+            <% end %>
+          </div>
         </div>
       <% end %>
     <% end %>
