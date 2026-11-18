@@ -74,7 +74,7 @@ RSpec.describe "Members", type: :request do
 
         page = Nokogiri::HTML(response.body)
         expect(page.css("#members li[id]").map { it["id"] }).to eq [ ActionView::RecordIdentifier.dom_id(reader, :row) ]
-        expect(page.at_css("nav[aria-label='Member lists'] a[aria-current=page]").text).to eq "Active (1 member)"
+        expect(page.at_css("nav[aria-label='Member lists'] a[aria-current=page]").text).to eq "Active (1)"
         expect([ response.body.include?(ActionView::RecordIdentifier.dom_id(paused, :row)), response.body.include?(ActionView::RecordIdentifier.dom_id(inactive, :row)) ]).to eq [ false, false ]
       end
 
@@ -109,7 +109,7 @@ RSpec.describe "Members", type: :request do
         inactive_tab = Nokogiri::HTML(response.body).at_css("nav[aria-label='Member lists'] a[aria-current=page]").text
         get group_members_path(member.group, status: "pending")
 
-        expect([ inactive_tab, Nokogiri::HTML(response.body).at_css("nav[aria-label='Member lists'] a[aria-current=page]").text ]).to eq [ "Active (1 member)", "Active (1 member)" ]
+        expect([ inactive_tab, Nokogiri::HTML(response.body).at_css("nav[aria-label='Member lists'] a[aria-current=page]").text ]).to eq [ "Active (1)", "Active (1)" ]
         expect(response.body).not_to include ActionView::RecordIdentifier.dom_id(inactive, :row)
       end
 
@@ -176,7 +176,7 @@ RSpec.describe "Members", type: :request do
         ]
       end
 
-      # WHY: #484 AC12 and AC13. Each tab counts what it would list with every filter on, zero included, and the count's noun is for a screen reader alone.
+      # WHY: #484 AC12 and AC13. Each tab counts what it would list with every filter on, zero included, and its name says what the count counts.
       it "names each tab with how many members it would list under the filters on" do
         reader = create(:member, :active, :owner)
         create(:member, :active, group: reader.group)
@@ -185,7 +185,7 @@ RSpec.describe "Members", type: :request do
 
         get group_members_path(reader.group, role: %w[ owner ])
 
-        expect(Nokogiri::HTML(response.body).css("nav[aria-label='Member lists'] a").map { [ it.text, it.at_css(".sr-only")&.text ] }.first(2)).to eq [ [ "Active (1 member)", " member" ], [ "Paused (1 member)", " member" ] ]
+        expect(Nokogiri::HTML(response.body).css("nav[aria-label='Member lists'] a").map { [ it.text, it["aria-label"] ] }.first(2)).to eq [ [ "Active (1)", "Active (1 member)" ], [ "Paused (1)", "Paused (1 member)" ] ]
       end
 
       it "tags each member with the roles they hold, by their short names" do
@@ -1388,7 +1388,7 @@ RSpec.describe "Members", type: :request do
 
         get group_members_path(owner.group)
 
-        expect(Nokogiri::HTML(response.body).css("nav[aria-label='Member lists'] a").map(&:text).values_at(0, 2)).to eq [ "Active (1 member)", "Pending (1 member)" ]
+        expect(Nokogiri::HTML(response.body).css("nav[aria-label='Member lists'] a").map(&:text).values_at(0, 2)).to eq [ "Active (1)", "Pending (1)" ]
       end
 
       it "shows their page" do

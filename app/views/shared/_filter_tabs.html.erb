@@ -4,7 +4,7 @@
   <% filter.tabs.each do |name, value, params| %>
     <% current = value == filter.tab %>
     <% count = counts.fetch(value, 0) %>
-    <%# WHY: the count names what the tab would list with every filter on, and its noun is for a screen reader alone, so the tab reads "Active (19)" and is named "Active (19 members)", its visible label inside its name, as Primer's UnderlineNav counters are. %>
-    <%= link_to polymorphic_path([ group, filter.model ], params), class: [ "tab flex-1", current ? "tab-active top-px border-b-2 border-primary font-semibold" : "text-muted" ], aria: { current: ("page" if current) } do %><%= name %> (<%= count %><span class="sr-only"> <%= filter.noun.pluralize(count) %></span>)<% end %>
+    <%# WHY: the count names what the tab would list with every filter on, and the name says what it counts, so the tab reads "Active (19)" and is named "Active (19 members)". A label rather than a visually hidden noun, because Chromium spaces an absolutely positioned span off its neighbours and named the tab "Active (19 members )". %>
+    <%= link_to "#{name} (#{count})", polymorphic_path([ group, filter.model ], params), class: [ "tab flex-1", current ? "tab-active top-px border-b-2 border-primary font-semibold" : "text-muted" ], aria: { current: ("page" if current), label: "#{name} (#{pluralize(count, filter.noun)})" } %>
   <% end %>
 </nav>
