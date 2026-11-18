@@ -204,14 +204,10 @@ RSpec.describe "The events list", type: :system do
     visit group_events_path(member.group)
     pick_in_sheet "Gig"
     expect(page).to have_button "Show 0 events"
-    within("#event_filter_dialog") { click_button "Close" }
-    click_link "New event"
-    expect(page).to have_current_path new_group_event_path(member.group)
-    go_back
+    leave_for_a_new_event_and_come_back(member.group)
     click_button "Filter events"
 
-    expect(page).to have_button "Show 1 event"
-    expect(find_by_id("event_filter_dialog").evaluate_script("this.querySelectorAll('input:checked').length")).to eq 0
+    expect(page).to have_button("Show 1 event").and have_no_css("#event_filter_dialog input:checked")
   end
 
   # WHY: #460 AC4. The count is fetched as the picks change, so only a browser sees it follow them.
@@ -315,6 +311,14 @@ RSpec.describe "The events list", type: :system do
     narrow_reset, narrow_show = sheet_buttons
 
     expect([ reset.top == show.top && reset.left < show.left, narrow_show.top < narrow_reset.top ]).to eq [ true, true ]
+  end
+
+  # A Turbo visit away and Back, so the list comes back from Turbo's snapshot rather than from a request.
+  def leave_for_a_new_event_and_come_back(group)
+    within("#event_filter_dialog") { click_button "Close" }
+    click_link "New event"
+    expect(page).to have_current_path new_group_event_path(group)
+    go_back
   end
 
   def pick_in_sheet(*labels)
