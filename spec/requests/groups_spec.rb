@@ -563,7 +563,18 @@ RSpec.describe "Groups", type: :request do
 
         get group_path(member.group)
 
-        expect(Nokogiri::HTML(response.body).at_css("#no_gig")&.text&.squish).to eq "No gig coming up"
+        expect(Nokogiri::HTML(response.body).at_css("#no_gig p")&.text&.squish).to eq "No gig coming up"
+      end
+
+      # WHY: #461 AC4. The empty gig slot leads to the whole list, unfiltered, since there is no gig ahead for a gigs filter to show.
+      it "links the empty gig slot to the unfiltered events list" do
+        member = create(:member, :active)
+        confirmed_rehearsal_spanning(member, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(Nokogiri::HTML(response.body).css("#no_gig a").map { [ it.text.squish, it[:href] ] }).to eq [ [ "See all events", group_events_path(member.group) ] ]
       end
 
       # WHY: #459 AC9.
