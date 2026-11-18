@@ -116,7 +116,7 @@ RSpec.describe "The group home", type: :system do
     expect(target).to eq "_blank"
   end
 
-  # WHY: #473 AC3. The name's link is stretched over the card, so each control is pressed to prove it still sits above that overlay.
+  # WHY: #473 AC3, #487 AC1 and AC2. The name's link is stretched over the card, so each control is pressed to prove it still sits above that overlay; `have_current_path` waits for Turbo's navigation, where a bare `current_path` read races it.
   it "lands on Duplicate's form and on Edit's from the card's controls" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
     event = next_event_for(member)
@@ -124,11 +124,11 @@ RSpec.describe "The group home", type: :system do
 
     visit group_path(member.group)
     click_link "Duplicate Tuesday rehearsal"
-    duplicated = page.current_path
+    expect(page).to have_current_path duplicate_group_event_path(member.group, event)
+
     visit group_path(member.group)
     click_link "Edit Tuesday rehearsal"
-
-    expect([ duplicated, page.current_path ]).to eq [ duplicate_group_event_path(member.group, event), edit_group_event_path(member.group, event) ]
+    expect(page).to have_current_path edit_group_event_path(member.group, event)
   end
 
   # WHY: #473 AC3. A press lands on whatever is topmost under it, so every control on the card, the map link and the Who's coming line included, has to be the topmost element at its own centre rather than the name's overlay.
