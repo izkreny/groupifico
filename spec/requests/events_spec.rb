@@ -120,6 +120,20 @@ RSpec.describe "Events", type: :request do
         expect(Nokogiri::HTML(response.body).at_xpath("//a[normalize-space()='Clear all']")).to be_nil
       end
 
+      # WHY: #460 AC9. Each tab is a link carrying every filter on, so switching lists keeps them.
+      it "links each tab to its list with every filter still on" do
+        member = create(:member, :active)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group, category: %w[ gig ], answer: %w[ yes ])
+
+        expect(Nokogiri::HTML(response.body).css("nav[aria-label='Event lists'] a").map { it[:href] }).to eq [
+          group_events_path(member.group, category: %w[ gig ], answer: %w[ yes ]),
+          group_events_path(member.group, scope: "past", category: %w[ gig ], answer: %w[ yes ]),
+          group_events_path(member.group, scope: "canceled", category: %w[ gig ], answer: %w[ yes ])
+        ]
+      end
+
       # WHY: #458 AC1 and AC2. Who may create an event is `EventPolicy#create?`, and the + carries no text of its own, so its accessible name is the only label it has.
       it "offers a member who may create events an icon-only + named New event, linking the new event form" do
         owner = create(:member, :owner)
