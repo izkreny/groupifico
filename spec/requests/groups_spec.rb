@@ -577,8 +577,23 @@ RSpec.describe "Groups", type: :request do
 
         document = Nokogiri::HTML(response.body)
         last = document.at_css("##{ActionView::RecordIdentifier.dom_id(gig, :next_up)} .card-body > :last-child")
-        expect([ last.name, last.text.squish, last[:href] ]).to eq [ "a", "All upcoming gigs", group_events_path(member.group, category: %w[ gig ]) ]
+        expect([ last.name, last.text.squish, last[:href] ]).to eq [ "a", "All upcoming gigs (1)", group_events_path(member.group, category: %w[ gig ]) ]
         expect(document.css("##{ActionView::RecordIdentifier.dom_id(rehearsal, :next_up)} a").map { URI(it[:href]).path }).not_to include group_events_path(member.group)
+      end
+
+      # WHY: the owner's count on the gig card's link, written as #486 writes its tab counts, so a member sees from the home whether the list holds more than the card's own gig. It counts what the link opens: a running or upcoming gig of any status but canceled, so the past gig, the canceled gig, the unconfirmed gig and the rehearsal each prove one edge.
+      it "counts on the gig card's link the gigs its list holds" do
+        member = create(:member, :active)
+        gig = create(:event, :gig, group: member.group, creator: member, status: :confirmed, starts_at: 1.day.from_now, ends_at: 1.day.from_now + 2.hours)
+        create(:event, :gig, group: member.group, creator: member, status: :unconfirmed, starts_at: 5.days.from_now, ends_at: 5.days.from_now + 2.hours)
+        create(:event, :gig, group: member.group, creator: member, status: :canceled, starts_at: 6.days.from_now, ends_at: 6.days.from_now + 2.hours)
+        create(:event, :gig, group: member.group, creator: member, status: :concluded, starts_at: 6.days.ago, ends_at: 6.days.ago + 2.hours)
+        confirmed_rehearsal_spanning(member, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(card_text(gig)).to end_with "All upcoming gigs (2)"
       end
 
       # WHY: #459 AC9.

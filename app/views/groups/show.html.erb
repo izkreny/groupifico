@@ -9,7 +9,7 @@
   <div class="flex flex-col gap-4">
     <% [ [ "rehearsal", @next_rehearsal ], [ "gig", @next_gig ] ].each do |category, event| %>
       <% if event %>
-        <%= render "events/next_up", event:, registration: event.registration_for(@membership) %>
+        <%= render "events/next_up", event:, registration: event.registration_for(@membership), upcoming_gig_count: (@upcoming_gig_count if category == "gig") %>
       <% else %>
         <div id="no_<%= category %>" class="card card-sm bg-base-200">
           <p class="card-body text-xs font-semibold uppercase tracking-wider text-base-content/70">No <%= category %> coming up</p>
