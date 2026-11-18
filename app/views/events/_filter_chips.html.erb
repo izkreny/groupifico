@@ -1,7 +1,8 @@
 <%# locals: (group:, filter:) %>
 <%# WHY: each chip is one link to the list with everything else still on, as Fizzy's filter chips are, since the URL is the only place a filter lives and the funnel is what opens the sheet; "Clear all" is a plain text link with no ✕, so it reads neither as one more filter nor as one chip's remove. %>
 <% if filter.narrowed? %>
-  <div class="flex flex-wrap gap-2">
+  <%# WHY: 16px from the tabs' line and 16px from the first row's text; that row already starts its text 16px down, so its own padding is the space under the chips and the gap below them is taken back. %>
+  <div class="mt-1 -mb-3 flex flex-wrap gap-2">
     <% filter.chips.each do |name, params| %>
       <%= link_to group_events_path(group, params), class: "inline-flex items-center gap-1 rounded-full bg-primary py-1 ps-3 pe-2 text-sm text-primary-content", aria: { label: "Remove #{name}" } do %>
         <%= name %><%= icon :remove, class: "size-icon-inline" %>
