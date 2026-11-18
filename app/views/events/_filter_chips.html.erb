@@ -5,8 +5,8 @@
   <div class="mt-1 -mb-1.5 flex flex-wrap gap-2">
     <% filter.chips.each do |name, params| %>
       <%= link_to group_events_path(group, params), class: "inline-flex items-center gap-1 rounded-full bg-primary py-1 ps-3 pe-2 text-sm text-primary-content", aria: { label: "Remove #{name}" } do %>
-        <%# WHY: the ✕ stays centred in the chip and the label is lifted 1.22px, measured in the browser, so its baseline sits on the ✕'s bottom edge, the alignment the owner picked on #471 over centring either on the other. %>
-        <span class="relative -top-[1.22px]"><%= name %></span><%= icon :remove, class: "size-icon-inline" %>
+        <%# WHY: the ✕ stays centred in the chip and the label is lifted 1.72px, measured in the browser, so its baseline sits on the ✕'s visual bottom, where its strokes' round caps are centred: the alignment the owner picked on #471 over centring either on the other. %>
+        <span class="relative -top-[1.72px]"><%= name %></span><%= icon :remove, class: "size-icon-inline" %>
       <% end %>
     <% end %>
 
