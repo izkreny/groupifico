@@ -1,6 +1,6 @@
 <%# locals: (rows:) %>
-<ul class="list">
+<%= render layout: "shared/filter_list" do %>
   <% rows.each do |event, registration| %>
     <%= render "events/row", event: event, registration: registration %>
   <% end %>
-</ul>
+<% end %>

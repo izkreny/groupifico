@@ -2,43 +2,25 @@
 <%# WHY: never snapshotted, so Back asks the server for the list as it stands, the way Fizzy's card list does, rather than restoring the sheet's unapplied picks and a count that answering in place has since redrawn. %>
 <% turbo_exempts_page_from_cache %>
 
-<%# WHY: the list is always on and exactly one, so it is a tab, while every filter is optional and chosen in the funnel's sheet; the screen needs no list menu, its title is simply "Events", and the chips under the tabs say which filters are on. %>
 <div class="flex flex-col gap-3">
-  <div class="flex flex-col gap-3" data-controller="dialog">
-    <div class="flex items-center justify-between gap-2.5">
-      <h2 class="font-heading text-hero">Events</h2>
-
-      <div class="flex items-center gap-controls">
-        <%# Checked against a new event rather than the group, because that is the record `EventPolicy`
-            writes the rule against. A refused reader gets no button rather than a disabled one. %>
-        <% if allowed_to?(:create?, @group.events.new) %>
-          <%= link_to new_group_event_path(@group), class: "btn btn-ghost btn-circle btn-sm text-primary", aria: { label: "New event" } do %>
-            <%= icon :new, class: "size-icon-control" %>
-          <% end %>
-        <% end %>
-
-        <%# WHY: primary only while a filter hides events from the list picked, and muted otherwise, whichever tab is open, since the tab already names the list. %>
-        <% funnel_ink = @filter.narrowed? ? "text-primary" : "text-icon-muted" %>
-        <%= tag.button type: "button", class: [ "btn btn-ghost btn-circle btn-sm", funnel_ink ], aria: { label: "Filter events" }, data: { dialog_target: "trigger", action: "dialog#show" } do %>
-          <%= icon :filter, class: "size-icon-control" %>
-        <% end %>
-      </div>
-    </div>
-
-    <%= render "events/filter_tabs", group: @group, filter: @filter %>
-    <%= render "events/filter_chips", group: @group, filter: @filter %>
-    <%= render "events/filter_sheet", group: @group, filter: @filter, count: @events.load.size %>
-  </div>
+  <%= render layout: "shared/filter_bar", locals: { group: @group, filter: @filter, count: @events.load.size } do %>
+    <%# Checked against a new event rather than the group, because that is the record `EventPolicy`
+        writes the rule against. A refused reader gets no button rather than a disabled one. %>
+    <% if allowed_to?(:create?, @group.events.new) %>
+      <%= link_to new_group_event_path(@group), class: "btn btn-ghost btn-circle btn-sm text-primary", aria: { label: "New event" } do %>
+        <%= icon :new, class: "size-icon-control" %>
+      <% end %>
+    <% end %>
+  <% end %>
 
   <% reader = Current.member %>
   <div id="events">
     <% if @events.any? %>
-      <%# WHY: daisyUI's list draws its divider under every row but the last; the list closes on that same line, drawn as daisyUI draws it, in oklab and inset by the box radius, so it is the same line rather than a near one. The tabs' line above it opens it. %>
-      <ul class="list [&>.list-row:last-child]:after:absolute [&>.list-row:last-child]:after:bottom-0 [&>.list-row:last-child]:after:inset-x-(--radius-box) [&>.list-row:last-child]:after:border-b-(length:--border) [&>.list-row:last-child]:after:border-[color:color-mix(in_oklab,var(--color-base-content)_5%,transparent)]">
+      <%= render layout: "shared/filter_list" do %>
         <% @events.each do |event| %>
           <%= render "events/row", event: event, registration: event.registration_for(reader) %>
         <% end %>
-      </ul>
+      <% end %>
     <% elsif @filter.narrowed? %>
       <p class="text-meta">No events match these filters.</p>
     <% else %>

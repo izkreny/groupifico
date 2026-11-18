@@ -4,12 +4,12 @@
   <%# WHY: 16px from the tabs' line and 22px from the first row's text, which already starts 16px into its row, so only 6px of the gap below is kept. %>
   <div class="mt-1 -mb-1.5 flex flex-wrap gap-2">
     <% filter.chips.each do |name, params| %>
-      <%= link_to group_events_path(group, params), class: "inline-flex items-center gap-1 rounded-full bg-primary py-1 ps-3 pe-2 text-sm text-primary-content", aria: { label: "Remove #{name}" } do %>
+      <%= link_to polymorphic_path([ group, filter.model ], params), class: "inline-flex items-center gap-1 rounded-full bg-primary py-1 ps-3 pe-2 text-sm text-primary-content", aria: { label: "Remove #{name}" } do %>
         <%# WHY: the ✕ stays centred in the chip and the label is lifted 1.72px, measured in the browser, so its baseline sits on the ✕'s visual bottom, where its strokes' round caps are centred: the alignment the owner picked on #471 over centring either on the other. %>
         <span class="relative -top-[1.72px]"><%= name %></span><%= icon :remove, class: "size-icon-inline" %>
       <% end %>
     <% end %>
 
-    <%= link_to "Clear all", group_events_path(group, filter.cleared), class: "link ms-1 self-center text-sm" %>
+    <%= link_to "Clear all", polymorphic_path([ group, filter.model ], filter.cleared), class: "link ms-1 self-center text-sm" %>
   </div>
 <% end %>

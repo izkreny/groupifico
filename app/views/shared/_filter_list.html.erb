@@ -1,0 +1,5 @@
+<%# locals: () %>
+<%# WHY: daisyUI's list draws its divider under every row but the last; a filtered list closes on that same line, drawn as daisyUI draws it, in oklab and inset by the box radius, so it is the same line rather than a near one. The tabs' line above it opens it. %>
+<ul class="list [&>.list-row:last-child]:after:absolute [&>.list-row:last-child]:after:bottom-0 [&>.list-row:last-child]:after:inset-x-(--radius-box) [&>.list-row:last-child]:after:border-b-(length:--border) [&>.list-row:last-child]:after:border-[color:color-mix(in_oklab,var(--color-base-content)_5%,transparent)]">
+  <%= yield %>
+</ul>
