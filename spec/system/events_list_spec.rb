@@ -322,11 +322,11 @@ RSpec.describe "The events list", type: :system do
 
     visit group_events_path(member.group)
     click_button "Filter events"
-    reset, show = sheet_buttons
+    clear, show = sheet_buttons
     resize_to [ 260, 700 ]
-    narrow_reset, narrow_show = sheet_buttons
+    narrow_clear, narrow_show = sheet_buttons
 
-    expect([ reset.top == show.top && reset.left < show.left, narrow_show.top < narrow_reset.top ]).to eq [ true, true ]
+    expect([ clear.top == show.top && clear.left < show.left, narrow_show.top < narrow_clear.top ]).to eq [ true, true ]
   end
 
   # A Turbo visit away and Back, so the list comes back from Turbo's snapshot rather than from a request.
