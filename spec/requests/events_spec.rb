@@ -39,8 +39,8 @@ RSpec.describe "Events", type: :request do
         expect(response).to have_http_status :ok
       end
 
-      # WHY: #460 AC1. The screen's title names it, and the list is chosen through the funnel beside the +, which carries no text, so its accessible name is the only label it has.
-      it "titles the screen Events, with an icon-only funnel named Filter events and no list menu" do
+      # WHY: #460 AC1. The screen's title names it, the list is a tab under it, and the funnel beside the + carries no text, so its accessible name is the only label it has.
+      it "titles the screen Events, with an icon-only funnel named Filter events, the lists as tabs and no list menu" do
         member = create(:member, :active)
         sign_in_as(member.user)
 
@@ -48,10 +48,12 @@ RSpec.describe "Events", type: :request do
 
         page = Nokogiri::HTML(response.body)
         funnel = page.at_css("button[aria-label='Filter events']")
+        tabs = page.css("nav[aria-label='Event lists'] a")
         expect([ page.at_css("main h2")&.text, funnel.text.strip, funnel.at_css("svg").present?, page.at_css("details#scope").present? ]).to eq [ "Events", "", true, false ]
+        expect([ tabs.map(&:text), tabs.map { it["aria-current"] } ]).to eq [ %w[ Upcoming Past Canceled ], [ "page", nil, nil ] ]
       end
 
-      # WHY: #460 AC2. One sheet, headed and closable like the join link's, holds the list and every filter.
+      # WHY: #460 AC2. One sheet, headed and closable like the join link's, holds every filter, and the list stays on its tab.
       it "offers the filter sheet's groups and buttons" do
         member = create(:member, :active)
         sign_in_as(member.user)
@@ -61,9 +63,22 @@ RSpec.describe "Events", type: :request do
         sheet = Nokogiri::HTML(response.body).at_css("dialog#event_filter_dialog")
         expect([ sheet.at_css("h2").text, sheet.at_css("form[method=dialog] button[aria-label=Close]").present? ]).to eq [ "Filter events", true ]
         expect(sheet.css("fieldset").map { [ it.at_css("legend").text, it.css("input").map { |input| input["aria-label"] } ] }).to eq [
-          [ "Show", %w[ Upcoming Past Canceled ] ], [ "Category", %w[ Gig Rehearsal Other ] ], [ "My answer", [ "Yes", "Maybe", "No", "Not answered" ] ]
+          [ "Category", %w[ Gig Rehearsal Other ] ], [ "My answer", [ "Yes", "Maybe", "No", "Not answered" ] ]
         ]
-        expect(sheet.css("button.btn").map { it.text.squish }.last(2)).to eq [ "Reset", "Show 0 events" ]
+        expect(sheet.css("button.btn").map { it.text.squish }.last(2)).to eq [ "Clear all", "Show 0 events" ]
+      end
+
+      # WHY: the sheet carries the open tab, so its count and its applied picks stay on that list; the upcoming list is the URL with no `scope`.
+      it "carries the open tab in the sheet's form" do
+        member = create(:member, :active)
+        sign_in_as(member.user)
+        get group_events_path(member.group)
+        upcoming = Nokogiri::HTML(response.body).at_css("dialog form input[type=hidden][name=scope]")
+
+        get group_events_path(member.group, scope: "past")
+
+        past = Nokogiri::HTML(response.body).at_css("dialog form input[type=hidden][name=scope]")
+        expect([ upcoming, past&.[]("value") ]).to eq [ nil, "past" ]
       end
 
       # WHY: #460 AC3. "Events I manage" narrows nothing for someone who manages none of the group's events, so they are not offered it.
@@ -80,18 +95,43 @@ RSpec.describe "Events", type: :request do
         expect([ unoffered.include?("Miscellaneous"), offered.at_css("legend").text, offered.at_css("input")["aria-label"] ]).to eq [ false, "Miscellaneous", "Events I manage" ]
       end
 
-      # WHY: #460 AC5. The list's chip names it with no ✕, and each filter's chip carries a ✕ linking the list with everything else still on.
-      it "shows the list and each filter as chips, only the filters removable" do
+      # WHY: #460 AC5. Each filter's chip carries a ✕ linking the list with everything else still on, and "Clear all" drops every filter but keeps the tab, since the tab is not a filter.
+      it "shows each filter as a removable chip, then Clear all keeping the tab" do
         member = create(:member, :active)
         sign_in_as(member.user)
 
         get group_events_path(member.group, scope: "past", category: %w[ gig ], answer: %w[ yes ])
 
         page = Nokogiri::HTML(response.body)
-        expect(page.css("main button[data-action='dialog#show']").map { it.text.strip }.reject(&:empty?)).to eq %w[ Past Gig Yes ]
+        expect(page.css("main button[data-action='dialog#show']").map { it.text.strip }.reject(&:empty?)).to eq %w[ Gig Yes ]
         expect(page.css("a[aria-label^='Remove ']").map { [ it["aria-label"], it[:href] ] }).to eq [
           [ "Remove Gig", group_events_path(member.group, scope: "past", answer: %w[ yes ]) ],
           [ "Remove Yes", group_events_path(member.group, scope: "past", category: %w[ gig ]) ]
+        ]
+        expect(page.at_xpath("//a[normalize-space()='Clear all']")&.[](:href)).to eq group_events_path(member.group, scope: "past")
+      end
+
+      # WHY: #460 AC5. With no filter on there is nothing to remove, so no chip row is drawn.
+      it "draws no chip row while no filter is on" do
+        member = create(:member, :active)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group, scope: "past")
+
+        expect(Nokogiri::HTML(response.body).at_xpath("//a[normalize-space()='Clear all']")).to be_nil
+      end
+
+      # WHY: #460 AC9. Each tab is a link carrying every filter on, so switching lists keeps them.
+      it "links each tab to its list with every filter still on" do
+        member = create(:member, :active)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group, category: %w[ gig ], answer: %w[ yes ])
+
+        expect(Nokogiri::HTML(response.body).css("nav[aria-label='Event lists'] a").map { it[:href] }).to eq [
+          group_events_path(member.group, category: %w[ gig ], answer: %w[ yes ]),
+          group_events_path(member.group, scope: "past", category: %w[ gig ], answer: %w[ yes ]),
+          group_events_path(member.group, scope: "canceled", category: %w[ gig ], answer: %w[ yes ])
         ]
       end
 
@@ -374,7 +414,7 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include "Did you go?"
       end
 
-      # WHY: a scope naming no list is the upcoming list, which is what keeps a mistyped URL a screen rather than an error, with the list's chip agreeing with what is under it.
+      # WHY: a scope naming no list is the upcoming list, which is what keeps a mistyped URL a screen rather than an error, with the open tab agreeing with what is under it.
       it "reads an unknown scope as the upcoming list" do
         member = create(:member, :active)
         confirmed_event(member, days: -2, name: "Summer gig")
@@ -382,7 +422,7 @@ RSpec.describe "Events", type: :request do
 
         get group_events_path(member.group, scope: "sideways")
 
-        expect(Nokogiri::HTML(response.body).at_css("main button[data-action='dialog#show']:not([aria-label])").text.strip).to eq "Upcoming"
+        expect(Nokogiri::HTML(response.body).at_css("nav[aria-label='Event lists'] a[aria-current=page]").text).to eq "Upcoming"
         expect(response.body).not_to include "Summer gig"
       end
     end
@@ -411,7 +451,7 @@ RSpec.describe "Events", type: :request do
         get group_events_path(member.group)
 
         page = Nokogiri::HTML(response.body)
-        expect([ response.body.include?("Section rehearsal"), page.css("main button[data-action='dialog#show']").map { it.text.strip }.reject(&:empty?) ]).to eq [ true, %w[ Upcoming ] ]
+        expect([ response.body.include?("Section rehearsal"), page.at_css("nav[aria-label='Event lists'] a[aria-current=page]").text, page.css("a[aria-label^='Remove ']").size ]).to eq [ true, "Upcoming", 0 ]
       end
 
       # WHY: #460 AC11. A category the sheet does not offer narrows nothing.

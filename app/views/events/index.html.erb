@@ -1,6 +1,6 @@
 <% content_for :title, "Events" %>
 
-<%# WHY: the list and every filter are chosen in one place, the funnel's sheet, so the screen needs no list menu and its title is simply "Events"; the chips under it say what is on. %>
+<%# WHY: the list is always on and exactly one, so it is a tab, while every filter is optional and chosen in the funnel's sheet; the screen needs no list menu, its title is simply "Events", and the chips under the tabs say which filters are on. %>
 <div class="flex flex-col gap-3">
   <div class="flex flex-col gap-3" data-controller="dialog" data-action="turbo:before-cache@document->dialog#close">
     <div class="flex items-center justify-between gap-2.5">
@@ -15,7 +15,7 @@
           <% end %>
         <% end %>
 
-        <%# WHY: primary only while a filter hides events from the list picked, and muted otherwise, whichever list is open, since the list's own chip already names it. %>
+        <%# WHY: primary only while a filter hides events from the list picked, and muted otherwise, whichever tab is open, since the tab already names the list. %>
         <% funnel_ink = @filter.narrowed? ? "text-primary" : "text-icon-muted" %>
         <%= tag.button type: "button", class: [ "btn btn-ghost btn-circle btn-sm", funnel_ink ], aria: { label: "Filter events" }, data: { dialog_target: "trigger", action: "dialog#show" } do %>
           <%= icon :filter, class: "size-icon-control" %>
@@ -23,6 +23,7 @@
       </div>
     </div>
 
+    <%= render "events/filter_tabs", group: @group, filter: @filter %>
     <%= render "events/filter_chips", group: @group, filter: @filter %>
     <%= render "events/filter_sheet", group: @group, filter: @filter, count: @events.load.size %>
   </div>

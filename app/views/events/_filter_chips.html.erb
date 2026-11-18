@@ -1,12 +1,16 @@
 <%# locals: (group:, filter:) %>
-<%# WHY: every chip is primary, the list's included, so only the ✕ tells the list apart from the filters that narrow it, which the owner judged enough. The ✕ is a link to the list with everything else still on, since the URL is the only place a filter lives. %>
-<div class="flex flex-wrap gap-2">
-  <button type="button" class="rounded-full bg-primary px-3 py-1 text-sm text-primary-content cursor-pointer" data-action="dialog#show"><%= filter.scope_name %></button>
+<%# WHY: each ✕ is a link to the list with everything else still on, since the URL is the only place a filter lives, and "Clear all" is drawn apart from the primary chips so it does not read as one more filter. %>
+<% if filter.narrowed? %>
+  <div class="flex flex-wrap gap-2">
+    <% filter.chips.each do |name, params| %>
+      <div class="inline-flex items-center rounded-full bg-primary text-primary-content">
+        <button type="button" class="ps-3 py-1 text-sm cursor-pointer" data-action="dialog#show"><%= name %></button>
+        <%= link_to icon(:remove, class: "size-icon-inline"), group_events_path(group, params), class: "btn btn-ghost btn-circle btn-xs text-primary-content", aria: { label: "Remove #{name}" } %>
+      </div>
+    <% end %>
 
-  <% filter.chips.each do |name, params| %>
-    <div class="inline-flex items-center rounded-full bg-primary text-primary-content">
-      <button type="button" class="ps-3 py-1 text-sm cursor-pointer" data-action="dialog#show"><%= name %></button>
-      <%= link_to icon(:remove, class: "size-icon-inline"), group_events_path(group, params), class: "btn btn-ghost btn-circle btn-xs text-primary-content", aria: { label: "Remove #{name}" } %>
-    </div>
-  <% end %>
-</div>
+    <%= link_to group_events_path(group, filter.cleared), class: "inline-flex items-center gap-1 rounded-full border border-base-300 px-3 py-1 text-sm" do %>
+      <%= icon :remove, class: "size-icon-inline" %>Clear all
+    <% end %>
+  </div>
+<% end %>

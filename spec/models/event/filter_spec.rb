@@ -105,6 +105,26 @@ RSpec.describe Event::Filter do
     end
   end
 
+  describe "#tabs" do
+    # WHY: #460 AC9. Each tab keeps every filter on, so switching lists keeps them.
+    it "names each list with the parameters that open it with every filter still on" do
+      filter = described_class.new(member, scope: "past", categories: %w[ gig ])
+
+      expect(filter.tabs).to eq [
+        [ "Upcoming", nil, { category: %w[ gig ] } ],
+        [ "Past", "past", { scope: "past", category: %w[ gig ] } ],
+        [ "Canceled", "canceled", { scope: "canceled", category: %w[ gig ] } ]
+      ]
+    end
+  end
+
+  describe "#cleared" do
+    # WHY: #460 AC5. Clear all drops every filter and keeps the tab, since the tab is not a filter.
+    it "keeps the list and nothing else" do
+      expect(described_class.new(member, scope: "past", categories: %w[ gig ], answers: %w[ yes ]).cleared).to eq({ scope: "past" })
+    end
+  end
+
   describe "#chips" do
     it "names each filter in sheet order, with the parameters that remove it alone" do
       filter = described_class.new(member, scope: "past", categories: %w[ rehearsal gig ], answers: %w[ no ])

@@ -13,10 +13,9 @@ export default class extends Controller {
     this.countTarget.src = `${this.urlValue}?${picks}`
   }
 
-  // WHY: resets the sheet's inputs rather than submitting, because nothing is applied until the sheet is, and a native reset would return to what was applied rather than to Upcoming with no filters.
-  reset() {
+  // WHY: unticks the sheet's picks rather than submitting, because nothing is applied until the sheet is, and a native reset would return to what was applied rather than to no filters.
+  clear() {
     for (const input of this.element.querySelectorAll("input[type=checkbox]")) input.checked = false
-    this.element.querySelector("input[name=scope][value='']").checked = true
     this.refresh()
   }
 }

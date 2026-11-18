@@ -13,14 +13,10 @@
 
 <%# WHY: the dialog closes as the form submits, because applying picks the list already shows lands on this same URL, a refresh Turbo morphs, and a morph strips `open` without calling `close()`, which leaves the dialog modal and the page refusing clicks. %>
 <%= form_with url: group_events_path(group), method: :get, class: "flex flex-col gap-4", data: { controller: "events-filter", action: "change->events-filter#refresh submit->dialog#close", events_filter_url_value: (group_events_path(group) unless namespace) } do %>
-  <fieldset>
-    <legend class="<%= legend %>">Show</legend>
-    <div class="flex flex-wrap gap-2">
-      <% Event::Filter::SCOPES.each do |value, name| %>
-        <%= radio_button_tag :scope, value.to_s, filter.scope == value, id: id.("scope_#{value || "upcoming"}"), class: pick, aria: { label: name } %>
-      <% end %>
-    </div>
-  </fieldset>
+  <%# WHY: the tab rides along, so the count and the applied picks stay on the list that is open; the upcoming list is the URL with no `scope`, so it carries none. %>
+  <% if filter.scope %>
+    <%= hidden_field_tag :scope, filter.scope, id: id.(:scope) %>
+  <% end %>
 
   <fieldset>
     <legend class="<%= legend %>">Category</legend>
@@ -49,9 +45,9 @@
     </fieldset>
   <% end %>
 
-  <%# WHY: `flex-wrap-reverse` keeps Reset on the left while both fit, and puts "Show N events" on top, full width, once they no longer do. %>
+  <%# WHY: `flex-wrap-reverse` keeps "Clear all" on the left while both fit, and puts "Show N events" on top, full width, once they no longer do. %>
   <div class="flex flex-wrap-reverse gap-2">
-    <button type="button" class="btn grow" data-action="events-filter#reset"><%= icon :reset, class: "size-icon-control" %>Reset</button>
+    <button type="button" class="btn grow" data-action="events-filter#clear"><%= icon :remove, class: "size-icon-control" %>Clear all</button>
 
     <%# WHY: a count whose response carries no matching frame, such as a lapsed session redirecting to sign-in, is followed as a whole visit, as the join link's frame is, rather than replacing the button with "Content missing". %>
     <%= turbo_frame_tag id.(:count), class: "flex grow", data: { events_filter_target: "count", action: "turbo:frame-missing->dialog#visit" } do %>

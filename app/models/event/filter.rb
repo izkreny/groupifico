@@ -52,7 +52,13 @@ class Event::Filter
     events
   end
 
-  def scope_name = SCOPES.fetch(scope)
+  # WHY: each tab carries every filter on, so switching lists keeps them, the way GitLab's and Mastodon's tabs merge the current query.
+  def tabs
+    SCOPES.map { |value, name| [ name, value, without(scope: value) ] }
+  end
+
+  # WHY: the tab is not a filter, so clearing every filter keeps it.
+  def cleared = { scope: }.compact
 
   # WHY: each chip carries the parameters that leave every other filter on, so its ✕ applies what remains rather than knowing how to remove itself.
   def chips
@@ -62,7 +68,7 @@ class Event::Filter
   end
 
   private
-    def without(category: nil, answer: nil, managed: false)
+    def without(scope: self.scope, category: nil, answer: nil, managed: false)
       { scope:, category: categories - [ category ], answer: answers - [ answer ], managed: ("1" if managed? && !managed) }.compact_blank
     end
 end

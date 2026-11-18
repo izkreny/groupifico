@@ -75,9 +75,8 @@ module IconsHelper
     remove: "x-mark",
     return: "arrow-uturn-left",
 
-    # WHY: the legend draws none of the events filter's glyphs, so they are Heroicons' own: a funnel because the sheet narrows the list rather than configures it, and `reset` is `regenerate`'s glyph under its own meaning, because returning a sheet to its defaults mints nothing.
+    # WHY: the legend draws none of the events filter's glyphs, so they are Heroicons' own: a funnel because the sheet narrows the list rather than configures it.
     filter: "funnel",
-    reset: "arrow-path",
     apply: "check"
   }.freeze
 

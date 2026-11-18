@@ -131,18 +131,41 @@ RSpec.describe "The events list", type: :system do
     JS
   end
 
-  # WHY: #460 AC2 and AC6. The funnel and every chip open the same sheet.
+  # WHY: #460 AC2 and AC6. The funnel and every filter's chip open the same sheet.
   it "opens the filter sheet from the funnel and from a chip" do
     member = create(:member, :owner)
     sign_in_as member.user
 
-    visit group_events_path(member.group)
+    visit group_events_path(member.group, category: %w[ gig ])
     click_button "Filter events"
     expect(page).to have_css "dialog#event_filter_dialog[open]"
     within("#event_filter_dialog") { click_button "Close" }
-    click_button "Upcoming"
+    click_button "Gig"
 
     expect(page).to have_css "dialog#event_filter_dialog[open]"
+  end
+
+  # WHY: #460 AC12. The tabs and the chips paint differently in each theme, and an inactive tab is where daisyUI's own dimming fell short of 4.5:1.
+  it "passes axe on the list with its tabs and chips, in organic" do
+    member = create(:member, :owner)
+    next_event_for(member)
+    sign_in_as member.user
+    prefer_colour_scheme :light
+
+    visit group_events_path(member.group, category: %w[ rehearsal ])
+
+    expect(page).to have_link("Clear all").and be_accessible
+  end
+
+  it "passes axe on the list with its tabs and chips, in organic-dark" do
+    member = create(:member, :owner)
+    next_event_for(member)
+    sign_in_as member.user
+    prefer_colour_scheme :dark
+
+    visit group_events_path(member.group, category: %w[ rehearsal ])
+
+    expect(page).to have_link("Clear all").and be_accessible
   end
 
   # WHY: #460 AC12. The sheet is only in the accessibility tree while it is open, which only a browser can make it, and its picks paint differently in each theme.
@@ -202,34 +225,36 @@ RSpec.describe "The events list", type: :system do
     expect(page).to have_link("Remove Not answered").and have_no_link("Remove Rehearsal")
   end
 
-  # WHY: #460 AC8. Reset returns the sheet, not the list, to Upcoming with no filters, and the count follows.
-  it "returns the sheet to Upcoming with no filters on Reset" do
+  # WHY: #460 AC8. Clear all unticks the sheet's picks, not the list's, and the count follows; applying it leaves the tab as it is.
+  it "clears every pick in the sheet on Clear all, keeping the tab" do
     member = create(:member, :owner)
-    next_event_for(member)
+    past_event_for(member)
     sign_in_as member.user
 
-    visit group_events_path(member.group)
-    pick_in_sheet "Past", "Gig"
+    visit group_events_path(member.group, scope: "past")
+    pick_in_sheet "Rehearsal"
     expect(page).to have_button "Show 0 events"
-    click_button "Reset"
+    click_button "Clear all"
+    expect(find_by_id("event_filter_dialog").evaluate_script("this.querySelectorAll('input:checked').length")).to eq 0
+    click_button "Show 1 event"
 
-    expect(page).to have_button "Show 1 event"
-    expect(find_by_id("event_filter_dialog").evaluate_script("[ ...this.querySelectorAll('input:checked') ].map(input => input.getAttribute('aria-label'))")).to eq %w[ Upcoming ]
+    expect(page).to have_current_path(group_events_path(member.group, scope: "past")).and have_text("Spring concert")
   end
 
-  # WHY: #460 AC9. The sheet's picks travel in the URL and nowhere else, so the next plain visit opens on Upcoming with nothing on.
-  it "applies the sheet's picks through the URL alone, remembering nothing for the next visit" do
+  # WHY: #460 AC9. The tab and the sheet's picks travel in the URL and nowhere else, so picks applied on a tab stay on it and the next plain visit opens on Upcoming with nothing on.
+  it "applies the sheet's picks through the URL alone, on the open tab, remembering nothing for the next visit" do
     member = create(:member, :owner)
     past_event_for(member)
     sign_in_as member.user
 
     visit group_events_path(member.group)
-    pick_in_sheet "Past"
+    click_link "Past"
+    pick_in_sheet "Other"
     click_button "Show 1 event"
-    expect(page).to have_current_path(/scope=past/).and have_text("Spring concert")
+    expect(page).to have_current_path("#{group_events_path(member.group)}?scope=past&category%5B%5D=other").and have_text("Spring concert")
     visit group_events_path(member.group)
 
-    expect(page).to have_button("Upcoming").and have_no_text("Spring concert")
+    expect(page).to have_css("nav[aria-label='Event lists'] a[aria-current=page]", text: "Upcoming").and have_no_link("Remove Other")
   end
 
   # WHY: #460 AC7. Muted while nothing hides events from the list picked, primary once a filter does, and either way clearing 3:1 as an icon must.
