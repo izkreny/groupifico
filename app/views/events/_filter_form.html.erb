@@ -12,7 +12,7 @@
 </div>
 
 <%# WHY: the dialog closes as the form submits, because applying picks the list already shows lands on this same URL, a refresh Turbo morphs, and a morph strips `open` without calling `close()`, which leaves the dialog modal and the page refusing clicks. %>
-<%= form_with url: group_events_path(group), method: :get, class: "flex flex-col gap-4", data: { controller: "events-filter", action: "change->events-filter#refresh submit->dialog#close turbo:before-cache@document->events-filter#restore", events_filter_url_value: (group_events_path(group) unless namespace) } do %>
+<%= form_with url: group_events_path(group), method: :get, class: "flex flex-col gap-4", data: { controller: "events-filter", action: "change->events-filter#refresh submit->dialog#close", events_filter_url_value: (group_events_path(group) unless namespace) } do %>
   <%# WHY: the tab rides along, so the count and the applied picks stay on the list that is open; the upcoming list is the URL with no `scope`, so it carries none. %>
   <% if filter.scope %>
     <%= hidden_field_tag :scope, filter.scope, id: id.(:scope) %>

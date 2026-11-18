@@ -195,7 +195,7 @@ RSpec.describe "The events list", type: :system do
     expect(page).to have_css("dialog#event_filter_dialog[open]").and be_accessible
   end
 
-  # WHY: #460 AC4. Answering a row in place redraws the count without reconnecting the sheet, so the count Back restores has to be that one, not the count the page first loaded with.
+  # WHY: #460 AC4. Answering a row in place redraws the count, so the count Back shows has to be that one, not the count the page first loaded with.
   it "keeps a count redrawn by answering in place when the list is left and come back to" do
     member = create(:member, :owner)
     create(:registration, member:, status: :response_requested, event: next_event_for(member))
@@ -204,14 +204,28 @@ RSpec.describe "The events list", type: :system do
     visit group_events_path(member.group, answer: %w[ not_answered ])
     click_button "Maybe"
     expect(page).to have_text "No events match these filters."
-    click_link "New event"
-    expect(page).to have_current_path new_group_event_path(member.group)
-    go_back
+    leave_for_a_new_event_and_come_back(member.group)
 
     expect(page).to have_button "Show 0 events", visible: :all
   end
 
-  # WHY: #460 AC9. Back restores the list from Turbo's snapshot without a request, so picks left unapplied would come back in the sheet, disagreeing with the list and the chips under it.
+  # WHY: #460 AC4. A pick left in the closed sheet must not decide the count Back shows once answering in place has redrawn it.
+  it "keeps a count redrawn by answering in place with a pick left in the closed sheet" do
+    member = create(:member, :owner)
+    create(:registration, member:, status: :response_requested, event: next_event_for(member))
+    sign_in_as member.user
+
+    visit group_events_path(member.group, answer: %w[ not_answered ])
+    pick_in_sheet "Gig"
+    within("#event_filter_dialog") { click_button "Close" }
+    click_button "Maybe"
+    expect(page).to have_text "No events match these filters."
+    leave_for_a_new_event_and_come_back(member.group)
+
+    expect(page).to have_button "Show 0 events", visible: :all
+  end
+
+  # WHY: #460 AC9. Back shows the sheet as applied, so picks left unapplied never come back in it, disagreeing with the list and the chips under it.
   it "drops the sheet's unapplied picks when the list is left and come back to" do
     member = create(:member, :owner)
     next_event_for(member)
@@ -220,6 +234,7 @@ RSpec.describe "The events list", type: :system do
     visit group_events_path(member.group)
     pick_in_sheet "Gig"
     expect(page).to have_button "Show 0 events"
+    within("#event_filter_dialog") { click_button "Close" }
     leave_for_a_new_event_and_come_back(member.group)
     click_button "Filter events"
 
@@ -329,9 +344,8 @@ RSpec.describe "The events list", type: :system do
     expect([ clear.top == show.top && clear.left < show.left, narrow_show.top < narrow_clear.top ]).to eq [ true, true ]
   end
 
-  # A Turbo visit away and Back, so the list comes back from Turbo's snapshot rather than from a request.
+  # A Turbo visit away and Back, the way a member leaves the list and returns, where a `visit` would be a full page load.
   def leave_for_a_new_event_and_come_back(group)
-    within("#event_filter_dialog") { click_button "Close" }
     click_link "New event"
     expect(page).to have_current_path new_group_event_path(group)
     go_back

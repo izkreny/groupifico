@@ -1,8 +1,10 @@
 <% content_for :title, "Events" %>
+<%# WHY: never snapshotted, so Back asks the server for the list as it stands, the way Fizzy's card list does, rather than restoring the sheet's unapplied picks and a count that answering in place has since redrawn. %>
+<% turbo_exempts_page_from_cache %>
 
 <%# WHY: the list is always on and exactly one, so it is a tab, while every filter is optional and chosen in the funnel's sheet; the screen needs no list menu, its title is simply "Events", and the chips under the tabs say which filters are on. %>
 <div class="flex flex-col gap-3">
-  <div class="flex flex-col gap-3" data-controller="dialog" data-action="turbo:before-cache@document->dialog#close">
+  <div class="flex flex-col gap-3" data-controller="dialog">
     <div class="flex items-center justify-between gap-2.5">
       <h2 class="font-heading text-hero">Events</h2>
 
