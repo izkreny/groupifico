@@ -211,16 +211,27 @@ RSpec.describe "The events list", type: :system do
     expect(page).to have_button "Show 0 events", visible: :all
   end
 
-  # WHY: daisyUI's list draws its divider under every row but the last; like the roster, the list opens and closes on that same line.
-  it "draws the rows' divider above the first row and under the last" do
+  # WHY: option C on the owner's options page: a line across the tab row, and the open tab's underline in the primary colour sitting on it.
+  it "underlines the open tab in the primary colour on a line across the tab row" do
+    member = create(:member, :owner)
+    sign_in_as member.user
+
+    visit group_events_path(member.group)
+
+    tabs = page.evaluate_script(%((() => { const nav = document.querySelector("nav[aria-label='Event lists']"), tab = nav.querySelector("[aria-current=page]"), ink = document.createElement("span"); ink.className = "text-primary"; nav.append(ink); const line = getComputedStyle(nav), under = getComputedStyle(tab); return [ line.borderBottomWidth, under.borderBottomWidth, under.borderBottomColor == getComputedStyle(ink).color, tab.getBoundingClientRect().bottom == nav.getBoundingClientRect().bottom ] })()))
+    expect(tabs).to eq [ "1px", "2px", true, true ]
+  end
+
+  # WHY: daisyUI's list draws its divider under every row but the last; the list closes on that same line, and the tabs' line opens it.
+  it "draws the rows' divider under the last row too" do
     member = create(:member, :owner)
     2.times { next_event_for(member) }
     sign_in_as member.user
 
     visit group_events_path(member.group)
 
-    lines = page.evaluate_script(%(Array.from(document.querySelectorAll("#events .list-row")).flatMap((row, index) => { const line = (part, side) => { const s = getComputedStyle(row, part); return [ s.getPropertyValue(`border-${side}-width`), s.getPropertyValue(`border-${side}-style`), s.getPropertyValue(`border-${side}-color`), s.left, s.right ].join(" ") }; return index == 0 ? [ line("::before", "top"), line("::after", "bottom") ] : [ line("::after", "bottom") ] })))
-    expect([ lines.size, lines.uniq, lines.first ]).to match [ 3, [ lines.first ], start_with("1px solid") ]
+    lines = page.evaluate_script(%(Array.from(document.querySelectorAll("#events .list-row")).flatMap((row, index) => { const line = (part, side) => { const s = getComputedStyle(row, part); return [ s.getPropertyValue(`border-${side}-width`), s.getPropertyValue(`border-${side}-style`), s.getPropertyValue(`border-${side}-color`), s.left, s.right ].join(" ") }; return [ line("::after", "bottom") ] })))
+    expect([ lines.size, lines.uniq, lines.first ]).to match [ 2, [ lines.first ], start_with("1px solid") ]
   end
 
   # WHY: #460 AC9. Back shows the sheet as applied, so picks left unapplied never come back in it, disagreeing with the list and the chips under it.
