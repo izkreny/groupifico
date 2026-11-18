@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 
 // WHY: the count is a Turbo Frame pointed at the events list's own URL carrying the sheet's picks, so it counts with the very query applying the sheet would run.
 export default class extends Controller {
-  static targets = ["count"]
+  static targets = ["count", "pick"]
   static values = { url: String }
 
   connect() {
@@ -26,7 +26,7 @@ export default class extends Controller {
 
   // WHY: unticks the sheet's picks rather than submitting, because nothing is applied until the sheet is, and a native reset would return to what was applied rather than to no filters.
   clear() {
-    for (const input of this.element.querySelectorAll("input[type=checkbox]")) input.checked = false
+    for (const pick of this.pickTargets) pick.checked = false
     this.refresh()
   }
 }

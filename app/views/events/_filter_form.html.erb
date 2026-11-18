@@ -22,7 +22,7 @@
     <legend class="<%= legend %>">Category</legend>
     <div class="flex flex-wrap gap-2">
       <% Event::Filter::CATEGORIES.each do |value, name| %>
-        <%= check_box_tag "category[]", value, filter.categories.include?(value), id: id.("category_#{value}"), class: pick, aria: { label: name } %>
+        <%= check_box_tag "category[]", value, filter.categories.include?(value), id: id.("category_#{value}"), class: pick, data: { events_filter_target: "pick" }, aria: { label: name } %>
       <% end %>
     </div>
   </fieldset>
@@ -31,7 +31,7 @@
     <legend class="<%= legend %>">My answer</legend>
     <div class="flex flex-wrap gap-2">
       <% Event::Filter::ANSWERS.each do |value, name| %>
-        <%= check_box_tag "answer[]", value, filter.answers.include?(value), id: id.("answer_#{value}"), class: pick, aria: { label: name } %>
+        <%= check_box_tag "answer[]", value, filter.answers.include?(value), id: id.("answer_#{value}"), class: pick, data: { events_filter_target: "pick" }, aria: { label: name } %>
       <% end %>
     </div>
   </fieldset>
@@ -40,7 +40,7 @@
     <fieldset>
       <legend class="<%= legend %>">Miscellaneous</legend>
       <div class="flex flex-wrap gap-2">
-        <%= check_box_tag :managed, "1", filter.managed?, id: id.(:managed), class: pick, aria: { label: Event::Filter::MISCELLANEOUS["managed"] } %>
+        <%= check_box_tag :managed, "1", filter.managed?, id: id.(:managed), class: pick, data: { events_filter_target: "pick" }, aria: { label: Event::Filter::MISCELLANEOUS["managed"] } %>
       </div>
     </fieldset>
   <% end %>
