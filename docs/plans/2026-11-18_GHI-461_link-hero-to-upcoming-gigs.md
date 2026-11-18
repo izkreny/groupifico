@@ -33,4 +33,4 @@ The specs prove where each link points, which card carries it and that a press r
 
 ## Settled
 
-None yet.
+- **Q1, the empty gig slot's link.** Should the empty gig slot carry a link to the events list? Settled by the owner in the session, 2026-11-18: no. The "No gig coming up" slot stays as #459 shipped it, and AC4 is struck from the issue.
