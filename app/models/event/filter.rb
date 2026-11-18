@@ -8,7 +8,7 @@ class Event::Filter
   MISCELLANEOUS = { "managed" => "Events I manage" }.freeze
 
   # WHY: "Not answered" is a place on the event's list with no answer yet, so an event the reader is not listed on has no answer of theirs to match.
-  STATUSES = { "yes" => %w[ yes ], "maybe" => %w[ maybe ], "no" => %w[ no ], "not_answered" => %w[ reserved response_requested ] }.freeze
+  STATUSES = Registration::ANSWERS.index_with { [ it ] }.merge("not_answered" => Registration.statuses.keys - Registration::ANSWERS).freeze
 
   # WHY: the URL is the only place a filter lives, so a link shows exactly what it names and a plain visit opens on Upcoming with nothing on, with no remembered state to surprise anyone.
   def self.from(member, params)
