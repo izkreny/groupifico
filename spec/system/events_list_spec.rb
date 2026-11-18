@@ -260,8 +260,8 @@ RSpec.describe "The events list", type: :system do
     expect(page).to have_current_path(group_events_path(member.group, scope: "past")).and have_text("Spring concert")
   end
 
-  # WHY: #460 AC9. The tab and the sheet's picks travel in the URL and nowhere else, so picks applied on a tab stay on it and the next plain visit opens on Upcoming with nothing on.
-  it "applies the sheet's picks through the URL alone, on the open tab, remembering nothing for the next visit" do
+  # WHY: #460 AC9. The tab and the sheet's picks travel in the URL, so picks applied on a tab stay on it; that a plain visit then opens on Upcoming with nothing on is the request spec's.
+  it "applies the sheet's picks through the URL, on the open tab" do
     member = create(:member, :owner)
     past_event_for(member)
     sign_in_as member.user
@@ -270,10 +270,8 @@ RSpec.describe "The events list", type: :system do
     click_link "Past"
     pick_in_sheet "Other"
     click_button "Show 1 event"
-    expect(page).to have_current_path("#{group_events_path(member.group)}?scope=past&category%5B%5D=other").and have_text("Spring concert")
-    visit group_events_path(member.group)
 
-    expect(page).to have_css("nav[aria-label='Event lists'] a[aria-current=page]", text: "Upcoming").and have_no_link("Remove Other")
+    expect(page).to have_current_path("#{group_events_path(member.group)}?scope=past&category%5B%5D=other").and have_text("Spring concert")
   end
 
   # WHY: #460 AC7. Muted while nothing hides events from the list picked, primary once a filter does, and either way clearing 3:1 as an icon must.
