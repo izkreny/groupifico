@@ -50,7 +50,7 @@ RSpec.describe "Events", type: :request do
         funnel = page.at_css("button[aria-label='Filter events']")
         tabs = page.css("nav[aria-label='Event lists'] a")
         expect([ page.at_css("main h2")&.text, funnel.text.strip, funnel.at_css("svg").present?, page.at_css("details#scope").present? ]).to eq [ "Events", "", true, false ]
-        expect([ tabs.map(&:text), tabs.map { it["aria-current"] } ]).to eq [ %w[ Upcoming Past Canceled ], [ "page", nil, nil ] ]
+        expect([ tabs.map(&:text), tabs.map { it["aria-current"] } ]).to eq [ [ "Upcoming (0 events)", "Past (0 events)", "Canceled (0 events)" ], [ "page", nil, nil ] ]
       end
 
       # WHY: #460 AC2. One sheet, headed and closable like the join link's, holds every filter, and the list stays on its tab.
@@ -118,6 +118,20 @@ RSpec.describe "Events", type: :request do
         get group_events_path(member.group, scope: "past")
 
         expect(Nokogiri::HTML(response.body).at_xpath("//a[normalize-space()='Clear all']")).to be_nil
+      end
+
+      # WHY: #484 AC12 and AC13. Each tab counts what it would list with every filter on, zero included, and the count's noun is written for a screen reader alone, so the tab reads "Upcoming (1)" and is named "Upcoming (1 event)".
+      it "names each tab with how many events it would list under the filters on" do
+        member = create(:member, :active)
+        confirmed_event(member, days: 3, name: "Advent concert", category: :gig)
+        confirmed_event(member, days: 4, name: "Section rehearsal", category: :rehearsal)
+        confirmed_event(member, days: -2, name: "Summer gig", category: :gig)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group, category: %w[ gig ])
+
+        tabs = Nokogiri::HTML(response.body).css("nav[aria-label='Event lists'] a")
+        expect(tabs.map { [ it.text, it.at_css(".sr-only")&.text ] }).to eq [ [ "Upcoming (1 event)", " event" ], [ "Past (1 event)", " event" ], [ "Canceled (0 events)", " events" ] ]
       end
 
       # WHY: #460 AC9. Each tab is a link carrying every filter on, so switching lists keeps them, and opened from Past so Upcoming's link is seen to drop the open list.
@@ -421,7 +435,7 @@ RSpec.describe "Events", type: :request do
 
         get group_events_path(member.group, scope: "sideways")
 
-        expect(Nokogiri::HTML(response.body).at_css("nav[aria-label='Event lists'] a[aria-current=page]").text).to eq "Upcoming"
+        expect(Nokogiri::HTML(response.body).at_css("nav[aria-label='Event lists'] a[aria-current=page]").text).to eq "Upcoming (0 events)"
         expect(response.body).not_to include "Summer gig"
       end
     end
@@ -450,7 +464,7 @@ RSpec.describe "Events", type: :request do
         get group_events_path(member.group)
 
         page = Nokogiri::HTML(response.body)
-        expect([ response.body.include?("Section rehearsal"), page.at_css("nav[aria-label='Event lists'] a[aria-current=page]").text, page.css("a[aria-label^='Remove ']").size ]).to eq [ true, "Upcoming", 0 ]
+        expect([ response.body.include?("Section rehearsal"), page.at_css("nav[aria-label='Event lists'] a[aria-current=page]").text, page.css("a[aria-label^='Remove ']").size ]).to eq [ true, "Upcoming (2 events)", 0 ]
       end
 
       # WHY: #460 AC11. A category the sheet does not offer narrows nothing.

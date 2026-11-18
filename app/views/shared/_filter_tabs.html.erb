@@ -1,8 +1,10 @@
-<%# locals: (group:, filter:) %>
+<%# locals: (group:, filter:, counts:) %>
 <%# WHY: links marked `aria-current` rather than ARIA tabs, because each tab loads its own URL. An inactive tab takes the muted text token, because daisyUI's own dimming leaves it at 3.1:1. Drawn as option C on the owner's options page: equal tabs on a line across the row, the open one underlined in the primary colour on that line, which also opens the list below. %>
 <nav class="tabs border-b border-base-300" aria-label="<%= filter.noun.capitalize %> lists">
   <% filter.tabs.each do |name, value, params| %>
     <% current = value == filter.tab %>
-    <%= link_to name, polymorphic_path([ group, filter.model ], params), class: [ "tab flex-1", current ? "tab-active top-px border-b-2 border-primary font-semibold" : "text-muted" ], aria: { current: ("page" if current) } %>
+    <% count = counts.fetch(value, 0) %>
+    <%# WHY: the count names what the tab would list with every filter on, and its noun is for a screen reader alone, so the tab reads "Active (19)" and is named "Active (19 members)", its visible label inside its name, as Primer's UnderlineNav counters are. %>
+    <%= link_to polymorphic_path([ group, filter.model ], params), class: [ "tab flex-1", current ? "tab-active top-px border-b-2 border-primary font-semibold" : "text-muted" ], aria: { current: ("page" if current) } do %><%= name %> (<%= count %><span class="sr-only"> <%= filter.noun.pluralize(count) %></span>)<% end %>
   <% end %>
 </nav>

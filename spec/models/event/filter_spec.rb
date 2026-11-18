@@ -100,6 +100,17 @@ RSpec.describe Event::Filter do
     end
   end
 
+  describe "#counts" do
+    # WHY: #484 AC12. Each tab counts what it would list with every filter on, and a list with nothing on it counts zero rather than dropping out.
+    it "counts each list under the filters that are on, a list with none of them at zero" do
+      upcoming(name: "Advent concert", category: :gig)
+      upcoming(name: "Section rehearsal", category: :rehearsal)
+      create(:event, :from_the_past, group: member.group, creator: member, name: "Autumn fair", category: :gig)
+
+      expect(described_class.new(member, categories: %w[ gig ]).counts(member.group.events)).to eq({ nil => 1, "past" => 1, "canceled" => 0 })
+    end
+  end
+
   describe "#narrowed?" do
     # WHY: #460 AC7. The funnel says whether anything hides events from the list picked, and the list itself never does.
     it "is false for a list alone and true once a filter is on" do

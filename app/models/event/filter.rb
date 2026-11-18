@@ -39,18 +39,12 @@ class Event::Filter
     @managed_offered
   end
 
-  # WHY: ordered here because the list had no order of its own: the rows were whatever the database happened to return, which is the same list in a different sequence on a different day.
-  def apply(events)
-    events = case scope
-    when "past" then events.past.order(starts_at: :desc)
-    when "canceled" then events.canceled.order(starts_at: :desc)
-    else events.current_and_upcoming.order(:starts_at)
-    end
+  def apply(events) = on_tab(narrow(events), scope)
 
-    events = events.where(category: categories) if categories.any?
-    events = events.where(manager: member) if managed?
-    events = events.where(id: member.registrations.where(status: answers.flat_map { STATUSES[it] }).select(:event_id)) if answers.any?
-    events
+  # WHY: every filter but the tab's own, as GitLab's issue tabs count, because the list carries no result line above its rows, so a total that ignored a chip would contradict the rows beneath it.
+  def counts(events)
+    narrowed = narrow(events)
+    TABS.keys.index_with { on_tab(narrowed, it).count }
   end
 
   # WHY: each chip carries the parameters that leave every other filter on, so its ✕ applies what remains rather than knowing how to remove itself.
@@ -61,6 +55,22 @@ class Event::Filter
   end
 
   private
+    # WHY: ordered here because the list had no order of its own: the rows were whatever the database happened to return, which is the same list in a different sequence on a different day.
+    def on_tab(events, tab)
+      case tab
+      when "past" then events.past.order(starts_at: :desc)
+      when "canceled" then events.canceled.order(starts_at: :desc)
+      else events.current_and_upcoming.order(:starts_at)
+      end
+    end
+
+    def narrow(events)
+      events = events.where(category: categories) if categories.any?
+      events = events.where(manager: member) if managed?
+      events = events.where(id: member.registrations.where(status: answers.flat_map { STATUSES[it] }).select(:event_id)) if answers.any?
+      events
+    end
+
     def params_with(scope: self.scope, categories: self.categories, answers: self.answers, managed: managed?)
       { scope:, category: categories, answer: answers, managed: ("1" if managed) }.compact_blank
     end
