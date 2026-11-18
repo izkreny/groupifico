@@ -131,7 +131,7 @@ RSpec.describe "The group home", type: :system do
     expect([ duplicated, page.current_path ]).to eq [ duplicate_group_event_path(member.group, event), edit_group_event_path(member.group, event) ]
   end
 
-  # WHY: #461 AC1 and AC2. The gig card's name is stretched over it like the rehearsal card's, so pressing the link proves it sits above that overlay and lands on the list filtered to gigs rather than on the gig.
+  # WHY: #461 AC1 and AC2. The gig card's name is stretched over it like the rehearsal card's, so pressing the link proves it sits above that overlay and lands on the list filtered to gigs rather than on the gig; what that list shows is `spec/requests/events_spec.rb`'s.
   it "lands on the events list filtered to gigs from the gig card's link" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
     gig = next_gig_for(member)
@@ -142,7 +142,7 @@ RSpec.describe "The group home", type: :system do
     expect(page).to be_accessible
     within(id: ActionView::RecordIdentifier.dom_id(gig, :next_up)) { click_link "See all upcoming gigs" }
 
-    expect([ page.has_link?("Remove Gig"), page.current_url.delete_prefix(page.server_url) ]).to eq [ true, group_events_path(member.group, category: %w[ gig ]) ]
+    expect(page).to have_current_path group_events_path(member.group, category: %w[ gig ])
   end
 
   # WHY: #473 AC3. A press lands on whatever is topmost under it, so every control on the card, the map link and the Who's coming line included, has to be the topmost element at its own centre rather than the name's overlay.
