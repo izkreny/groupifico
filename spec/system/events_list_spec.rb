@@ -195,6 +195,22 @@ RSpec.describe "The events list", type: :system do
     expect(page).to have_css("dialog#event_filter_dialog[open]").and be_accessible
   end
 
+  # WHY: #460 AC4. Answering a row in place redraws the count without reconnecting the sheet, so the count Back restores has to be that one, not the count the page first loaded with.
+  it "keeps a count redrawn by answering in place when the list is left and come back to" do
+    member = create(:member, :owner)
+    create(:registration, member:, status: :response_requested, event: next_event_for(member))
+    sign_in_as member.user
+
+    visit group_events_path(member.group, answer: %w[ not_answered ])
+    click_button "Maybe"
+    expect(page).to have_text "No events match these filters."
+    click_link "New event"
+    expect(page).to have_current_path new_group_event_path(member.group)
+    go_back
+
+    expect(page).to have_button "Show 0 events", visible: :all
+  end
+
   # WHY: #460 AC9. Back restores the list from Turbo's snapshot without a request, so picks left unapplied would come back in the sheet, disagreeing with the list and the chips under it.
   it "drops the sheet's unapplied picks when the list is left and come back to" do
     member = create(:member, :owner)
