@@ -324,7 +324,32 @@ RSpec.describe "Groups", type: :request do
         expect(Nokogiri::HTML(response.body).css("[id^=next_up] a[aria-label]").map { it["aria-label"] }).to eq [ "Edit Ours" ]
       end
 
-      it "links the card's responses to the event with its roster open" do
+      # WHY: #473 AC4. The card opens its event through the name's link stretched over it, so a screen reader meets that one link by the event's name rather than the whole card read out as a link.
+      it "links the card to its event through the event's name alone" do
+        owner = create(:member, :owner)
+        event = create(:event, :rehearsal, group: owner.group, name: "Tuesday rehearsal", status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        sign_in_as(owner.user)
+
+        get group_path(owner.group)
+
+        card = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(event, :next_up)}")
+        expect([ card.ancestors("a").size, card.css("a[href='#{group_event_path(owner.group, event)}']").map { it.text.squish } ]).to eq [ 0, [ "Tuesday rehearsal" ] ]
+      end
+
+      # WHY: #473 AC6. The whole address line is the one map link, so its icon sits inside it as the Who's coming line's tags sit inside the roster link.
+      it "links the card's whole address line, its icon included, to the map in a new tab" do
+        owner = create(:member, :owner)
+        event = create(:event, :rehearsal, group: owner.group, status: :confirmed, address: create(:address, name: "Community Hall"), starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        sign_in_as(owner.user)
+
+        get group_path(owner.group)
+
+        links = Nokogiri::HTML(response.body).css("##{ActionView::RecordIdentifier.dom_id(event, :next_up)} a[target='_blank']")
+        expect(links.map { [ it.text.squish, it.css("svg").size ] }).to eq [ [ "Community Hall", 1 ] ]
+      end
+
+      # WHY: #473 AC2 and AC4. The whole line is one roster link, so a screen reader meets its tags inside that link rather than beside it.
+      it "links the card's whole Who’s coming line, tags included, to the event with its roster open" do
         owner = create(:member, :owner)
         event = confirmed_rehearsal_spanning(owner, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
         create(:registration, event:, member: owner, status: :yes)
@@ -332,8 +357,8 @@ RSpec.describe "Groups", type: :request do
 
         get group_path(owner.group)
 
-        link = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(event, :next_up)} a[href='#{group_event_path(owner.group, event, responses: "show")}']")
-        expect(link&.text&.squish).to eq "Who’s coming?"
+        links = Nokogiri::HTML(response.body).css("##{ActionView::RecordIdentifier.dom_id(event, :next_up)} a[href='#{group_event_path(owner.group, event, responses: "show")}']")
+        expect(links.map { [ it.text.squish.start_with?("Who’s coming?"), it.css("[aria-label]").map { |tag| tag["aria-label"] } ] }).to eq [ [ true, [ "yes", "maybe", "no", "no reply", "reserved" ] ] ]
       end
 
       it "draws the answer and the counts for a plain member who has answered" do

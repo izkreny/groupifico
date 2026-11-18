@@ -1031,6 +1031,20 @@ RSpec.describe "Events", type: :request do
         end
       end
 
+      # WHY: #473 AC5. Only the next-up card's line links to the roster; here the row is the roster's own toggle, so a link inside it would be a control nested in a control.
+      it "draws the Who’s coming row with no link in it" do
+        travel_to Time.zone.parse("2026-09-01 12:00") do
+          member = create(:member, :active)
+          event = detailed_event(member, reader_status: :response_requested)
+          sign_in_as(member.user)
+
+          get group_event_path(event.group, event)
+
+          summary = Nokogiri::HTML(response.body).at_css("details.collapse summary")
+          expect([ summary.at_css("[aria-label='yes']"), summary.css("a") ]).to match [ be_present, be_empty ]
+        end
+      end
+
       it "draws the five count tags and the reader's own question" do
         travel_to Time.zone.parse("2026-09-01 12:00") do
           member = create(:member, :active)

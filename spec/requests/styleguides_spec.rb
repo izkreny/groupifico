@@ -51,6 +51,17 @@ RSpec.describe "The styleguide", type: :request do
         expect(html.css("[aria-label='no reply']")).not_to be_empty
       end
 
+      # WHY: #473 AC5. The counts sample draws the partial without `roster_link:`, so its line stays the plain fact line the hero card's link is built on.
+      it "draws the counts sample's Who’s coming line with no link in it" do
+        plant_styleguide_group(manager: "Ana Horvat", waiting: "Ivan Kovačević", said_yes: "Marija Babić")
+        sign_in_as(create(:user))
+
+        get "/styleguide"
+
+        sample = Nokogiri::HTML(response.body).at_css("section[data-title='Counts'] .collapse-content")
+        expect([ sample.text.squish.start_with?("Who’s coming?"), sample.css("a") ]).to match [ true, be_empty ]
+      end
+
       # The owner may answer for every member.
       it "draws the roster's controls on every row for the owner" do
         plant_styleguide_group(manager: "Ana Horvat", waiting: "Ivan Kovačević", said_yes: "Marija Babić")
