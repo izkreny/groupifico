@@ -33,7 +33,8 @@
   <% reader = Current.member %>
   <div id="events">
     <% if @events.any? %>
-      <ul class="list">
+      <%# WHY: daisyUI's list draws its divider under every row but the last; like the roster, the list opens and closes on that same line, drawn as daisyUI draws it, in oklab and inset by the box radius, so it is the same line rather than a near one. %>
+      <ul class="list [&>.list-row:first-child]:before:absolute [&>.list-row:first-child]:before:top-0 [&>.list-row:first-child]:before:inset-x-(--radius-box) [&>.list-row:first-child]:before:border-t-(length:--border) [&>.list-row:first-child]:before:border-[color:color-mix(in_oklab,var(--color-base-content)_5%,transparent)] [&>.list-row:last-child]:after:absolute [&>.list-row:last-child]:after:bottom-0 [&>.list-row:last-child]:after:inset-x-(--radius-box) [&>.list-row:last-child]:after:border-b-(length:--border) [&>.list-row:last-child]:after:border-[color:color-mix(in_oklab,var(--color-base-content)_5%,transparent)]">
         <% @events.each do |event| %>
           <%= render "events/row", event: event, registration: event.registration_for(reader) %>
         <% end %>
