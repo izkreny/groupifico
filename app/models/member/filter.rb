@@ -6,7 +6,7 @@ class Member::Filter
   # WHY: `nil` is the active list because that list is the screen's own URL, with no `status`.
   TABS = { nil => "Active", "paused" => "Paused", "pending" => "Pending", "inactive" => "Inactive" }.freeze
   # WHY: who has left and who is waiting to be let in are the `MemberPolicy#oversee?` columns' reads, as the inactive toggle and the pending rows were.
-  OVERSEEN_TABS = %w[ pending inactive ].freeze
+  OVERSEER_TABS = %w[ pending inactive ].freeze
   ROLES = Role::NAMES.index_with(&:humanize).freeze
   MISCELLANEOUS = { "manages" => "Manages events", "not_signed_in" => "Not signed in yet" }.freeze
 
@@ -35,7 +35,7 @@ class Member::Filter
 
   def not_signed_in? = @not_signed_in
 
-  def offered_tabs = oversees? ? TABS : TABS.except(*OVERSEEN_TABS)
+  def offered_tabs = oversees? ? TABS : TABS.except(*OVERSEER_TABS)
 
   def apply(members) = narrow(members).where(status: status || "active")
 
