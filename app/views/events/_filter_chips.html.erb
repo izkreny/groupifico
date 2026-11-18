@@ -1,5 +1,5 @@
 <%# locals: (group:, filter:) %>
-<%# WHY: each ✕ is a link to the list with everything else still on, since the URL is the only place a filter lives, and "Clear all" is drawn apart from the primary chips so it does not read as one more filter. %>
+<%# WHY: each ✕ is a link to the list with everything else still on, since the URL is the only place a filter lives, and "Clear all" is a plain text link with no ✕, so it reads neither as one more filter nor as one chip's remove. %>
 <% if filter.narrowed? %>
   <div class="flex flex-wrap gap-2">
     <% filter.chips.each do |name, params| %>
@@ -9,8 +9,6 @@
       </div>
     <% end %>
 
-    <%= link_to group_events_path(group, filter.cleared), class: "inline-flex items-center gap-1 rounded-full border border-base-300 px-3 py-1 text-sm" do %>
-      <%= icon :remove, class: "size-icon-inline" %>Clear all
-    <% end %>
+    <%= link_to "Clear all", group_events_path(group, filter.cleared), class: "link self-center text-sm" %>
   </div>
 <% end %>

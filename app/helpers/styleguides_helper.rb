@@ -50,7 +50,7 @@ module StyleguidesHelper
     sign_out: "Signing out: Sign out in the Me menu.",
     feedback: "Telling us what broke or what you would like: Send feedback in the Me menu.",
     send: "Sending feedback: Send on the feedback form.",
-    remove: "Taking something off: the x on a picked screenshot's thumbnail on the feedback form, and on a filter's chip and Clear all on the events list and its filter sheet.",
+    remove: "Taking something off: the x on a picked screenshot's thumbnail on the feedback form, and on a filter's chip on the events list, and on Clear all in its filter sheet.",
     return: "Going back to the page the feedback was sent from: Back to where you were on the thank-you page.",
     filter: "Choosing what the events list shows: the funnel beside the + on the events list.",
     apply: "Applying the events filter sheet's picks: Show N events on the sheet."
