@@ -16,23 +16,23 @@ RSpec.describe Event::Filter do
     it "reads the list and filters from the URL's parameters" do
       filter = described_class.from(member, ActionController::Parameters.new(scope: "past", category: %w[ rehearsal gig ], answer: %w[ not_answered ]))
 
-      expect([ filter.list, filter.categories, filter.answers ]).to eq [ "past", %w[ gig rehearsal ], %w[ not_answered ] ]
+      expect([ filter.scope, filter.categories, filter.answers ]).to eq [ "past", %w[ gig rehearsal ], %w[ not_answered ] ]
     end
 
     # WHY: #460 AC9. A URL with no filter in it is Upcoming with nothing on.
     it "is Upcoming with no filters when the URL carries none" do
       filter = described_class.from(member, ActionController::Parameters.new(group_id: member.group_id))
 
-      expect([ filter.list, filter.categories, filter.answers, filter.managed?, filter.narrowed? ]).to eq [ nil, [], [], false, false ]
+      expect([ filter.scope, filter.categories, filter.answers, filter.managed?, filter.narrowed? ]).to eq [ nil, [], [], false, false ]
     end
   end
 
   describe "values the list does not offer" do
     # WHY: #460 AC11. A value outside the sheet's choices is ignored, so it narrows nothing and can never be written back.
     it "drops a list, a category and an answer the sheet does not offer" do
-      filter = described_class.new(member, list: "archived", categories: %w[ gig party ], answers: %w[ yes perhaps ])
+      filter = described_class.new(member, scope: "archived", categories: %w[ gig party ], answers: %w[ yes perhaps ])
 
-      expect([ filter.list, filter.categories, filter.answers ]).to eq [ nil, %w[ gig ], %w[ yes ] ]
+      expect([ filter.scope, filter.categories, filter.answers ]).to eq [ nil, %w[ gig ], %w[ yes ] ]
     end
 
     # WHY: #460 AC3 and AC11. "Only events I manage" is offered only to someone who manages one of the group's events, so anyone else's is dropped.
@@ -87,14 +87,14 @@ RSpec.describe Event::Filter do
       create(:event, :from_the_past, group: member.group, creator: member, name: "Autumn fair", category: :gig)
       create(:event, :from_the_past, group: member.group, creator: member, name: "Full rehearsal", category: :rehearsal)
 
-      expect(names(described_class.new(member, list: "past", categories: %w[ gig ]))).to eq [ "Autumn fair" ]
+      expect(names(described_class.new(member, scope: "past", categories: %w[ gig ]))).to eq [ "Autumn fair" ]
     end
   end
 
   describe "#narrowed?" do
     # WHY: #460 AC7. The funnel says whether anything hides events from the list picked, and the list itself never does.
     it "is false for a list alone and true once a filter is on" do
-      expect([ described_class.new(member, list: "past").narrowed?, described_class.new(member, list: "past", answers: %w[ maybe ]).narrowed? ]).to eq [ false, true ]
+      expect([ described_class.new(member, scope: "past").narrowed?, described_class.new(member, scope: "past", answers: %w[ maybe ]).narrowed? ]).to eq [ false, true ]
     end
 
     # WHY: #460 AC7 names the managed filter as one of the three that turn the funnel primary.
@@ -107,7 +107,7 @@ RSpec.describe Event::Filter do
 
   describe "#chips" do
     it "names each filter in sheet order, with the parameters that remove it alone" do
-      filter = described_class.new(member, list: "past", categories: %w[ rehearsal gig ], answers: %w[ no ])
+      filter = described_class.new(member, scope: "past", categories: %w[ rehearsal gig ], answers: %w[ no ])
 
       expect(filter.chips).to eq [
         [ "Gig", { scope: "past", category: %w[ rehearsal ], answer: %w[ no ] } ],

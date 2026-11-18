@@ -16,8 +16,8 @@
   <fieldset>
     <legend class="<%= legend %>">Show</legend>
     <div class="flex flex-wrap gap-2">
-      <% Event::Filter::LISTS.each do |value, name| %>
-        <%= radio_button_tag :scope, value.to_s, filter.list == value, id: id.("scope_#{value || "upcoming"}"), class: pick, aria: { label: name } %>
+      <% Event::Filter::SCOPES.each do |value, name| %>
+        <%= radio_button_tag :scope, value.to_s, filter.scope == value, id: id.("scope_#{value || "upcoming"}"), class: pick, aria: { label: name } %>
       <% end %>
     </div>
   </fieldset>
