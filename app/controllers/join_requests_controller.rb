@@ -9,7 +9,11 @@ class JoinRequestsController < ApplicationController
   before_action :set_group
 
   def new
-    @user = User.new
+    if authenticated?
+      @member = @group.members.find_by(user: Current.user)
+    else
+      @user = User.new
+    end
   end
 
   # WHY: found before it is created, so a second press, a double-click or a page left open in another tab leaves a membership that already exists as it is, whatever its status, rather than answering a uniqueness error or bringing back a member who left; `status: :pending` is stated because a member is created `active` by default.

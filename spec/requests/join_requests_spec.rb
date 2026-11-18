@@ -79,7 +79,72 @@ RSpec.describe "JoinRequests", type: :request do
         expect(page_text(response.body)).to include("Riverside Choir")
       end
 
-      # WHY: a signed-in visitor has nothing to ask a sign-in link for; what they see instead is #447's.
+      # WHY: #447 AC1, opening the page is a GET that writes nothing, so a link previewed or opened by accident adds nobody.
+      it "adds nobody by opening the page" do
+        sign_in_as create(:user)
+        token = JoinLink.mint(create(:group))
+
+        expect { get new_join_request_path(token:) }.not_to change(Member, :count)
+      end
+
+      # WHY: #447 AC1, the button carries the link's token so pressing it resolves the same link.
+      it "offers a visitor with no membership a button asking to join, posting the link's token" do
+        sign_in_as create(:user)
+        token = JoinLink.mint(create(:group, name: "Riverside Choir"))
+
+        get new_join_request_path(token:)
+
+        expect(page_text(response.body)).to include("Ask to join Riverside Choir")
+        expect(response.body).to include(%(action="#{join_request_path}"))
+        expect(response.body).to match(/<input type="hidden" name="token" value="#{token}"/)
+      end
+
+      # WHY: #447 AC4, one example per status, each answered with what it means instead of the button.
+      it "tells an active member they are already in the group, offering no button" do
+        member = create(:member, :active)
+        sign_in_as member.user
+        token = JoinLink.mint(member.group)
+
+        get new_join_request_path(token:)
+
+        expect(page_text(response.body)).to include("You are already in this group.")
+        expect(response.body).not_to include(%(action="#{join_request_path}"))
+      end
+
+      it "tells a paused member they are already in the group, offering no button" do
+        member = create(:member, :paused)
+        sign_in_as member.user
+        token = JoinLink.mint(member.group)
+
+        get new_join_request_path(token:)
+
+        expect(page_text(response.body)).to include("You are already in this group.")
+        expect(response.body).not_to include(%(action="#{join_request_path}"))
+      end
+
+      it "tells a pending member their request is waiting for approval, offering no button" do
+        member = create(:member, :pending)
+        sign_in_as member.user
+        token = JoinLink.mint(member.group)
+
+        get new_join_request_path(token:)
+
+        expect(page_text(response.body)).to include("Your request to join is waiting for approval.")
+        expect(response.body).not_to include(%(action="#{join_request_path}"))
+      end
+
+      it "tells a member who left that only an owner or administrator can bring them back, offering no button" do
+        member = create(:member, :inactive)
+        sign_in_as member.user
+        token = JoinLink.mint(member.group)
+
+        get new_join_request_path(token:)
+
+        expect(page_text(response.body)).to include("You left this group. Only an owner or administrator can bring you back.")
+        expect(response.body).not_to include(%(action="#{join_request_path}"))
+      end
+
+      # WHY: a signed-in visitor has nothing to ask a sign-in link for.
       it "offers no email form" do
         sign_in_as create(:user)
         token = JoinLink.mint(create(:group))
