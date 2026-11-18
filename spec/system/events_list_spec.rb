@@ -2,7 +2,7 @@ require "rails_helper"
 
 # Only what a browser adds. Which rows a given reader sees, and what each carries, is `spec/requests/events_spec.rb`'s assertion, and per the duplication rule in `.agents/testing.md` it does not come back here. The card the group's next event gets is `spec/system/group_home_spec.rb`'s.
 #
-# What no request spec can reach is how a row is laid out, whether the list menu paints, and where pressing a row's answer or a menu link lands.
+# What no request spec can reach is how a row is laid out, where pressing a row's answer lands, and the filter sheet: its count following the picks, Clear all, the chips' ✕ and how its buttons stack.
 RSpec.describe "The events list", type: :system do
   # A row puts its question in place, so answering it turns the question into the answer's icon at the row's end without leaving the list.
   it "answers a row in place, its question replaced by the answer's icon" do
@@ -18,51 +18,6 @@ RSpec.describe "The events list", type: :system do
     expect(page).to have_css "##{ActionView::RecordIdentifier.dom_id(event)} > svg[aria-label='you said maybe']"
     expect(page).to have_current_path group_events_path(member.group)
     expect(page).to have_no_css "##{ActionView::RecordIdentifier.dom_id(event)} form"
-  end
-
-  # The list menu is this screen's title as well as its filter, so whether it paints as a surface of
-  # its own is what tells a pill from one whose classes compiled to nothing.
-  it "paints the list menu" do
-    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
-    next_event_for(member)
-    sign_in_as member.user
-    resize_to ViewportHelper::MOBILE
-
-    visit group_events_path(member.group)
-
-    expect(page).to paint "#scope summary"
-    expect(page).to be_accessible
-  end
-
-  # The menu's rows are links, so landing on the past list is a click on one, which only a browser follows through the opened `<details>`.
-  it "lands on the past list from the list menu" do
-    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
-    next_event_for(member)
-    past_event_for(member)
-    sign_in_as member.user
-    resize_to ViewportHelper::MOBILE
-
-    visit group_events_path(member.group)
-    find("#scope summary").click
-    within("#scope") { click_link "Past events" }
-
-    expect(page).to have_current_path group_events_path(member.group, scope: "past")
-    expect(page).to have_text("Spring concert").and be_accessible
-  end
-
-  it "lands on the canceled list from the list menu" do
-    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
-    next_event_for(member)
-    create(:event, :from_the_future, group: member.group, creator: member, name: "Autumn gig", status: :canceled)
-    sign_in_as member.user
-    resize_to ViewportHelper::MOBILE
-
-    visit group_events_path(member.group)
-    find("#scope summary").click
-    within("#scope") { click_link "Canceled events" }
-
-    expect(page).to have_current_path group_events_path(member.group, scope: "canceled")
-    expect(page).to have_text("Autumn gig").and be_accessible
   end
 
   # A list row is a grid whose cells start at its top, so the status icon would sit level with the name rather than with the name and its meta line together.
@@ -173,6 +128,265 @@ RSpec.describe "The events list", type: :system do
 
     expect(find_by_id(ActionView::RecordIdentifier.dom_id(event)).evaluate_script(<<~JS)).to eq 20
       Math.round(this.querySelector("a[aria-label^='Edit '] svg").getBoundingClientRect().left - this.querySelector(":scope > svg[aria-label^='you said']").getBoundingClientRect().right)
+    JS
+  end
+
+  # WHY: #460 AC12. The tabs and the chips paint differently in each theme, and an inactive tab is where daisyUI's own dimming fell short of 4.5:1.
+  it "passes axe on the list with its tabs and chips, in organic" do
+    member = create(:member, :owner)
+    next_event_for(member)
+    sign_in_as member.user
+    prefer_colour_scheme :light
+
+    visit group_events_path(member.group, category: %w[ rehearsal ])
+
+    expect(page).to have_link("Clear all").and be_accessible
+  end
+
+  it "passes axe on the list with its tabs and chips, in organic-dark" do
+    member = create(:member, :owner)
+    next_event_for(member)
+    sign_in_as member.user
+    prefer_colour_scheme :dark
+
+    visit group_events_path(member.group, category: %w[ rehearsal ])
+
+    expect(page).to have_link("Clear all").and be_accessible
+  end
+
+  # WHY: #460 AC12. The sheet is only in the accessibility tree while it is open, which only a browser can make it, and its picks paint differently in each theme.
+  it "passes axe with the filter sheet open, in organic" do
+    member = create(:member, :owner)
+    next_event_for(member)
+    sign_in_as member.user
+    resize_to ViewportHelper::MOBILE
+    prefer_colour_scheme :light
+
+    visit group_events_path(member.group)
+    click_button "Filter events"
+
+    expect(page).to have_css("dialog#event_filter_dialog[open]").and be_accessible
+  end
+
+  it "passes axe with the filter sheet open, in organic-dark" do
+    member = create(:member, :owner)
+    next_event_for(member)
+    sign_in_as member.user
+    resize_to ViewportHelper::MOBILE
+    prefer_colour_scheme :dark
+
+    visit group_events_path(member.group)
+    click_button "Filter events"
+
+    expect(page).to have_css("dialog#event_filter_dialog[open]").and be_accessible
+  end
+
+  # WHY: #460 AC4. Answering a row in place redraws the count, so the count Back shows has to be that one, not the count the page first loaded with.
+  it "keeps a count redrawn by answering in place when the list is left and come back to" do
+    member = create(:member, :owner)
+    create(:registration, member:, status: :response_requested, event: next_event_for(member))
+    sign_in_as member.user
+
+    visit group_events_path(member.group, answer: %w[ not_answered ])
+    click_button "Maybe"
+    expect(page).to have_text "No events match these filters."
+    leave_for_a_new_event_and_come_back(member.group)
+
+    expect(page).to have_button "Show 0 events", visible: :all
+  end
+
+  # WHY: #460 AC4. A pick left in the closed sheet must not decide the count Back shows once answering in place has redrawn it.
+  it "keeps a count redrawn by answering in place with a pick left in the closed sheet" do
+    member = create(:member, :owner)
+    create(:registration, member:, status: :response_requested, event: next_event_for(member))
+    sign_in_as member.user
+
+    visit group_events_path(member.group, answer: %w[ not_answered ])
+    pick_in_sheet "Gig"
+    within("#event_filter_dialog") { click_button "Close" }
+    click_button "Maybe"
+    expect(page).to have_text "No events match these filters."
+    leave_for_a_new_event_and_come_back(member.group)
+
+    expect(page).to have_button "Show 0 events", visible: :all
+  end
+
+  # WHY: option C on the owner's options page: a line across the tab row, and the open tab's underline in the primary colour sitting on it.
+  it "underlines the open tab in the primary colour on a line across the tab row" do
+    member = create(:member, :owner)
+    sign_in_as member.user
+
+    visit group_events_path(member.group)
+
+    tabs = page.evaluate_script(%((() => { const nav = document.querySelector("nav[aria-label='Event lists']"), tab = nav.querySelector("[aria-current=page]"), ink = document.createElement("span"); ink.className = "text-primary"; nav.append(ink); const line = getComputedStyle(nav), under = getComputedStyle(tab); return [ line.borderBottomWidth, under.borderBottomWidth, under.borderBottomColor == getComputedStyle(ink).color, tab.getBoundingClientRect().bottom == nav.getBoundingClientRect().bottom ] })()))
+    expect(tabs).to eq [ "1px", "2px", true, true ]
+  end
+
+  # WHY: the owner's pick on #471: the ✕ centred in the chip, and the label lifted so its baseline sits on the ✕'s visual bottom, where its strokes' round caps are centred, 11.28 of the glyph's 16 units, in a chip that keeps its 28px tap target.
+  it "sets each chip's label on the bottom edge of its centred ✕" do
+    member = create(:member, :owner)
+    sign_in_as member.user
+
+    visit group_events_path(member.group, category: %w[ rehearsal ], answer: %w[ not_answered ])
+
+    chips = page.evaluate_script(%(Array.from(document.querySelectorAll("a[aria-label^='Remove ']")).map(link => { const label = link.querySelector("span"), probe = document.createElement("span"); probe.style.display = "inline-block"; label.append(probe); const baseline = probe.getBoundingClientRect().bottom, chip = link.getBoundingClientRect(), icon = link.querySelector("svg").getBoundingClientRect(); probe.remove(); return [ Math.abs(icon.top + icon.height / 2 - (chip.top + chip.height / 2)) <= 0.1, Math.abs(icon.top + icon.height * 11.28 / 16 - baseline) <= 0.1, chip.height ] })))
+    expect(chips).to eq [ [ true, true, 28 ], [ true, true, 28 ] ]
+  end
+
+  # WHY: daisyUI's list draws its divider under every row but the last; the list closes on that same line, and the tabs' line opens it.
+  it "draws the rows' divider under the last row too" do
+    member = create(:member, :owner)
+    2.times { next_event_for(member) }
+    sign_in_as member.user
+
+    visit group_events_path(member.group)
+
+    lines = page.evaluate_script(%(Array.from(document.querySelectorAll("#events .list-row")).flatMap((row, index) => { const line = (part, side) => { const s = getComputedStyle(row, part); return [ s.getPropertyValue(`border-${side}-width`), s.getPropertyValue(`border-${side}-style`), s.getPropertyValue(`border-${side}-color`), s.left, s.right ].join(" ") }; return [ line("::after", "bottom") ] })))
+    expect([ lines.size, lines.uniq, lines.first ]).to match [ 2, [ lines.first ], start_with("1px solid") ]
+  end
+
+  # WHY: #460 AC9. Back shows the sheet as applied, so picks left unapplied never come back in it, disagreeing with the list and the chips under it.
+  it "drops the sheet's unapplied picks when the list is left and come back to" do
+    member = create(:member, :owner)
+    next_event_for(member)
+    sign_in_as member.user
+
+    visit group_events_path(member.group)
+    pick_in_sheet "Gig"
+    expect(page).to have_button "Show 0 events"
+    within("#event_filter_dialog") { click_button "Close" }
+    leave_for_a_new_event_and_come_back(member.group)
+    click_button "Filter events"
+
+    expect(page).to have_button("Show 1 event").and have_no_css("#event_filter_dialog input:checked")
+  end
+
+  # WHY: #460 AC4. The count is fetched as the picks change, so only a browser sees it follow them.
+  it "counts the events the sheet's picks would show as they change, then applies them" do
+    member = create(:member, :owner)
+    next_event_for(member)
+    create(:event, :from_the_future, group: member.group, creator: member, name: "Advent concert", category: :gig, status: :confirmed)
+    sign_in_as member.user
+
+    visit group_events_path(member.group)
+    pick_in_sheet "Gig"
+
+    expect(page).to have_button "Show 1 event"
+    click_button "Show 1 event"
+    expect(page).to have_text("Advent concert").and have_no_text("Tuesday rehearsal")
+    expect(page).to have_link "Remove Gig"
+  end
+
+  # WHY: #460 AC6. A chip links the list with everything else still on, so only its own filter goes.
+  it "removes one filter with its chip, leaving the others on" do
+    member = create(:member, :owner)
+    next_event_for(member)
+    sign_in_as member.user
+
+    visit group_events_path(member.group)
+    pick_in_sheet "Rehearsal", "Not answered"
+    click_button "Show 0 events"
+    click_link "Remove Rehearsal"
+
+    expect(page).to have_no_link("Remove Rehearsal").and have_link("Remove Not answered")
+  end
+
+  # WHY: #460 AC8. Clear all unticks the sheet's picks, not the list's, and the count follows; applying it leaves the tab as it is.
+  it "clears every pick in the sheet on Clear all, keeping the tab" do
+    member = create(:member, :owner)
+    past_event_for(member)
+    sign_in_as member.user
+
+    visit group_events_path(member.group, scope: "past")
+    pick_in_sheet "Rehearsal"
+    expect(page).to have_button "Show 0 events"
+    click_button "Clear all"
+    expect(find_by_id("event_filter_dialog").evaluate_script("this.querySelectorAll('input:checked').length")).to eq 0
+    click_button "Show 1 event"
+
+    expect(page).to have_current_path(group_events_path(member.group, scope: "past")).and have_text("Spring concert")
+  end
+
+  # WHY: #460 AC9. The tab and the sheet's picks travel in the URL, so picks applied on a tab stay on it; that a plain visit then opens on Upcoming with nothing on is the request spec's.
+  it "applies the sheet's picks through the URL, on the open tab" do
+    member = create(:member, :owner)
+    past_event_for(member)
+    sign_in_as member.user
+
+    visit group_events_path(member.group)
+    click_link "Past"
+    pick_in_sheet "Other"
+    click_button "Show 1 event"
+
+    expect(page).to have_current_path("#{group_events_path(member.group)}?scope=past&category%5B%5D=other").and have_text("Spring concert")
+  end
+
+  # WHY: #460 AC7. Muted while nothing hides events from the list picked, primary once a filter does, and either way clearing 3:1 as an icon must.
+  it "paints the funnel muted with no filter on and primary with one" do
+    member = create(:member, :owner)
+    next_event_for(member)
+    sign_in_as member.user
+
+    visit group_events_path(member.group)
+    muted = funnel_ink("text-icon-muted")
+    pick_in_sheet "Rehearsal"
+    click_button "Show 1 event"
+    expect(page).to have_link "Remove Rehearsal"
+
+    expect([ muted, funnel_ink("text-primary") ]).to eq [ [ true, true ], [ true, true ] ]
+  end
+
+  # WHY: #460 AC4. A count whose response is the sign-in page has no frame to swap in, so the sheet follows it rather than replacing "Show N events" with "Content missing".
+  it "follows a lapsed session to sign-in from the sheet's count" do
+    member = create(:member, :owner)
+    sign_in_as member.user
+
+    visit group_events_path(member.group)
+    click_button "Filter events"
+    member.user.sessions.destroy_all
+    find_by_id("event_filter_dialog").find("input[aria-label='Gig']").click
+
+    expect(page).to have_current_path new_session_path, ignore_query: true
+  end
+
+  # WHY: #460 AC2. Side by side while both fit, Clear all on the left; once they do not, "Show N events" goes first, full width, and Clear all under it.
+  it "stacks the sheet's buttons Show first once they no longer fit side by side" do
+    member = create(:member, :owner)
+    sign_in_as member.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_events_path(member.group)
+    click_button "Filter events"
+    clear, show = sheet_buttons
+    resize_to [ 260, 700 ]
+    narrow_clear, narrow_show = sheet_buttons
+
+    expect([ clear.top == show.top && clear.left < show.left, narrow_show.top < narrow_clear.top ]).to eq [ true, true ]
+  end
+
+  # A Turbo visit away and Back, the way a member leaves the list and returns, where a `visit` would be a full page load.
+  def leave_for_a_new_event_and_come_back(group)
+    click_link "New event"
+    expect(page).to have_current_path new_group_event_path(group)
+    go_back
+  end
+
+  def pick_in_sheet(*labels)
+    click_button "Filter events"
+    labels.each { find_by_id("event_filter_dialog").find("input[aria-label='#{it}']").click }
+  end
+
+  # Whether the funnel paints the named ink, read against a probe carrying that class, which must itself differ from the ink around it so a class that compiled to nothing cannot pass, and still clears 3:1 as an icon.
+  def funnel_ink(ink)
+    funnel = "button[aria-label='Filter events']"
+    painted = page.evaluate_script(%((() => { const button = document.querySelector("#{funnel}"), probe = document.createElement("span"); probe.className = "#{ink}"; button.parentElement.append(probe); const ink = getComputedStyle(probe).color, painted = getComputedStyle(button).color == ink && ink != getComputedStyle(button.parentElement).color; probe.remove(); return painted })()))
+    [ painted, text_contrast(funnel) >= ContrastHelper::WCAG_NON_TEXT ]
+  end
+
+  # Clear all and "Show N events", the sheet's last two labelled buttons, each as its rounded top and left.
+  def sheet_buttons
+    find_by_id("event_filter_dialog").evaluate_script(<<~JS).map { Data.define(:top, :left).new(*it) }
+      [ ...this.querySelectorAll("button.btn:not([aria-label])") ].slice(-2).map(button => button.getBoundingClientRect()).map(rect => [ Math.round(rect.top), Math.round(rect.left) ])
     JS
   end
 

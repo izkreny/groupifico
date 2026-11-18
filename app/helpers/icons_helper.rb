@@ -73,7 +73,11 @@ module IconsHelper
     feedback: "chat-bubble-left-ellipsis",
     send: "paper-airplane",
     remove: "x-mark",
-    return: "arrow-uturn-left"
+    return: "arrow-uturn-left",
+
+    # WHY: the legend draws none of the events filter's glyphs, so they are Heroicons' own: a funnel because the sheet narrows the list rather than configures it.
+    filter: "funnel",
+    apply: "check"
   }.freeze
 
   # Heroicons' filled set for each size class the app draws: solid, mini and micro are drawn on their own 24, 20 and 16px grids, where its outline set exists at 24px alone.
