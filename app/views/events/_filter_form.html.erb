@@ -42,9 +42,9 @@
 
   <% if filter.managed_offered? %>
     <fieldset>
-      <legend class="<%= legend %>">Other</legend>
+      <legend class="<%= legend %>">Miscellaneous</legend>
       <div class="flex flex-wrap gap-2">
-        <%= check_box_tag :managed, "1", filter.managed?, id: id.(:managed), class: pick, aria: { label: Event::Filter::MANAGED } %>
+        <%= check_box_tag :managed, "1", filter.managed?, id: id.(:managed), class: pick, aria: { label: Event::Filter::MISCELLANEOUS["managed"] } %>
       </div>
     </fieldset>
   <% end %>

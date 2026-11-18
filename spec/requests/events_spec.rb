@@ -67,7 +67,7 @@ RSpec.describe "Events", type: :request do
       end
 
       # WHY: #460 AC3. "Only events I manage" narrows nothing for someone who manages none of the group's events, so they are not offered it.
-      it "offers the Other group only to a member who manages one of the group's events" do
+      it "offers the Miscellaneous group only to a member who manages one of the group's events" do
         member = create(:member, :active)
         sign_in_as(member.user)
         get group_events_path(member.group)
@@ -77,7 +77,7 @@ RSpec.describe "Events", type: :request do
         get group_events_path(member.group)
 
         offered = Nokogiri::HTML(response.body).css("dialog fieldset").last
-        expect([ unoffered.include?("Other"), offered.at_css("legend").text, offered.at_css("input")["aria-label"] ]).to eq [ false, "Other", "Only events I manage" ]
+        expect([ unoffered.include?("Miscellaneous"), offered.at_css("legend").text, offered.at_css("input")["aria-label"] ]).to eq [ false, "Miscellaneous", "Only events I manage" ]
       end
 
       # WHY: #460 AC5. The list's chip names it with no ✕, and each filter's chip carries a ✕ linking the list with everything else still on.

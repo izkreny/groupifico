@@ -5,7 +5,7 @@ class Event::Filter
   # WHY: in the sheet's order rather than the enum's, so the chips read in the order the sheet offers them.
   CATEGORIES = { "gig" => "Gig", "rehearsal" => "Rehearsal", "other" => "Other" }.freeze
   ANSWERS = { "yes" => "Yes", "maybe" => "Maybe", "no" => "No", "not_answered" => "Not answered" }.freeze
-  MANAGED = "Only events I manage".freeze
+  MISCELLANEOUS = { "managed" => "Only events I manage" }.freeze
 
   # WHY: "Not answered" is a place on the event's list with no answer yet, so an event the reader is not listed on has no answer of theirs to match.
   STATUSES = { "yes" => %w[ yes ], "maybe" => %w[ maybe ], "no" => %w[ no ], "not_answered" => %w[ reserved response_requested ] }.freeze
@@ -27,7 +27,7 @@ class Event::Filter
 
   def managed? = @managed
 
-  # WHY: the Other group is offered only to a member it can narrow anything for, which is someone managing one of the group's events.
+  # WHY: the Miscellaneous group is offered only to a member it can narrow anything for, which is someone managing one of the group's events.
   def managed_offered?
     @managed_offered = member.managed_events.exists? unless defined?(@managed_offered)
     @managed_offered
@@ -58,7 +58,7 @@ class Event::Filter
   def chips
     categories.map { [ CATEGORIES[it], without(category: it) ] } +
       answers.map { [ ANSWERS[it], without(answer: it) ] } +
-      (managed? ? [ [ MANAGED, without(managed: true) ] ] : [])
+      (managed? ? [ [ MISCELLANEOUS["managed"], without(managed: true) ] ] : [])
   end
 
   private
