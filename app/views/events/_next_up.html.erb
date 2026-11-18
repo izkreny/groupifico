@@ -1,4 +1,4 @@
-<%# locals: (event:, registration: nil) %>
+<%# locals: (event:, registration: nil, upcoming_gig_count: nil) %>
 <%#
   The group home's hero card, tinted. Status, when and where are quiet facts: their icons and plain text colour, no accent. It renders the counts and the answer row itself, because the legend's matrix gives every cell that shows tags the answer row under them, and a screen that had to remember to render all three would be a screen that can forget.
 %>
@@ -55,5 +55,10 @@
 
     <%# WHY: the margin is what `card-break` leaves after the card body's `card-row` gap, so the answer sits 14px under the facts it follows where every fact sits 8px from the next. %>
     <%= render "events/response", event: event, registration: registration, classes: "mt-[calc(var(--spacing-card-break)-var(--spacing-card-row))]" %>
+
+    <%# Only the gig card leads on to the gigs ahead, so only the home's gig slot passes the count: the rehearsal card and the styleguide's sample pass none. %>
+    <% if upcoming_gig_count %>
+      <%= render "events/upcoming_gigs", group: event.group, count: upcoming_gig_count %>
+    <% end %>
   </div>
 </div>

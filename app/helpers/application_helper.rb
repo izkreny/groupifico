@@ -53,6 +53,11 @@ module ApplicationHelper
     end
   end
 
+  # WHY: every count the app shows stops at 99+, the owner's cap, so a long list never widens the label beside it.
+  def count_label(count)
+    count > 99 ? "99+" : count.to_s
+  end
+
   private
     def section_root(group)
       return GROUPLESS_HOME_ROOT if shell_section == :home && group.nil?
