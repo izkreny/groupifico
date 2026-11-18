@@ -42,3 +42,4 @@ None.
 ## Settled
 
 - ::Q1:: Should the events list remember a member's filters between visits? Settled by the owner on 2026-11-16: no, filters live in the URL alone. A remembered filter that a link visit left untouched read as a hidden second state, and Mobbin showed no app saving filters silently. So the sheet is a GET to the events list, a chip's ✕ is a link, and the controller, route and cookies of S2 go.
+- ::Q2:: Should the list be a group in the sheet or tabs of its own, and do tabs share the filters? Settled by the owner on 2026-11-18, in the PR thread on `app/models/event/filter.rb`: tabs, option C on the options page, because the list is always on and exactly one where every filter is optional, and no heading named it well. Each tab links its list with every filter still on, as GitLab's and Mastodon's tabs do and Square's order tabs show, and the chip row ends in a Clear all that keeps the tab, which also names the sheet's Reset.
