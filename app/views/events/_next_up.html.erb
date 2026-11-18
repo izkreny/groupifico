@@ -55,5 +55,12 @@
 
     <%# WHY: the margin is what `card-break` leaves after the card body's `card-row` gap, so the answer sits 14px under the facts it follows where every fact sits 8px from the next. %>
     <%= render "events/response", event: event, registration: registration, classes: "mt-[calc(var(--spacing-card-break)-var(--spacing-card-row))]" %>
+
+    <%# Only the gig card leads on to the gigs ahead: the home draws a rehearsal card too, and the styleguide's sample is a rehearsal. %>
+    <% if event.gig? %>
+      <%= link_to group_events_path(event.group, category: [ "gig" ]), class: "link link-hover relative z-1 inline-flex items-center gap-1 text-card-fact self-start" do %>
+        See all upcoming gigs<%= icon :go_to, class: "size-icon-inline" %>
+      <% end %>
+    <% end %>
   </div>
 </div>
