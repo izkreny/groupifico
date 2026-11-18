@@ -11,18 +11,10 @@
 <% may_add = allowed_to?(:create?, unattached) %>
 <% manages = allowed_to?(:edit?, unattached) %>
 
-<div class="flex flex-col gap-3">
-  <%= render layout: "shared/filter_bar", locals: { group: @group, filter: @filter, counts: @counts, count: @members.size } do %>
-    <% if may_add %>
-      <%# WHY: beside the + because the link is the other way in, and decided by the same `create?`, since the join link row marks the columns that add a person. %>
-      <%= render "groups/join_link_dialog", group: @group, join_link: @group.join_link %>
+<%# WHY: the join link beside the + because the link is the other way in, and decided by the same `create?`, since the join link row marks the columns that add a person. %>
+<% join_link = render("groups/join_link_dialog", group: @group, join_link: @group.join_link) if may_add %>
 
-      <%= link_to new_group_member_path(@group), class: "btn btn-ghost btn-circle btn-sm text-primary", aria: { label: "Invite member" } do %>
-        <%= icon :new, class: "size-icon-control" %>
-      <% end %>
-    <% end %>
-  <% end %>
-
+<%= render layout: "shared/filter_bar", locals: { group: @group, filter: @filter, counts: @counts, count: @members.size, add_label: "Invite member", add_path: (new_group_member_path(@group) if may_add), actions: join_link } do %>
   <div id="members">
     <% if @members.any? %>
       <%= render layout: "shared/filter_list" do %>
@@ -34,4 +26,4 @@
       <p class="text-meta">No <%= @filter.offered_tabs[@filter.tab].downcase %> members.</p>
     <% end %>
   </div>
-</div>
+<% end %>

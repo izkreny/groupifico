@@ -2,17 +2,11 @@
 <%# WHY: never snapshotted, so Back asks the server for the list as it stands, the way Fizzy's card list does, rather than restoring the sheet's unapplied picks and a count that answering in place has since redrawn. %>
 <% turbo_exempts_page_from_cache %>
 
-<div class="flex flex-col gap-3">
-  <%= render layout: "shared/filter_bar", locals: { group: @group, filter: @filter, counts: @counts, count: @events.load.size } do %>
-    <%# Checked against a new event rather than the group, because that is the record `EventPolicy`
-        writes the rule against. A refused reader gets no button rather than a disabled one. %>
-    <% if allowed_to?(:create?, @group.events.new) %>
-      <%= link_to new_group_event_path(@group), class: "btn btn-ghost btn-circle btn-sm text-primary", aria: { label: "New event" } do %>
-        <%= icon :new, class: "size-icon-control" %>
-      <% end %>
-    <% end %>
-  <% end %>
+<%# Checked against a new event rather than the group, because that is the record `EventPolicy`
+    writes the rule against. %>
+<% add_path = new_group_event_path(@group) if allowed_to?(:create?, @group.events.new) %>
 
+<%= render layout: "shared/filter_bar", locals: { group: @group, filter: @filter, counts: @counts, count: @events.load.size, add_label: "New event", add_path: } do %>
   <% reader = Current.member %>
   <div id="events">
     <% if @events.any? %>
@@ -27,4 +21,4 @@
       <p class="text-meta"><%= { "past" => "No past events.", "canceled" => "No canceled events." }.fetch(@filter.scope, "Nothing coming up.") %></p>
     <% end %>
   </div>
-</div>
+<% end %>

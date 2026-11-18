@@ -1,21 +1,31 @@
-<%# locals: (group:, filter:, counts:, count:) %>
-<%# WHY: a filtered list's head, the same on every list so a member who has learned one knows the next: the tab is always on and exactly one, while every filter is optional and chosen in the funnel's sheet, so the title is simply the list's name and the chips under the tabs say which filters are on. The block is the list's own buttons, drawn before the funnel. %>
-<div class="flex flex-col gap-3" data-controller="dialog">
-  <div class="flex items-center justify-between gap-2.5">
-    <h2 class="font-heading text-hero"><%= filter.noun.pluralize.capitalize %></h2>
+<%# locals: (group:, filter:, counts:, count:, add_label: nil, add_path: nil, actions: nil) %>
+<%# WHY: a filtered list's screen, the same on every list so a member who has learned one knows the next: the tab is always on and exactly one, while every filter is optional and chosen in the funnel's sheet, so the title is simply the list's name and the chips under the tabs say which filters are on. `actions` are the list's own buttons, drawn before its + and the funnel; the + is drawn only where the caller passes its path, so a reader refused it gets no button rather than a disabled one. The block is the list itself. %>
+<div class="flex flex-col gap-3">
+  <div class="flex flex-col gap-3" data-controller="dialog">
+    <div class="flex items-center justify-between gap-2.5">
+      <h2 class="font-heading text-hero"><%= filter.noun.pluralize.capitalize %></h2>
 
-    <div class="flex items-center gap-controls">
-      <%= yield %>
+      <div class="flex items-center gap-controls">
+        <%= actions %>
 
-      <%# WHY: primary only while a filter hides rows from the tab picked, and muted otherwise, whichever tab is open, since the tab already names the list. %>
-      <% funnel_ink = filter.narrowed? ? "text-primary" : "text-icon-muted" %>
-      <%= tag.button type: "button", class: [ "btn btn-ghost btn-circle btn-sm", funnel_ink ], aria: { label: "Filter #{filter.noun.pluralize}" }, data: { dialog_target: "trigger", action: "dialog#show" } do %>
-        <%= icon :filter, class: "size-icon-control" %>
-      <% end %>
+        <% if add_path %>
+          <%= link_to add_path, class: "btn btn-ghost btn-circle btn-sm text-primary", aria: { label: add_label } do %>
+            <%= icon :new, class: "size-icon-control" %>
+          <% end %>
+        <% end %>
+
+        <%# WHY: primary only while a filter hides rows from the tab picked, and muted otherwise, whichever tab is open, since the tab already names the list. %>
+        <% funnel_ink = filter.narrowed? ? "text-primary" : "text-icon-muted" %>
+        <%= tag.button type: "button", class: [ "btn btn-ghost btn-circle btn-sm", funnel_ink ], aria: { label: "Filter #{filter.noun.pluralize}" }, data: { dialog_target: "trigger", action: "dialog#show" } do %>
+          <%= icon :filter, class: "size-icon-control" %>
+        <% end %>
+      </div>
     </div>
+
+    <%= render "shared/filter_tabs", group:, filter:, counts: %>
+    <%= render "shared/filter_chips", group:, filter: %>
+    <%= render "shared/filter_sheet", group:, filter:, count: %>
   </div>
 
-  <%= render "shared/filter_tabs", group:, filter:, counts: %>
-  <%= render "shared/filter_chips", group:, filter: %>
-  <%= render "shared/filter_sheet", group:, filter:, count: %>
+  <%= yield %>
 </div>
