@@ -5,6 +5,6 @@
     <% current = value == filter.tab %>
     <% count = counts.fetch(value, 0) %>
     <%# WHY: the count names what the tab would list with every filter on, and the name says what it counts, so the tab reads "Active (19)" and is named "Active (19 members)". A label rather than a visually hidden noun, because Chromium spaces an absolutely positioned span off its neighbours and named the tab "Active (19 members )". %>
-    <%= link_to "#{name} (#{count})", polymorphic_path([ group, filter.model ], params), class: [ "tab flex-1", current ? "tab-active top-px border-b-2 border-primary font-semibold" : "text-muted" ], aria: { current: ("page" if current), label: "#{name} (#{pluralize(count, filter.noun)})" } %>
+    <%= link_to "#{name} (#{count_label(count)})", polymorphic_path([ group, filter.model ], params), class: [ "tab flex-1", current ? "tab-active top-px border-b-2 border-primary font-semibold" : "text-muted" ], aria: { current: ("page" if current), label: "#{name} (#{count_label(count)} #{filter.noun.pluralize(count)})" } %>
   <% end %>
 </nav>

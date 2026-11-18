@@ -134,6 +134,19 @@ RSpec.describe "Events", type: :request do
         expect(tabs.map { [ it.text, it["aria-label"] ] }).to eq [ [ "Upcoming (1)", "Upcoming (1 event)" ], [ "Past (1)", "Past (1 event)" ], [ "Canceled (0)", "Canceled (0 events)" ] ]
       end
 
+      # WHY: #484 AC14. Every count stops at 99+, so a hundred events read as 99+ on the tab, in its name and on the sheet's button, the noun staying plural.
+      it "caps the tab's count and the sheet's at 99+" do
+        member = create(:member, :active)
+        create_list(:event, 100, :from_the_future, group: member.group, creator: member, status: :confirmed)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group)
+
+        page = Nokogiri::HTML(response.body)
+        upcoming = page.at_css("nav[aria-label='Event lists'] a[aria-current=page]")
+        expect([ upcoming.text, upcoming["aria-label"], page.at_css("dialog#event_filter_dialog button.btn-primary").text.squish ]).to eq [ "Upcoming (99+)", "Upcoming (99+ events)", "Show 99+ events" ]
+      end
+
       # WHY: #460 AC9. Each tab is a link carrying every filter on, so switching lists keeps them, and opened from Past so Upcoming's link is seen to drop the open list.
       it "links each tab to its list with every filter still on" do
         member = create(:member, :active)

@@ -176,6 +176,19 @@ RSpec.describe "Members", type: :request do
         ]
       end
 
+      # WHY: #484 AC14. Every count stops at 99+, so a hundred members read as 99+ on the tab, in its name and on the sheet's button, the noun staying plural.
+      it "caps the tab's count and the sheet's at 99+" do
+        reader = create(:member, :active)
+        create_list(:member, 99, :active, group: reader.group)
+        sign_in_as(reader.user)
+
+        get group_members_path(reader.group)
+
+        page = Nokogiri::HTML(response.body)
+        active = page.at_css("nav[aria-label='Member lists'] a[aria-current=page]")
+        expect([ active.text, active["aria-label"], page.at_css("dialog#member_filter_dialog button.btn-primary").text.squish ]).to eq [ "Active (99+)", "Active (99+ members)", "Show 99+ members" ]
+      end
+
       # WHY: #484 AC12 and AC13. Each tab counts what it would list with every filter on, zero included, and its name says what the count counts.
       it "names each tab with how many members it would list under the filters on" do
         reader = create(:member, :active, :owner)

@@ -31,7 +31,7 @@
 
     <%# WHY: a count whose response carries no matching frame, such as a lapsed session redirecting to sign-in, is followed as a whole visit, as the join link's frame is, rather than replacing the button with "Content missing". %>
     <%= turbo_frame_tag id.(:count), class: "flex grow", data: { filter_target: "count", action: "turbo:frame-missing->dialog#visit" } do %>
-      <button class="btn btn-primary grow"><%= icon :apply, class: "size-icon-control" %>Show <%= pluralize count, filter.noun %></button>
+      <button class="btn btn-primary grow"><%= icon :apply, class: "size-icon-control" %>Show <%= count_label(count) %> <%= filter.noun.pluralize(count) %></button>
     <% end %>
   </div>
 <% end %>
