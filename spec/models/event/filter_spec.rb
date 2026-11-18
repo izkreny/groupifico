@@ -27,34 +27,36 @@ RSpec.describe Event::Filter do
     end
   end
 
-  describe "values the list does not offer" do
-    # WHY: #460 AC11. A value outside the sheet's choices is ignored, so it narrows nothing and can never be written back.
-    it "drops a list, a category and an answer the sheet does not offer" do
-      filter = described_class.new(member, scope: "archived", categories: %w[ gig party ], answers: %w[ yes perhaps ])
+  describe ".new" do
+    context "with values the list does not offer" do
+      # WHY: #460 AC11. A value outside the sheet's choices is ignored, so it narrows nothing and can never be written back.
+      it "drops a list, a category and an answer the sheet does not offer" do
+        filter = described_class.new(member, scope: "archived", categories: %w[ gig party ], answers: %w[ yes perhaps ])
 
-      expect([ filter.scope, filter.categories, filter.answers ]).to eq [ nil, %w[ gig ], %w[ yes ] ]
-    end
+        expect([ filter.scope, filter.categories, filter.answers ]).to eq [ nil, %w[ gig ], %w[ yes ] ]
+      end
 
-    # WHY: #460 AC3 and AC11. "Events I manage" is offered only to someone who manages one of the group's events, so anyone else's is dropped.
-    it "drops the managed filter for a member who manages none of the group's events" do
-      filter = described_class.new(member, managed: "1")
+      # WHY: #460 AC3 and AC11. "Events I manage" is offered only to someone who manages one of the group's events, so anyone else's is dropped.
+      it "drops the managed filter for a member who manages none of the group's events" do
+        filter = described_class.new(member, managed: "1")
 
-      expect([ filter.managed_offered?, filter.managed? ]).to eq [ false, false ]
-    end
+        expect([ filter.managed_offered?, filter.managed? ]).to eq [ false, false ]
+      end
 
-    it "keeps the managed filter for a member who manages one of the group's events" do
-      upcoming(manager: member)
+      it "keeps the managed filter for a member who manages one of the group's events" do
+        upcoming(manager: member)
 
-      filter = described_class.new(member, managed: "1")
+        filter = described_class.new(member, managed: "1")
 
-      expect([ filter.managed_offered?, filter.managed? ]).to eq [ true, true ]
-    end
+        expect([ filter.managed_offered?, filter.managed? ]).to eq [ true, true ]
+      end
 
-    # WHY: #460 AC11. The sheet sends "1" and nothing else, so any other value is one the list does not offer.
-    it "drops a managed value the sheet does not send" do
-      upcoming(manager: member)
+      # WHY: #460 AC11. The sheet sends "1" and nothing else, so any other value is one the list does not offer.
+      it "drops a managed value the sheet does not send" do
+        upcoming(manager: member)
 
-      expect([ described_class.new(member, managed: "no").managed?, described_class.new(member, managed: "banana").managed? ]).to eq [ false, false ]
+        expect([ described_class.new(member, managed: "no").managed?, described_class.new(member, managed: "banana").managed? ]).to eq [ false, false ]
+      end
     end
   end
 
