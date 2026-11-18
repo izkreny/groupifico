@@ -5,7 +5,7 @@ class Event::Filter
   # WHY: in the sheet's order rather than the enum's, so the chips read in the order the sheet offers them.
   CATEGORIES = { "gig" => "Gig", "rehearsal" => "Rehearsal", "other" => "Other" }.freeze
   ANSWERS = { "yes" => "Yes", "maybe" => "Maybe", "no" => "No", "not_answered" => "Not answered" }.freeze
-  MISCELLANEOUS = { "managed" => "Only events I manage" }.freeze
+  MISCELLANEOUS = { "managed" => "Events I manage" }.freeze
 
   # WHY: "Not answered" is a place on the event's list with no answer yet, so an event the reader is not listed on has no answer of theirs to match.
   STATUSES = { "yes" => %w[ yes ], "maybe" => %w[ maybe ], "no" => %w[ no ], "not_answered" => %w[ reserved response_requested ] }.freeze
