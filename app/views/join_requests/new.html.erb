@@ -3,7 +3,20 @@
 <div class="grow flex flex-col gap-5">
   <h1 class="text-record text-center break-words">Join <span class="block text-secondary"><%= @group.name %></span></h1>
 
-  <% unless authenticated? %>
+  <% if authenticated? %>
+    <% if @member.nil? %>
+      <%= button_to safe_join([ icon(:add_member, class: "size-icon-control"), "Ask to join #{@group.name}" ]), join_request_path,
+            params: { token: params[:token] }, class: "btn btn-primary btn-block" %>
+    <% elsif @member.pending? %>
+      <p class="text-center">Your request to join is waiting for approval.</p>
+    <% elsif @member.inactive? %>
+      <p class="text-center">You left this group. Only an owner or administrator can bring you back.</p>
+    <% else %>
+      <p class="text-center">You are already in this group.</p>
+
+      <%= link_to safe_join([ "Open #{@group.name}", icon(:go_to, class: "size-icon-control") ]), group_path(@group), class: "btn btn-primary btn-block" %>
+    <% end %>
+  <% else %>
     <%= form_with model: @user, url: join_request_sign_in_link_path, class: "contents" do |form| %>
       <%= hidden_field_tag :token, params[:token] %>
 

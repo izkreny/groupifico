@@ -79,7 +79,72 @@ RSpec.describe "JoinRequests", type: :request do
         expect(page_text(response.body)).to include("Riverside Choir")
       end
 
-      # WHY: a signed-in visitor has nothing to ask a sign-in link for; what they see instead is #447's.
+      # WHY: #447 AC1, opening the page is a GET that writes nothing, so a link previewed or opened by accident adds nobody.
+      it "adds nobody by opening the page" do
+        sign_in_as create(:user)
+        token = JoinLink.mint(create(:group))
+
+        expect { get new_join_request_path(token:) }.not_to change(Member, :count)
+      end
+
+      # WHY: #447 AC1, the button carries the link's token so pressing it resolves the same link.
+      it "offers a visitor with no membership a button asking to join, posting the link's token" do
+        sign_in_as create(:user)
+        token = JoinLink.mint(create(:group, name: "Riverside Choir"))
+
+        get new_join_request_path(token:)
+
+        expect(page_text(response.body)).to include("Ask to join Riverside Choir")
+        expect(response.body).to include(%(action="#{join_request_path}"))
+        expect(response.body).to match(/<input type="hidden" name="token" value="#{token}"/)
+      end
+
+      # WHY: #447 AC4, one example per status, each answered with what it means instead of the button.
+      it "tells an active member they are already in the group, offering no button" do
+        member = create(:member, :active)
+        sign_in_as member.user
+        token = JoinLink.mint(member.group)
+
+        get new_join_request_path(token:)
+
+        expect(page_text(response.body)).to include("You are already in this group.")
+        expect(response.body).not_to include(%(action="#{join_request_path}"))
+      end
+
+      it "tells a paused member they are already in the group, offering no button" do
+        member = create(:member, :paused)
+        sign_in_as member.user
+        token = JoinLink.mint(member.group)
+
+        get new_join_request_path(token:)
+
+        expect(page_text(response.body)).to include("You are already in this group.")
+        expect(response.body).not_to include(%(action="#{join_request_path}"))
+      end
+
+      it "tells a pending member their request is waiting for approval, offering no button" do
+        member = create(:member, :pending)
+        sign_in_as member.user
+        token = JoinLink.mint(member.group)
+
+        get new_join_request_path(token:)
+
+        expect(page_text(response.body)).to include("Your request to join is waiting for approval.")
+        expect(response.body).not_to include(%(action="#{join_request_path}"))
+      end
+
+      it "tells a member who left that only an owner or administrator can bring them back, offering no button" do
+        member = create(:member, :inactive)
+        sign_in_as member.user
+        token = JoinLink.mint(member.group)
+
+        get new_join_request_path(token:)
+
+        expect(page_text(response.body)).to include("You left this group. Only an owner or administrator can bring you back.")
+        expect(response.body).not_to include(%(action="#{join_request_path}"))
+      end
+
+      # WHY: a signed-in visitor has nothing to ask a sign-in link for.
       it "offers no email form" do
         sign_in_as create(:user)
         token = JoinLink.mint(create(:group))
@@ -97,6 +162,102 @@ RSpec.describe "JoinRequests", type: :request do
 
         get new_join_request_path(token:)
 
+        expect(response).to have_http_status :not_found
+      end
+    end
+  end
+
+  describe "POST /join" do
+    context "when not signed in" do
+      it "redirects to sign in and adds nobody" do
+        token = JoinLink.mint(create(:group))
+
+        expect { post join_request_path(token:) }.not_to change(Member, :count)
+        expect(response).to redirect_to new_session_path
+      end
+    end
+
+    context "when signed in" do
+      # WHY: #447 AC2, pending rather than the `active` a member is created with by default.
+      it "adds the visitor to the link's group as a pending member and returns to the join page" do
+        user = create(:user)
+        sign_in_as user
+        group = create(:group)
+        token = JoinLink.mint(group)
+
+        expect { post join_request_path(token:) }.to change { group.members.pending.where(user:).count }.from(0).to(1)
+        expect(group.members.where(user:).count).to eq 1
+        expect(response).to redirect_to new_join_request_path(token:)
+      end
+
+      # WHY: #447 AC4, a second press or a page left open leaves the membership as it is; one example per status, since the inactive one is the member who must not let themselves back in.
+      it "leaves an active member as they are" do
+        member = create(:member, :active)
+        sign_in_as member.user
+        token = JoinLink.mint(member.group)
+
+        expect { post join_request_path(token:) }.not_to change(Member, :count)
+        expect(member.reload).to be_active
+        expect(response).to redirect_to new_join_request_path(token:)
+      end
+
+      it "leaves a paused member as they are" do
+        member = create(:member, :paused)
+        sign_in_as member.user
+        token = JoinLink.mint(member.group)
+
+        expect { post join_request_path(token:) }.not_to change(Member, :count)
+        expect(member.reload).to be_paused
+        expect(response).to redirect_to new_join_request_path(token:)
+      end
+
+      it "leaves a pending member as they are" do
+        member = create(:member, :pending)
+        sign_in_as member.user
+        token = JoinLink.mint(member.group)
+
+        expect { post join_request_path(token:) }.not_to change(Member, :count)
+        expect(member.reload).to be_pending
+        expect(response).to redirect_to new_join_request_path(token:)
+      end
+
+      it "leaves a member who left inactive rather than letting them back in" do
+        member = create(:member, :inactive)
+        sign_in_as member.user
+        token = JoinLink.mint(member.group)
+
+        expect { post join_request_path(token:) }.not_to change(Member, :count)
+        expect(member.reload).to be_inactive
+        expect(response).to redirect_to new_join_request_path(token:)
+      end
+
+      # WHY: #447 AC6, the link turned off between opening the page and pressing the button.
+      it "answers 404 and adds nobody for a link that was turned off" do
+        sign_in_as create(:user)
+        group = create(:group)
+        token = JoinLink.mint(group)
+        group.join_link.destroy!
+
+        expect { post join_request_path(token:) }.not_to change(Member, :count)
+        expect(response).to have_http_status :not_found
+      end
+
+      # WHY: #447 AC6, the link regenerated between opening the page and pressing the button.
+      it "answers 404 and adds nobody for a link the group has since regenerated" do
+        sign_in_as create(:user)
+        group = create(:group)
+        token = JoinLink.mint(group)
+        JoinLink.mint(group)
+
+        expect { post join_request_path(token:) }.not_to change(Member, :count)
+        expect(response).to have_http_status :not_found
+      end
+
+      it "answers 404 and adds nobody for a token never minted" do
+        sign_in_as create(:user)
+        JoinLink.mint(create(:group))
+
+        expect { post join_request_path(token: "never-minted") }.not_to change(Member, :count)
         expect(response).to have_http_status :not_found
       end
     end
