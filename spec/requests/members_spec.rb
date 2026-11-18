@@ -102,15 +102,17 @@ RSpec.describe "Members", type: :request do
       # WHY: #484 AC8. Who has left and who is waiting are `MemberPolicy#oversee?` reads, so a member not offered those tabs gets the Active list from their URLs, as an unknown events list degrades to Upcoming.
       it "lists the active members to a member who may not oversee the list opening the Pending or Inactive tab's URL" do
         member = create(:member, :active)
-        inactive = create(:member, :inactive, group: member.group)
+        create(:member, :inactive, group: member.group)
+        create(:member, :pending, group: member.group)
         sign_in_as(member.user)
 
         get group_members_path(member.group, status: "inactive")
-        inactive_tab = Nokogiri::HTML(response.body).at_css("nav[aria-label='Member lists'] a[aria-current=page]").text
+        inactive_page = Nokogiri::HTML(response.body)
         get group_members_path(member.group, status: "pending")
+        pending_page = Nokogiri::HTML(response.body)
 
-        expect([ inactive_tab, Nokogiri::HTML(response.body).at_css("nav[aria-label='Member lists'] a[aria-current=page]").text ]).to eq [ "Active (1)", "Active (1)" ]
-        expect(response.body).not_to include ActionView::RecordIdentifier.dom_id(inactive, :row)
+        expect([ inactive_page, pending_page ].map { it.at_css("nav[aria-label='Member lists'] a[aria-current=page]").text }).to eq [ "Active (1)", "Active (1)" ]
+        expect([ inactive_page, pending_page ].map { it.css("#members li[id]").map { |row| row["id"] } }).to eq [ [ ActionView::RecordIdentifier.dom_id(member, :row) ] ] * 2
       end
 
       # WHY: #484 AC8. A role the sheet does not offer narrows nothing.
