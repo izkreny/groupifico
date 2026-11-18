@@ -222,6 +222,17 @@ RSpec.describe "The events list", type: :system do
     expect(tabs).to eq [ "1px", "2px", true, true ]
   end
 
+  # WHY: a chip's label is mostly lowercase, so its ✕ is centred on the letters' x-height, as the app's badges are, and the chip keeps its 28px tap target.
+  it "centres each chip's ✕ on its label's lowercase letters" do
+    member = create(:member, :owner)
+    sign_in_as member.user
+
+    visit group_events_path(member.group, category: %w[ rehearsal ], answer: %w[ not_answered ])
+
+    chips = page.evaluate_script(%(Array.from(document.querySelectorAll("a[aria-label^='Remove ']")).map(link => { const label = link.querySelector("span"), probe = document.createElement("span"); probe.style.display = "inline-block"; label.append(probe); const baseline = probe.getBoundingClientRect().bottom, style = getComputedStyle(label), canvas = document.createElement("canvas").getContext("2d"); canvas.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`; const x = canvas.measureText("x").actualBoundingBoxAscent, icon = link.querySelector("svg").getBoundingClientRect(); probe.remove(); return [ Math.abs(icon.top + icon.height / 2 - (baseline - x / 2)) <= 0.5, link.getBoundingClientRect().height ] })))
+    expect(chips).to eq [ [ true, 28 ], [ true, 28 ] ]
+  end
+
   # WHY: daisyUI's list draws its divider under every row but the last; the list closes on that same line, and the tabs' line opens it.
   it "draws the rows' divider under the last row too" do
     member = create(:member, :owner)
