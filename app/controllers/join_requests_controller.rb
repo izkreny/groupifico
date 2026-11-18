@@ -16,9 +16,9 @@ class JoinRequestsController < ApplicationController
     end
   end
 
-  # WHY: found before it is created, so a second press, a double-click or a page left open in another tab leaves a membership that already exists as it is, whatever its status, rather than answering a uniqueness error or bringing back a member who left; `status: :pending` is stated because a member is created `active` by default.
+  # WHY: found before it is created, so a second press or a page left open in another tab leaves a membership that already exists as it is, whatever its status, rather than bringing back a member who left; no bang, because two presses in flight at once both find nothing and the later one's create is refused by the membership the earlier one just wrote, and that refusal is answered with the same join page, which shows the request waiting; `status: :pending` is stated because a member is created `active` by default.
   def create
-    @group.members.create_with(status: :pending).find_or_create_by!(user: Current.user)
+    @group.members.create_with(status: :pending).find_or_create_by(user: Current.user)
 
     redirect_to new_join_request_path(token: params[:token])
   end
