@@ -577,7 +577,7 @@ RSpec.describe "Groups", type: :request do
 
         document = Nokogiri::HTML(response.body)
         last = document.at_css("##{ActionView::RecordIdentifier.dom_id(gig, :next_up)} .card-body > :last-child")
-        expect([ last.name, last.text.squish, last[:href] ]).to eq [ "a", "See all upcoming gigs", group_events_path(member.group, category: %w[ gig ]) ]
+        expect([ last.name, last.text.squish, last[:href] ]).to eq [ "a", "All upcoming gigs", group_events_path(member.group, category: %w[ gig ]) ]
         expect(document.css("##{ActionView::RecordIdentifier.dom_id(rehearsal, :next_up)} a").map { URI(it[:href]).path }).not_to include group_events_path(member.group)
       end
 

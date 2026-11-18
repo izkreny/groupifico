@@ -482,7 +482,7 @@ RSpec.describe "Events", type: :request do
         confirmed_event(member, days: 4, name: "Section rehearsal", category: :rehearsal)
         sign_in_as(member.user)
         get group_path(member.group)
-        href = Nokogiri::HTML(response.body).at_xpath("//a[normalize-space()='See all upcoming gigs']")&.[](:href)
+        href = Nokogiri::HTML(response.body).at_xpath("//a[normalize-space()='All upcoming gigs']")&.[](:href)
         expect(href).not_to be_nil
 
         get href

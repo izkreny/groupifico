@@ -140,9 +140,23 @@ RSpec.describe "The group home", type: :system do
 
     visit group_path(member.group)
     expect(page).to be_accessible
-    within(id: ActionView::RecordIdentifier.dom_id(gig, :next_up)) { click_link "See all upcoming gigs" }
+    within(id: ActionView::RecordIdentifier.dom_id(gig, :next_up)) { click_link "All upcoming gigs" }
 
     expect(page).to have_current_path group_events_path(member.group, category: %w[ gig ])
+  end
+
+  # WHY: #461, the owner's pick of the footer row: a 44px row, the WCAG 2.5.5 target, under a hairline that paints, so the link reads as the card's own footer rather than the answer row's tail.
+  it "draws the gig card's link as a 44px footer row under a divider" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    gig = next_gig_for(member)
+    sign_in_as member.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_path(member.group)
+
+    expect(find_by_id(ActionView::RecordIdentifier.dom_id(gig, :next_up)).find_link("All upcoming gigs").evaluate_script(<<~JS)).to eq [ 44, "1px", true ]
+      ((box, style) => [ Math.round(box.height), style.borderTopWidth, style.borderTopStyle === "solid" && style.borderTopColor !== getComputedStyle(this.closest(".card")).backgroundColor ])(this.getBoundingClientRect(), getComputedStyle(this))
+    JS
   end
 
   # WHY: #473 AC3. A press lands on whatever is topmost under it, so every control on the card, the map link and the Who's coming line included, has to be the topmost element at its own centre rather than the name's overlay.
