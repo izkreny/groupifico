@@ -376,10 +376,11 @@ RSpec.describe "The events list", type: :system do
     labels.each { find_by_id("event_filter_dialog").find("input[aria-label='#{it}']").click }
   end
 
-  # Whether the funnel carries the named ink and still clears 3:1 as an icon.
+  # Whether the funnel paints the named ink, read against a probe carrying that class, which must itself differ from the ink around it so a class that compiled to nothing cannot pass, and still clears 3:1 as an icon.
   def funnel_ink(ink)
     funnel = "button[aria-label='Filter events']"
-    [ find(funnel)[:class].include?(ink), text_contrast(funnel) >= ContrastHelper::WCAG_NON_TEXT ]
+    painted = page.evaluate_script(%((() => { const button = document.querySelector("#{funnel}"), probe = document.createElement("span"); probe.className = "#{ink}"; button.parentElement.append(probe); const ink = getComputedStyle(probe).color, painted = getComputedStyle(button).color == ink && ink != getComputedStyle(button.parentElement).color; probe.remove(); return painted })()))
+    [ painted, text_contrast(funnel) >= ContrastHelper::WCAG_NON_TEXT ]
   end
 
   # Clear all and "Show N events", the sheet's last two labelled buttons, each as its rounded top and left.
