@@ -364,11 +364,29 @@ RSpec.describe "The events list", type: :system do
     expect([ clear.top == show.top && clear.left < show.left, narrow_show.top < narrow_clear.top ]).to eq [ true, true ]
   end
 
+  # WHY: #484 AC12 and AC13. The browser's accessibility tree names each tab with what its count counts, while the tab shows the count alone.
+  it "names each tab with what its count counts, showing the count alone" do
+    member = create(:member, :owner)
+    next_event_for(member)
+    sign_in_as member.user
+
+    visit group_events_path(member.group)
+
+    expect(tab_names(%w[ Upcoming Past Canceled ])).to eq [ "Upcoming (1 event)", "Past (0 events)", "Canceled (0 events)" ]
+    expect(page.all("nav[aria-label='Event lists'] a").map(&:text)).to eq [ "Upcoming (1)", "Past (0)", "Canceled (0)" ]
+  end
+
   # A Turbo visit away and Back, the way a member leaves the list and returns, where a `visit` would be a full page load.
   def leave_for_a_new_event_and_come_back(group)
     click_link "New event"
     expect(page).to have_current_path new_group_event_path(group)
     go_back
+  end
+
+  # The accessible names Chromium computed for the links whose name opens with one of the tabs, read from its accessibility tree rather than the markup, which is the name a screen reader announces.
+  def tab_names(tabs)
+    nodes = page.driver.browser.page.command("Accessibility.getFullAXTree")["nodes"]
+    nodes.filter_map { it.dig("name", "value") if it.dig("role", "value") == "link" }.select { |name| tabs.any? { name.start_with?("#{it} (") } }
   end
 
   def pick_in_sheet(*labels)
