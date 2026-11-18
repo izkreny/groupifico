@@ -515,7 +515,7 @@ RSpec.describe "Events", type: :request do
         get href
 
         page = Nokogiri::HTML(response.body)
-        expect([ response.body.include?("Advent concert"), response.body.include?("Section rehearsal"), page.at_css("nav[aria-label='Event lists'] a[aria-current=page]").text, page.css("a[aria-label^='Remove ']").map { it["aria-label"] } ]).to eq [ true, false, "Upcoming", [ "Remove Gig" ] ]
+        expect([ response.body.include?("Advent concert"), response.body.include?("Section rehearsal"), page.at_css("nav[aria-label='Event lists'] a[aria-current=page]").text, page.css("a[aria-label^='Remove ']").map { it["aria-label"] } ]).to eq [ true, false, "Upcoming (1)", [ "Remove Gig" ] ]
       end
     end
 
