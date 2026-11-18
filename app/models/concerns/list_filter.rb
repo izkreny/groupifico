@@ -10,8 +10,11 @@ module ListFilter
 
   # WHY: each tab carries every filter on, so switching lists keeps them, the way GitLab's and Mastodon's tabs merge the current query.
   def tabs
-    self.class::TABS.map { |value, name| [ name, value, params_with(self.class::TAB => value) ] }
+    offered_tabs.map { |value, name| [ name, value, params_with(self.class::TAB => value) ] }
   end
+
+  # The tabs this reader is offered, every one unless a list says otherwise.
+  def offered_tabs = self.class::TABS
 
   # WHY: the tab is not a filter, so clearing every filter keeps it.
   def cleared = { self.class::TAB => tab }.compact
