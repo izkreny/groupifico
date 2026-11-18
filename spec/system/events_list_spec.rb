@@ -131,20 +131,6 @@ RSpec.describe "The events list", type: :system do
     JS
   end
 
-  # WHY: #460 AC2 and AC6. The funnel and every filter's chip open the same sheet.
-  it "opens the filter sheet from the funnel and from a chip" do
-    member = create(:member, :owner)
-    sign_in_as member.user
-
-    visit group_events_path(member.group, category: %w[ gig ])
-    click_button "Filter events"
-    expect(page).to have_css "dialog#event_filter_dialog[open]"
-    within("#event_filter_dialog") { click_button "Close" }
-    click_button "Gig"
-
-    expect(page).to have_css "dialog#event_filter_dialog[open]"
-  end
-
   # WHY: #460 AC12. The tabs and the chips paint differently in each theme, and an inactive tab is where daisyUI's own dimming fell short of 4.5:1.
   it "passes axe on the list with its tabs and chips, in organic" do
     member = create(:member, :owner)
@@ -257,8 +243,8 @@ RSpec.describe "The events list", type: :system do
     expect(page).to have_link "Remove Gig"
   end
 
-  # WHY: #460 AC5. A chip's ✕ links the list with everything else still on, so only its own filter goes.
-  it "removes one filter with its chip's ✕, leaving the others on" do
+  # WHY: #460 AC6. A chip links the list with everything else still on, so only its own filter goes.
+  it "removes one filter with its chip, leaving the others on" do
     member = create(:member, :owner)
     next_event_for(member)
     sign_in_as member.user

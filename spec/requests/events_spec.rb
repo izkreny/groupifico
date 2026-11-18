@@ -95,7 +95,7 @@ RSpec.describe "Events", type: :request do
         expect([ unoffered.include?("Miscellaneous"), offered.at_css("legend").text, offered.at_css("input")["aria-label"] ]).to eq [ false, "Miscellaneous", "Events I manage" ]
       end
 
-      # WHY: #460 AC5. Each filter's chip carries a ✕ linking the list with everything else still on, and "Clear all" drops every filter but keeps the tab, since the tab is not a filter.
+      # WHY: #460 AC5 and AC6. Each filter's chip is one link, its label included, to the list with everything else still on, and "Clear all" drops every filter but keeps the tab, since the tab is not a filter.
       it "shows each filter as a removable chip, then Clear all keeping the tab" do
         member = create(:member, :active)
         sign_in_as(member.user)
@@ -103,10 +103,9 @@ RSpec.describe "Events", type: :request do
         get group_events_path(member.group, scope: "past", category: %w[ gig ], answer: %w[ yes ])
 
         page = Nokogiri::HTML(response.body)
-        expect(page.css("main button[data-action='dialog#show']").map { it.text.strip }.reject(&:empty?)).to eq %w[ Gig Yes ]
-        expect(page.css("a[aria-label^='Remove ']").map { [ it["aria-label"], it[:href] ] }).to eq [
-          [ "Remove Gig", group_events_path(member.group, scope: "past", answer: %w[ yes ]) ],
-          [ "Remove Yes", group_events_path(member.group, scope: "past", category: %w[ gig ]) ]
+        expect(page.css("a[aria-label^='Remove ']").map { [ it["aria-label"], it.text.squish, it[:href] ] }).to eq [
+          [ "Remove Gig", "Gig", group_events_path(member.group, scope: "past", answer: %w[ yes ]) ],
+          [ "Remove Yes", "Yes", group_events_path(member.group, scope: "past", category: %w[ gig ]) ]
         ]
         expect(page.at_xpath("//a[normalize-space()='Clear all']")&.[](:href)).to eq group_events_path(member.group, scope: "past")
       end
