@@ -49,6 +49,13 @@ RSpec.describe Event::Filter do
 
       expect([ filter.managed_offered?, filter.managed? ]).to eq [ true, true ]
     end
+
+    # WHY: #460 AC11. The sheet sends "1" and nothing else, so any other value is one the list does not offer.
+    it "drops a managed value the sheet does not send" do
+      upcoming(manager: member)
+
+      expect([ described_class.new(member, managed: "no").managed?, described_class.new(member, managed: "banana").managed? ]).to eq [ false, false ]
+    end
   end
 
   describe "#apply" do

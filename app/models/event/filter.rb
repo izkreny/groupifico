@@ -22,7 +22,8 @@ class Event::Filter
     @scope = scope.presence_in(SCOPES.keys.compact)
     @categories = CATEGORIES.keys & Array(categories)
     @answers = ANSWERS.keys & Array(answers)
-    @managed = managed_offered? && ActiveModel::Type::Boolean.new.cast(managed).present?
+    # WHY: only the "1" the sheet sends, checked like every other value against what the sheet offers, since a boolean cast reads any unknown string as on.
+    @managed = managed_offered? && managed.to_s == "1"
   end
 
   def managed? = @managed
