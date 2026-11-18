@@ -55,7 +55,7 @@ class Event::Filter
 
   # WHY: each tab carries every filter on, so switching lists keeps them, the way GitLab's and Mastodon's tabs merge the current query.
   def tabs
-    SCOPES.map { |value, name| [ name, value, without(scope: value) ] }
+    SCOPES.map { |value, name| [ name, value, params_with(scope: value) ] }
   end
 
   # WHY: the tab is not a filter, so clearing every filter keeps it.
@@ -63,13 +63,13 @@ class Event::Filter
 
   # WHY: each chip carries the parameters that leave every other filter on, so its ✕ applies what remains rather than knowing how to remove itself.
   def chips
-    categories.map { [ CATEGORIES[it], without(category: it) ] } +
-      answers.map { [ ANSWERS[it], without(answer: it) ] } +
-      (managed? ? [ [ MISCELLANEOUS["managed"], without(managed: true) ] ] : [])
+    categories.map { [ CATEGORIES[it], params_with(categories: categories - [ it ]) ] } +
+      answers.map { [ ANSWERS[it], params_with(answers: answers - [ it ]) ] } +
+      (managed? ? [ [ MISCELLANEOUS["managed"], params_with(managed: false) ] ] : [])
   end
 
   private
-    def without(scope: self.scope, category: nil, answer: nil, managed: false)
-      { scope:, category: categories - [ category ], answer: answers - [ answer ], managed: ("1" if managed? && !managed) }.compact_blank
+    def params_with(scope: self.scope, categories: self.categories, answers: self.answers, managed: managed?)
+      { scope:, category: categories, answer: answers, managed: ("1" if managed) }.compact_blank
     end
 end
