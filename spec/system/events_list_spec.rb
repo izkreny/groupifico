@@ -383,31 +383,6 @@ RSpec.describe "The events list", type: :system do
     go_back
   end
 
-  # The accessible names Chromium computed for the links whose name opens with one of the tabs, read from its accessibility tree rather than the markup, which is the name a screen reader announces.
-  def tab_names(tabs)
-    nodes = page.driver.browser.page.command("Accessibility.getFullAXTree")["nodes"]
-    nodes.filter_map { it.dig("name", "value") if it.dig("role", "value") == "link" }.select { |name| tabs.any? { name.start_with?("#{it} (") } }
-  end
-
-  def pick_in_sheet(*labels)
-    click_button "Filter events"
-    labels.each { find_by_id("event_filter_dialog").find("input[aria-label='#{it}']").click }
-  end
-
-  # Whether the funnel paints the named ink, read against a probe carrying that class, which must itself differ from the ink around it so a class that compiled to nothing cannot pass, and still clears 3:1 as an icon.
-  def funnel_ink(ink)
-    funnel = "button[aria-label='Filter events']"
-    painted = page.evaluate_script(%((() => { const button = document.querySelector("#{funnel}"), probe = document.createElement("span"); probe.className = "#{ink}"; button.parentElement.append(probe); const ink = getComputedStyle(probe).color, painted = getComputedStyle(button).color == ink && ink != getComputedStyle(button.parentElement).color; probe.remove(); return painted })()))
-    [ painted, text_contrast(funnel) >= ContrastHelper::WCAG_NON_TEXT ]
-  end
-
-  # Clear all and "Show N events", the sheet's last two labelled buttons, each as its rounded top and left.
-  def sheet_buttons
-    find_by_id("event_filter_dialog").evaluate_script(<<~JS).map { Data.define(:top, :left).new(*it) }
-      [ ...this.querySelectorAll("button.btn:not([aria-label])") ].slice(-2).map(button => button.getBoundingClientRect()).map(rect => [ Math.round(rect.top), Math.round(rect.left) ])
-    JS
-  end
-
   # The other list needs something on it, and only its name is read: a concert that ended a week
   # ago is past by `ends_at` as well as by `starts_at`, which is the column `Event.past` reads.
   def past_event_for(member)
