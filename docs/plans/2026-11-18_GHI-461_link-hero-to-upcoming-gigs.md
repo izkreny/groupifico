@@ -37,3 +37,4 @@ The specs prove where each link points, which card carries it and that a press r
 - **The link's shape.** The owner picked option C from the design proposal, 2026-11-18: a full-width 44px footer row under a hairline, in the kicker's type and the plain text colour, labelled "All upcoming gigs".
 - **The link's count.** The owner asked for the row to carry the number of gigs its list holds, written as #486 writes its tab counts, "All upcoming gigs (4)", and for the row to show whatever the number.
 - **Unconfirmed gigs ahead of no confirmed one.** The owner's rule: the gig slot says "No confirmed gig coming up" and carries the same counted row; with no gig ahead at all it keeps "No gig coming up" and no row, as Q1 settled.
+- **Counts past 99.** The owner's rule for every count the app shows: 100 or more is written "99+", through one helper the other counts can share.
