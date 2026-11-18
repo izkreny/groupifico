@@ -501,6 +501,22 @@ RSpec.describe "Events", type: :request do
 
         expect([ response.body.include?("No events match these filters."), response.body.include?("Nothing coming up.") ]).to eq [ true, false ]
       end
+
+      # WHY: #461 AC2. The URL is read off the group home's gig card rather than written here, so the example follows the link the member presses.
+      it "opens the gig card's link on Upcoming filtered to gigs, with a removable Gig chip" do
+        member = create(:member, :active)
+        confirmed_event(member, days: 3, name: "Advent concert", category: :gig)
+        confirmed_event(member, days: 4, name: "Section rehearsal", category: :rehearsal)
+        sign_in_as(member.user)
+        get group_path(member.group)
+        href = Nokogiri::HTML(response.body).at_xpath("//a[starts-with(normalize-space(), 'All upcoming gigs')]")&.[](:href)
+        expect(href).not_to be_nil
+
+        get href
+
+        page = Nokogiri::HTML(response.body)
+        expect([ response.body.include?("Advent concert"), response.body.include?("Section rehearsal"), page.at_css("nav[aria-label='Event lists'] a[aria-current=page]").text, page.css("a[aria-label^='Remove ']").map { it["aria-label"] } ]).to eq [ true, false, "Upcoming", [ "Remove Gig" ] ]
+      end
     end
 
     # WHY: `confirmed_event` and then the status, because a registration takes an answer only while its event is open to answers, so a member answers before the event is called off.

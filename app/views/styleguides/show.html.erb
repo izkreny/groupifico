@@ -126,6 +126,15 @@
     <%= render "events/next_up", event: @next_up, registration: question %>
   <% end %>
 
+  <%# The gig slot's footer row, drawn alone on the hero's surface, since the hero sample above is a rehearsal and only the gig slot carries it. %>
+  <%= render layout: "styleguides/section", locals: { title: "Gig slot footer row" } do %>
+    <div class="card card-sm bg-base-200">
+      <div class="card-body gap-card-row">
+        <%= render "events/upcoming_gigs", group: @group, count: 3 %>
+      </div>
+    </div>
+  <% end %>
+
   <%= render layout: "styleguides/section", locals: { title: "Record facts" } do %>
     <%= render "events/event", event: @next_up %>
   <% end %>

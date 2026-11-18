@@ -131,6 +131,34 @@ RSpec.describe "The group home", type: :system do
     expect(page).to have_current_path edit_group_event_path(member.group, event)
   end
 
+  # WHY: #461 AC1 and AC2. The gig card's name is stretched over it like the rehearsal card's, so pressing the link proves it sits above that overlay and lands on the list filtered to gigs rather than on the gig; what that list shows is `spec/requests/events_spec.rb`'s.
+  it "lands on the events list filtered to gigs from the gig card's link" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    gig = next_gig_for(member)
+    sign_in_as member.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_path(member.group)
+    expect(page).to be_accessible
+    within(id: ActionView::RecordIdentifier.dom_id(gig, :next_up)) { click_link "All upcoming gigs" }
+
+    expect(page).to have_current_path group_events_path(member.group, category: %w[ gig ])
+  end
+
+  # WHY: #461, the owner's pick of the footer row: a 44px row, the WCAG 2.5.5 target, under a hairline that paints, so the link reads as the card's own footer rather than the answer row's tail.
+  it "draws the gig card's link as a 44px footer row under a divider" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    gig = next_gig_for(member)
+    sign_in_as member.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_path(member.group)
+
+    expect(find_by_id(ActionView::RecordIdentifier.dom_id(gig, :next_up)).find_link("All upcoming gigs").evaluate_script(<<~JS)).to eq [ 44, "1px", true ]
+      ((box, style) => [ Math.round(box.height), style.borderTopWidth, style.borderTopStyle === "solid" && style.borderTopColor !== getComputedStyle(this.closest(".card")).backgroundColor ])(this.getBoundingClientRect(), getComputedStyle(this))
+    JS
+  end
+
   # WHY: #473 AC3. A press lands on whatever is topmost under it, so every control on the card, the map link and the Who's coming line included, has to be the topmost element at its own centre rather than the name's overlay.
   it "keeps every control on the card above the link to its event" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
@@ -357,6 +385,22 @@ RSpec.describe "The group home", type: :system do
 
     expect(page).to have_text "NO REHEARSAL COMING UP"
     expect(page).to paint "#no_rehearsal"
+    expect(page).to be_accessible
+  end
+
+  # WHY: the owner's rule for unconfirmed gigs ahead of no confirmed one: the empty gig slot gains the gig card's footer row, so whether the slot still paints, stays legible and draws that row at its 44px is the browser's to say.
+  it "paints the empty gig slot with its footer row while unconfirmed gigs are ahead, with no accessibility violations" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    next_event_for(member)
+    create(:event, :gig, group: member.group, creator: member, name: "Spring concert", status: :unconfirmed, starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours)
+    sign_in_as member.user
+    prefer_colour_scheme :light
+    resize_to ViewportHelper::MOBILE
+
+    visit group_path(member.group)
+
+    expect([ page.has_text?("NO CONFIRMED GIG COMING UP"), find_by_id("no_gig").find_link("All upcoming gigs (1)").evaluate_script("Math.round(this.getBoundingClientRect().height)") ]).to eq [ true, 44 ]
+    expect(page).to paint "#no_gig"
     expect(page).to be_accessible
   end
 

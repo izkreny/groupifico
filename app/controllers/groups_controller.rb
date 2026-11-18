@@ -19,6 +19,8 @@ class GroupsController < ApplicationController
     # The group decides which rehearsal and which gig are next, not the screen. No preload: each card's "said yes" line queries with the names included itself, and its counts are one grouped query, so the only association a screen leaves it to load is `registrations`.
     @next_rehearsal = @group.featured_event(:rehearsal)
     @next_gig       = @group.featured_event(:gig)
+    # WHY: counted through the events list's own filter and scope, so the number on the gig slot's link is exactly what that link opens, unconfirmed gigs included; the empty gig slot reads it too, to lead to unconfirmed gigs when no confirmed one is ahead.
+    @upcoming_gig_count = Event::Filter.new(@membership, categories: %w[ gig ]).apply(authorized_scope(@group.events)).count
   end
 
   def new
