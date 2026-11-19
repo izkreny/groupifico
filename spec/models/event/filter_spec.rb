@@ -14,16 +14,35 @@ RSpec.describe Event::Filter do
   describe ".from" do
     # WHY: #460 AC10. The URL is the only place a filter lives, so a link's parameters are the whole filter.
     it "reads the list and filters from the URL's parameters" do
-      filter = described_class.from(member, ActionController::Parameters.new(scope: "past", category: %w[ rehearsal gig ], answer: %w[ not_answered ]))
+      filter = described_class.from(member, ActionController::Parameters.new(scope: "past", category: %w[ rehearsal gig ], answer: %w[ not_answered ]), oversees: false)
 
       expect([ filter.scope, filter.categories, filter.answers ]).to eq [ "past", %w[ gig rehearsal ], %w[ not_answered ] ]
     end
 
     # WHY: #460 AC9. A URL with no filter in it is Upcoming with nothing on.
     it "is Upcoming with no filters when the URL carries none" do
-      filter = described_class.from(member, ActionController::Parameters.new(group_id: member.group_id))
+      filter = described_class.from(member, ActionController::Parameters.new(group_id: member.group_id), oversees: false)
 
-      expect([ filter.scope, filter.categories, filter.answers, filter.managed?, filter.narrowed? ]).to eq [ nil, [], [], false, false ]
+      expect([ filter.list, filter.scope, filter.categories, filter.answers, filter.managed?, filter.narrowed? ]).to eq [ "upcoming", nil, [], [], false, false ]
+    end
+
+    # WHY: #462 AC3. A member who oversees the events opens a URL with no list in it on Active, written back as no `scope` because it is their default.
+    it "is Active for a member who oversees the events when the URL names no list" do
+      filter = described_class.from(member, ActionController::Parameters.new(group_id: member.group_id), oversees: true)
+
+      expect([ filter.list, filter.scope ]).to eq [ "active", nil ]
+    end
+  end
+
+  describe "#offered_tabs" do
+    # WHY: #462 AC2. Active comes first for a member who oversees the events, and is their default, so it is the tab with no `scope`.
+    it "offers Active first to a member who oversees the events, Upcoming then named by its own value" do
+      expect(described_class.new(member, oversees: true).offered_tabs).to eq({ nil => "Active", "upcoming" => "Upcoming", "past" => "Past", "canceled" => "Canceled" })
+    end
+
+    # WHY: #462 AC4. Anyone else is offered no Active tab, and Upcoming stays their default.
+    it "offers no Active tab to a member who does not oversee the events" do
+      expect(described_class.new(member).offered_tabs).to eq({ nil => "Upcoming", "past" => "Past", "canceled" => "Canceled" })
     end
   end
 
@@ -34,6 +53,28 @@ RSpec.describe Event::Filter do
         filter = described_class.new(member, scope: "archived", categories: %w[ gig party ], answers: %w[ yes perhaps ])
 
         expect([ filter.scope, filter.categories, filter.answers ]).to eq [ nil, %w[ gig ], %w[ yes ] ]
+      end
+
+      # WHY: #462 AC5. Active is a list this member is not offered, so it is dropped like any other and they get Upcoming.
+      it "drops Active for a member who does not oversee the events" do
+        filter = described_class.new(member, scope: "active")
+
+        expect([ filter.list, filter.scope ]).to eq [ "upcoming", nil ]
+      end
+    end
+
+    # WHY: #462 AC9. Upcoming has a name of its own, so one link opens it whoever follows it, written back as no `scope` only where it is the reader's default.
+    context "with Upcoming named" do
+      it "opens Upcoming for a member who oversees the events, keeping its name" do
+        filter = described_class.new(member, oversees: true, scope: "upcoming")
+
+        expect([ filter.list, filter.scope ]).to eq [ "upcoming", "upcoming" ]
+      end
+
+      it "opens Upcoming for any other member, as their default" do
+        filter = described_class.new(member, scope: "upcoming")
+
+        expect([ filter.list, filter.scope ]).to eq [ "upcoming", nil ]
       end
 
       # WHY: #460 AC3 and AC11. "Managed by me" is offered only to someone who manages one of the group's events, so anyone else's is dropped.
@@ -98,6 +139,24 @@ RSpec.describe Event::Filter do
 
       expect(names(described_class.new(member, scope: "past", categories: %w[ gig ]))).to eq [ "Autumn fair" ]
     end
+
+    # WHY: #462 AC1. Every event neither canceled nor concluded, past and upcoming alike, by start.
+    it "lists every open event on Active, past and upcoming alike, ordered by start" do
+      upcoming(name: "Advent concert", starts_at: 10.days.from_now, ends_at: 10.days.from_now + 2.hours)
+      create(:event, :from_the_past, group: member.group, creator: member, name: "Autumn fair", status: :unconfirmed)
+      create(:event, :from_the_past, group: member.group, creator: member, name: "Summer gig", status: :concluded)
+      upcoming(name: "Christmas concert", status: :canceled)
+
+      expect(names(described_class.new(member, oversees: true))).to eq [ "Autumn fair", "Advent concert" ]
+    end
+
+    # WHY: #462 AC6. The sheet's filters narrow Active like any other list.
+    it "narrows Active to the categories picked" do
+      create(:event, :from_the_past, group: member.group, creator: member, name: "Autumn fair", category: :gig, status: :confirmed)
+      upcoming(name: "Section rehearsal", category: :rehearsal)
+
+      expect(names(described_class.new(member, oversees: true, categories: %w[ gig ]))).to eq [ "Autumn fair" ]
+    end
   end
 
   describe "#counts" do
@@ -108,6 +167,24 @@ RSpec.describe Event::Filter do
       create(:event, :from_the_past, group: member.group, creator: member, name: "Autumn fair", category: :gig)
 
       expect(described_class.new(member, categories: %w[ gig ]).counts(member.group.events)).to eq({ nil => 1, "past" => 1, "canceled" => 0 })
+    end
+
+    # WHY: #462 AC8. Active carries its count like every other tab, an event on it counted on its dated list too.
+    it "counts Active beside the other lists for a member who oversees the events" do
+      upcoming(name: "Advent concert", category: :gig)
+      create(:event, :from_the_past, group: member.group, creator: member, name: "Autumn fair", category: :gig, status: :confirmed)
+      create(:event, :from_the_past, group: member.group, creator: member, name: "Summer gig", category: :gig, status: :concluded)
+
+      expect(described_class.new(member, oversees: true, categories: %w[ gig ]).counts(member.group.events)).to eq({ nil => 2, "upcoming" => 1, "past" => 2, "canceled" => 0 })
+    end
+  end
+
+  describe "#tabs" do
+    # WHY: #462 AC6. The Active tab keeps every filter on, like the other tabs.
+    it "links Active with every filter still on" do
+      filter = described_class.new(member, oversees: true, scope: "past", categories: %w[ gig ])
+
+      expect(filter.tabs.first).to eq [ "Active", nil, { category: %w[ gig ] } ]
     end
   end
 

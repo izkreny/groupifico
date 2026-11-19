@@ -18,7 +18,7 @@
     <% elsif @filter.narrowed? %>
       <p class="text-meta">No events match these filters.</p>
     <% else %>
-      <p class="text-meta"><%= { "upcoming" => "Nothing coming up.", "past" => "No past events.", "canceled" => "No canceled events." }.fetch(@filter.list) %></p>
+      <p class="text-meta"><%= { "active" => "No active events.", "upcoming" => "Nothing coming up.", "past" => "No past events.", "canceled" => "No canceled events." }.fetch(@filter.list) %></p>
     <% end %>
   </div>
 <% end %>
