@@ -53,7 +53,9 @@ module StyleguidesHelper
     remove: "Taking something off: the x on a picked screenshot's thumbnail on the feedback form, and on a filter's chip on the events and members lists, and on Clear all in their filter sheets.",
     return: "Going back to the page the feedback was sent from: Back to where you were on the thank-you page.",
     filter: "Choosing what a list shows: the funnel beside the + on the events and members lists.",
-    apply: "Applying a filter sheet's picks: Show N events or Show N members on the sheet."
+    apply: "Applying a filter sheet's picks: Show N events or Show N members on the sheet.",
+    scroll_left: "Sliding a list's tabs back: the arrow over the start of the events or members tabs, once they have scrolled.",
+    scroll_right: "Sliding a list's tabs on: the arrow over the end of the events or members tabs, while more lie past the screen's edge."
   }.freeze
 
   # The named theme's daisyUI colour tokens, name to hex, in the order the stylesheet lists them.

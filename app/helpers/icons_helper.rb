@@ -77,7 +77,11 @@ module IconsHelper
 
     # WHY: the legend draws none of the events filter's glyphs, so they are Heroicons' own: a funnel because the sheet narrows the list rather than configures it.
     filter: "funnel",
-    apply: "check"
+    apply: "check",
+
+    # WHY: the legend draws no glyph for a tab row that scrolls, so they are Heroicons' own, the chevrons `back` and `go_to` draw under meanings of their own, since sliding a row is not leaving the screen.
+    scroll_left: "chevron-left",
+    scroll_right: "chevron-right"
   }.freeze
 
   # Heroicons' filled set for each size class the app draws: solid, mini and micro are drawn on their own 24, 20 and 16px grids, where its outline set exists at 24px alone.

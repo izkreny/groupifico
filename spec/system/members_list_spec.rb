@@ -380,6 +380,21 @@ RSpec.describe "The members list", type: :system do
       expect(page.evaluate_script(%((() => { const nav = document.querySelector("nav[aria-label='Member lists']"), tab = nav.querySelector("[aria-current='page']").getBoundingClientRect(), box = nav.getBoundingClientRect(); return [ nav.scrollWidth > nav.clientWidth, tab.left >= box.left, Math.round(tab.right) <= Math.round(box.right) ] })()))).to eq [ true, true, true ]
     end
 
+    # WHY: the owner's pick on #486: where the screen's edge falls decides whether any label is cut, so an arrow marks each end that hides more tabs, and at 320px no label is cut at all.
+    it "marks each end of the tabs that hides more with an arrow that slides the row" do
+      owner = create(:member, :active, :owner)
+      sign_in_as owner.user
+      page.current_window.resize_to(320, 844)
+
+      visit group_members_path(owner.group)
+
+      arrows = %((() => [ ...document.querySelectorAll("nav[aria-label='Member lists'] ~ button") ].map(arrow => arrow.checkVisibility()))())
+      expect(page.evaluate_script(arrows)).to eq [ false, true ]
+      find("nav[aria-label='Member lists'] ~ button:not([hidden])").click
+      expect(page).to have_css("nav[aria-label='Member lists'] ~ button:first-of-type:not([hidden])", visible: :all)
+      expect(page.evaluate_script(arrows)).to eq [ true, false ]
+    end
+
     # WHY: the row scrolls only when it must; where the tabs fit they still share its width equally.
     it "spreads the tabs across the row when they fit" do
       owner = create(:member, :active, :owner)
