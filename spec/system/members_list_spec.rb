@@ -369,6 +369,17 @@ RSpec.describe "The members list", type: :system do
       expect(page.evaluate_script(%((() => { const nav = document.querySelector("nav[aria-label='Member lists']"), tabs = [ ...nav.querySelectorAll("a") ], lines = tabs.map(tab => { const range = document.createRange(); range.selectNodeContents(tab); return range.getClientRects().length }); nav.scrollLeft = nav.scrollWidth; const last = tabs.at(-1).getBoundingClientRect(), box = nav.getBoundingClientRect(); return [ lines, nav.scrollWidth > nav.clientWidth, Math.round(last.right) <= Math.round(box.right) ] })()))).to eq [ [ 1, 1, 1, 1 ], true, true ]
     end
 
+    # WHY: a row that scrolls starts at its left edge, so a tab opened past the screen's edge would load cut off; the research on #486 asks for the open tab shown whole.
+    it "shows the open tab whole on a phone, even the last" do
+      owner = create(:member, :active, :owner)
+      sign_in_as owner.user
+      resize_to ViewportHelper::MOBILE
+
+      visit group_members_path(owner.group, status: "inactive")
+
+      expect(page.evaluate_script(%((() => { const nav = document.querySelector("nav[aria-label='Member lists']"), tab = nav.querySelector("[aria-current='page']").getBoundingClientRect(), box = nav.getBoundingClientRect(); return [ nav.scrollWidth > nav.clientWidth, tab.left >= box.left, Math.round(tab.right) <= Math.round(box.right) ] })()))).to eq [ true, true, true ]
+    end
+
     # WHY: the row scrolls only when it must; where the tabs fit they still share its width equally.
     it "spreads the tabs across the row when they fit" do
       owner = create(:member, :active, :owner)
