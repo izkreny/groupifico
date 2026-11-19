@@ -33,9 +33,13 @@ AllCops:
     - ".agents/**/*.md"
   # A plan is a dated record frozen at plan time, and its Ruby blocks are
   # often partial or illustrative, so rewriting one to satisfy a linter
-  # changes the record without improving any code - #411.
+  # changes the record without improving any code - #411. `CLAUDE.md` and
+  # `GEMINI.md` are symlinks to `AGENTS.md`, which is linted itself, so
+  # linting them would report each of its offenses three times.
   Exclude:
     - "docs/plans/**/*"
+    - "CLAUDE.md"
+    - "GEMINI.md"
 
 # Overwrite or add rules to create your own house style
 #
