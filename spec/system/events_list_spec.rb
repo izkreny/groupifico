@@ -218,8 +218,8 @@ RSpec.describe "The events list", type: :system do
 
     visit group_events_path(member.group)
 
-    tabs = page.evaluate_script(%((() => { const nav = document.querySelector("nav[aria-label='Event lists']"), tab = nav.querySelector("[aria-current=page]"), ink = document.createElement("span"); ink.className = "text-primary"; nav.append(ink); const line = getComputedStyle(nav), under = getComputedStyle(tab); return [ line.borderBottomWidth, under.borderBottomWidth, under.borderBottomColor == getComputedStyle(ink).color, tab.getBoundingClientRect().bottom == nav.getBoundingClientRect().bottom ] })()))
-    expect(tabs).to eq [ "1px", "2px", true, true ]
+    tabs = page.evaluate_script(%((() => { const nav = document.querySelector("nav[aria-label='Event lists']"), tab = nav.querySelector("[aria-current=page]"), ink = document.createElement("span"); ink.className = "text-primary"; nav.append(ink); const line = getComputedStyle(nav), under = getComputedStyle(tab); return [ line.boxShadow.endsWith("0px -1px 0px 0px inset"), under.borderBottomWidth, under.borderBottomColor == getComputedStyle(ink).color, tab.getBoundingClientRect().bottom == nav.getBoundingClientRect().bottom ] })()))
+    expect(tabs).to eq [ true, "2px", true, true ]
   end
 
   # WHY: the owner's pick on #471: the ✕ centred in the chip, and the label lifted so its baseline sits on the ✕'s visual bottom, where its strokes' round caps are centred, 11.28 of the glyph's 16 units, in a chip that keeps its 28px tap target.

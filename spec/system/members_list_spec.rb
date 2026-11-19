@@ -358,6 +358,28 @@ RSpec.describe "The members list", type: :system do
       expect(page.all("nav[aria-label='Member lists'] a").map(&:text)).to eq [ "Active (2)", "Paused (0)", "Pending (0)", "Inactive (0)" ]
     end
 
+    # WHY: the owner's pick on #486: four tabs and their counts do not fit a phone, so the row scrolls sideways and no label wraps.
+    it "keeps every tab on one line on a phone, scrolling the row to reach the last" do
+      owner = create(:member, :active, :owner)
+      sign_in_as owner.user
+      resize_to ViewportHelper::MOBILE
+
+      visit group_members_path(owner.group)
+
+      expect(page.evaluate_script(%((() => { const nav = document.querySelector("nav[aria-label='Member lists']"), tabs = [ ...nav.querySelectorAll("a") ], lines = tabs.map(tab => { const range = document.createRange(); range.selectNodeContents(tab); return range.getClientRects().length }); nav.scrollLeft = nav.scrollWidth; const last = tabs.at(-1).getBoundingClientRect(), box = nav.getBoundingClientRect(); return [ lines, nav.scrollWidth > nav.clientWidth, Math.round(last.right) <= Math.round(box.right) ] })()))).to eq [ [ 1, 1, 1, 1 ], true, true ]
+    end
+
+    # WHY: the row scrolls only when it must; where the tabs fit they still share its width equally.
+    it "spreads the tabs across the row when they fit" do
+      owner = create(:member, :active, :owner)
+      sign_in_as owner.user
+      resize_to ViewportHelper::DESKTOP
+
+      visit group_members_path(owner.group)
+
+      expect(page.evaluate_script(%((() => { const nav = document.querySelector("nav[aria-label='Member lists']"), widths = [ ...nav.querySelectorAll("a") ].map(tab => Math.round(tab.getBoundingClientRect().width)); return [ nav.scrollWidth == nav.clientWidth, Math.max(...widths) - Math.min(...widths) <= 1, Math.abs(widths.reduce((sum, width) => sum + width, 0) - nav.clientWidth) <= 2 ] })()))).to eq [ true, true, true ]
+    end
+
     # WHY: #484 AC11. The tabs and the chips paint differently in each theme.
     it "passes axe on the list with its tabs and chips, in organic" do
       owner = create(:member, :active, :owner)

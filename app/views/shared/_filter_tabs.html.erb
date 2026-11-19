@@ -1,10 +1,10 @@
 <%# locals: (group:, filter:, counts:) %>
-<%# WHY: links marked `aria-current` rather than ARIA tabs, because each tab loads its own URL. An inactive tab takes the muted text token, because daisyUI's own dimming leaves it at 3.1:1. Drawn as option C on the owner's options page: equal tabs on a line across the row, the open one underlined in the primary colour on that line, which also opens the list below. %>
-<nav class="tabs border-b border-base-300" aria-label="<%= filter.noun.capitalize %> lists">
+<%# WHY: links marked `aria-current` rather than ARIA tabs, because each tab loads its own URL. An inactive tab takes the muted text token, because daisyUI's own dimming leaves it at 3.1:1. Drawn as option C on the owner's options page: equal tabs on a line across the row, the open one underlined in the primary colour on that line, which also opens the list below. A row too narrow for its tabs scrolls sideways rather than wrapping a label, the owner's pick on #486, so the line is an inset shadow: a scrolling row clips a child to its padding box, which would cut an underline pushed down onto a border, and its scrollbar is hidden because it drew over that line; the cut-off last label is what says the row scrolls. %>
+<nav class="tabs flex-nowrap overflow-x-auto [scrollbar-width:none] shadow-[inset_0_-1px_0_var(--color-base-300)]" aria-label="<%= filter.noun.capitalize %> lists">
   <% filter.tabs.each do |name, value, params| %>
     <% current = value == filter.tab %>
     <% count = counts.fetch(value, 0) %>
     <%# WHY: the count names what the tab would list with every filter on, and the name says what it counts, so the tab reads "Active (19)" and is named "Active (19 members)". A label rather than a visually hidden noun, because Chromium spaces an absolutely positioned span off its neighbours and named the tab "Active (19 members )". %>
-    <%= link_to "#{name} (#{count_label(count)})", polymorphic_path([ group, filter.model ], params), class: [ "tab flex-1", current ? "tab-active top-px border-b-2 border-primary font-semibold" : "text-muted" ], aria: { current: ("page" if current), label: "#{name} (#{count_label(count)} #{filter.noun.pluralize(count)})" } %>
+    <%= link_to "#{name} (#{count_label(count)})", polymorphic_path([ group, filter.model ], params), class: [ "tab flex-1 shrink-0 whitespace-nowrap", current ? "tab-active border-b-2 border-primary font-semibold" : "text-muted" ], aria: { current: ("page" if current), label: "#{name} (#{count_label(count)} #{filter.noun.pluralize(count)})" } %>
   <% end %>
 </nav>
