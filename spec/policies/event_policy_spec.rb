@@ -51,6 +51,40 @@ RSpec.describe EventPolicy, type: :policy do
     end
   end
 
+  # WHY: #462 AC7. A read the three columns that run the events keep while paused, which is the whole reason it is a rule of its own rather than `create?`.
+  describe_rule :oversee? do
+    let(:group)   { create(:group) }
+    let(:actor)   { create(:member, group:) }
+    let(:record)  { build(:event, group:) }
+    let(:context) { { user: actor.user } }
+
+    failed "for a member holding no role, who may not see the Active list"
+
+    succeed "for an owner" do
+      let(:actor) { create(:member, :owner, group:) }
+    end
+
+    succeed "for an administrator" do
+      let(:actor) { create(:member, :administrator, group:) }
+    end
+
+    succeed "for an events administrator" do
+      let(:actor) { create(:member, :events_administrator, group:) }
+    end
+
+    failed "for a members administrator, whose column the row leaves blank" do
+      let(:actor) { create(:member, :members_administrator, group:) }
+    end
+
+    failed "for the manager of an event, whose column the row leaves blank" do
+      before { create(:event, group:, manager: actor) }
+    end
+
+    succeed "for a paused events administrator, because seeing the Active list is a read" do
+      let(:actor) { create(:member, :paused, :events_administrator, group:) }
+    end
+  end
+
   describe_rule :update? do
     let(:group)   { create(:group) }
     let(:actor)   { create(:member, group:) }
