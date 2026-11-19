@@ -309,6 +309,17 @@ RSpec.describe "Members", type: :request do
         expect(response.body).not_to include "2 members"
       end
 
+      # WHY: the owner's pick on #486: the + first, then the join link, then the funnel.
+      it "draws the +, the join link and the funnel in that order" do
+        actor = create(:member, :active, :members_administrator)
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group)
+
+        buttons = Nokogiri::HTML(response.body).css("main h2 + div > a[aria-label], main h2 + div > div > button[aria-label], main h2 + div > button[aria-label]")
+        expect(buttons.map { it["aria-label"] }).to eq [ "Invite member", "Join link", "Filter members" ]
+      end
+
       # WHY: #484 AC2. Pending and Inactive are the tabs of a member who may add people.
       it "offers each member's edit form and the Active, Paused, Pending and Inactive tabs" do
         actor = create(:member, :active, :members_administrator)
