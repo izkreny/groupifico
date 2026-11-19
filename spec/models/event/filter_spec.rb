@@ -36,7 +36,7 @@ RSpec.describe Event::Filter do
         expect([ filter.scope, filter.categories, filter.answers ]).to eq [ nil, %w[ gig ], %w[ yes ] ]
       end
 
-      # WHY: #460 AC3 and AC11. "Events I manage" is offered only to someone who manages one of the group's events, so anyone else's is dropped.
+      # WHY: #460 AC3 and AC11. "Managed by me" is offered only to someone who manages one of the group's events, so anyone else's is dropped.
       it "drops the managed filter for a member who manages none of the group's events" do
         filter = described_class.new(member, managed: "1")
 
@@ -149,7 +149,7 @@ RSpec.describe Event::Filter do
 
       expect(described_class.new(member, categories: %w[ gig ], managed: "1").chips).to eq [
         [ "Gig", { managed: "1" } ],
-        [ "Events I manage", { category: %w[ gig ] } ]
+        [ "Managed by me", { category: %w[ gig ] } ]
       ]
     end
   end

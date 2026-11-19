@@ -81,7 +81,7 @@ RSpec.describe "Events", type: :request do
         expect([ upcoming, past&.[]("value") ]).to eq [ nil, "past" ]
       end
 
-      # WHY: #460 AC3. "Events I manage" narrows nothing for someone who manages none of the group's events, so they are not offered it.
+      # WHY: #460 AC3. "Managed by me" narrows nothing for someone who manages none of the group's events, so they are not offered it.
       it "offers the Miscellaneous group only to a member who manages one of the group's events" do
         member = create(:member, :active)
         sign_in_as(member.user)
@@ -92,7 +92,7 @@ RSpec.describe "Events", type: :request do
         get group_events_path(member.group)
 
         offered = Nokogiri::HTML(response.body).css("dialog fieldset").last
-        expect([ unoffered.include?("Miscellaneous"), offered.at_css("legend").text, offered.at_css("input")["aria-label"] ]).to eq [ false, "Miscellaneous", "Events I manage" ]
+        expect([ unoffered.include?("Miscellaneous"), offered.at_css("legend").text, offered.at_css("input")["aria-label"] ]).to eq [ false, "Miscellaneous", "Managed by me" ]
       end
 
       # WHY: #460 AC5 and AC6. Each filter's chip is one link, its label included, to the list with everything else still on, and "Clear all" drops every filter but keeps the tab, since the tab is not a filter.
