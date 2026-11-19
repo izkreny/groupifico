@@ -24,6 +24,8 @@ class SessionsController < ApplicationController
               "If nothing arrives, ask your group's owner or an administrator for an invitation."
 
   allow_unauthenticated_access only: %i[ new create ]
+  # WHY: a member sent to the profile form may still sign out rather than fill it in.
+  allow_unset_profile only: %i[ destroy ]
   before_action :refuse_authenticated, only: %i[ new create ]
   rate_limit to: 10, within: 3.minutes, only: :create, with: -> { redirect_to new_session_path(return_to:), alert: "Try again later." }
 

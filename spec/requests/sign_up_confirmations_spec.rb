@@ -83,10 +83,12 @@ RSpec.describe "SignUpConfirmations", type: :request do
 
       # The owner membership is what makes the landing page reachable at all: without it
       # `GroupPolicy` answers the redirect with a 404, so following it proves the membership as
-      # well as the redirect target.
+      # well as the redirect target. The profile is set up in between, because a founder signs up
+      # with an address alone and `ProfileSetup` sends them to the profile form before anything else.
       it "lands the new owner on a group page they are allowed to see" do
         get sign_up_confirmation_path(token: SignUp.mint(email: "starter@example.com", group_name: "Chamber Choir"))
         post sign_up_confirmation_path
+        User.find_by!(email: "starter@example.com").profile.update!(first_name: "Ada", mobile_phone: "+385911111111")
 
         follow_redirect!
 
