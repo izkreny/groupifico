@@ -6,6 +6,9 @@ class ApplicationController < ActionController::Base
   # Changes to the importmap will invalidate the etag for HTML responses
   stale_when_importmap_changes
 
+  # WHY: an outcome that is neither something done nor something failed, such as a press the row's state already answered, gets its own flash type rather than borrowing `alert`'s red.
+  add_flash_types :info
+
   # Every `form_with` in the application draws its fields through `AppFormBuilder#field`, nested
   # `fields_for` builders included, so the field pattern arrives without a `builder:` per form.
   default_form_builder AppFormBuilder

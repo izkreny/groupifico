@@ -19,6 +19,7 @@ class StyleguidesController < ApplicationController
 
     if @missing.empty?
       flash.now[:notice] = "Event was successfully updated."
+      flash.now[:info]   = "This event is concluded, so no response was requested."
       flash.now[:alert]  = "You are not allowed to do that."
     else
       render :missing
