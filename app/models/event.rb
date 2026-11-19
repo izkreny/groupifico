@@ -91,6 +91,9 @@ class Event < ApplicationRecord
   scope :current_and_upcoming, -> { not_canceled.where(ends_at: Time.current..) }
   scope :past,                 -> { not_canceled.where(ends_at: ...Time.current) }
 
+  # WHY: a fourth list, the one those three do not partition: every event still open, read by status alone, so one that ended without being concluded stays in front of whoever runs the events. It is a view across the current and upcoming list and the past one, so an event on it is always on one of those as well.
+  scope :active, -> { where(status: %i[ unconfirmed confirmed ]) }
+
   scope :preloaded, -> { includes(:address, :group, :registrations, creator: :profile, manager: :profile) }
 
   # The tallies the event card draws, in one query, with a zero for a status nobody holds so the

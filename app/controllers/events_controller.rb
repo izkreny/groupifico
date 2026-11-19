@@ -18,7 +18,7 @@ class EventsController < ApplicationController
     # and `Event#registration_for` reads the loaded association: without this the list costs a
     # query per row for each.
     #
-    # The list's scopes partition the group's events between them, so an event it is in the middle of is on the upcoming list rather than on none: still ahead of its members, not behind them.
+    # The Upcoming, Past and Canceled scopes partition the group's events between them, so an event it is in the middle of is on the upcoming list rather than on none: still ahead of its members, not behind them. Active is a view across Upcoming and Past rather than a fourth part.
     events = authorized_scope(@group.events)
     @events = @filter.apply(events.preloaded)
     @counts = @filter.counts(events)

@@ -245,6 +245,19 @@ RSpec.describe Event, type: :model do
     end
   end
 
+  describe ".active" do
+    # WHY: #462 AC1. Every event neither canceled nor concluded, past and upcoming alike, so one that ended without being concluded stays on it.
+    it "returns every unconfirmed and confirmed event, whatever its dates" do
+      unconcluded = create(:event, :from_the_past, status: :confirmed)
+      ongoing = create(:event, :ongoing, status: :unconfirmed)
+      ahead = create(:event, :from_the_future, status: :confirmed)
+      create(:event, :from_the_past, status: :concluded)
+      create(:event, :from_the_future, status: :canceled)
+
+      expect(described_class.active).to contain_exactly(unconcluded, ongoing, ahead)
+    end
+  end
+
   describe "#ongoing?" do
     it "is true between the event's start and its end" do
       freeze_time do
