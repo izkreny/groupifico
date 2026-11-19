@@ -623,6 +623,21 @@ RSpec.describe "Events", type: :request do
         page = Nokogiri::HTML(response.body)
         expect([ response.body.include?("Advent concert"), response.body.include?("Section rehearsal"), page.at_css("nav[aria-label='Event lists'] a[aria-current=page]").text, page.css("a[aria-label^='Remove ']").map { it["aria-label"] } ]).to eq [ true, false, "Upcoming (1)", [ "Remove Gig" ] ]
       end
+
+      # WHY: #462 AC9. A bare events URL opens Active for whoever runs the events, so the gig card's link names Upcoming, and a gig that ended without being concluded stays off what it opens.
+      it "opens the gig card's link on Upcoming for a member who oversees the events" do
+        member = create(:member, :active, :events_administrator)
+        confirmed_event(member, days: 3, name: "Advent concert", category: :gig)
+        confirmed_event(member, days: -2, name: "Summer gig", category: :gig)
+        sign_in_as(member.user)
+        get group_path(member.group)
+        href = Nokogiri::HTML(response.body).at_xpath("//a[starts-with(normalize-space(), 'All upcoming gigs')]")&.[](:href)
+        expect(href).not_to be_nil
+
+        get href
+
+        expect([ response.body.include?("Advent concert"), response.body.include?("Summer gig"), Nokogiri::HTML(response.body).at_css("nav[aria-label='Event lists'] a[aria-current=page]").text ]).to eq [ true, false, "Upcoming (1)" ]
+      end
     end
 
     # WHY: `confirmed_event` and then the status, because a registration takes an answer only while its event is open to answers, so a member answers before the event is called off.
