@@ -17,20 +17,19 @@ plugins:
   # The app runs under Puma's threads and Solid Queue's workers.
   - rubocop-thread_safety
 
-# Merge rather than replace, so the lists below add to RuboCop's own
-# defaults instead of dropping them.
+# Merge rather than replace, so the exclusions below add to RuboCop's own
+# defaults (`node_modules/`, `vendor/`, `tmp/`) instead of dropping them.
 inherit_mode:
   merge:
-    - Include
     - Exclude
 
 AllCops:
   NewCops: enable
-  # RuboCop skips hidden directories, and `.agents/` holds maintained
-  # markdown. `.claude/` stays out: its markdown files are symlinks into
-  # `.agents/`, and `.claude/worktrees/` holds other branches' checkouts.
-  Include:
-    - ".agents/**/*.md"
+  # `.agents/` and `.claude/` stay out: RuboCop skips hidden directories,
+  # `.agents/` holds no Ruby blocks, `.claude/`'s markdown files are
+  # symlinks into it, and `.claude/worktrees/` holds other branches'
+  # checkouts.
+  #
   # A plan is a dated record frozen at plan time, and its Ruby blocks are
   # often partial or illustrative, so rewriting one to satisfy a linter
   # changes the record without improving any code - #411. `CLAUDE.md` and
