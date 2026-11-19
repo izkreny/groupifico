@@ -1,8 +1,9 @@
-<%# locals: (group:, filter:, count:) %>
-<%# WHY: a bottom sheet on a phone and a centred dialog wider up, as the join link's is, so the app's dialogs open one way. %>
-<dialog id="<%= filter.noun %>_filter_dialog" class="modal modal-bottom sm:modal-middle" aria-labelledby="<%= filter.noun %>_filter_heading" data-dialog-target="sheet">
+<%# locals: (group:, filter:, count:, namespace: nil) %>
+<%# WHY: a bottom sheet on a phone and a centred dialog wider up, as the join link's is, so the app's dialogs open one way. `namespace` is the styleguide's, as on `shared/filter_form`, which it passes on. %>
+<% id = ->(name) { [ namespace, "#{filter.noun}_filter", name ].compact.join("_") } %>
+<dialog id="<%= id.(:dialog) %>" class="modal modal-bottom sm:modal-middle" aria-labelledby="<%= id.(:heading) %>" data-dialog-target="sheet">
   <div class="modal-box flex flex-col gap-4">
-    <%= render "shared/filter_form", group:, filter:, count: %>
+    <%= render "shared/filter_form", group:, filter:, count:, namespace: %>
   </div>
 
   <form method="dialog" class="modal-backdrop">
