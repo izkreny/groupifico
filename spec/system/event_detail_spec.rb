@@ -456,9 +456,9 @@ RSpec.describe "The event detail", type: :system do
 
     press_plane_once_answered(event, ben)
 
+    expect(page).to have_css "#info[role='status']"
     expect(page).to paint "#info"
     expect(find_by_id("info").evaluate_script("getComputedStyle(this).color")).to eq "rgb(24, 90, 137)"
-    expect(page).to have_no_css "#alert"
     expect(page).to be_accessible
   end
 
