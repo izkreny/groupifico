@@ -36,8 +36,8 @@ FactoryBot.define do
     group
 
     trait :with_all_attributes do
-      association :user,  :with_full_profile
-      association :group, :with_all_attributes
+      user factory: %i[user with_full_profile]
+      group factory: %i[group with_all_attributes]
     end
 
     trait :active do

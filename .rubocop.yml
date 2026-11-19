@@ -9,9 +9,36 @@ plugins:
   - rubocop-rspec
   # The Capybara cops, which rubocop-rspec carried until its 3.0 and no longer does.
   - rubocop-capybara
+  # The FactoryBot cops, which rubocop-rspec carried until its 3.0 and no longer does.
+  - rubocop-factory_bot
+  # Lints the Ruby code blocks in markdown files with the same cops as the code.
+  - rubocop-md
+  - rubocop-rake
+  # The app runs under Puma's threads and Solid Queue's workers.
+  - rubocop-thread_safety
+
+# Merge rather than replace, so the exclusions below add to RuboCop's own
+# defaults (`node_modules/`, `vendor/`, `tmp/`) instead of dropping them.
+inherit_mode:
+  merge:
+    - Exclude
 
 AllCops:
   NewCops: enable
+  # `.agents/` and `.claude/` stay out: RuboCop skips hidden directories,
+  # `.agents/` holds no Ruby blocks, `.claude/`'s markdown files are
+  # symlinks into it, and `.claude/worktrees/` holds other branches'
+  # checkouts.
+  #
+  # A plan is a dated record frozen at plan time, and its Ruby blocks are
+  # often partial or illustrative, so rewriting one to satisfy a linter
+  # changes the record without improving any code - #411. `CLAUDE.md` and
+  # `GEMINI.md` are symlinks to `AGENTS.md`, which is linted itself, so
+  # linting them would report each of its offenses three times.
+  Exclude:
+    - "docs/plans/**/*"
+    - "CLAUDE.md"
+    - "GEMINI.md"
 
 # Overwrite or add rules to create your own house style
 #
@@ -44,6 +71,23 @@ RSpec/ExampleLength:
 RSpec/ExpectActual:
   Exclude:
     - "spec/policies/**/*_spec.rb"
+
+# These cops guard code that runs under Puma's threads and Solid Queue's
+# workers. The spec process runs one example at a time, and a spec that
+# mutates process-wide state on purpose, such as a callback set and
+# removed around one request to reach a race window, is setup rather
+# than a hazard - #411.
+ThreadSafety:
+  Exclude:
+    - "spec/**/*"
+
+# The group home's "caps the gig card's count at 99+" example needs 99
+# real events, since the cap is reached through the count query and only
+# rows prove the card uses it. A file is the narrowest scope config has,
+# so the default limit holds everywhere else - #411.
+FactoryBot/ExcessiveCreateList:
+  Exclude:
+    - "spec/requests/groups_spec.rb"
 
 # One behavior per example still holds; the default `Max: 1` mistakes
 # facets of one behavior for several behaviors. A request spec asserting
