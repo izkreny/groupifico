@@ -78,6 +78,14 @@ ThreadSafety:
   Exclude:
     - "spec/**/*"
 
+# The group home's "caps the gig card's count at 99+" example needs 99
+# real events, since the cap is reached through the count query and only
+# rows prove the card uses it. A file is the narrowest scope config has,
+# so the default limit holds everywhere else - #411.
+FactoryBot/ExcessiveCreateList:
+  Exclude:
+    - "spec/requests/groups_spec.rb"
+
 # One behavior per example still holds; the default `Max: 1` mistakes
 # facets of one behavior for several behaviors. A request spec asserting
 # a redirect and the side effect that earned it is one behavior in two
