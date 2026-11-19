@@ -69,6 +69,15 @@ RSpec/ExpectActual:
   Exclude:
     - "spec/policies/**/*_spec.rb"
 
+# These cops guard code that runs under Puma's threads and Solid Queue's
+# workers. The spec process runs one example at a time, and a spec that
+# mutates process-wide state on purpose, such as a callback set and
+# removed around one request to reach a race window, is setup rather
+# than a hazard - #411.
+ThreadSafety:
+  Exclude:
+    - "spec/**/*"
+
 # One behavior per example still holds; the default `Max: 1` mistakes
 # facets of one behavior for several behaviors. A request spec asserting
 # a redirect and the side effect that earned it is one behavior in two
