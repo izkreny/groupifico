@@ -3,9 +3,8 @@ require "rails_helper"
 RSpec.describe Member::Filter do
   let(:reader) { create(:member, :active) }
 
-  def member(status: :active, roles: [], signed_in: true)
-    user = create(:user, first_signed_in_at: (1.day.ago if signed_in))
-    create(:member, user:, group: reader.group, status:, roles: roles.map { build(:role, name: it) })
+  def member(*traits, signed_in: true, **attributes)
+    create(:member, :active, *traits, user: create(:user, first_signed_in_at: (1.day.ago if signed_in)), group: reader.group, **attributes)
   end
 
   def ids(filter)
@@ -66,22 +65,22 @@ RSpec.describe Member::Filter do
     # WHY: #484 AC2. Active is the tab a plain visit opens on.
     it "lists only the active members on the default tab" do
       active = member
-      member(status: :paused)
+      member(:paused)
 
       expect(ids(described_class.new(reader))).to contain_exactly(reader.id, active.id)
     end
 
     it "lists only the members of the tab picked" do
-      paused = member(status: :paused)
-      member(status: :inactive)
+      paused = member(:paused)
+      member(:inactive)
 
       expect(ids(described_class.new(reader, status: "paused"))).to eq [ paused.id ]
     end
 
     # WHY: #484 AC3 and N5. Roles are rows, so a member holding several matches each of them, once.
     it "narrows the list to the members holding any role picked, each listed once" do
-      both = member(roles: %w[ administrator events_administrator ])
-      member(roles: %w[ members_administrator ])
+      both = member(roles: [ build(:role, name: "administrator"), build(:role, name: "events_administrator") ])
+      member(:members_administrator)
 
       expect(ids(described_class.new(reader, roles: %w[ administrator events_administrator ]))).to eq [ both.id ]
     end
@@ -107,9 +106,9 @@ RSpec.describe Member::Filter do
   describe "#counts" do
     # WHY: #484 AC12. Each tab counts what it would list with every filter on.
     it "counts each tab's members under the filters that are on" do
-      member(roles: %w[ owner ])
-      member(roles: %w[ owner ], status: :paused)
-      member(status: :paused)
+      member(:owner)
+      member(:owner, :paused)
+      member(:paused)
 
       expect(described_class.new(reader, oversees: true, roles: %w[ owner ]).counts(reader.group.members)).to eq({ nil => 1, "paused" => 1 })
     end
