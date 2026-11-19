@@ -92,7 +92,7 @@ RSpec.describe "UserProfiles", type: :request do
         expect(document.at_css("#user_profile_mobile_phone_hint").text).to eq "Shown to members of your groups."
       end
 
-      it "carries the page the reader was sent from into the form" do
+      it "carries the page the member was sent from into the form" do
         sign_in_as(create(:user))
 
         get edit_user_profile_path(return_to: "/join?token=abc")
@@ -259,7 +259,7 @@ RSpec.describe "UserProfiles", type: :request do
         expect(user.profile.reload).to have_attributes(first_name: "Ada", last_name: "", mobile_phone: "+385911111111")
       end
 
-      it "returns to the page the reader was sent from" do
+      it "returns to the page the member was sent from" do
         sign_in_as(create(:user))
 
         patch user_profile_path, params: { user_profile: { first_name: "Ada" }, return_to: "/join?token=abc" }
