@@ -23,7 +23,7 @@ RSpec.describe UserProfile, type: :model do
   describe "#full_name" do
     context "when neither first nor last name is present" do
       it "returns the local-part (username) of the user's email address" do
-        user_profile_without_first_and_last_name = build(:user_profile, user: build(:user, email: "username@domain"))
+        user_profile_without_first_and_last_name = build(:user_profile, user: build(:user, :not_set_up, email: "username@domain"))
 
         expect(user_profile_without_first_and_last_name.full_name).to eq "username"
       end
@@ -37,7 +37,7 @@ RSpec.describe UserProfile, type: :model do
       end
 
       it "returns the last name if the first name is not present" do
-        user_profile_with_only_last_name = build(:user_profile, last_name: "Cave")
+        user_profile_with_only_last_name = build(:user_profile, first_name: nil, last_name: "Cave")
 
         expect(user_profile_with_only_last_name.full_name).to eq "Cave"
       end

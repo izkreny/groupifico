@@ -36,9 +36,9 @@ RSpec.describe "The Me menu", type: :system do
     expect(page).to be_accessible
   end
 
-  # WHY: a member with no name is headed by the email's local part, one word with nowhere to break, so a fixed long one fails on every run where a Faker draw only failed on some.
+  # WHY: a long first name is one word with nowhere to break, so a fixed one fails on every run where a Faker draw only failed on some.
   it "keeps the open menu inside a phone's width" do
-    sign_in_as create(:user, email: "maximilian.featherstonehaugh-wolstenholme@example.com")
+    sign_in_as create(:user, first_name: "Maximilianfeatherstonehaughwolstenholme", email: "maximilian.featherstonehaugh-wolstenholme@example.com")
     resize_to ViewportHelper::MOBILE
 
     visit root_path
@@ -116,7 +116,7 @@ RSpec.describe "The Me menu", type: :system do
     end
 
     it "keeps every row and line inside a phone's width" do
-      sign_in_as create(:user, email: "maximilian.featherstonehaugh-wolstenholme@example.com")
+      sign_in_as create(:user, first_name: "Maximilianfeatherstonehaughwolstenholme", email: "maximilian.featherstonehaugh-wolstenholme@example.com")
       resize_to ViewportHelper::MOBILE
 
       visit edit_user_profile_path

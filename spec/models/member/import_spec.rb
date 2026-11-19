@@ -27,7 +27,7 @@ RSpec.describe Member::Import do
   end
 
   describe "a row whose address belongs to an account outside the group" do
-    let!(:user) { create(:user, email: "marko@example.com") }
+    let!(:user) { create(:user, :not_set_up, email: "marko@example.com") }
     let(:import) { described_class.new(group, csv("Marko,Babić,marko@example.com,+385922222222")) }
 
     before { user.profile.update!(first_name: "Mark") }
@@ -53,7 +53,7 @@ RSpec.describe Member::Import do
 
   describe "a row whose address already belongs to a member of the group" do
     it "changes nothing" do
-      member = create(:member, group:, user: create(:user, email: "iva@example.com"))
+      member = create(:member, group:, user: create(:user, :not_set_up, email: "iva@example.com"))
       import = described_class.new(group, csv("Iva,Kovač,iva@example.com,+385933333333"))
 
       expect { import.save }.not_to change(Member, :count)

@@ -195,7 +195,7 @@ RSpec.describe "UserProfiles", type: :request do
 
       # The header's avatar and menu read the member's stored profile, so a refused write never reaches them: a blank email and no name would otherwise leave `initials` nothing to take a letter from, and the menu would name an address that was never saved.
       it "keeps the stored initials and email in the header when a cleared email is refused" do
-        user = create(:user, email: "ada@example.com")
+        user = create(:user, :not_set_up, email: "ada@example.com")
         sign_in_as(user)
 
         patch user_profile_path, params: { user_profile: { user_attributes: { email: "" } } }
