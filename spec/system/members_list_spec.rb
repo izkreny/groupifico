@@ -392,7 +392,7 @@ RSpec.describe "The members list", type: :system do
       expect(page.evaluate_script(arrows)).to eq [ false, true ]
       find("nav[aria-label='Member lists'] ~ button:not([hidden])").click
       expect(page).to have_css("nav[aria-label='Member lists'] ~ button:first-of-type:not([hidden])", visible: :all)
-      expect(page.evaluate_script(arrows)).to eq [ true, false ]
+      expect(page).to have_css("nav[aria-label='Member lists'] ~ button:last-of-type[hidden]", visible: :all)
     end
 
     # WHY: the row scrolls only when it must; where the tabs fit they still share its width equally.
