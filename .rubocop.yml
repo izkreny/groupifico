@@ -9,9 +9,33 @@ plugins:
   - rubocop-rspec
   # The Capybara cops, which rubocop-rspec carried until its 3.0 and no longer does.
   - rubocop-capybara
+  # The FactoryBot cops, which rubocop-rspec carried until its 3.0 and no longer does.
+  - rubocop-factory_bot
+  # Lints the Ruby code blocks in markdown files with the same cops as the code.
+  - rubocop-md
+  - rubocop-rake
+  # The app runs under Puma's threads and Solid Queue's workers.
+  - rubocop-thread_safety
+
+# Merge rather than replace, so the lists below add to RuboCop's own
+# defaults instead of dropping them.
+inherit_mode:
+  merge:
+    - Include
+    - Exclude
 
 AllCops:
   NewCops: enable
+  # RuboCop skips hidden directories, and `.agents/` holds maintained
+  # markdown. `.claude/` stays out: its markdown files are symlinks into
+  # `.agents/`, and `.claude/worktrees/` holds other branches' checkouts.
+  Include:
+    - ".agents/**/*.md"
+  # A plan is a dated record frozen at plan time, and its Ruby blocks are
+  # often partial or illustrative, so rewriting one to satisfy a linter
+  # changes the record without improving any code - #411.
+  Exclude:
+    - "docs/plans/**/*"
 
 # Overwrite or add rules to create your own house style
 #
