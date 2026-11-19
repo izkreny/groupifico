@@ -131,7 +131,7 @@ RSpec.describe "The group home", type: :system do
     expect(page).to have_current_path edit_group_event_path(member.group, event)
   end
 
-  # WHY: #461 AC1 and AC2. The gig card's name is stretched over it like the rehearsal card's, so pressing the link proves it sits above that overlay and lands on the list filtered to gigs rather than on the gig; what that list shows is `spec/requests/events_spec.rb`'s.
+  # WHY: #461 AC1 and AC2. The gig card's name is stretched over it like the rehearsal card's, so pressing the link proves it sits above that overlay and lands on the list filtered to gigs rather than on the gig; what that list shows is `spec/requests/events_spec.rb`'s. The owner lands on Upcoming by name, per #462 AC9, since their bare events URL opens Active.
   it "lands on the events list filtered to gigs from the gig card's link" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
     gig = next_gig_for(member)
@@ -142,7 +142,7 @@ RSpec.describe "The group home", type: :system do
     expect(page).to be_accessible
     within(id: ActionView::RecordIdentifier.dom_id(gig, :next_up)) { click_link "All upcoming gigs" }
 
-    expect(page).to have_current_path group_events_path(member.group, category: %w[ gig ])
+    expect(page).to have_current_path group_events_path(member.group, scope: "upcoming", category: %w[ gig ])
   end
 
   # WHY: #461, the owner's pick of the footer row: a 44px row, the WCAG 2.5.5 target, under a hairline that paints, so the link reads as the card's own footer rather than the answer row's tail.
