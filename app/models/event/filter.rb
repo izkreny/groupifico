@@ -3,8 +3,8 @@ class Event::Filter
   include ListFilter
 
   TAB = :scope
-  # WHY: `nil` is the upcoming list because that list is the screen's own URL, with no `scope`.
-  TABS = { nil => "Upcoming", "past" => "Past", "canceled" => "Canceled" }.freeze
+  # WHY: each list by the name a URL gives it, in the order the tabs read. The first one offered is the reader's default, which `#offered_tabs` gives the screen's own URL, with no `scope`.
+  TABS = { "upcoming" => "Upcoming", "past" => "Past", "canceled" => "Canceled" }.freeze
   # WHY: in the sheet's order rather than the enum's, so the chips read in the order the sheet offers them.
   CATEGORIES = { "gig" => "Gig", "rehearsal" => "Rehearsal", "other" => "Other" }.freeze
   ANSWERS = { "yes" => "Yes", "maybe" => "Maybe", "no" => "No", "not_answered" => "Not answered" }.freeze
@@ -18,18 +18,23 @@ class Event::Filter
     new(member, scope: params[:scope], categories: params[:category], answers: params[:answer], managed: params[:managed])
   end
 
-  attr_reader :member, :scope, :categories, :answers
+  attr_reader :member, :list, :categories, :answers
 
   def initialize(member, scope: nil, categories: nil, answers: nil, managed: nil)
     @member = member
-    @scope = scope.presence_in(TABS.keys.compact)
+    @list = scope.presence_in(TABS.keys) || default_list
     @categories = CATEGORIES.keys & Array(categories)
     @answers = ANSWERS.keys & Array(answers)
     # WHY: only the "1" the sheet sends, checked like every other value against what the sheet offers, since a boolean cast reads any unknown string as on.
     @managed = managed_offered? && managed.to_s == "1"
   end
 
+  # WHY: the default list is written as no `scope` at all, so its URL stays the screen's own whichever name reached it.
+  def scope = (list unless list == default_list)
+
   def tab = scope
+
+  def offered_tabs = TABS.transform_keys { it unless it == default_list }
 
   def managed? = @managed
 
@@ -39,12 +44,12 @@ class Event::Filter
     @managed_offered
   end
 
-  def apply(events) = on_tab(narrow(events), scope)
+  def apply(events) = on_list(narrow(events), list)
 
   # WHY: every filter but the tab's own, as GitLab's issue tabs count, because the list carries no result line above its rows, so a total that ignored a chip would contradict the rows beneath it.
   def counts(events)
     narrowed = narrow(events)
-    TABS.keys.index_with { on_tab(narrowed, it).count }
+    offered_tabs.keys.index_with { on_list(narrowed, it || default_list).count }
   end
 
   # WHY: each chip carries the parameters that leave every other filter on, so its ✕ applies what remains rather than knowing how to remove itself.
@@ -55,12 +60,14 @@ class Event::Filter
   end
 
   private
+    def default_list = TABS.keys.first
+
     # WHY: ordered here because the list had no order of its own: the rows were whatever the database happened to return, which is the same list in a different sequence on a different day.
-    def on_tab(events, tab)
-      case tab
+    def on_list(events, list)
+      case list
+      when "upcoming" then events.current_and_upcoming.order(:starts_at)
       when "past" then events.past.order(starts_at: :desc)
       when "canceled" then events.canceled.order(starts_at: :desc)
-      else events.current_and_upcoming.order(:starts_at)
       end
     end
 
