@@ -1,8 +1,0 @@
-<%# locals: (group:, filter:) %>
-<%# WHY: links marked `aria-current` rather than ARIA tabs, because each tab loads its own URL. An inactive tab takes the muted text token, because daisyUI's own dimming leaves it at 3.1:1. Drawn as option C on the owner's options page: equal tabs on a line across the row, the open one underlined in the primary colour on that line, which also opens the list below. %>
-<nav class="tabs border-b border-base-300" aria-label="Event lists">
-  <% filter.tabs.each do |name, value, params| %>
-    <% current = value == filter.scope %>
-    <%= link_to name, group_events_path(group, params), class: [ "tab flex-1", current ? "tab-active top-px border-b-2 border-primary font-semibold" : "text-muted" ], aria: { current: ("page" if current) } %>
-  <% end %>
-</nav>

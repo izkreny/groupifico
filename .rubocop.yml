@@ -82,12 +82,16 @@ ThreadSafety:
     - "spec/**/*"
 
 # The group home's "caps the gig card's count at 99+" example needs 99
-# real events, since the cap is reached through the count query and only
-# rows prove the card uses it. A file is the narrowest scope config has,
-# so the default limit holds everywhere else - #411.
+# real events, and the events and members lists' examples capping their
+# tab and sheet counts at 99+ need 100 real rows, since each cap is
+# reached through the count query and only rows prove the screen uses it.
+# A file is the narrowest scope config has, so the default limit holds
+# everywhere else - #411, #484.
 FactoryBot/ExcessiveCreateList:
   Exclude:
+    - "spec/requests/events_spec.rb"
     - "spec/requests/groups_spec.rb"
+    - "spec/requests/members_spec.rb"
 
 # One behavior per example still holds; the default `Max: 1` mistakes
 # facets of one behavior for several behaviors. A request spec asserting

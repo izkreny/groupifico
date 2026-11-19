@@ -1,0 +1,8 @@
+<%# locals: (legend:) %>
+<%# WHY: one group of a filter sheet's picks, each drawn by `shared/filter_pick`, so every list's sheet labels and lays out its groups alike. %>
+<fieldset>
+  <legend class="mb-2 text-meta font-semibold uppercase tracking-wide text-muted"><%= legend %></legend>
+  <div class="flex flex-wrap gap-2">
+    <%= yield %>
+  </div>
+</fieldset>

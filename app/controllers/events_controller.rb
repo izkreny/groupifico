@@ -19,7 +19,9 @@ class EventsController < ApplicationController
     # query per row for each.
     #
     # The list's scopes partition the group's events between them, so an event it is in the middle of is on the upcoming list rather than on none: still ahead of its members, not behind them.
-    @events = @filter.apply(authorized_scope(@group.events).preloaded)
+    events = authorized_scope(@group.events)
+    @events = @filter.apply(events.preloaded)
+    @counts = @filter.counts(events)
   end
 
   def show

@@ -218,8 +218,8 @@ RSpec.describe "The events list", type: :system do
 
     visit group_events_path(member.group)
 
-    tabs = page.evaluate_script(%((() => { const nav = document.querySelector("nav[aria-label='Event lists']"), tab = nav.querySelector("[aria-current=page]"), ink = document.createElement("span"); ink.className = "text-primary"; nav.append(ink); const line = getComputedStyle(nav), under = getComputedStyle(tab); return [ line.borderBottomWidth, under.borderBottomWidth, under.borderBottomColor == getComputedStyle(ink).color, tab.getBoundingClientRect().bottom == nav.getBoundingClientRect().bottom ] })()))
-    expect(tabs).to eq [ "1px", "2px", true, true ]
+    tabs = page.evaluate_script(%((() => { const nav = document.querySelector("nav[aria-label='Event lists']"), tab = nav.querySelector("[aria-current=page]"), ink = document.createElement("span"); ink.className = "text-primary"; nav.append(ink); const line = getComputedStyle(nav), under = getComputedStyle(tab); return [ line.boxShadow.endsWith("0px -1px 0px 0px inset"), under.borderBottomWidth, under.borderBottomColor == getComputedStyle(ink).color, tab.getBoundingClientRect().bottom == nav.getBoundingClientRect().bottom ] })()))
+    expect(tabs).to eq [ true, "2px", true, true ]
   end
 
   # WHY: the owner's pick on #471: the ✕ centred in the chip, and the label lifted so its baseline sits on the ✕'s visual bottom, where its strokes' round caps are centred, 11.28 of the glyph's 16 units, in a chip that keeps its 28px tap target.
@@ -364,30 +364,23 @@ RSpec.describe "The events list", type: :system do
     expect([ clear.top == show.top && clear.left < show.left, narrow_show.top < narrow_clear.top ]).to eq [ true, true ]
   end
 
+  # WHY: #484 AC12 and AC13. The browser's accessibility tree names each tab with what its count counts, while the tab shows the count alone.
+  it "names each tab with what its count counts, showing the count alone" do
+    member = create(:member, :owner)
+    next_event_for(member)
+    sign_in_as member.user
+
+    visit group_events_path(member.group)
+
+    expect(tab_names(%w[ Upcoming Past Canceled ])).to eq [ "Upcoming (1 event)", "Past (0 events)", "Canceled (0 events)" ]
+    expect(page.all("nav[aria-label='Event lists'] a").map(&:text)).to eq [ "Upcoming (1)", "Past (0)", "Canceled (0)" ]
+  end
+
   # A Turbo visit away and Back, the way a member leaves the list and returns, where a `visit` would be a full page load.
   def leave_for_a_new_event_and_come_back(group)
     click_link "New event"
     expect(page).to have_current_path new_group_event_path(group)
     go_back
-  end
-
-  def pick_in_sheet(*labels)
-    click_button "Filter events"
-    labels.each { find_by_id("event_filter_dialog").find("input[aria-label='#{it}']").click }
-  end
-
-  # Whether the funnel paints the named ink, read against a probe carrying that class, which must itself differ from the ink around it so a class that compiled to nothing cannot pass, and still clears 3:1 as an icon.
-  def funnel_ink(ink)
-    funnel = "button[aria-label='Filter events']"
-    painted = page.evaluate_script(%((() => { const button = document.querySelector("#{funnel}"), probe = document.createElement("span"); probe.className = "#{ink}"; button.parentElement.append(probe); const ink = getComputedStyle(probe).color, painted = getComputedStyle(button).color == ink && ink != getComputedStyle(button.parentElement).color; probe.remove(); return painted })()))
-    [ painted, text_contrast(funnel) >= ContrastHelper::WCAG_NON_TEXT ]
-  end
-
-  # Clear all and "Show N events", the sheet's last two labelled buttons, each as its rounded top and left.
-  def sheet_buttons
-    find_by_id("event_filter_dialog").evaluate_script(<<~JS).map { Data.define(:top, :left).new(*it) }
-      [ ...this.querySelectorAll("button.btn:not([aria-label])") ].slice(-2).map(button => button.getBoundingClientRect()).map(rect => [ Math.round(rect.top), Math.round(rect.left) ])
-    JS
   end
 
   # The other list needs something on it, and only its name is read: a concert that ended a week

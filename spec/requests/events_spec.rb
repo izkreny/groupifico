@@ -50,7 +50,7 @@ RSpec.describe "Events", type: :request do
         funnel = page.at_css("button[aria-label='Filter events']")
         tabs = page.css("nav[aria-label='Event lists'] a")
         expect([ page.at_css("main h2")&.text, funnel.text.strip, funnel.at_css("svg").present?, page.at_css("details#scope").present? ]).to eq [ "Events", "", true, false ]
-        expect([ tabs.map(&:text), tabs.map { it["aria-current"] } ]).to eq [ %w[ Upcoming Past Canceled ], [ "page", nil, nil ] ]
+        expect([ tabs.map(&:text), tabs.map { it["aria-current"] } ]).to eq [ [ "Upcoming (0)", "Past (0)", "Canceled (0)" ], [ "page", nil, nil ] ]
       end
 
       # WHY: #460 AC2. One sheet, headed and closable like the join link's, holds every filter, and the list stays on its tab.
@@ -81,7 +81,7 @@ RSpec.describe "Events", type: :request do
         expect([ upcoming, past&.[]("value") ]).to eq [ nil, "past" ]
       end
 
-      # WHY: #460 AC3. "Events I manage" narrows nothing for someone who manages none of the group's events, so they are not offered it.
+      # WHY: #460 AC3. "Managed by me" narrows nothing for someone who manages none of the group's events, so they are not offered it.
       it "offers the Miscellaneous group only to a member who manages one of the group's events" do
         member = create(:member, :active)
         sign_in_as(member.user)
@@ -92,7 +92,7 @@ RSpec.describe "Events", type: :request do
         get group_events_path(member.group)
 
         offered = Nokogiri::HTML(response.body).css("dialog fieldset").last
-        expect([ unoffered.include?("Miscellaneous"), offered.at_css("legend").text, offered.at_css("input")["aria-label"] ]).to eq [ false, "Miscellaneous", "Events I manage" ]
+        expect([ unoffered.include?("Miscellaneous"), offered.at_css("legend").text, offered.at_css("input")["aria-label"] ]).to eq [ false, "Miscellaneous", "Managed by me" ]
       end
 
       # WHY: #460 AC5 and AC6. Each filter's chip is one link, its label included, to the list with everything else still on, and "Clear all" drops every filter but keeps the tab, since the tab is not a filter.
@@ -118,6 +118,33 @@ RSpec.describe "Events", type: :request do
         get group_events_path(member.group, scope: "past")
 
         expect(Nokogiri::HTML(response.body).at_xpath("//a[normalize-space()='Clear all']")).to be_nil
+      end
+
+      # WHY: #484 AC12 and AC13. Each tab counts what it would list with every filter on, zero included, and its name says what the count counts, so the tab reads "Upcoming (1)" and is named "Upcoming (1 event)".
+      it "names each tab with how many events it would list under the filters on" do
+        member = create(:member, :active)
+        confirmed_event(member, days: 3, name: "Advent concert", category: :gig)
+        confirmed_event(member, days: 4, name: "Section rehearsal", category: :rehearsal)
+        confirmed_event(member, days: -2, name: "Summer gig", category: :gig)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group, category: %w[ gig ])
+
+        tabs = Nokogiri::HTML(response.body).css("nav[aria-label='Event lists'] a")
+        expect(tabs.map { [ it.text, it["aria-label"] ] }).to eq [ [ "Upcoming (1)", "Upcoming (1 event)" ], [ "Past (1)", "Past (1 event)" ], [ "Canceled (0)", "Canceled (0 events)" ] ]
+      end
+
+      # WHY: #484 AC14. Every count stops at 99+, so a hundred events read as 99+ on the tab, in its name and on the sheet's button, the noun staying plural.
+      it "caps the tab's count and the sheet's at 99+" do
+        member = create(:member, :active)
+        create_list(:event, 100, :from_the_future, group: member.group, creator: member, status: :confirmed)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group)
+
+        page = Nokogiri::HTML(response.body)
+        upcoming = page.at_css("nav[aria-label='Event lists'] a[aria-current=page]")
+        expect([ upcoming.text, upcoming["aria-label"], page.at_css("dialog#event_filter_dialog button.btn-primary").text.squish ]).to eq [ "Upcoming (99+)", "Upcoming (99+ events)", "Show 99+ events" ]
       end
 
       # WHY: #460 AC9. Each tab is a link carrying every filter on, so switching lists keeps them, and opened from Past so Upcoming's link is seen to drop the open list.
@@ -421,7 +448,7 @@ RSpec.describe "Events", type: :request do
 
         get group_events_path(member.group, scope: "sideways")
 
-        expect(Nokogiri::HTML(response.body).at_css("nav[aria-label='Event lists'] a[aria-current=page]").text).to eq "Upcoming"
+        expect(Nokogiri::HTML(response.body).at_css("nav[aria-label='Event lists'] a[aria-current=page]").text).to eq "Upcoming (0)"
         expect(response.body).not_to include "Summer gig"
       end
     end
@@ -450,7 +477,7 @@ RSpec.describe "Events", type: :request do
         get group_events_path(member.group)
 
         page = Nokogiri::HTML(response.body)
-        expect([ response.body.include?("Section rehearsal"), page.at_css("nav[aria-label='Event lists'] a[aria-current=page]").text, page.css("a[aria-label^='Remove ']").size ]).to eq [ true, "Upcoming", 0 ]
+        expect([ response.body.include?("Section rehearsal"), page.at_css("nav[aria-label='Event lists'] a[aria-current=page]").text, page.css("a[aria-label^='Remove ']").size ]).to eq [ true, "Upcoming (2)", 0 ]
       end
 
       # WHY: #460 AC11. A category the sheet does not offer narrows nothing.
@@ -488,7 +515,7 @@ RSpec.describe "Events", type: :request do
         get href
 
         page = Nokogiri::HTML(response.body)
-        expect([ response.body.include?("Advent concert"), response.body.include?("Section rehearsal"), page.at_css("nav[aria-label='Event lists'] a[aria-current=page]").text, page.css("a[aria-label^='Remove ']").map { it["aria-label"] } ]).to eq [ true, false, "Upcoming", [ "Remove Gig" ] ]
+        expect([ response.body.include?("Advent concert"), response.body.include?("Section rehearsal"), page.at_css("nav[aria-label='Event lists'] a[aria-current=page]").text, page.css("a[aria-label^='Remove ']").map { it["aria-label"] } ]).to eq [ true, false, "Upcoming (1)", [ "Remove Gig" ] ]
       end
     end
 

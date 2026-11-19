@@ -1,0 +1,18 @@
+<%# locals: (filter:, id:) %>
+<%= render layout: "shared/filter_fieldset", locals: { legend: "Category" } do %>
+  <% Event::Filter::CATEGORIES.each do |value, name| %>
+    <%= render "shared/filter_pick", name: "category[]", value:, checked: filter.categories.include?(value), caption: name, id: id.("category_#{value}") %>
+  <% end %>
+<% end %>
+
+<%= render layout: "shared/filter_fieldset", locals: { legend: "My answer" } do %>
+  <% Event::Filter::ANSWERS.each do |value, name| %>
+    <%= render "shared/filter_pick", name: "answer[]", value:, checked: filter.answers.include?(value), caption: name, id: id.("answer_#{value}") %>
+  <% end %>
+<% end %>
+
+<% if filter.managed_offered? %>
+  <%= render layout: "shared/filter_fieldset", locals: { legend: "Miscellaneous" } do %>
+    <%= render "shared/filter_pick", name: "managed", value: "1", checked: filter.managed?, caption: Event::Filter::MISCELLANEOUS["managed"], id: id.(:managed) %>
+  <% end %>
+<% end %>

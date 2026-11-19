@@ -1,7 +1,7 @@
 require "rails_helper"
 
-# Only what a browser adds. Who sees the "not signed in yet" mark, the count, Invite, the pencil
-# and the toggle, which members are listed and in what order, are `spec/requests/members_spec.rb`'s
+# Only what a browser adds. Who sees the "not signed in yet" mark, the +, the pencil and which
+# tabs and filters, which members are listed and in what order, are `spec/requests/members_spec.rb`'s
 # assertions. What is left: that the tags and the buttons paint, that a dimmed row stays readable,
 # which axe-core measures here since the dim is a theme colour with its own alpha, and that the
 # name and the pencil land where they say.
@@ -19,31 +19,29 @@ RSpec.describe "The members list", type: :system do
 
   it "paints the roster in light, its paused row dimmed and still readable" do
     actor  = create(:member, :active, :owner, :with_all_attributes)
-    paused = create(:member, :paused, :with_all_attributes, group: actor.group)
+    paused = create(:member, :paused, :owner, :with_all_attributes, group: actor.group)
     sign_in_as actor.user
     prefer_colour_scheme :light
     resize_to ViewportHelper::MOBILE
 
-    visit group_members_path(actor.group)
+    visit group_members_path(actor.group, status: "paused")
 
     expect(rendered_colour_scheme).to eq "light"
-    expect(page).to paint "##{ActionView::RecordIdentifier.dom_id(actor, :row)} .badge"
-    expect(page).to have_css "##{ActionView::RecordIdentifier.dom_id(paused, :row)}"
+    expect(page).to paint "##{ActionView::RecordIdentifier.dom_id(paused, :row)} .badge"
     expect(page).to be_accessible
   end
 
   it "paints the roster in dark, its paused row dimmed and still readable" do
     actor  = create(:member, :active, :owner, :with_all_attributes)
-    paused = create(:member, :paused, :with_all_attributes, group: actor.group)
+    paused = create(:member, :paused, :owner, :with_all_attributes, group: actor.group)
     sign_in_as actor.user
     prefer_colour_scheme :dark
     resize_to ViewportHelper::MOBILE
 
-    visit group_members_path(actor.group)
+    visit group_members_path(actor.group, status: "paused")
 
     expect(rendered_colour_scheme).to eq "dark"
-    expect(page).to paint "##{ActionView::RecordIdentifier.dom_id(actor, :row)} .badge"
-    expect(page).to have_css "##{ActionView::RecordIdentifier.dom_id(paused, :row)}"
+    expect(page).to paint "##{ActionView::RecordIdentifier.dom_id(paused, :row)} .badge"
     expect(page).to be_accessible
   end
 
@@ -96,7 +94,7 @@ RSpec.describe "The members list", type: :system do
     JS
   end
 
-  # WHY: the join link lives in a dialog the owner opens from beside Invite on this page. Which state draws which control, and for whom, is `spec/requests/members_spec.rb`'s; what is left is that the dialog stays open through each action, that Copy puts the link on the clipboard, and that Regenerate and Delete ask first.
+  # WHY: the join link lives in a dialog the owner opens from beside the + on this page. Which state draws which control, and for whom, is `spec/requests/members_spec.rb`'s; what is left is that the dialog stays open through each action, that Copy puts the link on the clipboard, and that Regenerate and Delete ask first.
   context "with the join link" do
     def open_join_link
       click_on "Join link"
@@ -319,6 +317,223 @@ RSpec.describe "The members list", type: :system do
       expect(rendered_colour_scheme).to eq "dark"
       expect(page).to paint "#join_link_dialog button.btn-primary"
       expect(page).to be_accessible
+    end
+  end
+
+  # WHY: #484. The list takes the events list's structure, so what the browser adds there is walked here too: the +, the tabs, the sheet's count, the chips, the funnel, the stacking and axe in both themes. Who is offered which tab and filter is `spec/requests/members_spec.rb`'s.
+  context "with its tabs and filter sheet" do
+    # WHY: #484 AC1. The + is icon-only, so its accessible name is the link Capybara clicks.
+    it "lands on the invite form from the +" do
+      owner = create(:member, :active, :owner)
+      sign_in_as owner.user
+
+      visit group_members_path(owner.group)
+      click_link "Invite member"
+
+      expect(page).to have_current_path new_group_member_path(owner.group)
+    end
+
+    # WHY: #484 AC7. Each tab is a link carrying every filter on, so a filter survives switching tabs.
+    it "switches tabs with every filter still on" do
+      owner  = create(:member, :active, :owner)
+      paused = create(:member, :paused, :owner, group: owner.group)
+      sign_in_as owner.user
+
+      visit group_members_path(owner.group, role: %w[ owner ])
+      click_link "Paused"
+
+      expect(page).to have_current_path(group_members_path(owner.group, status: "paused", role: %w[ owner ])).and have_css("##{ActionView::RecordIdentifier.dom_id(paused, :row)}")
+      expect(page).to have_link "Remove Owner"
+    end
+
+    # WHY: #484 AC13. The browser's accessibility tree names each tab with what its count counts, while the tab shows the count alone.
+    it "names each tab with what its count counts, showing the count alone" do
+      owner = create(:member, :active, :owner)
+      create(:member, :active, group: owner.group)
+      sign_in_as owner.user
+
+      visit group_members_path(owner.group)
+
+      expect(tab_names(%w[ Active Paused Pending Inactive ])).to eq [ "Active (2 members)", "Paused (0 members)", "Pending (0 members)", "Inactive (0 members)" ]
+      expect(page.all("nav[aria-label='Member lists'] a").map(&:text)).to eq [ "Active (2)", "Paused (0)", "Pending (0)", "Inactive (0)" ]
+    end
+
+    # WHY: the owner's pick on #486: four tabs and their counts do not fit a phone, so the row scrolls sideways and no label wraps.
+    it "keeps every tab on one line on a phone, scrolling the row to reach the last" do
+      owner = create(:member, :active, :owner)
+      sign_in_as owner.user
+      resize_to ViewportHelper::MOBILE
+
+      visit group_members_path(owner.group)
+
+      expect(page.evaluate_script(%((() => { const nav = document.querySelector("nav[aria-label='Member lists']"), tabs = [ ...nav.querySelectorAll("a") ], lines = tabs.map(tab => { const range = document.createRange(); range.selectNodeContents(tab); return range.getClientRects().length }); nav.scrollLeft = nav.scrollWidth; const last = tabs.at(-1).getBoundingClientRect(), box = nav.getBoundingClientRect(); return [ lines, nav.scrollWidth > nav.clientWidth, Math.round(last.right) <= Math.round(box.right) ] })()))).to eq [ [ 1, 1, 1, 1 ], true, true ]
+    end
+
+    # WHY: a row that scrolls starts at its left edge, so a tab opened past the screen's edge would load cut off; the research on #486 asks for the open tab shown whole.
+    it "shows the open tab whole on a phone, even the last" do
+      owner = create(:member, :active, :owner)
+      sign_in_as owner.user
+      resize_to ViewportHelper::MOBILE
+
+      visit group_members_path(owner.group, status: "inactive")
+
+      expect(page.evaluate_script(%((() => { const nav = document.querySelector("nav[aria-label='Member lists']"), tab = nav.querySelector("[aria-current='page']").getBoundingClientRect(), box = nav.getBoundingClientRect(); return [ nav.scrollWidth > nav.clientWidth, tab.left >= box.left, Math.round(tab.right) <= Math.round(box.right) ] })()))).to eq [ true, true, true ]
+    end
+
+    # WHY: the owner's pick on #486: where the screen's edge falls decides whether any label is cut, so an arrow marks each end that hides more tabs, and at 320px no label is cut at all.
+    it "marks each end of the tabs that hides more with an arrow that slides the row" do
+      owner = create(:member, :active, :owner)
+      sign_in_as owner.user
+      page.current_window.resize_to(320, 844)
+
+      visit group_members_path(owner.group)
+
+      arrows = %((() => [ ...document.querySelectorAll("nav[aria-label='Member lists'] ~ button") ].map(arrow => arrow.checkVisibility()))())
+      expect(page.evaluate_script(arrows)).to eq [ false, true ]
+      find("nav[aria-label='Member lists'] ~ button:not([hidden])").click
+      expect(page).to have_css("nav[aria-label='Member lists'] ~ button:first-of-type:not([hidden])", visible: :all)
+      expect(page).to have_css("nav[aria-label='Member lists'] ~ button:last-of-type[hidden]", visible: :all)
+    end
+
+    # WHY: the row scrolls only when it must; where the tabs fit they still share its width equally.
+    it "spreads the tabs across the row when they fit" do
+      owner = create(:member, :active, :owner)
+      sign_in_as owner.user
+      resize_to ViewportHelper::DESKTOP
+
+      visit group_members_path(owner.group)
+
+      expect(page.evaluate_script(%((() => { const nav = document.querySelector("nav[aria-label='Member lists']"), widths = [ ...nav.querySelectorAll("a") ].map(tab => Math.round(tab.getBoundingClientRect().width)); return [ nav.scrollWidth == nav.clientWidth, Math.max(...widths) - Math.min(...widths) <= 1, Math.abs(widths.reduce((sum, width) => sum + width, 0) - nav.clientWidth) <= 2 ] })()))).to eq [ true, true, true ]
+    end
+
+    # WHY: #484 AC11. The tabs and the chips paint differently in each theme.
+    it "passes axe on the list with its tabs and chips, in organic" do
+      owner = create(:member, :active, :owner)
+      sign_in_as owner.user
+      prefer_colour_scheme :light
+
+      visit group_members_path(owner.group, role: %w[ owner ])
+
+      expect(page).to have_link("Clear all").and be_accessible
+    end
+
+    it "passes axe on the list with its tabs and chips, in organic-dark" do
+      owner = create(:member, :active, :owner)
+      sign_in_as owner.user
+      prefer_colour_scheme :dark
+
+      visit group_members_path(owner.group, role: %w[ owner ])
+
+      expect(page).to have_link("Clear all").and be_accessible
+    end
+
+    # WHY: #484 AC11. The sheet is only in the accessibility tree while it is open, which only a browser can make it.
+    it "passes axe with the filter sheet open, in organic" do
+      owner = create(:member, :active, :owner)
+      sign_in_as owner.user
+      resize_to ViewportHelper::MOBILE
+      prefer_colour_scheme :light
+
+      visit group_members_path(owner.group)
+      click_button "Filter members"
+
+      expect(page).to have_css("dialog#member_filter_dialog[open]").and be_accessible
+    end
+
+    it "passes axe with the filter sheet open, in organic-dark" do
+      owner = create(:member, :active, :owner)
+      sign_in_as owner.user
+      resize_to ViewportHelper::MOBILE
+      prefer_colour_scheme :dark
+
+      visit group_members_path(owner.group)
+      click_button "Filter members"
+
+      expect(page).to have_css("dialog#member_filter_dialog[open]").and be_accessible
+    end
+
+    # WHY: #484 AC5. The count is fetched as the picks change, so only a browser sees it follow them.
+    it "counts the members the sheet's picks would show as they change, then applies them" do
+      owner = create(:member, :active, :owner)
+      other = create(:member, :active, group: owner.group)
+      sign_in_as owner.user
+
+      visit group_members_path(owner.group)
+      pick_in_sheet "Owner"
+
+      expect(page).to have_button "Show 1 member"
+      click_button "Show 1 member"
+      expect(page).to have_css("##{ActionView::RecordIdentifier.dom_id(owner, :row)}").and have_no_css("##{ActionView::RecordIdentifier.dom_id(other, :row)}")
+      expect(page).to have_link "Remove Owner"
+    end
+
+    # WHY: #484 AC6. A chip links the list with everything else still on, so only its own filter goes.
+    it "removes one filter with its chip, leaving the others on" do
+      owner = create(:member, :active, :owner)
+      sign_in_as owner.user
+
+      visit group_members_path(owner.group)
+      pick_in_sheet "Owner", "Manages events"
+      click_button "Show 0 members"
+      click_link "Remove Owner"
+
+      expect(page).to have_no_link("Remove Owner").and have_link("Remove Manages events")
+    end
+
+    # WHY: #484 AC6. The chip row's Clear all drops every filter and keeps the tab.
+    it "clears every filter from the chip row, keeping the tab" do
+      owner = create(:member, :active, :owner)
+      sign_in_as owner.user
+
+      visit group_members_path(owner.group, status: "paused", role: %w[ administrator ])
+      click_link "Clear all"
+
+      expect(page).to have_current_path(group_members_path(owner.group, status: "paused")).and have_no_link("Remove Administrator")
+    end
+
+    # WHY: #484 AC6. The sheet's Clear all unticks its picks, not the list's, and the count follows; applying it leaves the tab as it is.
+    it "clears every pick in the sheet on Clear all, keeping the tab" do
+      owner = create(:member, :active, :owner)
+      create(:member, :paused, group: owner.group)
+      sign_in_as owner.user
+
+      visit group_members_path(owner.group, status: "paused")
+      pick_in_sheet "Owner"
+      expect(page).to have_button "Show 0 members"
+      click_button "Clear all"
+      expect(find_by_id("member_filter_dialog").evaluate_script("this.querySelectorAll('input:checked').length")).to eq 0
+      click_button "Show 1 member"
+
+      expect(page).to have_current_path(group_members_path(owner.group, status: "paused"))
+    end
+
+    # WHY: #484 AC6. Muted while nothing hides members from the tab picked, primary once a filter does, and either way clearing 3:1 as an icon must.
+    it "paints the funnel muted with no filter on and primary with one" do
+      owner = create(:member, :active, :owner)
+      sign_in_as owner.user
+
+      visit group_members_path(owner.group)
+      muted = funnel_ink("text-icon-muted")
+      pick_in_sheet "Owner"
+      click_button "Show 1 member"
+      expect(page).to have_link "Remove Owner"
+
+      expect([ muted, funnel_ink("text-primary") ]).to eq [ [ true, true ], [ true, true ] ]
+    end
+
+    # WHY: #484 AC3. Side by side while both fit, Clear all on the left; once they do not, "Show N members" goes first, full width, and Clear all under it, as the events sheet's do.
+    it "stacks the sheet's buttons Show first once they no longer fit side by side" do
+      owner = create(:member, :active, :owner)
+      sign_in_as owner.user
+      resize_to ViewportHelper::MOBILE
+
+      visit group_members_path(owner.group)
+      click_button "Filter members"
+      clear, show = sheet_buttons
+      resize_to [ 260, 700 ]
+      narrow_clear, narrow_show = sheet_buttons
+
+      expect([ clear.top == show.top && clear.left < show.left, narrow_show.top < narrow_clear.top ]).to eq [ true, true ]
     end
   end
 end

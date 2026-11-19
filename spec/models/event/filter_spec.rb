@@ -36,7 +36,7 @@ RSpec.describe Event::Filter do
         expect([ filter.scope, filter.categories, filter.answers ]).to eq [ nil, %w[ gig ], %w[ yes ] ]
       end
 
-      # WHY: #460 AC3 and AC11. "Events I manage" is offered only to someone who manages one of the group's events, so anyone else's is dropped.
+      # WHY: #460 AC3 and AC11. "Managed by me" is offered only to someone who manages one of the group's events, so anyone else's is dropped.
       it "drops the managed filter for a member who manages none of the group's events" do
         filter = described_class.new(member, managed: "1")
 
@@ -100,6 +100,17 @@ RSpec.describe Event::Filter do
     end
   end
 
+  describe "#counts" do
+    # WHY: #484 AC12. Each tab counts what it would list with every filter on, and a list with nothing on it counts zero rather than dropping out.
+    it "counts each list under the filters that are on, a list with none of them at zero" do
+      upcoming(name: "Advent concert", category: :gig)
+      upcoming(name: "Section rehearsal", category: :rehearsal)
+      create(:event, :from_the_past, group: member.group, creator: member, name: "Autumn fair", category: :gig)
+
+      expect(described_class.new(member, categories: %w[ gig ]).counts(member.group.events)).to eq({ nil => 1, "past" => 1, "canceled" => 0 })
+    end
+  end
+
   describe "#narrowed?" do
     # WHY: #460 AC7. The funnel says whether anything hides events from the list picked, and the list itself never does.
     it "is false for a list alone and true once a filter is on" do
@@ -138,7 +149,7 @@ RSpec.describe Event::Filter do
 
       expect(described_class.new(member, categories: %w[ gig ], managed: "1").chips).to eq [
         [ "Gig", { managed: "1" } ],
-        [ "Events I manage", { category: %w[ gig ] } ]
+        [ "Managed by me", { category: %w[ gig ] } ]
       ]
     end
   end

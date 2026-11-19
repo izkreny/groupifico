@@ -15,7 +15,7 @@ module StyleguidesHelper
     no: "An answer: the reply button and badge on a roster row, its count in Who's coming and on the next-up card, and the reader's own answer on the events list.",
     when: "When an event happens: the time line on the next-up card and on the event screen.",
     where: "Where an event happens: the address line on the next-up card and on the event screen.",
-    new: "Creating a record: the + on the events list, New event on an empty Home, New group on the groups list and in the Me menu, Invite on the members list, and Add screenshot on the feedback form.",
+    new: "Creating a record: the + on the events and members lists, New event on an empty Home, New group on the groups list and in the Me menu, and Add screenshot on the feedback form.",
     edit: "Editing a record: the group's name in the header, the event screen, a member's row and screen, the address on the group form, and Correct on the address screen.",
     duplicate: "Copying an event: Duplicate on the event screen.",
     delete: "Removing a registration, an event, a group, a member or an account: Delete or Remove first in an edit form's button row, Delete my account, Delete link in the join link's dialog, and the primary on every confirm sheet.",
@@ -36,7 +36,7 @@ module StyleguidesHelper
     email: "Emailing a member: their row on the members list and the Email row on their screen. Asking for an emailed link: the button on the sign-in and create-a-group forms.",
     add_member: "Not drawn yet: the legend's adding of a person.",
     send_invite: "Bringing someone into the group: Send invite on the new member form.",
-    invite_link: "The group's join link: the button opening it beside Invite on the members list, and Create new join link inside it.",
+    invite_link: "The group's join link: the button opening it beside the + on the members list, and Create new join link inside it.",
     copy: "Copying the group's join link: Copy link in its dialog on the members list.",
     regenerate: "Retiring the group's join link for a new one: Regenerate link in its dialog on the members list, and the primary of the sheet it opens.",
     copied: "The group's join link just copied: Link copied, which Copy link turns into for two seconds.",
@@ -50,10 +50,12 @@ module StyleguidesHelper
     sign_out: "Signing out: Sign out in the Me menu.",
     feedback: "Telling us what broke or what you would like: Send feedback in the Me menu.",
     send: "Sending feedback: Send on the feedback form.",
-    remove: "Taking something off: the x on a picked screenshot's thumbnail on the feedback form, and on a filter's chip on the events list, and on Clear all in its filter sheet.",
+    remove: "Taking something off: the x on a picked screenshot's thumbnail on the feedback form, and on a filter's chip on the events and members lists, and on Clear all in their filter sheets.",
     return: "Going back to the page the feedback was sent from: Back to where you were on the thank-you page.",
-    filter: "Choosing what the events list shows: the funnel beside the + on the events list.",
-    apply: "Applying the events filter sheet's picks: Show N events on the sheet."
+    filter: "Choosing what a list shows: the funnel beside the + on the events and members lists.",
+    apply: "Applying a filter sheet's picks: Show N events or Show N members on the sheet.",
+    scroll_left: "Sliding a list's tabs back: the arrow over the start of the events or members tabs, once they have scrolled.",
+    scroll_right: "Sliding a list's tabs on: the arrow over the end of the events or members tabs, while more lie past the screen's edge."
   }.freeze
 
   # The named theme's daisyUI colour tokens, name to hex, in the order the stylesheet lists them.
