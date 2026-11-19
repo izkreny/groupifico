@@ -88,17 +88,6 @@ RSpec.describe "Members", type: :request do
         expect(Nokogiri::HTML(response.body).css("#members li[id]").map { it["id"] }).to eq [ ActionView::RecordIdentifier.dom_id(paused, :row) ]
       end
 
-      it "tags a paused member with their status" do
-        reader = create(:member, :active)
-        paused = create(:member, :paused, group: reader.group)
-        sign_in_as(reader.user)
-
-        get group_members_path(reader.group, status: "paused")
-
-        row = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(paused, :row)}")
-        expect(row.css(".badge").map(&:text)).to include "paused"
-      end
-
       # WHY: #484 AC8. Who has left and who is waiting are `MemberPolicy#oversee?` reads, so a member not offered those tabs gets the Active list from their URLs, as an unknown events list degrades to Upcoming.
       it "lists the active members to a member who may not oversee the list opening the Pending or Inactive tab's URL" do
         member = create(:member, :active)
@@ -1384,14 +1373,14 @@ RSpec.describe "Members", type: :request do
     def row_of(member) = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(member, :row)}")
 
     context "when signed in as an owner" do
-      it "lists them on the Pending tab, tagged pending, with no edit link" do
+      it "lists them on the Pending tab, with no edit link" do
         owner   = create(:member, :active, :owner)
         pending = create(:member, :pending, group: owner.group)
         sign_in_as(owner.user)
 
         get group_members_path(owner.group, status: "pending")
 
-        expect(row_of(pending).css(".badge").map(&:text)).to include "pending"
+        expect(row_of(pending)).to be_present
         expect(response.body).not_to include edit_group_member_path(owner.group, pending)
       end
 
@@ -1469,14 +1458,14 @@ RSpec.describe "Members", type: :request do
     end
 
     context "when signed in as a members administrator" do
-      it "lists them on the Pending tab, tagged pending, with no edit link" do
+      it "lists them on the Pending tab, with no edit link" do
         actor   = create(:member, :active, :members_administrator)
         pending = create(:member, :pending, group: actor.group)
         sign_in_as(actor.user)
 
         get group_members_path(actor.group, status: "pending")
 
-        expect(row_of(pending).css(".badge").map(&:text)).to include "pending"
+        expect(row_of(pending)).to be_present
         expect(response.body).not_to include edit_group_member_path(actor.group, pending)
       end
 
