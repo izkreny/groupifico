@@ -98,6 +98,32 @@ RSpec.describe Member::Import do
     end
   end
 
+  # WHY: #472 AC4. A member without a first name and a mobile is sent to the profile form at every sign-in, so the import never adds one.
+  describe "a row without a first name or a mobile" do
+    it "refuses a new account's row without a first name, naming its line" do
+      import = described_class.new(group, csv(",Horvat,ana@example.com,+385911111111"))
+
+      expect { expect(import.save).to be(false) }.not_to change(User, :count)
+      expect(import.rows).to contain_exactly(have_attributes(line: 2, outcome: :refused, reasons: [ "First name can't be blank" ]))
+    end
+
+    it "refuses a new account's row without a mobile, naming its line" do
+      import = described_class.new(group, csv("Ana,Horvat,ana@example.com,"))
+
+      expect { expect(import.save).to be(false) }.not_to change(User, :count)
+      expect(import.rows).to contain_exactly(have_attributes(line: 2, outcome: :refused, reasons: [ "Mobile phone can't be blank" ]))
+    end
+
+    it "adds an account whose profile already holds both, the row's blanks left to it" do
+      user = create(:user, email: "marko@example.com")
+      import = described_class.new(group, csv(",,marko@example.com,"))
+
+      expect(import.save).to be(true)
+      expect(import.rows).to contain_exactly(have_attributes(line: 2, outcome: :joined))
+      expect(group.members.find_by!(user:)).to be_active
+    end
+  end
+
   it "refuses a row whose mobile number another user already holds" do
     create(:user_profile, mobile_phone: "+385955555555")
     import = described_class.new(group, csv("Ana,Horvat,ana@example.com,+385955555555"))

@@ -18,6 +18,31 @@ RSpec.describe UserProfile, type: :model do
       it { is_expected.to validate_uniqueness_of(:mobile_phone).case_insensitive.allow_nil }
       it { is_expected.to validate_uniqueness_of(:user_id) }
     end
+
+    # WHY: #472 AC3 and AC5. The profile form and the member import save in `:setup`, so a first name and a mobile are required there and the last name stays optional.
+    describe "(setup)" do
+      it { is_expected.to validate_presence_of(:first_name).on(:setup) }
+      it { is_expected.to validate_presence_of(:mobile_phone).on(:setup) }
+      it { is_expected.not_to validate_presence_of(:last_name).on(:setup) }
+
+      it "accepts the empty profile an email-only invitation leaves, outside setup" do
+        expect(build(:user_profile, user: build(:user, :not_set_up))).to be_valid
+      end
+    end
+  end
+
+  describe "#setup?" do
+    it "is true with a first name and a mobile, whatever the last name" do
+      expect(build(:user_profile, first_name: "Nick", last_name: nil, mobile_phone: "+385911111111")).to be_setup
+    end
+
+    it "is false without a first name" do
+      expect(build(:user_profile, first_name: nil, mobile_phone: "+385911111111")).not_to be_setup
+    end
+
+    it "is false without a mobile" do
+      expect(build(:user_profile, first_name: "Nick", mobile_phone: nil)).not_to be_setup
+    end
   end
 
   describe "#full_name" do

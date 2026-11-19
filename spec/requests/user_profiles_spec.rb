@@ -79,7 +79,25 @@ RSpec.describe "UserProfiles", type: :request do
         document = Nokogiri::HTML(response.body)
 
         expect(document.css("form label").map { it.text.squish }).to eq [ "First name", "Last name", "Mobile", "Email" ]
-        expect(document.at_css("#user_profile_mobile_phone_hint").text).to eq "Optional. Shown to members of your groups."
+      end
+
+      # WHY: #472 AC5. The first name and the mobile are required, so only the last name says it may stay empty.
+      it "marks the last name as the one optional field" do
+        sign_in_as(create(:user))
+
+        get edit_user_profile_path
+        document = Nokogiri::HTML(response.body)
+
+        expect(document.at_css("#user_profile_last_name_hint").text).to eq "Optional."
+        expect(document.at_css("#user_profile_mobile_phone_hint").text).to eq "Shown to members of your groups."
+      end
+
+      it "carries the page the reader was sent from into the form" do
+        sign_in_as(create(:user))
+
+        get edit_user_profile_path(return_to: "/join?token=abc")
+
+        expect(Nokogiri::HTML(response.body).at_css("form[action='#{user_profile_path}'] input[name=return_to]")["value"]).to eq "/join?token=abc"
       end
 
       it "leads the form's button row with Delete my account" do
@@ -214,6 +232,47 @@ RSpec.describe "UserProfiles", type: :request do
 
         expect(other.reload.email).to eq "other@example.com"
         expect(user.reload.email).to eq "taken@example.com"
+      end
+
+      # WHY: #472 AC3. A first name and a mobile are what lets a member past the profile form, so a save without either is refused on the field it lacks.
+      it "refuses a save without a first name or a mobile, with the error under each field" do
+        user = create(:user)
+        sign_in_as(user)
+
+        patch user_profile_path, params: { user_profile: { first_name: "", mobile_phone: " " } }
+        document = Nokogiri::HTML(response.body)
+
+        expect(response).to have_http_status :unprocessable_content
+        expect(document.at_css("#user_profile_first_name_error").text).to eq "First name can't be blank"
+        expect(document.at_css("#user_profile_mobile_phone_error").text).to eq "Mobile phone can't be blank"
+        expect(user.profile.reload).to be_setup
+      end
+
+      # WHY: #472 AC5.
+      it "saves without a last name" do
+        user = create(:user, :not_set_up)
+        sign_in_as(user)
+
+        patch user_profile_path, params: { user_profile: { first_name: "Ada", last_name: "", mobile_phone: "+385911111111" } }
+
+        expect(response).to redirect_to root_path
+        expect(user.profile.reload).to have_attributes(first_name: "Ada", last_name: "", mobile_phone: "+385911111111")
+      end
+
+      it "returns to the page the reader was sent from" do
+        sign_in_as(create(:user))
+
+        patch user_profile_path, params: { user_profile: { first_name: "Ada" }, return_to: "/join?token=abc" }
+
+        expect(response).to redirect_to "/join?token=abc"
+      end
+
+      it "returns home rather than to another site" do
+        sign_in_as(create(:user))
+
+        patch user_profile_path, params: { user_profile: { first_name: "Ada" }, return_to: "https://evil.example.com/" }
+
+        expect(response).to redirect_to root_path
       end
 
       it "re-renders the edit page when the update is invalid" do

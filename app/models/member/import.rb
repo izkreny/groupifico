@@ -59,7 +59,7 @@ class Member::Import
         new_user = user.new_record?
         fill_blanks(profile, row)
 
-        if profile.valid? && member.save && profile.save
+        if profile.valid?(:setup) && member.save && profile.save(context: :setup)
           Row.new(line:, outcome: new_user ? :added : :joined, reasons: [])
         else
           Row.new(line:, outcome: :refused, reasons: member.errors.full_messages + profile.errors.full_messages)

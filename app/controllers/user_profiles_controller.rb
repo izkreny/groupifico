@@ -8,8 +8,10 @@ class UserProfilesController < ApplicationController
   def update
     authorize! @user_profile
 
-    if @user_profile.update(user_profile_params)
-      redirect_to root_path,
+    @user_profile.assign_attributes(user_profile_params)
+
+    if @user_profile.save(context: :setup)
+      redirect_to return_to || root_path,
         notice: "User profile was successfully updated.",
         status: :see_other
     else
