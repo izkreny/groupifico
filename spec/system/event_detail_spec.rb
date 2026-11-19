@@ -449,6 +449,30 @@ RSpec.describe "The event detail", type: :system do
     expect(page).to have_css "button[aria-label='Response requested from Ben Cole']"
   end
 
+  # WHY: #452 AC1, which flash each refusal sets is `spec/requests/registrations/response_requests_spec.rb`'s; that the info banner paints in the info colour, #185a89, rather than the error or success one is what a browser adds.
+  it "says in an info banner, rather than a red alert, that a member who answered meanwhile was not asked" do
+    owner, event, ben = rostered_event
+    sign_in_as owner.user
+
+    press_plane_once_answered(event, ben)
+
+    expect(page).to paint "#info"
+    expect(find_by_id("info").evaluate_script("getComputedStyle(this).color")).to eq "rgb(24, 90, 137)"
+    expect(page).to have_no_css "#alert"
+    expect(page).to be_accessible
+  end
+
+  # WHY: #452 AC3.
+  it "takes the info banner away when its x is pressed" do
+    owner, event, ben = rostered_event
+    sign_in_as owner.user
+    press_plane_once_answered(event, ben)
+
+    within("#info") { click_button "Dismiss" }
+
+    expect(page).to have_no_css "#info"
+  end
+
   # WHY: #431 AC1, what the dialog says and carries is `spec/requests/events_spec.rb`'s; that the tinted plane opens it rather than posting is what a browser adds.
   it "opens the Send again dialog from a requested row's tinted plane" do
     owner, event, = rostered_event
@@ -592,6 +616,14 @@ RSpec.describe "The event detail", type: :system do
   def open_roster(sorted_by: nil)
     find("summary", text: "Who’s coming").click
     click_button sorted_by if sorted_by
+  end
+
+  # The roster draws no plane on an answered row, so the member answers after the page is drawn and before the press.
+  def press_plane_once_answered(event, member)
+    visit group_event_path(event.group, event)
+    open_roster
+    Registration.find_by!(event:, member:).update!(status: :yes)
+    click_button "Request a response from #{member.full_name}"
   end
 
   # Carla is `rostered_event`'s requested row, so her tinted plane is the one that opens the Send again dialog.
