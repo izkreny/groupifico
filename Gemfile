@@ -60,6 +60,11 @@ group :development, :test do
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
   gem "rubocop-rspec", require: false
+  # The FactoryBot cops, which rubocop-rspec carried until its 3.0 and no longer does
+  gem "rubocop-factory_bot", require: false
+  gem "rubocop-md", require: false
+  gem "rubocop-rake", require: false
+  gem "rubocop-thread_safety", require: false
 
   # Testing
   gem "factory_bot_rails"
