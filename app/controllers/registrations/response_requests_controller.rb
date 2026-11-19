@@ -15,13 +15,13 @@ class Registrations::ResponseRequestsController < ApplicationController
       if @registration.request_response_again
         notice = "#{member.full_name}'s response was requested again."
       elsif !@registration.request_response
-        alert = "#{member.full_name} has already answered, so no response was requested."
+        info = "#{member.full_name} has already answered, so no response was requested."
       end
-      redirect_back_or_to group_event_path(@group, @registration.event), status: :see_other, notice:, alert:
+      redirect_back_or_to group_event_path(@group, @registration.event), status: :see_other, notice:, info:
     elsif member.active?
-      redirect_back_or_to group_event_path(@group, @registration.event), status: :see_other, alert: "This event is #{@event.status}, so no response was requested."
+      redirect_back_or_to group_event_path(@group, @registration.event), status: :see_other, info: "This event is #{@event.status}, so no response was requested."
     else
-      redirect_back_or_to group_event_path(@group, @registration.event), status: :see_other, alert: "#{member.full_name} is #{member.status}, so no response was requested."
+      redirect_back_or_to group_event_path(@group, @registration.event), status: :see_other, info: "#{member.full_name} is #{member.status}, so no response was requested."
     end
   end
 

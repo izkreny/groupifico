@@ -41,7 +41,7 @@ module StyleguidesHelper
     regenerate: "Retiring the group's join link for a new one: Regenerate link in its dialog on the members list, and the primary of the sheet it opens.",
     copied: "The group's join link just copied: Link copied, which Copy link turns into for two seconds.",
     success: "A success alert: the flash notice after an action.",
-    info: "An info alert: the note atop the duplicate screen saying what the copy changed, and the hint atop the feedback form.",
+    info: "An info alert: the flash info after a press the row's state already answered, the note atop the duplicate screen saying what the copy changed, and the hint atop the feedback form.",
     warning: "Not drawn yet: the legend's warning alert.",
     error: "An error alert: the flash alert, the error summary atop a form, and the block on the account-deletion sheet.",
     signed_out: "Not drawn yet: the legend's signed-out state.",
