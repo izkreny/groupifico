@@ -1623,15 +1623,14 @@ RSpec.describe "Events", type: :request do
       it "badges a member on the list who is not active with their status, beside the name, and an active one with nothing" do
         actor = create(:member, :active, :events_administrator)
         event = create(:event, group: actor.group)
-        listed = { active: %w[ Alice Bird ], paused: %w[ Ben Cole ], inactive: %w[ Carla Duke ] }.map do |status, (first_name, last_name)|
-          user = create(:user, :with_full_profile, first_name:, last_name:)
-          create(:registration, event:, member: create(:member, status, group: event.group, user:)).member
-        end
+        alice = create(:registration, event:, member: create(:member, :active, group: event.group, user: create(:user, :with_full_profile, first_name: "Alice", last_name: "Bird"))).member
+        ben = create(:registration, event:, member: create(:member, :paused, group: event.group, user: create(:user, :with_full_profile, first_name: "Ben", last_name: "Cole"))).member
+        carla = create(:registration, event:, member: create(:member, :inactive, group: event.group, user: create(:user, :with_full_profile, first_name: "Carla", last_name: "Duke"))).member
         sign_in_as(actor.user)
 
         get edit_group_event_path(event.group, event)
 
-        badges = listed.map { |member| Nokogiri::HTML(response.body).xpath("//div[span[normalize-space()='#{member.full_name}']]/span[contains(@class, 'badge')]").map(&:text) }
+        badges = [ alice, ben, carla ].map { |member| Nokogiri::HTML(response.body).xpath("//div[span[normalize-space()='#{member.full_name}']]/span[contains(@class, 'badge')]").map(&:text) }
         expect(badges).to eq [ [], [ "paused" ], [ "inactive" ] ]
       end
     end
