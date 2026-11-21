@@ -30,4 +30,4 @@ None.
 
 ## Settled
 
-None yet.
+- ::Q1:: Does this branch also fix the same flake elsewhere, the `press` helper in `spec/system/event_form_spec.rb` quoting Faker names in a CSS selector? Yes, inside this pull request: the owner decided so in the session on 2026-11-21.
