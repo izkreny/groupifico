@@ -15,7 +15,7 @@ RSpec.describe MemberMailer, type: :mailer do
     it "links to the sign-in form carrying the address and the group's join page in the query string" do
       member = create(:member, :pending, user: create(:user, email: "added@example.com"))
 
-      url = sign_in_form_url_from(described_class.invitation(member))
+      url = sign_in_form_link_in(described_class.invitation(member))
 
       expect(url.path).to eq("/session/new")
       expect(URI.decode_www_form(url.query).to_h).to eq("email" => "added@example.com", "return_to" => "/groups/#{member.group_id}/invitation")
@@ -28,9 +28,4 @@ RSpec.describe MemberMailer, type: :mailer do
       expect { described_class.invitation(member).message }.not_to change(SignInToken, :count)
     end
   end
-
-  private
-    def sign_in_form_url_from(mail)
-      URI.parse(mail.text_part.body.decoded[%r{https?://\S+?/session/new\?\S+}])
-    end
 end

@@ -155,7 +155,7 @@ RSpec.describe "The join page", type: :system do
     member = create(:member, :pending, group: create(:group, name: "Riverside Choir"))
     resize_to ViewportHelper::MOBILE
 
-    visit invitation_link_in(MemberMailer.invitation(member)).request_uri
+    visit sign_in_form_link_in(MemberMailer.invitation(member)).request_uri
     expect(page).to have_field "Email", with: member.email
     sign_in_from_the_mailed_link(member.email)
     expect(page).to have_current_path group_invitation_path(member.group)
@@ -216,10 +216,6 @@ RSpec.describe "The join page", type: :system do
   end
 
   private
-    def invitation_link_in(mail)
-      URI.parse(mail.text_part.decoded[%r{https?://\S+?/session/new\?\S+}])
-    end
-
     # Presses the sign-in form's button, then follows the link the delivered mail carries and spends it, so every hop is the real one.
     def sign_in_from_the_mailed_link(email)
       perform_enqueued_jobs do
