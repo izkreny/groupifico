@@ -125,14 +125,15 @@ RSpec.describe Event::Filter do
       expect(names(described_class.new(member, scope: "past", categories: %w[ gig ]))).to eq [ "Autumn fair" ]
     end
 
-    # WHY: #462 AC1. Every event that ended while still unconfirmed or confirmed, newest first, and nothing concluded or still ahead.
-    it "lists on To do every ended event still unconfirmed or confirmed, newest first" do
+    # WHY: #462 AC1. Every unconfirmed event, ahead or ended, and every ended one still confirmed, newest first; nothing concluded, and no confirmed event still ahead.
+    it "lists on To do every unconfirmed event and every ended one still confirmed, newest first" do
       create(:event, group: member.group, creator: member, name: "Autumn fair", status: :unconfirmed, starts_at: 20.days.ago, ends_at: 20.days.ago + 2.hours)
       create(:event, group: member.group, creator: member, name: "Harvest gig", status: :confirmed, starts_at: 5.days.ago, ends_at: 5.days.ago + 2.hours)
       create(:event, group: member.group, creator: member, name: "Summer gig", status: :concluded, starts_at: 10.days.ago, ends_at: 10.days.ago + 2.hours)
+      upcoming(name: "Winter gala", status: :unconfirmed, starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours)
       upcoming(name: "Advent concert")
 
-      expect(names(described_class.new(member, oversees: true, scope: "to_do"))).to eq [ "Harvest gig", "Autumn fair" ]
+      expect(names(described_class.new(member, oversees: true, scope: "to_do"))).to eq [ "Winter gala", "Harvest gig", "Autumn fair" ]
     end
 
     # WHY: #462 AC6. The sheet's filters narrow To do like any other list.
@@ -154,7 +155,7 @@ RSpec.describe Event::Filter do
       expect(described_class.new(member, categories: %w[ gig ]).counts(member.group.events)).to eq({ nil => 1, "past" => 1, "canceled" => 0 })
     end
 
-    # WHY: #462 AC8. To do carries its count like every other tab, an event on it counted on Past too.
+    # WHY: #462 AC8. To do carries its count like every other tab, an event on it counted on its dated list too.
     it "counts To do beside the other lists for a member who oversees the events" do
       upcoming(name: "Advent concert", category: :gig)
       create(:event, :from_the_past, group: member.group, creator: member, name: "Autumn fair", category: :gig, status: :confirmed)

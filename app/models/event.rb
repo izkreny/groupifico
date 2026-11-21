@@ -91,8 +91,8 @@ class Event < ApplicationRecord
   scope :current_and_upcoming, -> { not_canceled.where(ends_at: Time.current..) }
   scope :past,                 -> { not_canceled.where(ends_at: ...Time.current) }
 
-  # WHY: a fourth list, outside that partition: the events waiting on whoever runs them, which today is one that ended while still unconfirmed or confirmed, so it stays in front of them rather than slipping onto the past list unnoticed. It is a view inside the past list, so an event on it is always on that one as well.
-  scope :to_do, -> { past.where(status: %i[ unconfirmed confirmed ]) }
+  # WHY: a fourth list, outside that partition: the events waiting on whoever runs them, which today is every event still unconfirmed, whatever its dates, and every past one still confirmed, so neither slips by unnoticed. It overlaps the partition rather than joining it, so an event on it is always on Upcoming or Past as well.
+  scope :to_do, -> { unconfirmed.or(past.confirmed) }
 
   scope :preloaded, -> { includes(:address, :group, :registrations, creator: :profile, manager: :profile) }
 
