@@ -390,10 +390,12 @@ RSpec.describe "The event form", type: :system do
 
   private
     # An event with one member on its list and one active member off it, in the actor's group.
+    # WHY: literal names, because `press` quotes each one in a CSS selector and a Faker name carrying an apostrophe would end the string early.
     def event_to_edit_the_list_of(actor)
       event = create(:event, group: actor.group)
-      leaving = create(:registration, event:, member: create(:member, :active, group: event.group)).member
-      [ event, leaving, create(:member, :active, group: event.group) ]
+      leaving = create(:registration, event:, member: create(:member, :active, group: event.group, user: create(:user, :with_full_profile, first_name: "Ben", last_name: "Cole"))).member
+      arriving = create(:member, :active, group: event.group, user: create(:user, :with_full_profile, first_name: "Carla", last_name: "Duke"))
+      [ event, leaving, arriving ]
     end
 
     # The list's buttons are labels around a visually hidden checkbox, which carries the name.

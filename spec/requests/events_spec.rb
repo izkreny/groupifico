@@ -1619,15 +1619,18 @@ RSpec.describe "Events", type: :request do
         expect(page_text(response.body)).not_to include unlisted.full_name
       end
 
+      # WHY: #511 AC1, literal names, because the XPath below quotes each one and a Faker name carrying an apostrophe would end the literal early.
       it "badges a member on the list who is not active with their status, beside the name, and an active one with nothing" do
         actor = create(:member, :active, :events_administrator)
         event = create(:event, group: actor.group)
-        listed = [ :active, :paused, :inactive ].map { create(:registration, event:, member: create(:member, it, group: event.group)).member }
+        alice = create(:registration, event:, member: create(:member, :active, group: event.group, user: create(:user, :with_full_profile, first_name: "Alice", last_name: "Bird"))).member
+        ben = create(:registration, event:, member: create(:member, :paused, group: event.group, user: create(:user, :with_full_profile, first_name: "Ben", last_name: "Cole"))).member
+        carla = create(:registration, event:, member: create(:member, :inactive, group: event.group, user: create(:user, :with_full_profile, first_name: "Carla", last_name: "Duke"))).member
         sign_in_as(actor.user)
 
         get edit_group_event_path(event.group, event)
 
-        badges = listed.map { |member| Nokogiri::HTML(response.body).xpath("//div[span[normalize-space()='#{member.full_name}']]/span[contains(@class, 'badge')]").map(&:text) }
+        badges = [ alice, ben, carla ].map { |member| Nokogiri::HTML(response.body).xpath("//div[span[normalize-space()='#{member.full_name}']]/span[contains(@class, 'badge')]").map(&:text) }
         expect(badges).to eq [ [], [ "paused" ], [ "inactive" ] ]
       end
     end
