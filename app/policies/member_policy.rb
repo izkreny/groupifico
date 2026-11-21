@@ -26,8 +26,8 @@ class MemberPolicy < ApplicationPolicy
   # granted the same way every other one is.
   #
   # It is not an action, and no controller action maps to it. `MembersController` asks it as a
-  # second question on create and update, whenever the posted roles differ from the ones the member
-  # holds, so an administrator may still add a member and change their status.
+  # second question on update, whenever the posted roles differ from the ones the member holds, so
+  # an administrator may still change a member's status; an invitation takes no roles at all.
   def manage_roles? = membership.owner?
 
   private
