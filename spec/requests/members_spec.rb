@@ -242,6 +242,22 @@ RSpec.describe "Members", type: :request do
         expect(Nokogiri::HTML(response.body).at_css("#join_link_url")["value"]).to eq new_join_request_url(token:)
       end
 
+      # WHY: #505 AC4, an invitee under Pending only, and N7's Resend on their row.
+      it "lists an invitee under Pending alone, offering to resend their invitation" do
+        actor   = create(:member, :active, :members_administrator)
+        invitee = create(:member, :pending, group: actor.group)
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group)
+        active_rows = Nokogiri::HTML(response.body).css("#members li[id]").map { it["id"] }
+        get group_members_path(actor.group, status: "pending")
+        pending_page = Nokogiri::HTML(response.body)
+
+        expect(active_rows).not_to include ActionView::RecordIdentifier.dom_id(invitee, :row)
+        expect(pending_page.css("#members li[id]").map { it["id"] }).to eq [ ActionView::RecordIdentifier.dom_id(invitee, :row) ]
+        expect(pending_page.at_css(%(form[action="#{group_member_invitation_path(actor.group, invitee)}"])).text.strip).to eq "Resend invitation"
+      end
+
       it "marks a member who has never signed in" do
         actor = create(:member, :active, :members_administrator)
         added = create(:member, group: actor.group, user: create(:user, first_signed_in_at: nil))

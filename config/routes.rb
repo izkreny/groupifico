@@ -41,7 +41,10 @@ Rails.application.routes.draw do
 
 
   resources :groups do
-    resources :members
+    resources :members do
+      # WHY: resending a pending member's invitation, a singular resource of the member's because they have one invitation, and `create` because each press sends it again.
+      resource :invitation, only: :create, module: :members
+    end
     # WHY: one link per group, so a singular resource: `create` turns it on or regenerates it, `destroy` turns it off.
     resource :join_link, only: %i[ create destroy ], module: :groups
     # WHY: the invitee's own invitation, one per group, so a singular resource naming the group rather than a token, because an invitation must reach the join page while the join link is off: `show` is that page, `update` is Join and `destroy` is Decline.
