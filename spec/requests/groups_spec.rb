@@ -2,6 +2,28 @@ require 'rails_helper'
 
 RSpec.describe "Groups", type: :request do
   describe "GET /groups" do
+    # WHY: #472 AC1, `ProfileSetup` sending a user without a first name and a mobile to the profile form from every page, the groups list being the one signing in lands on.
+    context "when signed in without a first name and a mobile" do
+      it "sends them to the profile form, carrying the list to come back to" do
+        sign_in_as(create(:user, :not_set_up))
+
+        get groups_path
+
+        expect(response).to redirect_to edit_user_profile_path(return_to: groups_path)
+        expect(flash[:info]).to eq "Complete your profile to continue."
+      end
+
+      it "sends them when only the mobile is missing" do
+        user = create(:user, :not_set_up)
+        user.profile.update!(first_name: "Ada", last_name: "Lovelace")
+        sign_in_as(user)
+
+        get groups_path
+
+        expect(response).to redirect_to edit_user_profile_path(return_to: groups_path)
+      end
+    end
+
     context "when not signed in" do
       it "redirects to the sign-in page" do
         get groups_path
@@ -146,6 +168,18 @@ RSpec.describe "Groups", type: :request do
   end
 
   describe "GET /groups/:id" do
+    # WHY: #472 AC1.
+    context "when signed in as a member without a first name and a mobile" do
+      it "sends them to the profile form, carrying the group's page to come back to" do
+        member = create(:member, user: create(:user, :not_set_up))
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(response).to redirect_to edit_user_profile_path(return_to: group_path(member.group))
+      end
+    end
+
     context "when not signed in" do
       it "redirects to the sign-in page" do
         get group_path(create(:group))
@@ -1026,6 +1060,17 @@ RSpec.describe "Groups", type: :request do
   end
 
   describe "POST /groups" do
+    # WHY: #472 AC1, a write being refused too, with no page to come back to.
+    context "when signed in without a first name and a mobile" do
+      it "creates nothing and sends them to the profile form" do
+        sign_in_as(create(:user, :not_set_up))
+
+        expect { post groups_path, params: { group: { name: "Riverside Choir" } } }.not_to change(Group, :count)
+
+        expect(response).to redirect_to edit_user_profile_path
+      end
+    end
+
     context "when not signed in" do
       # WHY: a redirect can only replay a GET, so a refused POST has nowhere to return to.
       it "redirects to the sign-in page carrying no destination" do

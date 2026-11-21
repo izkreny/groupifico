@@ -22,6 +22,7 @@ FactoryBot.define do
     transient do
       first_name { Faker::Name.first_name }
       last_name  { Faker::Name.last_name }
+      set_up     { true }
     end
 
     # The sequence carries uniqueness and Faker only decorates, which is the split
@@ -29,6 +30,15 @@ FactoryBot.define do
     # from a finite pool and raised `RetryLimitExceeded` once a run created enough users - a suite
     # that failed on how many examples ran before it rather than on anything it asserted.
     sequence(:email) { |n| "#{first_name.parameterize}.#{last_name.parameterize}.#{n}@example.com" }
+
+    # WHY: a signed-in user without a first name, a last name and a mobile is sent to the profile form from every page, so a user is set up unless a spec asks for the empty profile `User` builds for an email-only invitation.
+    after(:build) do |user, context|
+      user.build_profile(first_name: context.first_name, last_name: context.last_name, mobile_phone: generate(:mobile_phone)) if context.set_up && !user.profile
+    end
+
+    trait :not_set_up do
+      set_up { false }
+    end
 
     trait :with_full_profile do
       after(:create) do |user, context|

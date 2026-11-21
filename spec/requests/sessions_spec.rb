@@ -211,6 +211,16 @@ RSpec.describe "Sessions", type: :request do
 
         expect(response).to redirect_to new_session_path
       end
+
+      # WHY: #472 AC2, signing out being the one way off the profile form other than filling it in.
+      it "signs out a user whose profile lacks a first name and a mobile" do
+        sign_in_as(create(:user, :not_set_up))
+
+        expect { delete session_path }
+          .to change(Session, :count).by(-1)
+
+        expect(response).to redirect_to new_session_path
+      end
     end
   end
 
