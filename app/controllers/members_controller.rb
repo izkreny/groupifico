@@ -42,20 +42,19 @@ class MembersController < ApplicationController
     authorize! @member
   end
 
+  # WHY: pending and holding no role whatever the form posts, because an invitation asks for an address and nothing else and the invitee is let in by their own Join; any status or role is set on the edit form once they have joined.
   def create
-    @member = @group.members.new(new_member_params)
+    @member = @group.members.new(email: params.expect(member: [ :email ])[:email], status: :pending)
 
     authorize! @member
-    authorize! @member, to: :manage_roles? if @member.roles.any?
 
     # WHY: sent from here rather than from a callback on `Member`, which would also mail every owner
-    # `Group#add_owner` makes for themselves when they start a group. Not to an `inactive` one, who
-    # is refused the group like a non-member and so would sign in to a root that does not list it.
+    # `Group#add_owner` makes for themselves when they start a group.
     if @member.save
-      MemberMailer.welcome(@member).deliver_later unless @member.inactive?
+      MemberMailer.invitation(@member).deliver_later
 
       redirect_to group_member_path(@group, @member),
-        notice: "Member was successfully created."
+        notice: "Invitation sent."
     else
       render :new, status: :unprocessable_content
     end
@@ -91,12 +90,6 @@ class MembersController < ApplicationController
       @member = @group.members.preloaded.find(params.expect(:id))
     end
 
-    # Used on create: deciding which person a membership is for is what creating one means, and the
-    # person is named by their address, which `Member#email=` resolves to a user.
-    def new_member_params
-      role_records params.expect(member: [ :status, :email, roles: [] ])
-    end
-
     # Used on update: the address stays out, so an existing membership cannot be handed to a
     # different user. Who may set a role is `MemberPolicy#manage_roles?`, asked above.
     def member_params
@@ -121,7 +114,7 @@ class MembersController < ApplicationController
     # WHY: a name the member already holds keeps its row. Swapping it for a fresh record destroys
     # the old row first, and `Role`'s owner guard refuses that for the group's last owner even
     # though the role stays, so the only owner could not save their own form at all.
-    def role_records(permitted, held: [])
+    def role_records(permitted, held:)
       return permitted unless permitted.key?(:roles)
 
       role_names = permitted[:roles].compact_blank.uniq

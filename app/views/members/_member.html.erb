@@ -37,7 +37,11 @@
       <%= icon :email, class: "size-icon-control" %>
     <% end %>
 
-    <% if manages && !member.pending? %>
+    <%# WHY: text rather than an icon alone, as Slack and User Interviews draw it, because a paper plane beside the envelope reads as a second way to email them. %>
+    <% if manages && member.pending? %>
+      <%= button_to safe_join([ icon(:send_invite, class: "size-icon-control"), "Resend invitation" ]), group_member_invitation_path(member.group, member),
+            class: "btn btn-ghost btn-sm text-primary" %>
+    <% elsif manages %>
       <%= link_to edit_group_member_path(member.group, member), class: "btn btn-ghost btn-circle btn-sm text-primary", aria: { label: "Edit #{name}" } do %>
         <%= icon :edit, class: "size-icon-control" %>
       <% end %>

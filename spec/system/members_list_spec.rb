@@ -17,6 +17,20 @@ RSpec.describe "The members list", type: :system do
     expect(page).to be_accessible
   end
 
+  # WHY: N7 in the browser, the button readable on a dimmed row and its press landing back on the Pending tab.
+  it "resends an invitation from a pending row, with no accessibility violations" do
+    actor   = create(:member, :active, :members_administrator, :with_all_attributes)
+    invitee = create(:member, :pending, group: actor.group)
+    sign_in_as actor.user
+
+    visit group_members_path(actor.group, status: "pending")
+    expect(page).to be_accessible
+    within("##{ActionView::RecordIdentifier.dom_id(invitee, :row)}") { click_button "Resend invitation" }
+
+    expect(page).to have_text "Invitation sent again."
+    expect(page).to have_current_path group_members_path(actor.group, status: "pending")
+  end
+
   it "paints the roster in light, its paused row dimmed and still readable" do
     actor  = create(:member, :active, :owner, :with_all_attributes)
     paused = create(:member, :paused, :owner, :with_all_attributes, group: actor.group)

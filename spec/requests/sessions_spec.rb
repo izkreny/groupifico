@@ -10,7 +10,7 @@ RSpec.describe "Sessions", type: :request do
         expect(response.body).not_to include('type="password"')
       end
 
-      # The welcome mail's link, which ADR 0004 makes safe only while opening it sends nothing: a
+      # The invitation's link, which ADR 0004 makes safe only while opening it sends nothing: a
       # mail filter follows every link in a message before the person does.
       it "fills in the address it is opened with, and mails nothing until the form is submitted" do
         create(:user, email: "added@example.com")
@@ -93,6 +93,23 @@ RSpec.describe "Sessions", type: :request do
         sign_in_as(create(:user))
 
         get new_session_path
+
+        expect(response).to redirect_to root_path
+      end
+
+      # WHY: #505 AC1, an invitation's link is this form carrying the join page as its destination, and an invitee already signed in to another group must still reach that page rather than a root that lists no group they are pending in.
+      it "redirects to the destination it is opened with, instead of the root page" do
+        sign_in_as(create(:user))
+
+        get new_session_path(return_to: "/groups/1/invitation")
+
+        expect(response).to redirect_to "/groups/1/invitation"
+      end
+
+      it "redirects a destination that is not a path inside the application to the root page" do
+        sign_in_as(create(:user))
+
+        get new_session_path(return_to: "https://other.example/x")
 
         expect(response).to redirect_to root_path
       end

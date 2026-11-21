@@ -242,6 +242,22 @@ RSpec.describe "Members", type: :request do
         expect(Nokogiri::HTML(response.body).at_css("#join_link_url")["value"]).to eq new_join_request_url(token:)
       end
 
+      # WHY: #505 AC4, an invitee under Pending only, and N7's Resend on their row.
+      it "lists an invitee under Pending alone, offering to resend their invitation" do
+        actor   = create(:member, :active, :members_administrator)
+        invitee = create(:member, :pending, group: actor.group)
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group)
+        active_rows = Nokogiri::HTML(response.body).css("#members li[id]").map { it["id"] }
+        get group_members_path(actor.group, status: "pending")
+        pending_page = Nokogiri::HTML(response.body)
+
+        expect(active_rows).not_to include ActionView::RecordIdentifier.dom_id(invitee, :row)
+        expect(pending_page.css("#members li[id]").map { it["id"] }).to eq [ ActionView::RecordIdentifier.dom_id(invitee, :row) ]
+        expect(pending_page.at_css(%(form[action="#{group_member_invitation_path(actor.group, invitee)}"])).text.strip).to eq "Resend invitation"
+      end
+
       it "marks a member who has never signed in" do
         actor = create(:member, :active, :members_administrator)
         added = create(:member, group: actor.group, user: create(:user, first_signed_in_at: nil))
@@ -661,15 +677,15 @@ RSpec.describe "Members", type: :request do
     end
 
     context "when signed in as an owner" do
-      it "offers every role as an unticked checkbox" do
+      # WHY: #505 AC5, the invitation asking for an email and nothing else, even of the one column that may grant roles.
+      it "asks for the address alone, offering no status and no role" do
         owner = create(:member, :active, :owner)
         sign_in_as(owner.user)
 
         get new_group_member_path(owner.group)
 
-        boxes = Nokogiri::HTML(response.body).css("input[type=checkbox][name='member[roles][]']")
-        expect(boxes.map { it["value"] }).to eq [ "owner", "administrator", "events_administrator", "members_administrator" ]
-        expect(boxes.select { it["checked"] }).to be_empty
+        fields = Nokogiri::HTML(response.body).css("form input[name^='member['], form select[name^='member[']").map { it["name"] }.uniq
+        expect(fields).to eq [ "member[email]" ]
       end
     end
 
@@ -899,38 +915,34 @@ RSpec.describe "Members", type: :request do
     end
 
     context "when signed in as an owner" do
-      it "refuses a posted role name outside the vocabulary, creating nobody" do
+      # WHY: #505 AC5, the invitation taking an address and nothing else, so a status or a role posted with it changes nothing.
+      it "invites the person pending and holding no role, whatever status and roles are posted" do
         actor   = create(:member, :active, :owner)
         invitee = create(:user)
         sign_in_as(actor.user)
 
-        expect { post group_members_path(actor.group), params: { member: { email: invitee.email, roles: [ "events_administrator", "bogus" ] } } }
-          .not_to change(Member, :count)
+        post group_members_path(actor.group), params: { member: { email: invitee.email, status: "active", roles: [ "events_administrator" ] } }
 
-        expect(response).to have_http_status :unprocessable_content
-      end
-
-      it "creates the member with the roles posted for them" do
-        actor   = create(:member, :active, :owner)
-        invitee = create(:user)
-        sign_in_as(actor.user)
-
-        post group_members_path(actor.group), params: { member: { email: invitee.email, roles: [ "events_administrator" ] } }
-
-        expect(Member.find_by(user: invitee).roles.map(&:name)).to eq [ "events_administrator" ]
+        member = actor.group.members.preloaded.find_by!(user: invitee)
+        expect(member).to be_pending
+        expect(member.roles).to be_empty
       end
     end
 
     context "when signed in as a members administrator" do
-      it "creates the member" do
+      # WHY: #505 AC1, the invitee a pending member of the group, sent the invitation rather than a welcome.
+      it "invites the person as a pending member and emails them the invitation" do
         actor   = create(:member, :active, :members_administrator)
         invitee = create(:user)
         sign_in_as(actor.user)
 
         expect { post group_members_path(actor.group), params: { member: { email: invitee.email } } }
           .to change(Member, :count).by(1)
+          .and have_enqueued_mail(MemberMailer, :invitation)
 
-        expect(response).to redirect_to group_member_path(actor.group, Member.find_by!(user: invitee, group: actor.group))
+        member = Member.find_by!(user: invitee, group: actor.group)
+        expect(member).to be_pending
+        expect(response).to redirect_to group_member_path(actor.group, member)
       end
 
       it "creates the user too when no account holds the address" do
@@ -943,31 +955,13 @@ RSpec.describe "Members", type: :request do
         expect(actor.group.members.where(user: User.find_by!(email: "new.person@example.com"))).to exist
       end
 
-      it "emails the person added a link to the sign-in form" do
-        actor = create(:member, :active, :members_administrator)
-        sign_in_as(actor.user)
-
-        expect { post group_members_path(actor.group), params: { member: { email: "new.person@example.com" } } }
-          .to have_enqueued_mail(MemberMailer, :welcome)
-      end
-
-      it "emails nobody when the member is added as inactive, since they could not see the group" do
-        actor = create(:member, :active, :members_administrator)
-        sign_in_as(actor.user)
-
-        expect { post group_members_path(actor.group), params: { member: { email: "new.person@example.com", status: "inactive" } } }
-          .not_to have_enqueued_mail(MemberMailer, :welcome)
-
-        expect(actor.group.members.inactive.preloaded.sole.user.email).to eq "new.person@example.com"
-      end
-
       it "refuses an address that already belongs to the group, saying so and emailing nobody" do
         actor    = create(:member, :active, :members_administrator)
         existing = create(:member, group: actor.group)
         sign_in_as(actor.user)
 
         expect { post group_members_path(actor.group), params: { member: { email: existing.user.email } } }
-          .not_to have_enqueued_mail(MemberMailer, :welcome)
+          .not_to have_enqueued_mail(MemberMailer, :invitation)
 
         expect(response).to have_http_status :unprocessable_content
         expect(response.body).to include "already belongs to a member of this group"
@@ -984,9 +978,6 @@ RSpec.describe "Members", type: :request do
       end
     end
 
-    # Adding a person and granting them a role are two decisions, and the second is the owner's.
-    # Granting a role while adding somebody is the same decision as granting it afterwards, so the
-    # controller asks `manage_roles?` on create as well.
     context "when signed in as an administrator" do
       it "adds a member" do
         actor   = create(:member, :active, :administrator)
@@ -995,17 +986,6 @@ RSpec.describe "Members", type: :request do
 
         expect { post group_members_path(actor.group), params: { member: { email: invitee.email } } }
           .to change(Member, :count).by(1)
-      end
-
-      it "cannot add one carrying a role" do
-        actor   = create(:member, :active, :administrator)
-        invitee = create(:user)
-        sign_in_as(actor.user)
-
-        expect { post group_members_path(actor.group), params: { member: { email: invitee.email, roles: [ "events_administrator" ] } } }
-          .not_to change(Member, :count)
-
-        expect(response).to redirect_to root_path
       end
     end
 
@@ -1456,15 +1436,6 @@ RSpec.describe "Members", type: :request do
 
         expect(response).to redirect_to root_path
         expect(Member.exists?(pending.id)).to be true
-      end
-
-      it "refuses to add somebody as pending, and mails nobody" do
-        owner = create(:member, :active, :owner)
-        sign_in_as(owner.user)
-
-        expect { post group_members_path(owner.group), params: { member: { email: "new.person@example.com", status: "pending" } } }
-          .not_to have_enqueued_mail(MemberMailer, :welcome)
-        expect(owner.group.members.count).to eq 1
       end
     end
 

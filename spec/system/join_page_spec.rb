@@ -2,6 +2,8 @@ require "rails_helper"
 
 # The page a join link opens, which every holder of one lands on. What it shows and who reaches it are `spec/requests/join_requests_spec.rb`'s; what a browser adds is that the page passes axe, contrast of the group's name included, and that a long name wraps rather than running off a phone's screen.
 RSpec.describe "The join page", type: :system do
+  include ActiveJob::TestHelper
+
   it "has no accessibility violations in light" do
     token = JoinLink.mint(create(:group, name: "Riverside Choir"))
     prefer_colour_scheme :light
@@ -123,30 +125,57 @@ RSpec.describe "The join page", type: :system do
     expect(page).to be_accessible
   end
 
-  it "has no accessibility violations telling a pending member they are waiting in light" do
-    member = create(:member, :pending)
+  it "has no accessibility violations offering an invitee Join and Decline in light" do
+    member = create(:member, :pending, group: create(:group, name: "Riverside Choir"))
     sign_in_as member.user
-    token = JoinLink.mint(member.group)
     prefer_colour_scheme :light
     resize_to ViewportHelper::MOBILE
 
-    visit new_join_request_path(token:)
+    visit group_invitation_path(member.group)
 
-    expect(page).to have_text "Your request to join is waiting for approval."
+    expect(page).to have_button "Join Riverside Choir"
+    expect(page).to have_button "Decline"
     expect(page).to be_accessible
   end
 
-  it "has no accessibility violations telling a pending member they are waiting in dark" do
-    member = create(:member, :pending)
+  it "has no accessibility violations offering an invitee Join and Decline in dark" do
+    member = create(:member, :pending, group: create(:group, name: "Riverside Choir"))
     sign_in_as member.user
-    token = JoinLink.mint(member.group)
     prefer_colour_scheme :dark
     resize_to ViewportHelper::MOBILE
 
-    visit new_join_request_path(token:)
+    visit group_invitation_path(member.group)
 
     expect(rendered_colour_scheme).to eq "dark"
     expect(page).to be_accessible
+  end
+
+  # WHY: #505 AC1 and AC2 walked in the browser, every hop the real one: the invitation's link opens the sign-in form holding the address, the mailed sign-in link carries the join page, and Join reaches the group.
+  it "takes an invitee from the invitation's link through signing in to the join page, and Join into the group" do
+    member = create(:member, :pending, group: create(:group, name: "Riverside Choir"))
+    resize_to ViewportHelper::MOBILE
+
+    visit invitation_link_in(MemberMailer.invitation(member)).request_uri
+    expect(page).to have_field "Email", with: member.email
+    sign_in_from_the_mailed_link(member.email)
+    expect(page).to have_current_path group_invitation_path(member.group)
+    click_button "Join Riverside Choir"
+
+    expect(page).to have_current_path group_path(member.group)
+    expect(page).to have_text "You joined Riverside Choir."
+  end
+
+  # WHY: #505 AC3 in the browser, Decline posting and landing on the root with the group gone from it.
+  it "takes an invitee who presses Decline to the root page" do
+    member = create(:member, :pending, group: create(:group, name: "Riverside Choir"))
+    sign_in_as member.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_invitation_path(member.group)
+    click_button "Decline"
+
+    expect(page).to have_text "You declined the invitation to Riverside Choir."
+    expect(page).to have_current_path root_path
   end
 
   it "has no accessibility violations telling a member who left in light" do
@@ -185,4 +214,19 @@ RSpec.describe "The join page", type: :system do
     expect(page).to have_css "h1", text: "Kammerchorgemeinschaftsvereinigungsorchester"
     expect(horizontal_overflow).to eq 0
   end
+
+  private
+    def invitation_link_in(mail)
+      URI.parse(mail.text_part.decoded[%r{https?://\S+?/session/new\?\S+}])
+    end
+
+    # Presses the sign-in form's button, then follows the link the delivered mail carries and spends it, so every hop is the real one.
+    def sign_in_from_the_mailed_link(email)
+      perform_enqueued_jobs do
+        click_button "Email me a sign-in link"
+        expect(page).to have_text "Check your inbox"
+      end
+      visit mailed_sign_in_link(email).request_uri
+      click_button "Sign in"
+    end
 end
