@@ -25,7 +25,7 @@ FactoryBot.define do
 
     trait :with_all_attributes do
       description { Faker::Lorem.paragraph }
-      association :address, :with_all_attributes
+      address factory: %i[address with_all_attributes]
     end
   end
 end

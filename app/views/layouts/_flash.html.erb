@@ -4,6 +4,12 @@
   <% end %>
 <% end %>
 
+<% if info.present? %>
+  <%= render layout: "shared/alert", locals: { kind: :info, id: "info", role: "status", dismissible: true, classes: "mb-5" } do %>
+    <span><%= info %></span>
+  <% end %>
+<% end %>
+
 <% if alert.present? %>
   <%= render layout: "shared/alert", locals: { kind: :error, id: "alert", dismissible: true, classes: "mb-5" } do %>
     <span><%= alert %></span>

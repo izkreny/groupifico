@@ -1,33 +1,24 @@
 <% content_for :title, "Events" %>
+<%# WHY: never snapshotted, so Back asks the server for the list as it stands, the way Fizzy's card list does, rather than restoring the sheet's unapplied picks and a count that answering in place has since redrawn. %>
+<% turbo_exempts_page_from_cache %>
 
-<%#
-  The group's events. The shell's header already carries the group's name, so this screen's own
-  title is which of the lists is open - and because that is also the choice on offer, the title
-  is the list menu rather than a heading above one.
-%>
-<div class="flex flex-col gap-3">
-  <div class="flex items-center justify-between gap-2.5">
-    <%= render "events/scope_menu", group: @group, list: @list %>
+<%# Checked against a new event rather than the group, because that is the record `EventPolicy`
+    writes the rule against. %>
+<% add_path = new_group_event_path(@group) if allowed_to?(:create?, @group.events.new) %>
 
-    <%# Checked against a new event rather than the group, because that is the record `EventPolicy`
-        writes the rule against. A refused reader gets no button rather than a disabled one. %>
-    <% if allowed_to?(:create?, @group.events.new) %>
-      <%= link_to new_group_event_path(@group), class: "btn btn-ghost btn-circle btn-sm text-primary", aria: { label: "New event" } do %>
-        <%= icon :new, class: "size-icon-control" %>
-      <% end %>
-    <% end %>
-  </div>
-
+<%= render layout: "shared/filter_bar", locals: { group: @group, filter: @filter, counts: @counts, count: @events.load.size, add_label: "New event", add_path: } do %>
   <% reader = Current.member %>
   <div id="events">
-    <% if @events.load.any? %>
-      <ul class="list">
+    <% if @events.any? %>
+      <%= render layout: "shared/filter_list" do %>
         <% @events.each do |event| %>
           <%= render "events/row", event: event, registration: event.registration_for(reader) %>
         <% end %>
-      </ul>
+      <% end %>
+    <% elsif @filter.narrowed? %>
+      <p class="text-meta">No events match these filters.</p>
     <% else %>
-      <p class="text-meta"><%= { "past" => "No past events.", "canceled" => "No canceled events." }.fetch(@list, "Nothing coming up.") %></p>
+      <p class="text-meta"><%= { "past" => "No past events.", "canceled" => "No canceled events." }.fetch(@filter.scope, "Nothing coming up.") %></p>
     <% end %>
   </div>
-</div>
+<% end %>

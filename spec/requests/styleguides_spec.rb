@@ -248,6 +248,17 @@ RSpec.describe "The styleguide", type: :request do
         expect(tagged.values_at("base-200", "base-300", "neutral")).to eq [ false, false, true ]
       end
 
+      # WHY: #486 RF8. The funnel's ink says whether a filter is on, so the styleguide draws a bar with one on and a bar with none, in each theme.
+      it "draws the filter bar's funnel in both its inks" do
+        plant_styleguide_group
+        sign_in_as(create(:user))
+
+        get "/styleguide"
+
+        funnels = Nokogiri::HTML(response.body).css("button[aria-label^='Filter ']")
+        expect(funnels.map { [ it["aria-label"], (it["class"].split & %w[ text-primary text-icon-muted ]).first ] }.tally).to eq({ [ "Filter events", "text-primary" ] => 2, [ "Filter members", "text-icon-muted" ] => 2 })
+      end
+
       # The switcher's commonest row is a group that is not the current one, which a switcher listing only the current group never draws.
       it "draws the owner's groups in the switcher, one current and one paused" do
         plant_styleguide_group
@@ -464,8 +475,9 @@ RSpec.describe "The styleguide", type: :request do
       # and the confirm sheet through the event's delete partial, which is where its strings live; its scope wraps what it is rendered around, and its trigger is passed into a form's row.
       # The address fields, the event's list fields with each name in them, a form's button row, the role tags, and a requested row's Send again dialog are each drawn by the one partial that renders them.
       # The join link's dialog only frames the content the styleguide draws, and its two confirm sheets are drawn inside that content.
+      # A filtered list's bar and closing line wrap what they are rendered around, its tabs, chips and sheet are drawn through the bar, and a list's picks, their groups and each pick are drawn through the shared filter form.
       # The switcher, the Me menu and its detached sign-out form are drawn through the header, the tabs through the layout's own wrappers, and an alert's frame and the roster toggle each wrap what they are rendered around.
-      rendered_by = { "shared/errors" => "form.with_error_summary", "shared/confirm_sheet" => %(render "events/delete"), "shared/confirm_scope" => %(render layout: "shared/confirm_scope"), "shared/confirm_trigger" => 'render("shared/confirm_trigger"', "addresses/form_fields" => %(render "events/form"), "events/list_fields" => %(render "events/form"), "events/list_name" => %(render "events/form"), "shared/form_actions" => %(render "events/form"), "members/roles" => %(render "members/member"), "events/request_again" => %(render "events/roster"), "layouts/group_switcher" => %(render "layouts/header"), "layouts/me_menu" => %(render "layouts/header"), "shared/detached_delete_form" => %(render "layouts/header"), "layouts/group_tabs" => %(render "layouts/dock"), "shared/alert" => %(render layout: "shared/alert"), "events/roster_toggle" => %(render layout: "events/roster_toggle"), "groups/join_link_dialog" => %(render "groups/join_link"), "groups/join_link_confirm" => %(render "groups/join_link") }
+      rendered_by = { "shared/errors" => "form.with_error_summary", "shared/confirm_sheet" => %(render "events/delete"), "shared/confirm_scope" => %(render layout: "shared/confirm_scope"), "shared/confirm_trigger" => 'render("shared/confirm_trigger"', "addresses/form_fields" => %(render "events/form"), "events/list_fields" => %(render "events/form"), "events/list_name" => %(render "events/form"), "shared/form_actions" => %(render "events/form"), "members/roles" => %(render "members/member"), "events/request_again" => %(render "events/roster"), "layouts/group_switcher" => %(render "layouts/header"), "layouts/me_menu" => %(render "layouts/header"), "shared/detached_delete_form" => %(render "layouts/header"), "layouts/group_tabs" => %(render "layouts/dock"), "shared/alert" => %(render layout: "shared/alert"), "events/roster_toggle" => %(render layout: "events/roster_toggle"), "groups/join_link_dialog" => %(render "groups/join_link"), "groups/join_link_confirm" => %(render "groups/join_link"), "shared/filter_sheet" => %(render layout: "shared/filter_bar"), "shared/filter_bar" => %(render layout: "shared/filter_bar"), "shared/filter_tabs" => %(render layout: "shared/filter_bar"), "shared/filter_chips" => %(render layout: "shared/filter_bar"), "shared/filter_list" => %(render layout: "shared/filter_list"), "events/filter_fields" => %(render "shared/filter_form"), "members/filter_fields" => %(render "shared/filter_form"), "shared/filter_fieldset" => %(render "shared/filter_form"), "shared/filter_pick" => %(render "shared/filter_form") }
 
       expect(partials).not_to be_empty
       expect((partials - %w[ layouts/head styleguides/section ]).reject { template.include?(rendered_by.fetch(it, %(render "#{it}"))) }).to be_empty

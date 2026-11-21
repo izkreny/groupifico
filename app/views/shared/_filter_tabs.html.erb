@@ -1,0 +1,20 @@
+<%# locals: (group:, filter:, counts:) %>
+<%# WHY: links marked `aria-current` rather than ARIA tabs, because each tab loads its own URL. An inactive tab takes the muted text token, because daisyUI's own dimming leaves it at 3.1:1. Drawn as option C on the owner's options page: equal tabs on a line across the row, the open one underlined in the primary colour on that line, which also opens the list below. A row too narrow for its tabs scrolls sideways rather than wrapping a label, the owner's pick on #486, so the line is an inset shadow: a scrolling row clips a child to its padding box, which would cut an underline pushed down onto a border, and its scrollbar is hidden because it drew over that line; an arrow over each end that hides more tabs is what says the row scrolls. %>
+<div class="relative" data-controller="scroll-arrows" data-action="resize@window->scroll-arrows#update">
+  <nav class="tabs relative flex-nowrap overflow-x-auto [scrollbar-width:none] shadow-[inset_0_-1px_0_var(--color-base-300)]" aria-label="<%= filter.noun.capitalize %> lists" data-controller="scroll-to" data-scroll-arrows-target="row" data-action="scroll->scroll-arrows#update">
+    <% filter.tabs.each do |name, value, params| %>
+      <% current = value == filter.tab %>
+      <% count = counts.fetch(value, 0) %>
+      <%# WHY: the count names what the tab would list with every filter on, and the name says what it counts, so the tab reads "Active (19)" and is named "Active (19 members)". A label rather than a visually hidden noun, because Chromium spaces an absolutely positioned span off its neighbours and named the tab "Active (19 members )". %>
+      <%= link_to "#{name} (#{count_label(count)})", polymorphic_path([ group, filter.model ], params), class: [ "tab flex-1 shrink-0 whitespace-nowrap", current ? "tab-active border-b-2 border-primary font-semibold" : "text-muted" ], aria: { current: ("page" if current), label: "#{name} (#{count_label(count)} #{filter.noun.pluralize(count)})" }, data: { scroll_to_target: ("target" if current) } %>
+    <% end %>
+  </nav>
+
+  <%# WHY: the arrows are a pointer's and a thumb's shortcut, so they stay out of the keyboard order and the accessibility tree: every tab is already a link reached by Tab, which scrolls it into view. They start hidden, so a page without the script draws none. %>
+  <button type="button" class="absolute top-0 bottom-px left-0 flex w-10 cursor-pointer items-center justify-start bg-linear-to-r from-base-100 from-50% to-transparent pl-1 text-primary" tabindex="-1" aria-hidden="true" hidden data-scroll-arrows-target="previous" data-action="scroll-arrows#previous">
+    <%= icon :scroll_left, class: "size-icon-control" %>
+  </button>
+  <button type="button" class="absolute top-0 right-0 bottom-px flex w-10 cursor-pointer items-center justify-end bg-linear-to-l from-base-100 from-50% to-transparent pr-1 text-primary" tabindex="-1" aria-hidden="true" hidden data-scroll-arrows-target="next" data-action="scroll-arrows#next">
+    <%= icon :scroll_right, class: "size-icon-control" %>
+  </button>
+</div>

@@ -87,7 +87,8 @@ RSpec.describe "Registrations::ResponseRequests", type: :request do
         expect(response).to redirect_to group_event_path(event.group, event)
       end
 
-      it "refuses to request a response from a paused member, and leaves their held place as it was" do
+      # WHY: #452 AC2, a refusal the row's state answered is information, not a failure.
+      it "refuses to request a response from a paused member as information, and leaves their held place as it was" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, creator: actor, manager: actor)
         held = create(:registration, event:, member: create(:member, :paused, group: event.group), status: :reserved)
@@ -97,10 +98,23 @@ RSpec.describe "Registrations::ResponseRequests", type: :request do
 
         expect(held.reload).to be_reserved
         expect(response).to redirect_to group_event_path(event.group, event)
-        expect(flash[:alert]).to end_with "is paused, so no response was requested."
+        expect(flash[:info]).to eq "#{held.member.full_name} is paused, so no response was requested."
       end
 
-      it "refuses on a concluded event with an alert, and leaves the held place as it was" do
+      # WHY: #452 AC2.
+      it "refuses to request a response from an inactive member as information" do
+        actor = create(:member, :active)
+        event = create(:event, group: actor.group, creator: actor, manager: actor)
+        held = create(:registration, event:, member: create(:member, :inactive, group: event.group), status: :reserved)
+        sign_in_as(actor.user)
+
+        post group_event_registration_response_request_path(event.group, event, held)
+
+        expect(flash[:info]).to eq "#{held.member.full_name} is inactive, so no response was requested."
+      end
+
+      # WHY: #452 AC2.
+      it "refuses on a concluded event as information, and leaves the held place as it was" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, creator: actor, manager: actor, status: :concluded)
         held = create(:registration, event:, member: create(:member, :active, group: event.group), status: :reserved)
@@ -109,7 +123,19 @@ RSpec.describe "Registrations::ResponseRequests", type: :request do
         post group_event_registration_response_request_path(event.group, event, held)
 
         expect(held.reload).to be_reserved
-        expect(flash[:alert]).to eq "This event is concluded, so no response was requested."
+        expect(flash[:info]).to eq "This event is concluded, so no response was requested."
+      end
+
+      # WHY: #452 AC2.
+      it "refuses on a canceled event as information" do
+        actor = create(:member, :active)
+        event = create(:event, group: actor.group, creator: actor, manager: actor, status: :canceled)
+        held = create(:registration, event:, member: create(:member, :active, group: event.group), status: :reserved)
+        sign_in_as(actor.user)
+
+        post group_event_registration_response_request_path(event.group, event, held)
+
+        expect(flash[:info]).to eq "This event is canceled, so no response was requested."
       end
 
       it "leaves an answer as it was, because a manager does not overrule one" do
@@ -123,8 +149,8 @@ RSpec.describe "Registrations::ResponseRequests", type: :request do
         expect(answered.reload).to be_no
       end
 
-      # The roster draws no plane on an answered row, so a press here comes from a page drawn before the member answered.
-      it "says why nothing was requested of a member who has already answered" do
+      # The roster draws no plane on an answered row, so a press here comes from a page drawn before the member answered. WHY: #452 AC1, the answer is information, not a failure.
+      it "says as information why nothing was requested of a member who has already answered" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, creator: actor, manager: actor, status: :confirmed)
         answered = create(:registration, event:, member: create(:member, :active, group: event.group), status: :no)
@@ -132,7 +158,8 @@ RSpec.describe "Registrations::ResponseRequests", type: :request do
 
         post group_event_registration_response_request_path(event.group, event, answered)
 
-        expect(flash[:alert]).to eq "#{answered.member.full_name} has already answered, so no response was requested."
+        expect(flash[:info]).to eq "#{answered.member.full_name} has already answered, so no response was requested."
+        expect(flash[:alert]).to be_nil
       end
 
       # WHY: #431 AC2, the tinted plane's Send again posts here, and asking again is what a press on a requested row does.

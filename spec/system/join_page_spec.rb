@@ -57,6 +57,121 @@ RSpec.describe "The join page", type: :system do
     expect(page).to be_accessible
   end
 
+  # WHY: #447 AC1 and AC2 in the browser, the button posting and the redirect landing on the state it created.
+  it "takes a signed-in visitor who presses the button to their request waiting for approval" do
+    sign_in_as create(:user)
+    token = JoinLink.mint(create(:group, name: "Riverside Choir"))
+    resize_to ViewportHelper::MOBILE
+
+    visit new_join_request_path(token:)
+    click_button "Ask to join Riverside Choir"
+
+    expect(page).to have_text "Your request to join is waiting for approval."
+  end
+
+  it "has no accessibility violations on the ask to join button in light" do
+    sign_in_as create(:user)
+    token = JoinLink.mint(create(:group, name: "Riverside Choir"))
+    prefer_colour_scheme :light
+    resize_to ViewportHelper::MOBILE
+
+    visit new_join_request_path(token:)
+
+    expect(page).to have_button "Ask to join Riverside Choir"
+    expect(page).to be_accessible
+  end
+
+  it "has no accessibility violations on the ask to join button in dark" do
+    sign_in_as create(:user)
+    token = JoinLink.mint(create(:group, name: "Riverside Choir"))
+    prefer_colour_scheme :dark
+    resize_to ViewportHelper::MOBILE
+
+    visit new_join_request_path(token:)
+
+    expect(rendered_colour_scheme).to eq "dark"
+    expect(page).to be_accessible
+  end
+
+  # WHY: #447 AC4, each message a membership answers the page with, in both schemes.
+  it "has no accessibility violations telling a member they are already in the group in light" do
+    member = create(:member, :active, group: create(:group, name: "Riverside Choir"))
+    sign_in_as member.user
+    token = JoinLink.mint(member.group)
+    prefer_colour_scheme :light
+    resize_to ViewportHelper::MOBILE
+
+    visit new_join_request_path(token:)
+
+    expect(page).to have_link "Open Riverside Choir"
+    expect(page).to be_accessible
+  end
+
+  it "has no accessibility violations telling a member they are already in the group in dark" do
+    member = create(:member, :active, group: create(:group, name: "Riverside Choir"))
+    sign_in_as member.user
+    token = JoinLink.mint(member.group)
+    prefer_colour_scheme :dark
+    resize_to ViewportHelper::MOBILE
+
+    visit new_join_request_path(token:)
+
+    expect(rendered_colour_scheme).to eq "dark"
+    expect(page).to be_accessible
+  end
+
+  it "has no accessibility violations telling a pending member they are waiting in light" do
+    member = create(:member, :pending)
+    sign_in_as member.user
+    token = JoinLink.mint(member.group)
+    prefer_colour_scheme :light
+    resize_to ViewportHelper::MOBILE
+
+    visit new_join_request_path(token:)
+
+    expect(page).to have_text "Your request to join is waiting for approval."
+    expect(page).to be_accessible
+  end
+
+  it "has no accessibility violations telling a pending member they are waiting in dark" do
+    member = create(:member, :pending)
+    sign_in_as member.user
+    token = JoinLink.mint(member.group)
+    prefer_colour_scheme :dark
+    resize_to ViewportHelper::MOBILE
+
+    visit new_join_request_path(token:)
+
+    expect(rendered_colour_scheme).to eq "dark"
+    expect(page).to be_accessible
+  end
+
+  it "has no accessibility violations telling a member who left in light" do
+    member = create(:member, :inactive)
+    sign_in_as member.user
+    token = JoinLink.mint(member.group)
+    prefer_colour_scheme :light
+    resize_to ViewportHelper::MOBILE
+
+    visit new_join_request_path(token:)
+
+    expect(page).to have_text "You left this group."
+    expect(page).to be_accessible
+  end
+
+  it "has no accessibility violations telling a member who left in dark" do
+    member = create(:member, :inactive)
+    sign_in_as member.user
+    token = JoinLink.mint(member.group)
+    prefer_colour_scheme :dark
+    resize_to ViewportHelper::MOBILE
+
+    visit new_join_request_path(token:)
+
+    expect(rendered_colour_scheme).to eq "dark"
+    expect(page).to be_accessible
+  end
+
   # WHY: resized before visiting, for the reason `spec/system/sign_in_page_spec.rb` gives.
   it "breaks a group name word too long for the screen rather than scrolling sideways at phone width" do
     token = JoinLink.mint(create(:group, name: "Riverside Kammerchorgemeinschaftsvereinigungsorchester"))

@@ -199,4 +199,11 @@ RSpec.describe ApplicationHelper, type: :helper do
       expect(helper.section_root_path(nil)).to eq helper.groups_path
     end
   end
+
+  # WHY: the owner's cap on every count the app shows, so a list of a hundred or more never widens the label it sits in.
+  describe "#count_label" do
+    it "writes a count up to 99 as it is, and 100 or more as 99+" do
+      expect([ 0, 99, 100, 1234 ].map { helper.count_label(it) }).to eq [ "0", "99", "99+", "99+" ]
+    end
+  end
 end

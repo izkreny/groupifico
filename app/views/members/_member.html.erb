@@ -1,7 +1,6 @@
 <%# locals: (member:, manages:, oversees:) %>
 <%#
-  One roster row. A member who is not active is still drawn, tagged with their status and dimmed to
-  the theme's `base-content` at 70%, which holds AA in both themes. Call and Email are every reader's; Call only where the member has a mobile, since every member
+  One roster row. A member who is not active is dimmed to the theme's `base-content` at 70%, which holds AA in both themes, and carries no status tag, since the open tab already names it. Call and Email are every reader's; Call only where the member has a mobile, since every member
   has an address and not every one a number. The detail is every reader's too, so the name links
   there, and only the pencil opens the edit form.
 
@@ -20,10 +19,6 @@
 
     <div class="flex flex-wrap gap-1">
       <%= render "members/roles", member: %>
-
-      <% unless member.active? %>
-        <span class="badge badge-sm badge-ghost"><%= member.status %></span>
-      <% end %>
 
       <% if oversees && !member.user.first_signed_in_at? %>
         <span class="badge badge-sm badge-ghost">not signed in yet</span>

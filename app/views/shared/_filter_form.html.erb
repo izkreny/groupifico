@@ -1,0 +1,37 @@
+<%# locals: (group:, filter:, count:, namespace: nil) %>
+<%# WHY: apart from `shared/filter_sheet` so the styleguide can draw it without a dialog. `namespace` is the styleguide's, as on `groups/join_link`, since it draws this once per theme; a list leaves it out and keeps its ids, the count frame's among them, which the list's own response has to match, and only the list's copy gets the URL its count reads. The picks are the list's own, in its `filter_fields` partial. %>
+<% id = ->(name) { [ namespace, "#{filter.noun}_filter", name ].compact.join("_") } %>
+<% list_path = polymorphic_path([ group, filter.model ]) %>
+<div class="flex items-center justify-between gap-2">
+  <h2 id="<%= id.(:heading) %>" class="text-lg font-bold">Filter <%= filter.noun.pluralize %></h2>
+
+  <form method="dialog">
+    <button class="btn btn-ghost btn-circle btn-sm" aria-label="Close"><%= icon :cancel, class: "size-icon-control" %></button>
+  </form>
+</div>
+
+<%# WHY: the dialog closes as the form submits, because applying picks the list already shows lands on this same URL, a refresh Turbo morphs, and a morph strips `open` without calling `close()`, which leaves the dialog modal and the page refusing clicks. %>
+<%= form_with url: list_path, method: :get, class: "flex flex-col gap-4", data: { controller: "filter", action: "change->filter#refresh submit->dialog#close", filter_url_value: (list_path unless namespace) } do %>
+  <%# WHY: the tab rides along, so the count and the applied picks stay on the list that is open; the default tab is the URL with none, so it carries none. %>
+  <% if filter.tab %>
+    <%= hidden_field_tag filter.class::TAB, filter.tab, id: id.(filter.class::TAB) %>
+  <% end %>
+
+  <%# WHY: a branch between literal names rather than one built from the list, so Herb can check each list's partial against the locals passed. %>
+  <% case filter %>
+  <% when Event::Filter %>
+    <%= render "events/filter_fields", filter:, id: %>
+  <% when Member::Filter %>
+    <%= render "members/filter_fields", filter:, id: %>
+  <% end %>
+
+  <%# WHY: `flex-wrap-reverse` keeps "Clear all" on the left while both fit, and puts "Show N" on top, full width, once they no longer do. %>
+  <div class="flex flex-wrap-reverse gap-2">
+    <button type="button" class="btn grow" data-action="filter#clear"><%= icon :remove, class: "size-icon-control" %>Clear all</button>
+
+    <%# WHY: a count whose response carries no matching frame, such as a lapsed session redirecting to sign-in, is followed as a whole visit, as the join link's frame is, rather than replacing the button with "Content missing". %>
+    <%= turbo_frame_tag id.(:count), class: "flex grow", data: { filter_target: "count", action: "turbo:frame-missing->dialog#visit" } do %>
+      <button class="btn btn-primary grow"><%= icon :apply, class: "size-icon-control" %>Show <%= count_label(count) %> <%= filter.noun.pluralize(count) %></button>
+    <% end %>
+  </div>
+<% end %>

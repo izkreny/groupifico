@@ -97,7 +97,7 @@
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Dropdown", docs: "https://daisyui.com/components/dropdown/" } do |theme| %>
-    <%= render "events/scope_menu", group: @group, list: nil, id: "scope_#{theme}" %>
+    <%= render "layouts/me_menu", profile: @owner.profile, id: "me_menu_dropdown_#{theme}" %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Select", docs: "https://daisyui.com/components/select/" } do |theme| %>
@@ -118,12 +118,21 @@
           section: :events %>
   <% end %>
 
-  <%= render layout: "styleguides/section", locals: { title: "Flash, notice and alert" } do %>
+  <%= render layout: "styleguides/section", locals: { title: "Flash, notice, info and alert" } do %>
     <%= render "layouts/flash" %>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Hero card" } do %>
     <%= render "events/next_up", event: @next_up, registration: question %>
+  <% end %>
+
+  <%# The gig slot's footer row, drawn alone on the hero's surface, since the hero sample above is a rehearsal and only the gig slot carries it. %>
+  <%= render layout: "styleguides/section", locals: { title: "Gig slot footer row" } do %>
+    <div class="card card-sm bg-base-200">
+      <div class="card-body gap-card-row">
+        <%= render "events/upcoming_gigs", group: @group, count: 3 %>
+      </div>
+    </div>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Record facts" } do %>
@@ -204,6 +213,28 @@
     <%= render layout: "styleguides/section", locals: { title: "Join link, on" } do |theme| %>
       <%= render "groups/join_link", group: @group, join_link: JoinLink.new(group: @group, token: "sample"), namespace: theme %>
     <% end %>
+  <% end %>
+
+  <%# WHY: a sample filter rather than the reader's, so the tabs show a list open and the chips two removable filters whatever the styleguide's own URL carries, and the funnel shows the primary ink a filter on gives it. The bar takes its own namespace, since its closed sheet holds a second copy of the form drawn open below it. %>
+  <%= render layout: "styleguides/section", locals: { title: "Events filter" } do |theme| %>
+    <% sample = Event::Filter.new(@owner, scope: "past", categories: %w[ gig ], answers: %w[ yes ]) %>
+    <div class="flex flex-col gap-4">
+      <%= render layout: "shared/filter_bar", locals: { group: @group, filter: sample, counts: { nil => 4, "past" => 2, "canceled" => 0 }, count: 2, add_label: "New event", add_path: new_group_event_path(@group), namespace: "#{theme}_bar" } do %>
+        <p class="text-meta text-muted">The list itself, drawn under Compact rows above.</p>
+      <% end %>
+      <%= render "shared/filter_form", group: @group, filter: sample, count: 2, namespace: theme %>
+    </div>
+  <% end %>
+
+  <%# WHY: an overseer's samples, so the tabs and the sheet show everything the members filter offers. The bar's has no filter on, so its funnel shows the muted ink the events bar's never does; the form drawn open below it shows picks. %>
+  <%= render layout: "styleguides/section", locals: { title: "Members filter" } do |theme| %>
+    <% sample = Member::Filter.new(@owner, oversees: true, status: "paused", roles: %w[ owner ], not_signed_in: "1") %>
+    <div class="flex flex-col gap-4">
+      <%= render layout: "shared/filter_bar", locals: { group: @group, filter: Member::Filter.new(@owner, oversees: true, status: "paused"), counts: { nil => 19, "paused" => 2, "pending" => 1, "inactive" => 0 }, count: 2, add_label: "Invite member", add_path: new_group_member_path(@group), namespace: "#{theme}_bar" } do %>
+        <p class="text-meta text-muted">The list itself, drawn under Member rows below.</p>
+      <% end %>
+      <%= render "shared/filter_form", group: @group, filter: sample, count: 2, namespace: theme %>
+    </div>
   <% end %>
 
   <%= render layout: "styleguides/section", locals: { title: "Address" } do %>

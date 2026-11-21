@@ -1,0 +1,21 @@
+import { Controller } from "@hotwired/stimulus"
+
+// WHY: the count is a Turbo Frame pointed at the list's own URL carrying the sheet's picks, so it counts with the very query applying the sheet would run.
+export default class extends Controller {
+  static targets = ["count", "pick"]
+  static values = { url: String }
+
+  // WHY: the styleguide's copies leave the URL out, because their namespaced frames have no match in a list's response and would read "Content missing".
+  refresh() {
+    if (!this.urlValue) return
+
+    const picks = new URLSearchParams(new FormData(this.element))
+    this.countTarget.src = `${this.urlValue}?${picks}`
+  }
+
+  // WHY: unticks the sheet's picks rather than submitting, because nothing is applied until the sheet is, and a native reset would return to what was applied rather than to no filters.
+  clear() {
+    for (const pick of this.pickTargets) pick.checked = false
+    this.refresh()
+  }
+}
