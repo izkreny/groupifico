@@ -608,7 +608,7 @@ RSpec.describe "Groups", type: :request do
         expect(card_text(gig)).to end_with "All upcoming gigs (2)"
       end
 
-      # WHY: #462 AC9. Whoever runs the events opens the events list on Active, so the count has to name Upcoming to stay what the link opens, leaving out a gig that ended without being concluded.
+      # WHY: #462 AC9. Whoever runs the events opens the events list on Active, so a count taken through this member's own first list would add a gig that ended without being concluded; the count names Upcoming, as its link does, and this example fails on one handed the policy's answer and no list.
       it "counts only the upcoming gigs on the gig card's link for a member who oversees the events" do
         member = create(:member, :active, :events_administrator)
         gig = create(:event, :gig, group: member.group, creator: member, status: :confirmed, starts_at: 1.day.from_now, ends_at: 1.day.from_now + 2.hours)
