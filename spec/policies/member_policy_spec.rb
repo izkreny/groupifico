@@ -210,6 +210,35 @@ RSpec.describe MemberPolicy, type: :policy do
       end
     end
 
+    # WHY: #505 AC5, an invitation builds its member pending, so adding a person is asked of a pending member that does not exist yet, and the row answers it as for any other.
+    describe "being invited" do
+      let(:record) { build(:member, :pending, group:) }
+
+      describe_rule :create? do
+        failed "for a member holding no role, who may not add a person to the group"
+
+        succeed "for an owner" do
+          let(:actor) { create(:member, :owner, group:) }
+        end
+
+        succeed "for an administrator" do
+          let(:actor) { create(:member, :administrator, group:) }
+        end
+
+        succeed "for a members administrator" do
+          let(:actor) { create(:member, :members_administrator, group:) }
+        end
+
+        failed "for an events administrator, whose column the row leaves blank" do
+          let(:actor) { create(:member, :events_administrator, group:) }
+        end
+
+        failed "for a paused owner, because adding a person is a write" do
+          let(:actor) { create(:member, :paused, :owner, group:) }
+        end
+      end
+    end
+
     describe_rule :update? do
       failed "for an owner, who may not change a pending member through the member form" do
         let(:actor) { create(:member, :owner, group:) }
