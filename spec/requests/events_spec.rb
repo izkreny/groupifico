@@ -256,7 +256,7 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include %(href="#{new_group_event_path(actor.group)}")
       end
 
-      # WHY: #462 AC1, AC2 and AC3. To do is the third tab, after Past, and Upcoming the one a bare URL opens on; To do lists the event that ended unconfirmed and leaves out the one still ahead.
+      # WHY: #462 AC1, AC2 and AC3. To do is the third tab, after Past, and Upcoming the one a bare URL opens on; To do lists the event that ended while still confirmed and leaves out the one still ahead.
       it "offers To do third, listing an event that ended without being concluded, and opens on Upcoming" do
         actor = create(:member, :active, :events_administrator)
         confirmed_event(actor, days: -2, name: "Summer gig")
