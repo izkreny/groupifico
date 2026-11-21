@@ -157,12 +157,7 @@ RSpec.describe "The join page", type: :system do
 
     visit invitation_link_in(MemberMailer.invitation(member)).request_uri
     expect(page).to have_field "Email", with: member.email
-    perform_enqueued_jobs do
-      click_button "Email me a sign-in link"
-      expect(page).to have_text "Check your inbox"
-    end
-    visit mailed_sign_in_link(member.email).request_uri
-    click_button "Sign in"
+    sign_in_from_the_mailed_link(member.email)
     expect(page).to have_current_path group_invitation_path(member.group)
     click_button "Join Riverside Choir"
 
@@ -223,5 +218,15 @@ RSpec.describe "The join page", type: :system do
   private
     def invitation_link_in(mail)
       URI.parse(mail.text_part.decoded[%r{https?://\S+?/session/new\?\S+}])
+    end
+
+    # Presses the sign-in form's button, then follows the link the delivered mail carries and spends it, so every hop is the real one.
+    def sign_in_from_the_mailed_link(email)
+      perform_enqueued_jobs do
+        click_button "Email me a sign-in link"
+        expect(page).to have_text "Check your inbox"
+      end
+      visit mailed_sign_in_link(email).request_uri
+      click_button "Sign in"
     end
 end
