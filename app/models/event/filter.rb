@@ -66,7 +66,7 @@ class Event::Filter
     def on_tab(events, tab)
       case tab
       when "past" then events.past.order(starts_at: :desc)
-      when "to_do" then events.to_do.order(starts_at: :desc)
+      when "to_do" then events.to_do.order(:starts_at)
       when "canceled" then events.canceled.order(starts_at: :desc)
       else events.current_and_upcoming.order(:starts_at)
       end

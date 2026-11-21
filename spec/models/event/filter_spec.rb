@@ -125,15 +125,15 @@ RSpec.describe Event::Filter do
       expect(names(described_class.new(member, scope: "past", categories: %w[ gig ]))).to eq [ "Autumn fair" ]
     end
 
-    # WHY: #462 AC1. Every unconfirmed event, ahead or ended, and every ended one still confirmed, newest first; nothing concluded, and no confirmed event still ahead.
-    it "lists on To do every unconfirmed event and every ended one still confirmed, newest first" do
+    # WHY: #462 AC1. Every unconfirmed event, ahead or ended, and every ended one still confirmed, oldest first so the longest waiting leads; nothing concluded, and no confirmed event still ahead.
+    it "lists on To do every unconfirmed event and every ended one still confirmed, oldest first" do
       create(:event, group: member.group, creator: member, name: "Autumn fair", status: :unconfirmed, starts_at: 20.days.ago, ends_at: 20.days.ago + 2.hours)
       create(:event, group: member.group, creator: member, name: "Harvest gig", status: :confirmed, starts_at: 5.days.ago, ends_at: 5.days.ago + 2.hours)
       create(:event, group: member.group, creator: member, name: "Summer gig", status: :concluded, starts_at: 10.days.ago, ends_at: 10.days.ago + 2.hours)
       upcoming(name: "Winter gala", status: :unconfirmed, starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours)
       upcoming(name: "Advent concert")
 
-      expect(names(described_class.new(member, oversees: true, scope: "to_do"))).to eq [ "Winter gala", "Harvest gig", "Autumn fair" ]
+      expect(names(described_class.new(member, oversees: true, scope: "to_do"))).to eq [ "Autumn fair", "Harvest gig", "Winter gala" ]
     end
 
     # WHY: #462 AC6. The sheet's filters narrow To do like any other list.
