@@ -23,14 +23,14 @@ RSpec.describe Event::Filter do
     it "is Upcoming with no filters when the URL carries none" do
       filter = described_class.from(member, ActionController::Parameters.new(group_id: member.group_id), oversees: false)
 
-      expect([ filter.list, filter.scope, filter.categories, filter.answers, filter.managed?, filter.narrowed? ]).to eq [ "upcoming", nil, [], [], false, false ]
+      expect([ filter.scope, filter.categories, filter.answers, filter.managed?, filter.narrowed? ]).to eq [ nil, [], [], false, false ]
     end
 
     # WHY: #462 AC3. Upcoming stays the default for a member who oversees the events too, To do being a tab they open rather than the one they land on.
     it "is Upcoming for a member who oversees the events when the URL names no list" do
       filter = described_class.from(member, ActionController::Parameters.new(group_id: member.group_id), oversees: true)
 
-      expect([ filter.list, filter.scope ]).to eq [ "upcoming", nil ]
+      expect(filter.scope).to be_nil
     end
   end
 
@@ -59,7 +59,7 @@ RSpec.describe Event::Filter do
       it "drops To do for a member who does not oversee the events" do
         filter = described_class.new(member, scope: "to_do")
 
-        expect([ filter.list, filter.scope ]).to eq [ "upcoming", nil ]
+        expect(filter.scope).to be_nil
       end
 
       # WHY: #460 AC3 and AC11. "Managed by me" is offered only to someone who manages one of the group's events, so anyone else's is dropped.
