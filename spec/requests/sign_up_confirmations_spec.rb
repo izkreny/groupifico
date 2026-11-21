@@ -88,7 +88,7 @@ RSpec.describe "SignUpConfirmations", type: :request do
       it "lands the new owner on a group page they are allowed to see" do
         get sign_up_confirmation_path(token: SignUp.mint(email: "starter@example.com", group_name: "Chamber Choir"))
         post sign_up_confirmation_path
-        User.find_by!(email: "starter@example.com").profile.update!(first_name: "Ada", mobile_phone: "+385911111111")
+        User.find_by!(email: "starter@example.com").profile.update!(first_name: "Ada", last_name: "Lovelace", mobile_phone: "+385911111111")
 
         follow_redirect!
 

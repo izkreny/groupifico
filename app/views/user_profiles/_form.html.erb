@@ -12,7 +12,7 @@
   <%= form.with_error_summary do %>
     <fieldset class="fieldset">
       <%= form.field :first_name %>
-      <%= form.field :last_name, hint: "Optional." %>
+      <%= form.field :last_name %>
       <%= form.field :mobile_phone, as: :telephone_field, label: "Mobile", hint: "Shown to members of your groups." %>
 
       <%# No `id`: `update_only` writes the profile's own user, so the form has nothing to name. %>

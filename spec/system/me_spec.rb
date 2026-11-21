@@ -169,6 +169,7 @@ RSpec.describe "The Me menu", type: :system do
       expect(page).to be_accessible
 
       fill_in "First name", with: "Ada"
+      fill_in "Last name", with: "Lovelace"
       fill_in "Mobile", with: "+385911111111"
       click_button "Save"
 

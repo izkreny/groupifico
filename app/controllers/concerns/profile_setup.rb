@@ -1,4 +1,4 @@
-# A signed-in user whose profile lacks a first name or a mobile does nothing but fill them in. Keyed on the missing data rather than on a first sign-in, so a member imported before the mobile was required is sent too.
+# A signed-in user whose profile lacks a first name, a last name or a mobile does nothing but fill them in. Keyed on the missing data rather than on a first sign-in, so a member imported before the mobile was required is sent too.
 module ProfileSetup
   extend ActiveSupport::Concern
 
@@ -17,7 +17,7 @@ module ProfileSetup
     def require_profile_setup
       if authenticated? && !Current.user.profile.setup?
         redirect_to edit_user_profile_path(return_to: (request.fullpath if request.get?)),
-          info: "Add your first name and mobile to continue.",
+          info: "Add your name and mobile to continue.",
           status: :see_other
       end
     end

@@ -31,9 +31,9 @@ FactoryBot.define do
     # that failed on how many examples ran before it rather than on anything it asserted.
     sequence(:email) { |n| "#{first_name.parameterize}.#{last_name.parameterize}.#{n}@example.com" }
 
-    # WHY: a signed-in user without a first name and a mobile is sent to the profile form from every page, so a user is set up unless a spec asks for the empty profile `User` builds for an email-only invitation.
+    # WHY: a signed-in user without a first name, a last name and a mobile is sent to the profile form from every page, so a user is set up unless a spec asks for the empty profile `User` builds for an email-only invitation.
     after(:build) do |user, context|
-      user.build_profile(first_name: context.first_name, mobile_phone: generate(:mobile_phone)) if context.set_up && !user.profile
+      user.build_profile(first_name: context.first_name, last_name: context.last_name, mobile_phone: generate(:mobile_phone)) if context.set_up && !user.profile
     end
 
     trait :not_set_up do

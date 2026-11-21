@@ -116,6 +116,7 @@ RSpec.describe "Creating a group", type: :system do
     it "lands on the new group" do
       click_button "Sign in and create group"
       fill_in "First name", with: "Ada"
+      fill_in "Last name", with: "Lovelace"
       fill_in "Mobile", with: "+385911111111"
       click_button "Save"
 

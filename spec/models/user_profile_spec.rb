@@ -19,11 +19,11 @@ RSpec.describe UserProfile, type: :model do
       it { is_expected.to validate_uniqueness_of(:user_id) }
     end
 
-    # WHY: #472 AC3 and AC5. The profile form and the member import save in `:setup`, so a first name and a mobile are required there and the last name stays optional.
+    # WHY: #472 AC3 and AC5. The profile form and the member import save in `:setup`, so a first name, a last name and a mobile are all required there.
     describe "(setup)" do
       it { is_expected.to validate_presence_of(:first_name).on(:setup) }
       it { is_expected.to validate_presence_of(:mobile_phone).on(:setup) }
-      it { is_expected.not_to validate_presence_of(:last_name).on(:setup) }
+      it { is_expected.to validate_presence_of(:last_name).on(:setup) }
 
       it "accepts the empty profile an email-only invitation leaves, outside setup" do
         expect(build(:user_profile, user: build(:user, :not_set_up))).to be_valid
@@ -32,16 +32,21 @@ RSpec.describe UserProfile, type: :model do
   end
 
   describe "#setup?" do
-    it "is true with a first name and a mobile, whatever the last name" do
-      expect(build(:user_profile, first_name: "Nick", last_name: nil, mobile_phone: "+385911111111")).to be_setup
+    it "is true with a first name, a last name and a mobile" do
+      expect(build(:user_profile, first_name: "Nick", last_name: "Cave", mobile_phone: "+385911111111")).to be_setup
     end
 
     it "is false without a first name" do
-      expect(build(:user_profile, first_name: nil, mobile_phone: "+385911111111")).not_to be_setup
+      expect(build(:user_profile, first_name: nil, last_name: "Cave", mobile_phone: "+385911111111")).not_to be_setup
+    end
+
+    # WHY: #472 AC5.
+    it "is false without a last name" do
+      expect(build(:user_profile, first_name: "Nick", last_name: nil, mobile_phone: "+385911111111")).not_to be_setup
     end
 
     it "is false without a mobile" do
-      expect(build(:user_profile, first_name: "Nick", mobile_phone: nil)).not_to be_setup
+      expect(build(:user_profile, first_name: "Nick", last_name: "Cave", mobile_phone: nil)).not_to be_setup
     end
   end
 
@@ -56,7 +61,7 @@ RSpec.describe UserProfile, type: :model do
 
     context "when the first or last name is present" do
       it "returns the first name if the last name is not present" do
-        user_profile_with_only_first_name = build(:user_profile, first_name: "Nick")
+        user_profile_with_only_first_name = build(:user_profile, first_name: "Nick", last_name: nil)
 
         expect(user_profile_with_only_first_name.full_name).to eq "Nick"
       end

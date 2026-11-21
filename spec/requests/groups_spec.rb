@@ -10,7 +10,7 @@ RSpec.describe "Groups", type: :request do
         get groups_path
 
         expect(response).to redirect_to edit_user_profile_path(return_to: groups_path)
-        expect(flash[:info]).to eq "Add your first name and mobile to continue."
+        expect(flash[:info]).to eq "Add your name and mobile to continue."
       end
 
       it "sends them when only the mobile is missing" do
