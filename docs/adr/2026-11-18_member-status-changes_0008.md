@@ -28,6 +28,7 @@ The history is a hard requirement rather than a nice-to-have. A group's reports 
 
 - `starts_on` is a date and never after today, so a status never switches on by itself on a later day and the copy cannot go stale.
 - At most one change per member starts on any day. A second change on the same day is refused, and the day's row is edited instead.
+- A new change never starts before the latest change's `starts_on`, so it always becomes the latest row and the copy follows it. A row added further back is a history edit, which leaves the current status alone.
 - An edit keeps a row's date strictly between its neighbours' dates, so the history never reorders.
 - When a delete or a status edit leaves two neighbouring rows with the same status, they merge and the earlier row is kept.
 - The member's only row cannot be deleted.
