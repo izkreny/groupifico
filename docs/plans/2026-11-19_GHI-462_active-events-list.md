@@ -40,4 +40,4 @@ None.
 
 ## Settled
 
-None yet.
+- ::Q1:: Active and Upcoming would mostly list the same events, so is a second everything-still-open tab the right shape? No: settled by the owner in the terminal on 2026-11-21, the tab becomes To do, second after Upcoming and shown only to the `EventPolicy#oversee?` columns, listing the events waiting on them, today those that ended still unconfirmed or confirmed. Upcoming stays every member's default, so the home hero's gigs link needs no `scope` and AC9 is removed from #462.
