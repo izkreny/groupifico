@@ -85,7 +85,7 @@ RSpec.describe "The members list", type: :system do
   # WHY: #508 AC3. A press lands on whatever is topmost under it, so every control on the row has to be the topmost element at its own centre rather than the name's overlay.
   it "keeps every control on a row above the link to its member" do
     actor  = create(:member, :active, :members_administrator, :with_all_attributes)
-    target = create(:member, :with_all_attributes, group: actor.group)
+    target = create(:member, group: actor.group, user: create(:user, first_name: "Ana", last_name: "Horvat"))
     sign_in_as actor.user
     page.current_window.resize_to(1280, 900)
 
@@ -94,8 +94,7 @@ RSpec.describe "The members list", type: :system do
     topmost = find_by_id(ActionView::RecordIdentifier.dom_id(target, :row)).evaluate_script(<<~JS)
       [...this.querySelectorAll("a, button")].slice(1).map(control => (box => [ control.getAttribute("aria-label"), control.contains(document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2)) ])(control.getBoundingClientRect()))
     JS
-    name = target.full_name
-    expect(topmost).to eq [ [ "Call #{name}", true ], [ "Email #{name}", true ], [ "Edit #{name}", true ] ]
+    expect(topmost).to eq [ [ "Call Ana Horvat", true ], [ "Email Ana Horvat", true ], [ "Edit Ana Horvat", true ] ]
   end
 
   it "draws a row's icons at 20px, 20px apart" do
