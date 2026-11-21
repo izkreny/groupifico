@@ -155,7 +155,7 @@ RSpec.describe "Groups", type: :request do
         expect(Nokogiri::HTML(response.body).at_css("title").text).to eq "Your groups"
       end
 
-      # WHY: the reader holds a second current group, as every reader of the list below does, since a member of exactly one is taken straight to it (#498).
+      # WHY: the member holds a second current group, as every member reading the list below does, since a member of exactly one is taken straight to it (#498).
       it "lists only the groups the acting user belongs to" do
         member = create(:member)
         other_group = create(:group) # the acting user does not belong to this one
