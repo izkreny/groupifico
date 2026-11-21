@@ -10,7 +10,7 @@ Records what #329 decided about how a member's status changes, so #126 and the i
 
 ## Context
 
-A member's status is one value on the membership, `pending`, `active`, `paused` or `inactive`, overwritten on every change, so nothing records when it changed, who changed it, or what it was before. Several pieces of work hang off a change: #322 emails the member, #330 cleans up their registrations, #448 approves a request to join, and #92 and #126 asked for dates and history. Each would otherwise add its own hook.
+A member's status is one value on the membership, `pending`, `active`, `paused` or `inactive`, overwritten on every change, so nothing records when it changed, who changed it, or what it was before. Several pieces of work hang off a change: #322 emails the member, #330 cleans up their registrations, an invitee joins the group (#505), and #92 and #126 asked for dates and history. A group's own approval of newcomers comes back in v2 (#448). Each would otherwise add its own hook.
 
 The history is a hard requirement rather than a nice-to-have. A group's reports to its umbrella organisation (#115) count each member's presence over a season, and an absence while paused is excused rather than missing, so the app has to know a member's status on any past date. Some groups bring six years of history from spreadsheets, so dates are backdated and corrected by hand.
 
@@ -27,34 +27,35 @@ The history is a hard requirement rather than a nice-to-have. A group's reports 
 ### The rules of a history
 
 - `starts_on` is a date and never after today, so a status never switches on by itself on a later day and the copy cannot go stale.
-- At most one change per member starts on any day. A second change on the same day folds into that day's row, which takes the new status, so a join request approved the day it arrives reads as `active` from that day.
+- At most one change per member starts on any day. A second change on the same day folds into that day's row, which takes the new status, so an invitee who joins the day they were invited reads as `active` from that day.
 - A new change never starts before the latest change's `starts_on`, so it always becomes the latest row and the copy follows it. A row added further back is a history edit, which leaves the current status alone.
 - An edit keeps a row's date strictly between its neighbours' dates, so the history never reorders.
 - When a delete or a status edit leaves two neighbouring rows with the same status, they merge and the earlier row is kept.
 - The member's only row cannot be deleted.
-- The group always keeps an active owner. `Member`'s existing validation enforces it, because every change that moves the current status writes the copy through `Member`'s own save.
+- The group always keeps an active owner, and no member moves back into `pending`. `Member`'s existing validations enforce both, because every change that moves the current status writes the copy through `Member`'s own save, so deleting an invitee's `join` row is refused.
 
 The owner, the administrator and the members administrator may add, edit and delete rows, the same columns `docs/AUTHORIZATION.md` lets change a member's status. An owner edits their own history like anyone else's.
 
 ### The updater is whoever last wrote the row
 
-`updater` is a `Member`, set to the acting member by every write and overwritten by every edit, and the history screen shows it as "by Ana". It is not called `creator`, because `Event#creator` is set once and never changes, and one word must not mean two things.
+`updater` is a `Member`, set to the acting member by every write and overwritten by every edit, and the history screen shows it as "by Ana". A newcomer is the updater of their own first change when they join by link (#504), and of their `join` change when they accept an invitation (#505). It is not called `creator`, because `Event#creator` is set once and never changes, and one word must not mean two things.
 
 `updater_id` is nullable, with a foreign key that nullifies on delete, until soft delete (#87) means a member is never deleted. The one-time backfill also leaves it null. A required `updater` would repeat #143, where a required `creator` whose member was deleted makes the event impossible to save.
 
 ### Every member starts with a change
 
-Every way a member comes into being writes the first change in the same save. The "Add member" form and the member edit form carry a start date that defaults to today. A join request and a new group's owner start today, the import brings its own dates, and the one-time backfill gives every existing member one change dated the day their membership was created.
+Every way a member comes into being writes the first change in the same save. An invitation by email asks for an email and nothing else (#505), so an invitee starts `pending` from today; a link joiner (#504) and a new group's owner start `active` from today; the import brings its own dates; and the one-time backfill gives every existing member one change dated the day their membership was created. The member edit form carries a start date that defaults to today.
 
 ### One event per transition, and no model callbacks
 
-Every change of the current status fires a named event on `Member`'s state machine, such as approve, pause or deactivate, whichever path asks for it: the member form, an edit or delete of the current row, or an approval. In one transaction the machine checks that the move is allowed and saves the status, a `before_transition` runs the cleanup below, and the audit trail writes the status change row, while an `after_transition` with `after_commit: true` queues the email, so a rolled-back save sends nothing. An edit or delete of the current row writes its own row change and fires the event only for its callbacks, and the audit trail's `if:` option, evaluated with the event's arguments, skips the insert on that path. A second event on the same day takes the same path: it updates that day's row and fires its callbacks, and the audit trail adds nothing. Imports and edits to past rows write rows directly and fire nothing.
+Every change of the current status fires a named event on `Member`'s state machine, such as join, pause, deactivate or activate, whichever path asks for it: the member form, an edit or delete of the current row, or an invitee's Join. In one transaction the machine checks that the move is allowed and saves the status, a `before_transition` runs the cleanup below, and the audit trail writes the status change row, while an `after_transition` with `after_commit: true` queues the email, so a rolled-back save sends nothing. An edit or delete of the current row writes its own row change and fires the event only for its callbacks, and the audit trail's `if:` option, evaluated with the event's arguments, skips the insert on that path. A second event on the same day takes the same path: it updates that day's row and fires its callbacks, and the audit trail adds nothing. Imports and edits to past rows write rows directly and fire nothing.
 
 No model callback reacts to the status column. The machine's transition callbacks run only for an event, so the CSV import, the seeds and the test factories, which write the column without one, stay silent. A sweep of every status writer found that a callback on the column would fire for all of them, and the house style keeps business logic out of callbacks.
 
 ### What each transition does
 
-- **Approving a request to join**, `pending` to `active` (#448), sends the welcome email and nothing else.
+- **Joining**, `pending` to `active`, is the invitee's own Join (#505) and sends none of #322's emails, since the invitation already greeted them.
+- **Approving a link joiner**, `pending` to `active` while a group's approval setting is on (#448, v2), is an event of its own and sends the welcome email and nothing else.
 - **A move among `active`, `paused` and `inactive`** sends #322's email for the new status.
 - **Leaving `active`** for `paused` or `inactive` removes registrations from `starts_on` on, split by where each event stands:
   - an event that has not ended loses every registration of the member, answered or not;
@@ -74,7 +75,7 @@ Both get the same shape, history included: a state machine with its allowed tran
 
 `state_machines-activerecord` drives the transitions, and `state_machines-audit_trail` writes each one as a `Member::StatusChange` row, through `class:` and through `context:` methods that read the new status from `transition.to` and `starts_on` and `updater` from the event's arguments, and its `if:` option skips the row when a history edit of the current row, or a second change that day folded into its row, has already written it. Editing, deleting and importing that history stay hand-built, as they would be either way.
 
-The versions are pinned exactly: `state_machines-activerecord` 0.304.0 with `state_machines` 0.305.0 and `state_machines-activemodel` 0.300.0, and `state_machines-audit_trail` 4.0.0. They move only as a deliberate step of an update round, because 0.300 to 0.305 shipped within three days with behaviour changes.
+The versions are locked by `Gemfile.lock` like every gem's, starting at `state_machines-activerecord` 0.304.0 with `state_machines` 0.305.0 and `state_machines-activemodel` 0.300.0, and `state_machines-audit_trail` 4.0.0, and they move through the update rounds `.agents/dependencies.md` describes. Each is a 0.x release whose minors have changed behaviour, 0.300 to 0.305 shipping within three days, so a round treats a minor bump of these gems as it treats a major: its own commit, its changelog read closely, and #126's transition specs as the guard.
 
 These costs are accepted for now, each raised upstream: the enum integration adds prefixed methods and prints a conflict warning for each enum predicate when the class loads; the status change model carries no-op `event=`, `from=` and `to=` writers and an `alias_attribute` for its status, because the audit trail always assigns those three; and the first row's date reaches the audit trail through an attribute set on the member, because the initial entry carries no event arguments. States are declared by name beside the enum, never with `value:`, which breaks creation.
 
@@ -105,9 +106,9 @@ The evidence, from reading the repositories and running the gems against this ap
 
 ## Consequences
 
-**#126 builds this**, and #322 and #330 wait for it. It adds the four gems at their pinned versions and records them in `.agents/dependencies.md` as moved only on purpose. The history screen and the history import are their own issues, and returning a member to their events is a draft.
+**#126 builds this**, and #322 and #330 wait for it. It adds the four gems, and `.agents/dependencies.md` gains the rule that their minor bumps are handled as majors. The history screen and the history import are their own issues, and returning a member to their events is a draft.
 
-**Every write of a status goes through the machine's events or through the history edit**, never through `update(status:)` from a controller. #448 ships its approval as a plain write and moves onto the approve event when #126 lands.
+**Every write of a status goes through the machine's events or through the history edit**, never through `update(status:)` from a controller. #504 creates a link joiner `active`, which is a first change rather than a transition, and #505 ships an invitee's Join as a plain write that moves onto the join event when #126 lands; #448's approval arrives in v2 on an event of its own.
 
 **Statistics read status from the history** (#115), so a member's registrations are never edited to make a report come out right.
 
