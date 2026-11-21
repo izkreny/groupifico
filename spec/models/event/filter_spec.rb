@@ -14,16 +14,35 @@ RSpec.describe Event::Filter do
   describe ".from" do
     # WHY: #460 AC10. The URL is the only place a filter lives, so a link's parameters are the whole filter.
     it "reads the list and filters from the URL's parameters" do
-      filter = described_class.from(member, ActionController::Parameters.new(scope: "past", category: %w[ rehearsal gig ], answer: %w[ not_answered ]))
+      filter = described_class.from(member, ActionController::Parameters.new(scope: "past", category: %w[ rehearsal gig ], answer: %w[ not_answered ]), oversees: false)
 
       expect([ filter.scope, filter.categories, filter.answers ]).to eq [ "past", %w[ gig rehearsal ], %w[ not_answered ] ]
     end
 
     # WHY: #460 AC9. A URL with no filter in it is Upcoming with nothing on.
     it "is Upcoming with no filters when the URL carries none" do
-      filter = described_class.from(member, ActionController::Parameters.new(group_id: member.group_id))
+      filter = described_class.from(member, ActionController::Parameters.new(group_id: member.group_id), oversees: false)
 
       expect([ filter.scope, filter.categories, filter.answers, filter.managed?, filter.narrowed? ]).to eq [ nil, [], [], false, false ]
+    end
+
+    # WHY: #462 AC3. Upcoming stays the default for a member who oversees the events too, To do being a tab they open rather than the one they land on.
+    it "is Upcoming for a member who oversees the events when the URL names no list" do
+      filter = described_class.from(member, ActionController::Parameters.new(group_id: member.group_id), oversees: true)
+
+      expect(filter.scope).to be_nil
+    end
+  end
+
+  describe "#offered_tabs" do
+    # WHY: #462 AC2. To do comes third for a member who oversees the events, after Past, where Pending sits on the members list; compared as pairs because a hash compares equal whatever its order.
+    it "offers To do third, after Past, to a member who oversees the events" do
+      expect(described_class.new(member, oversees: true).offered_tabs.to_a).to eq [ [ nil, "Upcoming" ], [ "past", "Past" ], [ "to_do", "To do" ], [ "canceled", "Canceled" ] ]
+    end
+
+    # WHY: #462 AC4. Anyone else is offered no To do tab.
+    it "offers no To do tab to a member who does not oversee the events" do
+      expect(described_class.new(member).offered_tabs).to eq({ nil => "Upcoming", "past" => "Past", "canceled" => "Canceled" })
     end
   end
 
@@ -34,6 +53,13 @@ RSpec.describe Event::Filter do
         filter = described_class.new(member, scope: "archived", categories: %w[ gig party ], answers: %w[ yes perhaps ])
 
         expect([ filter.scope, filter.categories, filter.answers ]).to eq [ nil, %w[ gig ], %w[ yes ] ]
+      end
+
+      # WHY: #462 AC5. To do is a list this member is not offered, so it is dropped like any other and they get Upcoming.
+      it "drops To do for a member who does not oversee the events" do
+        filter = described_class.new(member, scope: "to_do")
+
+        expect(filter.scope).to be_nil
       end
 
       # WHY: #460 AC3 and AC11. "Managed by me" is offered only to someone who manages one of the group's events, so anyone else's is dropped.
@@ -98,6 +124,25 @@ RSpec.describe Event::Filter do
 
       expect(names(described_class.new(member, scope: "past", categories: %w[ gig ]))).to eq [ "Autumn fair" ]
     end
+
+    # WHY: #462 AC1. Every unconfirmed event, ahead or ended, and every ended one still confirmed, oldest first so the longest waiting leads; nothing concluded, and no confirmed event still ahead.
+    it "lists on To do every unconfirmed event and every ended one still confirmed, oldest first" do
+      create(:event, group: member.group, creator: member, name: "Autumn fair", status: :unconfirmed, starts_at: 20.days.ago, ends_at: 20.days.ago + 2.hours)
+      create(:event, group: member.group, creator: member, name: "Harvest gig", status: :confirmed, starts_at: 5.days.ago, ends_at: 5.days.ago + 2.hours)
+      create(:event, group: member.group, creator: member, name: "Summer gig", status: :concluded, starts_at: 10.days.ago, ends_at: 10.days.ago + 2.hours)
+      upcoming(name: "Winter gala", status: :unconfirmed, starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours)
+      upcoming(name: "Advent concert")
+
+      expect(names(described_class.new(member, oversees: true, scope: "to_do"))).to eq [ "Autumn fair", "Harvest gig", "Winter gala" ]
+    end
+
+    # WHY: #462 AC6. The sheet's filters narrow To do like any other list.
+    it "narrows To do to the categories picked" do
+      create(:event, :from_the_past, group: member.group, creator: member, name: "Autumn fair", category: :gig, status: :confirmed)
+      create(:event, :from_the_past, group: member.group, creator: member, name: "Full rehearsal", category: :rehearsal, status: :confirmed)
+
+      expect(names(described_class.new(member, oversees: true, scope: "to_do", categories: %w[ gig ]))).to eq [ "Autumn fair" ]
+    end
   end
 
   describe "#counts" do
@@ -108,6 +153,15 @@ RSpec.describe Event::Filter do
       create(:event, :from_the_past, group: member.group, creator: member, name: "Autumn fair", category: :gig)
 
       expect(described_class.new(member, categories: %w[ gig ]).counts(member.group.events)).to eq({ nil => 1, "past" => 1, "canceled" => 0 })
+    end
+
+    # WHY: #462 AC8. To do carries its count like every other tab, an event on it counted on its dated list too.
+    it "counts To do beside the other lists for a member who oversees the events" do
+      upcoming(name: "Advent concert", category: :gig)
+      create(:event, :from_the_past, group: member.group, creator: member, name: "Autumn fair", category: :gig, status: :confirmed)
+      create(:event, :from_the_past, group: member.group, creator: member, name: "Summer gig", category: :gig, status: :concluded)
+
+      expect(described_class.new(member, oversees: true, categories: %w[ gig ]).counts(member.group.events)).to eq({ nil => 1, "to_do" => 1, "past" => 2, "canceled" => 0 })
     end
   end
 

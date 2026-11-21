@@ -210,6 +210,17 @@ RSpec.describe "Events", type: :request do
 
         expect(response.body).to include %(href="#{new_group_event_path(actor.group)}")
       end
+
+      # WHY: #462 AC2 and AC3.
+      it "offers To do third and opens on Upcoming" do
+        actor = create(:member, :active, :administrator)
+        sign_in_as(actor.user)
+
+        get group_events_path(actor.group)
+
+        tabs = Nokogiri::HTML(response.body).css("nav[aria-label='Event lists'] a")
+        expect([ tabs.map(&:text), tabs.map { it["aria-current"] } ]).to eq [ [ "Upcoming (0)", "Past (0)", "To do (0)", "Canceled (0)" ], [ "page", nil, nil, nil ] ]
+      end
     end
 
     context "when signed in as an events administrator" do
@@ -244,6 +255,79 @@ RSpec.describe "Events", type: :request do
 
         expect(response.body).not_to include %(href="#{new_group_event_path(actor.group)}")
       end
+
+      # WHY: #462 AC2 and AC3. To do is the third tab, after Past, and Upcoming the one a bare URL opens on.
+      it "offers To do third and opens on Upcoming" do
+        actor = create(:member, :active, :events_administrator)
+        confirmed_event(actor, days: -2, name: "Summer gig")
+        confirmed_event(actor, days: 3, name: "Advent concert")
+        sign_in_as(actor.user)
+
+        get group_events_path(actor.group)
+
+        tabs = Nokogiri::HTML(response.body).css("nav[aria-label='Event lists'] a")
+        expect([ tabs.map(&:text), tabs.map { it["aria-current"] } ]).to eq [ [ "Upcoming (1)", "Past (1)", "To do (1)", "Canceled (0)" ], [ "page", nil, nil, nil ] ]
+      end
+
+      # WHY: #462 AC1. To do lists the event that ended while still confirmed and leaves out the confirmed one still ahead.
+      it "lists on To do an event that ended without being concluded" do
+        actor = create(:member, :active, :events_administrator)
+        confirmed_event(actor, days: -2, name: "Summer gig")
+        confirmed_event(actor, days: 3, name: "Advent concert")
+        sign_in_as(actor.user)
+
+        get group_events_path(actor.group, scope: "to_do")
+
+        expect([ response.body.include?("Summer gig"), response.body.include?("Advent concert") ]).to eq [ true, false ]
+      end
+
+      # WHY: #462 AC6. Every tab carries the filters on, Upcoming's link being the bare URL and To do's naming its own list.
+      it "links each tab to its list with every filter still on, To do third" do
+        actor = create(:member, :active, :events_administrator)
+        sign_in_as(actor.user)
+
+        get group_events_path(actor.group, scope: "past", category: %w[ gig ])
+
+        expect(Nokogiri::HTML(response.body).css("nav[aria-label='Event lists'] a").map { it[:href] }).to eq [
+          group_events_path(actor.group, category: %w[ gig ]),
+          group_events_path(actor.group, scope: "past", category: %w[ gig ]),
+          group_events_path(actor.group, scope: "to_do", category: %w[ gig ]),
+          group_events_path(actor.group, scope: "canceled", category: %w[ gig ])
+        ]
+      end
+
+      # WHY: a To do list with nothing on it says so in its own words, since "Nothing coming up." would speak of the wrong list.
+      it "says there is nothing to do when no event waits" do
+        actor = create(:member, :active, :events_administrator)
+        sign_in_as(actor.user)
+
+        get group_events_path(actor.group, scope: "to_do")
+
+        expect(response.body).to include "Nothing to do."
+      end
+
+      # WHY: #462 AC2. Seeing the To do list is a read, so pausing the member leaves it.
+      it "keeps To do while the member is paused" do
+        actor = create(:member, :paused, :events_administrator)
+        sign_in_as(actor.user)
+
+        get group_events_path(actor.group, scope: "to_do")
+
+        expect(Nokogiri::HTML(response.body).at_css("nav[aria-label='Event lists'] a[aria-current=page]")&.text).to eq "To do (0)"
+      end
+    end
+
+    # WHY: #462 AC2 and AC3. The other two columns the To do row marks, the events administrator being proven above.
+    context "when signed in as an owner" do
+      it "offers To do third and opens on Upcoming" do
+        actor = create(:member, :active, :owner)
+        sign_in_as(actor.user)
+
+        get group_events_path(actor.group)
+
+        tabs = Nokogiri::HTML(response.body).css("nav[aria-label='Event lists'] a")
+        expect([ tabs.map(&:text), tabs.map { it["aria-current"] } ]).to eq [ [ "Upcoming (0)", "Past (0)", "To do (0)", "Canceled (0)" ], [ "page", nil, nil, nil ] ]
+      end
     end
 
     context "when signed in as a members administrator" do
@@ -254,6 +338,17 @@ RSpec.describe "Events", type: :request do
         get group_events_path(actor.group)
 
         expect(response.body).not_to include %(href="#{new_group_event_path(actor.group)}")
+      end
+
+      # WHY: #462 AC4. A column the To do row leaves blank gets no To do tab.
+      it "offers no To do tab" do
+        actor = create(:member, :active, :members_administrator)
+        sign_in_as(actor.user)
+
+        get group_events_path(actor.group)
+
+        tabs = Nokogiri::HTML(response.body).css("nav[aria-label='Event lists'] a")
+        expect([ tabs.map(&:text), tabs.map { it["aria-current"] } ]).to eq [ [ "Upcoming (0)", "Past (0)", "Canceled (0)" ], [ "page", nil, nil ] ]
       end
     end
 
@@ -279,6 +374,18 @@ RSpec.describe "Events", type: :request do
         get group_events_path(actor.group)
 
         expect(response.body).not_to include %(href="#{new_group_event_path(actor.group)}")
+      end
+
+      # WHY: #462 AC4. Managing one event is no reason to see every event waiting on whoever runs the group's events.
+      it "offers no To do tab" do
+        actor = create(:member, :active)
+        create(:event, :from_the_future, group: actor.group, manager: actor)
+        sign_in_as(actor.user)
+
+        get group_events_path(actor.group)
+
+        tabs = Nokogiri::HTML(response.body).css("nav[aria-label='Event lists'] a")
+        expect([ tabs.map(&:text), tabs.map { it["aria-current"] } ]).to eq [ [ "Upcoming (1)", "Past (0)", "Canceled (0)" ], [ "page", nil, nil ] ]
       end
     end
 
@@ -447,6 +554,18 @@ RSpec.describe "Events", type: :request do
         sign_in_as(member.user)
 
         get group_events_path(member.group, scope: "sideways")
+
+        expect(Nokogiri::HTML(response.body).at_css("nav[aria-label='Event lists'] a[aria-current=page]").text).to eq "Upcoming (0)"
+        expect(response.body).not_to include "Summer gig"
+      end
+
+      # WHY: #462 AC5. The To do list is not this member's to see, so naming it in the URL gets Upcoming rather than a refusal.
+      it "reads To do as the upcoming list for a member not offered it" do
+        member = create(:member, :active)
+        confirmed_event(member, days: -2, name: "Summer gig")
+        sign_in_as(member.user)
+
+        get group_events_path(member.group, scope: "to_do")
 
         expect(Nokogiri::HTML(response.body).at_css("nav[aria-label='Event lists'] a[aria-current=page]").text).to eq "Upcoming (0)"
         expect(response.body).not_to include "Summer gig"
@@ -1619,15 +1738,18 @@ RSpec.describe "Events", type: :request do
         expect(page_text(response.body)).not_to include unlisted.full_name
       end
 
+      # WHY: #511 AC1, literal names, because the XPath below quotes each one and a Faker name carrying an apostrophe would end the literal early.
       it "badges a member on the list who is not active with their status, beside the name, and an active one with nothing" do
         actor = create(:member, :active, :events_administrator)
         event = create(:event, group: actor.group)
-        listed = [ :active, :paused, :inactive ].map { create(:registration, event:, member: create(:member, it, group: event.group)).member }
+        alice = create(:registration, event:, member: create(:member, :active, group: event.group, user: create(:user, :with_full_profile, first_name: "Alice", last_name: "Bird"))).member
+        ben = create(:registration, event:, member: create(:member, :paused, group: event.group, user: create(:user, :with_full_profile, first_name: "Ben", last_name: "Cole"))).member
+        carla = create(:registration, event:, member: create(:member, :inactive, group: event.group, user: create(:user, :with_full_profile, first_name: "Carla", last_name: "Duke"))).member
         sign_in_as(actor.user)
 
         get edit_group_event_path(event.group, event)
 
-        badges = listed.map { |member| Nokogiri::HTML(response.body).xpath("//div[span[normalize-space()='#{member.full_name}']]/span[contains(@class, 'badge')]").map(&:text) }
+        badges = [ alice, ben, carla ].map { |member| Nokogiri::HTML(response.body).xpath("//div[span[normalize-space()='#{member.full_name}']]/span[contains(@class, 'badge')]").map(&:text) }
         expect(badges).to eq [ [], [ "paused" ], [ "inactive" ] ]
       end
     end
