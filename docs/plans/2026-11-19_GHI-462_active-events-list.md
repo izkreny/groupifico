@@ -41,3 +41,4 @@ None.
 ## Settled
 
 - ::Q1:: Active and Upcoming would mostly list the same events, so is a second everything-still-open tab the right shape? No: settled by the owner in the terminal on 2026-11-21, the tab becomes To do, third after Past, where Pending sits on the members list, and shown only to the `EventPolicy#oversee?` columns, listing the events waiting on them, today those that ended still unconfirmed or confirmed. Upcoming stays every member's default, so the home hero's gigs link needs no `scope` and AC9 is removed from #462.
+- ::Q2:: Should To do also hold the unconfirmed events still ahead? Yes: settled by the owner in a thread on #497 on 2026-11-21, To do lists every unconfirmed event, whatever its dates, and every past event still confirmed, so it overlaps Upcoming as well as Past.
