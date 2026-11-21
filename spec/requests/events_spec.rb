@@ -1619,10 +1619,14 @@ RSpec.describe "Events", type: :request do
         expect(page_text(response.body)).not_to include unlisted.full_name
       end
 
+      # WHY: #511 AC1, literal names, because the XPath below quotes each one and a Faker name carrying an apostrophe would end the literal early.
       it "badges a member on the list who is not active with their status, beside the name, and an active one with nothing" do
         actor = create(:member, :active, :events_administrator)
         event = create(:event, group: actor.group)
-        listed = [ :active, :paused, :inactive ].map { create(:registration, event:, member: create(:member, it, group: event.group)).member }
+        listed = { active: %w[ Alice Bird ], paused: %w[ Ben Cole ], inactive: %w[ Carla Duke ] }.map do |status, (first_name, last_name)|
+          user = create(:user, :with_full_profile, first_name:, last_name:)
+          create(:registration, event:, member: create(:member, status, group: event.group, user:)).member
+        end
         sign_in_as(actor.user)
 
         get edit_group_event_path(event.group, event)
