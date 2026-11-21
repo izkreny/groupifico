@@ -17,7 +17,7 @@ module ProfileSetup
     def require_profile_setup
       if authenticated? && !Current.user.profile.setup?
         redirect_to edit_user_profile_path(return_to: (request.fullpath if request.get?)),
-          info: "Add your name and mobile to continue.",
+          info: "Complete your profile to continue.",
           status: :see_other
       end
     end
