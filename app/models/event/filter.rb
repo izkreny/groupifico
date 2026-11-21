@@ -4,9 +4,9 @@ class Event::Filter
 
   TAB = :scope
   # WHY: each list by the name a URL gives it, in the order the tabs read. The first one offered is the reader's default, which `#offered_tabs` gives the screen's own URL, with no `scope`.
-  TABS = { "active" => "Active", "upcoming" => "Upcoming", "past" => "Past", "canceled" => "Canceled" }.freeze
-  # WHY: every event still open is the `EventPolicy#oversee?` columns' read, so it is their first list and nobody else's.
-  OVERSEER_TABS = %w[ active ].freeze
+  TABS = { "upcoming" => "Upcoming", "to_do" => "To do", "past" => "Past", "canceled" => "Canceled" }.freeze
+  # WHY: the events waiting on whoever runs them are the `EventPolicy#oversee?` columns' read, so the tab is theirs alone, the way Pending is on the members list.
+  OVERSEER_TABS = %w[ to_do ].freeze
   # WHY: in the sheet's order rather than the enum's, so the chips read in the order the sheet offers them.
   CATEGORIES = { "gig" => "Gig", "rehearsal" => "Rehearsal", "other" => "Other" }.freeze
   ANSWERS = { "yes" => "Yes", "maybe" => "Maybe", "no" => "No", "not_answered" => "Not answered" }.freeze
@@ -72,8 +72,8 @@ class Event::Filter
     # WHY: ordered here because the list had no order of its own: the rows were whatever the database happened to return, which is the same list in a different sequence on a different day.
     def on_list(events, list)
       case list
-      when "active" then events.active.order(:starts_at)
       when "upcoming" then events.current_and_upcoming.order(:starts_at)
+      when "to_do" then events.to_do.order(starts_at: :desc)
       when "past" then events.past.order(starts_at: :desc)
       when "canceled" then events.canceled.order(starts_at: :desc)
       end

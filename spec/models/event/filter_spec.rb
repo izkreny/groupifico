@@ -26,22 +26,22 @@ RSpec.describe Event::Filter do
       expect([ filter.list, filter.scope, filter.categories, filter.answers, filter.managed?, filter.narrowed? ]).to eq [ "upcoming", nil, [], [], false, false ]
     end
 
-    # WHY: #462 AC3. A member who oversees the events opens a URL with no list in it on Active, written back as no `scope` because it is their default.
-    it "is Active for a member who oversees the events when the URL names no list" do
+    # WHY: #462 AC3. Upcoming stays the default for a member who oversees the events too, To do being a tab they open rather than the one they land on.
+    it "is Upcoming for a member who oversees the events when the URL names no list" do
       filter = described_class.from(member, ActionController::Parameters.new(group_id: member.group_id), oversees: true)
 
-      expect([ filter.list, filter.scope ]).to eq [ "active", nil ]
+      expect([ filter.list, filter.scope ]).to eq [ "upcoming", nil ]
     end
   end
 
   describe "#offered_tabs" do
-    # WHY: #462 AC2. Active comes first for a member who oversees the events, and is their default, so it is the tab with no `scope`.
-    it "offers Active first to a member who oversees the events, Upcoming then named by its own value" do
-      expect(described_class.new(member, oversees: true).offered_tabs).to eq({ nil => "Active", "upcoming" => "Upcoming", "past" => "Past", "canceled" => "Canceled" })
+    # WHY: #462 AC2. To do comes second for a member who oversees the events, after Upcoming, which keeps the screen's own URL.
+    it "offers To do second to a member who oversees the events" do
+      expect(described_class.new(member, oversees: true).offered_tabs).to eq({ nil => "Upcoming", "to_do" => "To do", "past" => "Past", "canceled" => "Canceled" })
     end
 
-    # WHY: #462 AC4. Anyone else is offered no Active tab, and Upcoming stays their default.
-    it "offers no Active tab to a member who does not oversee the events" do
+    # WHY: #462 AC4. Anyone else is offered no To do tab.
+    it "offers no To do tab to a member who does not oversee the events" do
       expect(described_class.new(member).offered_tabs).to eq({ nil => "Upcoming", "past" => "Past", "canceled" => "Canceled" })
     end
   end
@@ -55,24 +55,9 @@ RSpec.describe Event::Filter do
         expect([ filter.scope, filter.categories, filter.answers ]).to eq [ nil, %w[ gig ], %w[ yes ] ]
       end
 
-      # WHY: #462 AC5. Active is a list this member is not offered, so it is dropped like any other and they get Upcoming.
-      it "drops Active for a member who does not oversee the events" do
-        filter = described_class.new(member, scope: "active")
-
-        expect([ filter.list, filter.scope ]).to eq [ "upcoming", nil ]
-      end
-    end
-
-    # WHY: #462 AC9. Upcoming has a name of its own, so one link opens it whoever follows it, written back as no `scope` only where it is the reader's default.
-    context "with Upcoming named" do
-      it "opens Upcoming for a member who oversees the events, keeping its name" do
-        filter = described_class.new(member, oversees: true, scope: "upcoming")
-
-        expect([ filter.list, filter.scope ]).to eq [ "upcoming", "upcoming" ]
-      end
-
-      it "opens Upcoming for any other member, as their default" do
-        filter = described_class.new(member, scope: "upcoming")
+      # WHY: #462 AC5. To do is a list this member is not offered, so it is dropped like any other and they get Upcoming.
+      it "drops To do for a member who does not oversee the events" do
+        filter = described_class.new(member, scope: "to_do")
 
         expect([ filter.list, filter.scope ]).to eq [ "upcoming", nil ]
       end
@@ -140,22 +125,22 @@ RSpec.describe Event::Filter do
       expect(names(described_class.new(member, scope: "past", categories: %w[ gig ]))).to eq [ "Autumn fair" ]
     end
 
-    # WHY: #462 AC1. Every event neither canceled nor concluded, past and upcoming alike, by start.
-    it "lists every open event on Active, past and upcoming alike, ordered by start" do
-      upcoming(name: "Advent concert", starts_at: 10.days.from_now, ends_at: 10.days.from_now + 2.hours)
-      create(:event, :from_the_past, group: member.group, creator: member, name: "Autumn fair", status: :unconfirmed)
-      create(:event, :from_the_past, group: member.group, creator: member, name: "Summer gig", status: :concluded)
-      upcoming(name: "Christmas concert", status: :canceled)
+    # WHY: #462 AC1. Every event that ended while still unconfirmed or confirmed, newest first, and nothing concluded or still ahead.
+    it "lists on To do every ended event still unconfirmed or confirmed, newest first" do
+      create(:event, group: member.group, creator: member, name: "Autumn fair", status: :unconfirmed, starts_at: 20.days.ago, ends_at: 20.days.ago + 2.hours)
+      create(:event, group: member.group, creator: member, name: "Harvest gig", status: :confirmed, starts_at: 5.days.ago, ends_at: 5.days.ago + 2.hours)
+      create(:event, group: member.group, creator: member, name: "Summer gig", status: :concluded, starts_at: 10.days.ago, ends_at: 10.days.ago + 2.hours)
+      upcoming(name: "Advent concert")
 
-      expect(names(described_class.new(member, oversees: true))).to eq [ "Autumn fair", "Advent concert" ]
+      expect(names(described_class.new(member, oversees: true, scope: "to_do"))).to eq [ "Harvest gig", "Autumn fair" ]
     end
 
-    # WHY: #462 AC6. The sheet's filters narrow Active like any other list.
-    it "narrows Active to the categories picked" do
+    # WHY: #462 AC6. The sheet's filters narrow To do like any other list.
+    it "narrows To do to the categories picked" do
       create(:event, :from_the_past, group: member.group, creator: member, name: "Autumn fair", category: :gig, status: :confirmed)
-      upcoming(name: "Section rehearsal", category: :rehearsal)
+      create(:event, :from_the_past, group: member.group, creator: member, name: "Full rehearsal", category: :rehearsal, status: :confirmed)
 
-      expect(names(described_class.new(member, oversees: true, categories: %w[ gig ]))).to eq [ "Autumn fair" ]
+      expect(names(described_class.new(member, oversees: true, scope: "to_do", categories: %w[ gig ]))).to eq [ "Autumn fair" ]
     end
   end
 
@@ -169,22 +154,22 @@ RSpec.describe Event::Filter do
       expect(described_class.new(member, categories: %w[ gig ]).counts(member.group.events)).to eq({ nil => 1, "past" => 1, "canceled" => 0 })
     end
 
-    # WHY: #462 AC8. Active carries its count like every other tab, an event on it counted on its dated list too.
-    it "counts Active beside the other lists for a member who oversees the events" do
+    # WHY: #462 AC8. To do carries its count like every other tab, an event on it counted on Past too.
+    it "counts To do beside the other lists for a member who oversees the events" do
       upcoming(name: "Advent concert", category: :gig)
       create(:event, :from_the_past, group: member.group, creator: member, name: "Autumn fair", category: :gig, status: :confirmed)
       create(:event, :from_the_past, group: member.group, creator: member, name: "Summer gig", category: :gig, status: :concluded)
 
-      expect(described_class.new(member, oversees: true, categories: %w[ gig ]).counts(member.group.events)).to eq({ nil => 2, "upcoming" => 1, "past" => 2, "canceled" => 0 })
+      expect(described_class.new(member, oversees: true, categories: %w[ gig ]).counts(member.group.events)).to eq({ nil => 1, "to_do" => 1, "past" => 2, "canceled" => 0 })
     end
   end
 
   describe "#tabs" do
-    # WHY: #462 AC6. The Active tab keeps every filter on, like the other tabs.
-    it "links Active with every filter still on" do
+    # WHY: #462 AC6. The To do tab keeps every filter on, like the other tabs.
+    it "links To do with every filter still on" do
       filter = described_class.new(member, oversees: true, scope: "past", categories: %w[ gig ])
 
-      expect(filter.tabs.first).to eq [ "Active", nil, { category: %w[ gig ] } ]
+      expect(filter.tabs[1]).to eq [ "To do", "to_do", { scope: "to_do", category: %w[ gig ] } ]
     end
   end
 
