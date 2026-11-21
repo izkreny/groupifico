@@ -190,16 +190,28 @@ RSpec.describe "JoinRequests", type: :request do
     end
 
     context "when signed in" do
-      # WHY: #447 AC2, pending rather than the `active` a member is created with by default.
-      it "adds the visitor to the link's group as a pending member and returns to the join page" do
+      # WHY: #504 AC1, active from the moment they ask rather than pending an approval.
+      it "adds the visitor to the link's group as an active member and returns to the join page" do
         user = create(:user)
         sign_in_as user
         group = create(:group)
         token = JoinLink.mint(group)
 
-        expect { post join_request_path(token:) }.to change { group.members.pending.where(user:).count }.from(0).to(1)
+        expect { post join_request_path(token:) }.to change { group.members.active.where(user:).count }.from(0).to(1)
         expect(group.members.where(user:).count).to eq 1
         expect(response).to redirect_to new_join_request_path(token:)
+      end
+
+      # WHY: #504 AC2, the group's page answered as it is for any member, rather than with the 404 a pending member gets.
+      it "lets the new member open the group's page" do
+        sign_in_as create(:user)
+        group = create(:group)
+        token = JoinLink.mint(group)
+
+        post join_request_path(token:)
+        get group_path(group)
+
+        expect(response).to have_http_status :ok
       end
 
       # WHY: #447 AC4, a second press or a page left open leaves the membership as it is; one example per status, since the inactive one is the member who must not let themselves back in.

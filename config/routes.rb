@@ -13,7 +13,7 @@ Rails.application.routes.draw do
     resource :sign_up, only: %i[ new create ]
     resource :sign_up_confirmation, only: %i[ show create ]
   end
-  # WHY: a group's join link opens here, carrying its token in the query string for the reason `resource :sign_in` gives; `path: "join"` because the URL is pasted into a group chat for people to read. `create` is the signed-in visitor's "Ask to join" button, which adds them as a pending member.
+  # WHY: a group's join link opens here, carrying its token in the query string for the reason `resource :sign_in` gives; `path: "join"` because the URL is pasted into a group chat for people to read. `create` is the signed-in visitor's "Ask to join" button, which adds them as an active member.
   resource :join_request, only: %i[ new create ], path: "join" do
     # WHY: a visitor who is not signed in asks here for a sign-in link that brings them back to the join page; its own resource because `create` on the join request is the signed-in ask itself, and `show` is the check-your-inbox page `create` redirects to so a reload never resubmits.
     resource :sign_in_link, only: %i[ show create ], module: :join_requests
