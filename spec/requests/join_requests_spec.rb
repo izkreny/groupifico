@@ -134,14 +134,17 @@ RSpec.describe "JoinRequests", type: :request do
         expect(response.body).not_to include(%(action="#{join_request_path}"))
       end
 
-      it "tells a pending member their request is waiting for approval, offering no button" do
+      # WHY: #505's one screen, a pending member being somebody invited, so the join link offers them the invitation's Join and Decline rather than a second ask.
+      it "offers a pending member the invitation's Join and Decline, and no ask" do
         member = create(:member, :pending)
         sign_in_as member.user
         token = JoinLink.mint(member.group)
 
         get new_join_request_path(token:)
 
-        expect(page_text(response.body)).to include("Your request to join is waiting for approval.")
+        methods = Nokogiri::HTML(response.body).css(%(form[action="#{group_invitation_path(member.group)}"] input[name="_method"])).map { it["value"] }
+        expect(page_text(response.body)).to include("You are invited to join this group.")
+        expect(methods).to eq %w[ patch delete ]
         expect(response.body).not_to include(%(action="#{join_request_path}"))
       end
 
