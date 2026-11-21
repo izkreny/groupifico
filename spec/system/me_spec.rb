@@ -36,9 +36,9 @@ RSpec.describe "The Me menu", type: :system do
     expect(page).to be_accessible
   end
 
-  # WHY: a member with no name is headed by the email's local part, one word with nowhere to break, so a fixed long one fails on every run where a Faker draw only failed on some.
+  # WHY: a long first name is one word with nowhere to break, so a fixed one fails on every run where a Faker draw only failed on some.
   it "keeps the open menu inside a phone's width" do
-    sign_in_as create(:user, email: "maximilian.featherstonehaugh-wolstenholme@example.com")
+    sign_in_as create(:user, first_name: "Maximilianfeatherstonehaughwolstenholme", email: "maximilian.featherstonehaugh-wolstenholme@example.com")
     resize_to ViewportHelper::MOBILE
 
     visit root_path
@@ -116,7 +116,7 @@ RSpec.describe "The Me menu", type: :system do
     end
 
     it "keeps every row and line inside a phone's width" do
-      sign_in_as create(:user, email: "maximilian.featherstonehaugh-wolstenholme@example.com")
+      sign_in_as create(:user, first_name: "Maximilianfeatherstonehaughwolstenholme", email: "maximilian.featherstonehaugh-wolstenholme@example.com")
       resize_to ViewportHelper::MOBILE
 
       visit edit_user_profile_path
@@ -156,6 +156,24 @@ RSpec.describe "The Me menu", type: :system do
 
       expect(page).to have_current_path root_path
       expect(page).to have_css "#me-menu summary[aria-label='AL, me']"
+    end
+
+    # WHY: #472 AC1. A member without a first name and a mobile is sent here from the page they asked for, and Save takes them on to it; a page other than home, so landing there proves the way back rather than Save's default.
+    it "sends a member without a first name and a mobile here, and on to the page they asked for once saved" do
+      sign_in_as create(:user, :not_set_up)
+
+      visit new_group_path
+
+      expect(page).to have_current_path edit_user_profile_path, ignore_query: true
+      expect(page).to paint "#info"
+      expect(page).to be_accessible
+
+      fill_in "First name", with: "Ada"
+      fill_in "Last name", with: "Lovelace"
+      fill_in "Mobile", with: "+385911111111"
+      click_button "Save"
+
+      expect(page).to have_current_path new_group_path
     end
 
     it "returns home when cancelled" do

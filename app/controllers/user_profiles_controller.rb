@@ -1,4 +1,7 @@
 class UserProfilesController < ApplicationController
+  # WHY: this form is where `ProfileSetup` sends a member, so it is the one screen that member may reach.
+  allow_unset_profile only: %i[ edit update ]
+
   before_action :set_user_profile
 
   def edit
@@ -8,8 +11,10 @@ class UserProfilesController < ApplicationController
   def update
     authorize! @user_profile
 
-    if @user_profile.update(user_profile_params)
-      redirect_to root_path,
+    @user_profile.assign_attributes(user_profile_params)
+
+    if @user_profile.save(context: :setup)
+      redirect_to return_to || root_path,
         notice: "User profile was successfully updated.",
         status: :see_other
     else

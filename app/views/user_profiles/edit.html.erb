@@ -3,7 +3,7 @@
 <%= render "shared/page_header", title: "Edit profile", back: root_path %>
 
 <%#
-  The avatar's menu leads here, and there is no profile screen to go back to, so Back, Cancel and Save all return home.
+  The avatar's menu leads here, and there is no profile screen to go back to, so Back and Cancel return home, and Save returns to the page `ProfileSetup` sent the member from, home otherwise.
 
   The delete leads the form's button row, as on every edit screen, with its sheet detached below the form, since a form cannot hold the sheet's own. The groups that would be left ownerless are named inside the sheet, which every member has to open to delete at all, so that is where they learn why the button will not enable; the refusal's flash says only that nothing happened.
 %>

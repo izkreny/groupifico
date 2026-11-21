@@ -20,6 +20,9 @@ class UsersController < ApplicationController
   # nobody chose for it - same reason `SessionsController` names its own.
   skip_verify_authorized only: %i[ destroy ]
 
+  # WHY: the profile form `ProfileSetup` sends a member to draws Delete my account, and a form certain to be refused is not offered.
+  allow_unset_profile only: %i[ destroy ]
+
   before_action :set_user, only: %i[ destroy ]
 
   def destroy

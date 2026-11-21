@@ -111,8 +111,14 @@ RSpec.describe "Creating a group", type: :system do
     # `SignUp.redeem!` commits would raise `RecordNotFound` where the matcher would have waited.
     # Which group it is belongs to `spec/requests/sign_up_confirmations_spec.rb`, which already
     # asserts the redirect names it.
+    #
+    # WHY: #472 AC1, the founder signs up with an address alone, so the profile form `ProfileSetup` sends them to comes first and its Save carries them on to the group.
     it "lands on the new group" do
       click_button "Sign in and create group"
+      fill_in "First name", with: "Ada"
+      fill_in "Last name", with: "Lovelace"
+      fill_in "Mobile", with: "+385911111111"
+      click_button "Save"
 
       expect(page).to have_current_path %r{\A/groups/\d+\z}
     end
