@@ -51,4 +51,4 @@ None.
 
 ## Settled
 
-- None yet.
+- Should the last name stay optional, as the issue first had it? No: after the first review pass the owner required it like the first name and the mobile, in the form, the import and the gate, so a member without one is sent to the form too, and the last name's "Optional." hint goes.
