@@ -97,19 +97,30 @@ RSpec.describe "Sessions", type: :request do
         expect(response).to redirect_to root_path
       end
 
-      # WHY: #505 AC1, an invitation's link is this form carrying the join page as its destination, and an invitee already signed in to another group must still reach that page rather than a root that lists no group they are pending in.
-      it "redirects to the destination it is opened with, instead of the root page" do
-        sign_in_as(create(:user))
+      # WHY: #505 AC1, an invitation's link is this form carrying their address and the join page as its destination, and an invitee already signed in to another group must still reach that page rather than a root that lists no group they are pending in.
+      it "redirects to the destination it is opened with when it names the address signed in, instead of the root page" do
+        user = create(:user, email: "invitee@example.com")
+        sign_in_as(user)
 
-        get new_session_path(return_to: "/groups/1/invitation")
+        get new_session_path(email: "Invitee@Example.com", return_to: "/groups/1/invitation")
 
         expect(response).to redirect_to "/groups/1/invitation"
       end
 
-      it "redirects a destination that is not a path inside the application to the root page" do
-        sign_in_as(create(:user))
+      # WHY: somebody else's link opened under this session names a page this account cannot reach, so it lands on the root as it always did rather than on that page's 404.
+      it "redirects to the root page when the link names a different address" do
+        sign_in_as(create(:user, email: "someone@example.com"))
 
-        get new_session_path(return_to: "https://other.example/x")
+        get new_session_path(email: "invitee@example.com", return_to: "/groups/1/invitation")
+
+        expect(response).to redirect_to root_path
+      end
+
+      it "redirects a destination that is not a path inside the application to the root page" do
+        user = create(:user)
+        sign_in_as(user)
+
+        get new_session_path(email: user.email, return_to: "https://other.example/x")
 
         expect(response).to redirect_to root_path
       end
