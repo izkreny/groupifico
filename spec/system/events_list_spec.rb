@@ -20,6 +20,35 @@ RSpec.describe "The events list", type: :system do
     expect(page).to have_no_css "##{ActionView::RecordIdentifier.dom_id(event)} form"
   end
 
+  # WHY: #508 AC2. The status icon is no control, so pressing it is pressing the row. Pressed by its coordinates, because Cuprite refuses to click an element something else covers, and being covered by the name's link is the point.
+  it "lands on an event's screen from anywhere on its row" do
+    member = create(:member, :owner)
+    event = next_event_for(member)
+    sign_in_as member.user
+
+    visit group_events_path(member.group)
+    x, y = find("##{ActionView::RecordIdentifier.dom_id(event)} > svg").evaluate_script("(box => [ box.left + box.width / 2, box.top + box.height / 2 ])(this.getBoundingClientRect())")
+    page.driver.browser.mouse.click(x:, y:)
+
+    expect(page).to have_current_path group_event_path(member.group, event)
+  end
+
+  # WHY: #508 AC3. A press lands on whatever is topmost under it, so every control on the row, the map link included, has to be the topmost element at its own centre rather than the name's overlay.
+  it "keeps every control on a row above the link to its event" do
+    member = create(:member, :owner)
+    event = next_event_for(member)
+    create(:registration, event:, member:, status: :response_requested)
+    sign_in_as member.user
+    page.current_window.resize_to(1280, 900)
+
+    visit group_events_path(member.group)
+
+    topmost = find_by_id(ActionView::RecordIdentifier.dom_id(event)).evaluate_script(<<~JS)
+      [...this.querySelectorAll("a, button")].slice(1).map(control => (box => [ control.getAttribute("aria-label") || control.textContent.trim(), control.contains(document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2)) ])(control.getBoundingClientRect()))
+    JS
+    expect(topmost).to eq [ [ "Community Hall", true ], [ "Edit Tuesday rehearsal", true ], [ "Yes", true ], [ "Maybe", true ], [ "No", true ] ]
+  end
+
   # A list row is a grid whose cells start at its top, so the status icon would sit level with the name rather than with the name and its meta line together.
   # A row that puts the question and carries the pencil, at phone width: the question has to start under the name, never in the pencil's column, which squeezed the name to a letter a line.
   it "puts a row's question under its name when the row also carries the pencil" do
