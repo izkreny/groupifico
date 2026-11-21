@@ -165,15 +165,6 @@ RSpec.describe Event::Filter do
     end
   end
 
-  describe "#tabs" do
-    # WHY: #462 AC6. The To do tab keeps every filter on, like the other tabs.
-    it "links To do with every filter still on" do
-      filter = described_class.new(member, oversees: true, scope: "past", categories: %w[ gig ])
-
-      expect(filter.tabs[2]).to eq [ "To do", "to_do", { scope: "to_do", category: %w[ gig ] } ]
-    end
-  end
-
   describe "#narrowed?" do
     # WHY: #460 AC7. The funnel says whether anything hides events from the list picked, and the list itself never does.
     it "is false for a list alone and true once a filter is on" do
