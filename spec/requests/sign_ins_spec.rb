@@ -98,6 +98,17 @@ RSpec.describe "SignIns", type: :request do
         expect(response).to redirect_to root_url
       end
 
+      # WHY: #498 AC1, signing in being one of the ways home that lands a member of one group on that group.
+      it "lands a member of one group on the group's page, per AC1" do
+        member = create(:member, :active)
+        get sign_in_path(token: SignInToken.mint(member.user))
+
+        post sign_in_path
+        follow_redirect!
+
+        expect(response).to redirect_to group_path(member.group)
+      end
+
       it "signs the person in and lands on the destination the link carried" do
         get sign_in_path(token: SignInToken.mint(create(:user)))
 

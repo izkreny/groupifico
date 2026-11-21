@@ -6,12 +6,13 @@ RSpec.describe "Authentication", type: :system do
 
   # The one spec that pays for the whole cycle in the browser, so the flow every other spec skips
   # by setting the cookie is still covered somewhere.
-  it "signs a member in through the emailed link" do
+  # WHY: #498 AC1, a member of one group landing on its page when signing in.
+  it "signs a member in through the emailed link, landing on their one group, per AC1" do
     member = create(:member)
 
     sign_in_through_the_browser member.user
 
-    expect(page).to have_current_path root_path
+    expect(page).to have_current_path group_path(member.group)
   end
 
   # The route #208 gives somebody an owner or administrator added: the welcome mail's link opens the
@@ -75,7 +76,7 @@ RSpec.describe "Authentication", type: :system do
     # Positive rather than "not the sign-in page": a negation immediately after `visit` can be
     # satisfied before the navigation resolves, which is what `Capybara/RSpec/
     # NegationMatcherAfterVisit` exists to catch. It caught this line.
-    expect(page).to have_current_path root_path
+    expect(page).to have_current_path group_path(member.group)
   end
 
   # The one screen in this flow nothing under `spec/system` had asserted about. The examples above
