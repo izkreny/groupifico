@@ -22,7 +22,7 @@ RSpec.describe "Authentication", type: :system do
   # `sign_in_through_the_browser` already does.
   it "signs an added member in from the welcome mail, landing on the profile form" do
     member = Member.create!(group: create(:group, name: "Riverside Choir"), email: "added@example.com")
-    link   = URI.parse(MemberMailer.welcome(member).body.encoded[%r{https?://\S+?/session/new\?email=[^\s"<]+}])
+    link   = URI.parse(MemberMailer.invitation(member).body.encoded[%r{https?://\S+?/session/new\?email=[^\s"<]+}])
 
     visit link.request_uri
     expect(page).to have_field "Email", with: "added@example.com"

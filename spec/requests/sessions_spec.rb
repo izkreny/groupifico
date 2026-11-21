@@ -10,7 +10,7 @@ RSpec.describe "Sessions", type: :request do
         expect(response.body).not_to include('type="password"')
       end
 
-      # The welcome mail's link, which ADR 0004 makes safe only while opening it sends nothing: a
+      # The invitation's link, which ADR 0004 makes safe only while opening it sends nothing: a
       # mail filter follows every link in a message before the person does.
       it "fills in the address it is opened with, and mails nothing until the form is submitted" do
         create(:user, email: "added@example.com")

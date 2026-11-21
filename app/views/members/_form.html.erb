@@ -5,14 +5,13 @@
     <fieldset class="fieldset">
       <legend class="fieldset-legend">Member details</legend>
 
-      <%# A new record only: the controller's update never takes an address, so a membership is
-          never handed to somebody else, and drawing the field there would offer what it ignores. %>
+      <%# The address on a new record only, and the status on an existing one only: the controller's update never takes an address, so a membership is never handed to somebody else, and its create takes nothing else, because an invitee starts pending with no role and joins by their own Join. %>
       <% if member.new_record? %>
         <%= form.field :email, as: :email_field, required: true, autocomplete: "off",
-              hint: "They are emailed a link to sign in, and an account is made for a new address." %>
+              hint: "They are emailed an invitation to join, and an account is made for a new address." %>
+      <% else %>
+        <%= form.segmented_field :status, choices: member_status_choices %>
       <% end %>
-
-      <%= form.segmented_field :status, choices: member_status_choices %>
     </fieldset>
 
     <%# The hint sits outside the label and reaches the box through `aria-describedby`, so each
@@ -24,7 +23,7 @@
         WHY the box's label is not daisyUI's `.label`: that component draws its text at 65% of the
         colour it inherits, ahead of any utility, so the grey on top of it fell below AA. These
         are its layout utilities without its colour. %>
-    <% if allowed_to?(:manage_roles?, member) %>
+    <% if member.persisted? && allowed_to?(:manage_roles?, member) %>
       <fieldset class="fieldset" data-controller="role-implications" data-action="change->role-implications#grey">
         <legend class="fieldset-legend">Roles</legend>
 

@@ -1,6 +1,6 @@
 require "csv"
 
-# A member list brought over from a spreadsheet, added to one group the way the "Add member" form adds each person. Nobody is mailed: the welcome mail is `MembersController#create`'s to send, not the model's.
+# A member list brought over from a spreadsheet, added to one group the way the "Add member" form adds each person. Nobody is mailed: the invitation is `MembersController#create`'s to send, not the model's.
 class Member::Import
   HEADERS = %w[ first_name last_name email mobile_phone ].freeze
 

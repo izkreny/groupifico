@@ -91,7 +91,7 @@ class Member < ApplicationRecord
   # form to render the message on.
   validate :group_keeps_an_active_owner, on: :update
 
-  # WHY: `pending` is where a request to join starts and nothing else, so no update moves a member into it. A member with registrations set back to pending would keep their places on rosters every member reads, which is the one thing a pending member must never be seen on.
+  # WHY: `pending` is where an invitation starts and nothing else, so no update moves a member into it. A member with registrations set back to pending would keep their places on rosters every member reads, which is the one thing a pending member must never be seen on.
   validate :not_moved_into_pending, on: :update
 
   # A membership is created for an address, which is how an owner or an administrator names

@@ -1,0 +1,6 @@
+You are invited to join <%= @group.name %> on Chorifico. Sign in to answer:
+<%= new_session_url(email: @email, return_to: group_invitation_url(@group, only_path: true)) %>
+
+The link opens the sign-in form with your address already in it, and it does not expire.
+Nothing is sent until you press the form's button, which emails you a sign-in link.
+Once you are signed in, you can join the group or decline.
