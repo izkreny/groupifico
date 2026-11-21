@@ -417,8 +417,9 @@ RSpec.describe "The members list", type: :system do
 
       visit group_members_path(owner.group)
 
-      arrows = %((() => [ ...document.querySelectorAll("nav[aria-label='Member lists'] ~ button") ].map(arrow => arrow.checkVisibility()))())
-      expect(page.evaluate_script(arrows)).to eq [ false, true ]
+      # WHY: both arrows start `hidden` and only `scroll_arrows_controller.js` connecting shows the next one, so the matchers wait for it where a one-shot `evaluate_script` read raced the connect and flaked.
+      expect(page).to have_css("nav[aria-label='Member lists'] ~ button:last-of-type", visible: :visible)
+      expect(page).to have_css("nav[aria-label='Member lists'] ~ button:first-of-type", visible: :hidden)
       find("nav[aria-label='Member lists'] ~ button:not([hidden])").click
       expect(page).to have_css("nav[aria-label='Member lists'] ~ button:first-of-type:not([hidden])", visible: :all)
       expect(page).to have_css("nav[aria-label='Member lists'] ~ button:last-of-type[hidden]", visible: :all)
