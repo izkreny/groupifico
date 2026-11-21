@@ -9,9 +9,12 @@ require "rails_helper"
 # the pair passes under either order, as `config.order = :random` requires. Both also state a
 # width, for the same reason: an example that names none answers for whichever side of the shell's
 # breakpoint the driver's own window happens to be on.
+#
+# WHY: every member here holds a second current group, since a member of exactly one is taken straight to it rather than shown this screen (#498).
 RSpec.describe "The groups index", type: :system do
   it "paints in light when the device prefers light" do
     member = create(:member)
+    create(:member, user: member.user)
     sign_in_as member.user
     prefer_colour_scheme :light
     resize_to ViewportHelper::MOBILE
@@ -33,6 +36,7 @@ RSpec.describe "The groups index", type: :system do
   # and reads as painting nothing.
   it "paints in dark when the device prefers dark" do
     member = create(:member)
+    create(:member, user: member.user)
     sign_in_as member.user
     prefer_colour_scheme :dark
     resize_to ViewportHelper::MOBILE
@@ -49,6 +53,7 @@ RSpec.describe "The groups index", type: :system do
   # theme reaching the page at all rather than this screen's own furniture.
   it "paints a card and the tag on it" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    create(:member, user: member.user)
     sign_in_as member.user
     prefer_colour_scheme :light
     resize_to ViewportHelper::MOBILE
@@ -63,6 +68,7 @@ RSpec.describe "The groups index", type: :system do
   # rather than something inside it: a click at the meta line's text has to land on the group.
   it "lands on the group when its card is used" do
     member = create(:member, group: create(:group, name: "Riverside Choir"))
+    create(:member, user: member.user)
     sign_in_as member.user
     resize_to ViewportHelper::MOBILE
 

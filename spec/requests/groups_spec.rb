@@ -24,6 +24,87 @@ RSpec.describe "Groups", type: :request do
       end
     end
 
+    # WHY: #498, home being the group itself for a member of exactly one current group, counted the way the policies count membership.
+    context "when signed in as a member of exactly one current group" do
+      it "takes an active member from the root to the group's page, per AC1" do
+        member = create(:member, :active)
+        sign_in_as(member.user)
+
+        get root_path
+
+        expect(response).to redirect_to group_path(member.group)
+      end
+
+      it "takes an active member from the groups list to the group's page, per AC1" do
+        member = create(:member, :active)
+        sign_in_as(member.user)
+
+        get groups_path
+
+        expect(response).to redirect_to group_path(member.group)
+      end
+
+      it "takes a paused member to the group's page too, per AC1" do
+        member = create(:member, :paused)
+        sign_in_as(member.user)
+
+        get root_path
+
+        expect(response).to redirect_to group_path(member.group)
+      end
+
+      it "lands an active member who is pending elsewhere on the active group, per AC4" do
+        member = create(:member, :active)
+        create(:member, :pending, user: member.user)
+        sign_in_as(member.user)
+
+        get root_path
+
+        expect(response).to redirect_to group_path(member.group)
+      end
+
+      it "lands an active member who has left another group on the active group, per AC4" do
+        member = create(:member, :active)
+        create(:member, :inactive, user: member.user)
+        sign_in_as(member.user)
+
+        get root_path
+
+        expect(response).to redirect_to group_path(member.group)
+      end
+    end
+
+    context "when signed in as a member of two current groups" do
+      it "shows the groups list, per AC2" do
+        member = create(:member, :active)
+        create(:member, :paused, user: member.user)
+        sign_in_as(member.user)
+
+        get root_path
+
+        expect(response).to have_http_status :ok
+      end
+    end
+
+    context "when signed in with no current group" do
+      it "shows the groups list to a user in no group, per AC3" do
+        sign_in_as(create(:user))
+
+        get root_path
+
+        expect(response).to have_http_status :ok
+      end
+
+      it "shows the groups list to a user whose only membership is pending, per AC3" do
+        member = create(:member, :pending)
+        sign_in_as(member.user)
+
+        get root_path
+
+        expect(response).to have_http_status :ok
+      end
+    end
+
     context "when not signed in" do
       it "redirects to the sign-in page" do
         get groups_path
@@ -74,9 +155,11 @@ RSpec.describe "Groups", type: :request do
         expect(Nokogiri::HTML(response.body).at_css("title").text).to eq "Your groups"
       end
 
+      # WHY: the member holds a second current group, as every member reading the list below does, since a member of exactly one is taken straight to it (#498).
       it "lists only the groups the acting user belongs to" do
         member = create(:member)
         other_group = create(:group) # the acting user does not belong to this one
+        create(:member, user: member.user)
         sign_in_as(member.user)
 
         get groups_path
@@ -92,6 +175,7 @@ RSpec.describe "Groups", type: :request do
     describe "a group's card" do
       it "tags the reader who owns the group" do
         member = create(:member, :owner)
+        create(:member, user: member.user)
         sign_in_as(member.user)
 
         get groups_path
@@ -101,6 +185,7 @@ RSpec.describe "Groups", type: :request do
 
       it "tags the reader whose membership is paused" do
         member = create(:member, :paused)
+        create(:member, user: member.user)
         sign_in_as(member.user)
 
         get groups_path
@@ -118,6 +203,7 @@ RSpec.describe "Groups", type: :request do
         # declared `on: :update` - but what makes the state one a real group can be in.
         create(:member, :owner, group:)
         member = create(:member, :paused, :owner, group:)
+        create(:member, user: member.user)
         sign_in_as(member.user)
 
         get groups_path
@@ -130,6 +216,7 @@ RSpec.describe "Groups", type: :request do
       # card says what the reader is. Watched failing against a tag drawn from `can_manage?`.
       it "tags an administrator with neither" do
         member = create(:member, :administrator)
+        create(:member, user: member.user)
         sign_in_as(member.user)
 
         get groups_path
@@ -146,8 +233,8 @@ RSpec.describe "Groups", type: :request do
           member = create(:member, group: create(:group))
           create(:member, group: member.group)
           create(:member, :inactive, group: member.group) # has left, so is not one of the people
-          create(:event, :gig, group: member.group, creator: member, status: :confirmed,
-            starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+          create(:event, :gig, group: member.group, creator: member, status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+          create(:member, user: member.user)
           sign_in_as(member.user)
 
           get groups_path
@@ -158,6 +245,7 @@ RSpec.describe "Groups", type: :request do
 
       it "says nothing is scheduled for a group with no upcoming event" do
         member = create(:member)
+        create(:member, user: member.user)
         sign_in_as(member.user)
 
         get groups_path
@@ -1299,7 +1387,9 @@ RSpec.describe "Groups", type: :request do
 
         patch group_path(member.group), params: { group: { name: "Renamed" } }
         follow_redirect!
+        follow_redirect!
 
+        expect(request.path).to eq group_path(member.group)
         expect(response.body).to include "You are not allowed to do that."
       end
     end

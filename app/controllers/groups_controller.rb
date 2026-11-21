@@ -4,7 +4,10 @@ class GroupsController < ApplicationController
   def index
     authorize! Group, to: :index?
 
-    @groups = authorized_scope(Group.all)
+    @groups = authorized_scope(Group.all).load
+    # WHY: home for a member of exactly one current group is that group's page. Rails carries a flash this request never touches on to the next one, so the alert or notice of whatever sent them home survives the extra hop only while nothing here reads the flash before the redirect.
+    return redirect_to group_path(@groups.sole) if @groups.one?
+
     # The reader's own standing in each group, which is what the card's tag says. Loaded once and
     # keyed by group, because a card that looked its own membership up would cost a query each -
     # the same association and the same preload the layout already makes for the switcher.

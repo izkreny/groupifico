@@ -18,10 +18,11 @@ RSpec.describe "Refusing a paused member", type: :system do
     sign_in_as member.user
   end
 
-  it "lands on the root page rather than on the form" do
+  # WHY: the refusal sends the member home, and home for a member of this one group is its page (#498).
+  it "lands on the group's page rather than on the form" do
     visit edit_group_path(member.group)
 
-    expect(page).to have_current_path root_path
+    expect(page).to have_current_path group_path(member.group)
   end
 
   it "paints the alert, rather than merely rendering it" do
