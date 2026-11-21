@@ -12,13 +12,14 @@
 <li id="<%= dom_id event %>" class="list-row">
   <%= status_icon event, label: event.status, class: "size-icon-standalone self-center text-icon-muted" %>
 
+  <%# WHY: the name's link is stretched over the whole row, daisyUI's `list-row` being its positioned container, so pressing anywhere on it opens the event while a screen reader still meets one link; the map link, the pencil and the answer buttons in `events/_response` are each lifted above that overlay with `relative z-1`, so the gaps between them still open the event. %>
   <div>
-    <%= link_to event.name, group_event_path(event.group, event), class: "link link-hover" %>
+    <%= link_to event.name, group_event_path(event.group, event), class: "link link-hover after:absolute after:inset-0" %>
 
     <div class="text-xs">
       <%= event_schedule_start(event) %>
       <% if event.address %>
-        · <%= link_to event.address.name, address_map_url(event.address), class: "link link-hover", target: "_blank" %>
+        · <%= link_to event.address.name, address_map_url(event.address), class: "link link-hover relative z-1", target: "_blank" %>
       <% end %>
     </div>
   </div>
@@ -30,7 +31,7 @@
 
   <%# Frame 4h's pencil, last in the row, for a reader `edit?` allows. WHY: 20px, the answer's size and a step under the event's 24px status, so it reads beside the answer without competing with the name. WHY: the margin takes the row's 16px gap, daisyUI's rather than a token, down to `controls` plus the pencil's own inset, which sets its glyph 20px from the answer's bare one, the glyph gap the event screen's roster keeps. %>
   <% if allowed_to?(:edit?, event) %>
-    <%= link_to edit_group_event_path(event.group, event), class: "btn btn-ghost btn-circle btn-sm text-primary self-center ml-[calc(var(--spacing-controls)+var(--spacing-control-inset)-1rem)]", aria: { label: "Edit #{event.name}" } do %>
+    <%= link_to edit_group_event_path(event.group, event), class: "btn btn-ghost btn-circle btn-sm relative z-1 text-primary self-center ml-[calc(var(--spacing-controls)+var(--spacing-control-inset)-1rem)]", aria: { label: "Edit #{event.name}" } do %>
       <%= icon :edit, class: "size-icon-control" %>
     <% end %>
   <% end %>
