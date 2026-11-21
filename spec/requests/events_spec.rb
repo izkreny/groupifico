@@ -846,7 +846,7 @@ RSpec.describe "Events", type: :request do
 
       # After the end the pills are Yes and No, so a maybe given before the event has no pill to light, and the status icon says where that row stands instead.
       it "offers yes and no on an ended event's roster, and a status icon on a row that said maybe" do
-        owner = create(:member, :active, :owner)
+        owner = create(:member, :active, :owner, user: create(:user, first_name: "Dora"))
         event = travel_to(Time.zone.parse("2026-09-01 12:00")) { detailed_event(owner, reader_status: :maybe) }
         sign_in_as(owner.user)
 
@@ -1035,7 +1035,7 @@ RSpec.describe "Events", type: :request do
       # as far as that this screen draws it, and a reserved row carries the bookmark because a
       # member's view has no paper plane to read the state from.
       it "draws the same rows in roster order as status icons, with nothing to press" do
-        member = create(:member, :active)
+        member = create(:member, :active, user: create(:user, first_name: "Dora"))
         event = detailed_event(member)
         sign_in_as(member.user)
 
@@ -1610,7 +1610,7 @@ RSpec.describe "Events", type: :request do
         event = create(:event, group: actor.group)
         paused = create(:registration, event:, member: create(:member, :paused, group: event.group)).member
         gone = create(:registration, event:, member: create(:member, :inactive, group: event.group)).member
-        unlisted = create(:member, :inactive, group: event.group)
+        unlisted = create(:member, :inactive, group: event.group, user: create(:user, first_name: "Dora"))
         sign_in_as(actor.user)
 
         get edit_group_event_path(event.group, event)

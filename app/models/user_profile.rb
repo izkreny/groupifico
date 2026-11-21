@@ -41,6 +41,13 @@ class UserProfile < ApplicationRecord
   validates :mobile_phone, uniqueness: { case_sensitive: false }, length: { maximum: 50 }, allow_nil: true
   # nilify empty mobile phone because there is a unique index on the nullable `mobile_phone` database field
   normalizes :mobile_phone, with: ->(mobile_phone) { mobile_phone.strip.empty? ? nil : mobile_phone }
+  # WHY: a context rather than a model-wide rule, because the empty profile `User` builds on create is what an email-only invitation, a sign-up and a join save; the profile form and the member import save in `:setup`.
+  validates :first_name, :last_name, :mobile_phone, presence: true, on: :setup
+
+  # WHY: plain presence rather than `valid?(:setup)`, which would run the mobile's uniqueness query and fill `errors` on every request `ProfileSetup` asks it.
+  def setup?
+    first_name.present? && last_name.present? && mobile_phone.present?
+  end
 
 
   # TODO: Maybe create a `full_name` field in the `members` table?

@@ -6,6 +6,8 @@ class PicksController < ApplicationController
   # WHY: the sign-in screens load the picker too, through `layouts/_head`, and a developer's tool behind the guard above has no decision for a policy to make. Named actions, for the reason `StyleguidesController` gives.
   allow_unauthenticated_access only: %i[ index create ]
   skip_verify_authorized only: %i[ index create ]
+  # WHY: the picker posts from every page, the profile form `ProfileSetup` sends a member to included.
+  allow_unset_profile only: %i[ index create ]
   skip_verify_authorized_scoped only: %i[ index ]
 
   def index

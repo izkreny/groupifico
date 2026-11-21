@@ -170,7 +170,7 @@ RSpec.describe User, type: :model do
     end
 
     it "is invalid, with the error on :profile, when build_profile is stubbed out as the presence backstop" do
-      user = build(:user)
+      user = build(:user, :not_set_up)
       allow(user).to receive(:build_profile)
 
       expect(user).not_to be_valid

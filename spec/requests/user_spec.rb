@@ -43,6 +43,14 @@ RSpec.describe "User", type: :request do
         expect(flash[:notice]).to eq "Your account was deleted."
       end
 
+      # WHY: the profile form a user without a first name and a mobile is sent to draws Delete my account, so it has to work for them.
+      it "destroys a user whose profile lacks a first name and a mobile" do
+        sign_in_as(create(:user, :not_set_up))
+
+        expect { delete user_path }
+          .to change(User, :count).by(-1)
+      end
+
       it "refuses while the reader is a group's only active owner, and says nothing happened" do
         member = create(:member, :owner)
         sign_in_as(member.user)

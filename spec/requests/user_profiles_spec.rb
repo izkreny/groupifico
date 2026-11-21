@@ -64,6 +64,15 @@ RSpec.describe "UserProfiles", type: :request do
         expect(response).to have_http_status :ok
       end
 
+      # WHY: #472 AC1, the form being the one screen `ProfileSetup` lets a user without a first name and a mobile reach.
+      it "shows the edit profile page to a user without a first name and a mobile" do
+        sign_in_as(create(:user, :not_set_up))
+
+        get edit_user_profile_path
+
+        expect(response).to have_http_status :ok
+      end
+
       it "goes back home, there being no profile screen to return to" do
         sign_in_as(create(:user))
 
@@ -79,7 +88,25 @@ RSpec.describe "UserProfiles", type: :request do
         document = Nokogiri::HTML(response.body)
 
         expect(document.css("form label").map { it.text.squish }).to eq [ "First name", "Last name", "Mobile", "Email" ]
-        expect(document.at_css("#user_profile_mobile_phone_hint").text).to eq "Optional. Shown to members of your groups."
+      end
+
+      # WHY: #472 AC5. Every field is required, so none says it may stay empty.
+      it "marks no field as optional" do
+        sign_in_as(create(:user))
+
+        get edit_user_profile_path
+        document = Nokogiri::HTML(response.body)
+
+        expect(document.at_css("#user_profile_last_name_hint")).to be_nil
+        expect(document.at_css("#user_profile_mobile_phone_hint").text).to eq "Shown to members of your groups."
+      end
+
+      it "carries the page the member was sent from into the form" do
+        sign_in_as(create(:user))
+
+        get edit_user_profile_path(return_to: "/join?token=abc")
+
+        expect(Nokogiri::HTML(response.body).at_css("form[action='#{user_profile_path}'] input[name=return_to]")["value"]).to eq "/join?token=abc"
       end
 
       it "leads the form's button row with Delete my account" do
@@ -195,7 +222,7 @@ RSpec.describe "UserProfiles", type: :request do
 
       # The header's avatar and menu read the member's stored profile, so a refused write never reaches them: a blank email and no name would otherwise leave `initials` nothing to take a letter from, and the menu would name an address that was never saved.
       it "keeps the stored initials and email in the header when a cleared email is refused" do
-        user = create(:user, email: "ada@example.com")
+        user = create(:user, :not_set_up, email: "ada@example.com")
         sign_in_as(user)
 
         patch user_profile_path, params: { user_profile: { user_attributes: { email: "" } } }
@@ -214,6 +241,47 @@ RSpec.describe "UserProfiles", type: :request do
 
         expect(other.reload.email).to eq "other@example.com"
         expect(user.reload.email).to eq "taken@example.com"
+      end
+
+      # WHY: #472 AC3 and AC5. A first name, a last name and a mobile are what lets a member past the profile form, so a save without any of them is refused on the field it lacks.
+      it "refuses a save without a first name, a last name or a mobile, with the error under each field" do
+        user = create(:user)
+        sign_in_as(user)
+
+        patch user_profile_path, params: { user_profile: { first_name: "", last_name: "", mobile_phone: " " } }
+        document = Nokogiri::HTML(response.body)
+
+        expect(response).to have_http_status :unprocessable_content
+        expect(document.at_css("#user_profile_first_name_error").text).to eq "First name can't be blank"
+        expect(document.at_css("#user_profile_last_name_error").text).to eq "Last name can't be blank"
+        expect(document.at_css("#user_profile_mobile_phone_error").text).to eq "Mobile phone can't be blank"
+      end
+
+      # WHY: #472 AC5, the last name alone being enough to refuse, with the stored profile left as it was.
+      it "refuses a save that clears the last name, keeping the stored one" do
+        user = create(:user)
+        sign_in_as(user)
+
+        patch user_profile_path, params: { user_profile: { last_name: "" } }
+
+        expect(response).to have_http_status :unprocessable_content
+        expect(user.profile.reload).to be_setup
+      end
+
+      it "returns to the page the member was sent from" do
+        sign_in_as(create(:user))
+
+        patch user_profile_path, params: { user_profile: { first_name: "Ada" }, return_to: "/join?token=abc" }
+
+        expect(response).to redirect_to "/join?token=abc"
+      end
+
+      it "returns home rather than to another site" do
+        sign_in_as(create(:user))
+
+        patch user_profile_path, params: { user_profile: { first_name: "Ada" }, return_to: "https://evil.example.com/" }
+
+        expect(response).to redirect_to root_path
       end
 
       it "re-renders the edit page when the update is invalid" do

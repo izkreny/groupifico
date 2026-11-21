@@ -5,11 +5,15 @@
   the email: the frame promises a confirmation mail when it changes, and nothing sends one yet.
 %>
 <%= form_with(model: user_profile, namespace:, class: "contents") do |form| %>
+  <%# WHY: `ProfileSetup` sends a member here from the page they asked for, such as a group's join link, and Save takes them back to it. %>
+  <% if return_to %>
+    <%= hidden_field_tag :return_to, return_to %>
+  <% end %>
   <%= form.with_error_summary do %>
     <fieldset class="fieldset">
       <%= form.field :first_name %>
       <%= form.field :last_name %>
-      <%= form.field :mobile_phone, as: :telephone_field, label: "Mobile", hint: "Optional. Shown to members of your groups." %>
+      <%= form.field :mobile_phone, as: :telephone_field, label: "Mobile", hint: "Shown to members of your groups." %>
 
       <%# No `id`: `update_only` writes the profile's own user, so the form has nothing to name. %>
       <%= form.fields_for :user, include_id: false do |user_form| %>

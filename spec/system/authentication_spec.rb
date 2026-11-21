@@ -16,9 +16,10 @@ RSpec.describe "Authentication", type: :system do
 
   # The route #208 gives somebody an owner or administrator added: the welcome mail's link opens the
   # sign-in form already holding their address, the button asks for a sign-in link, and that link
-  # lands them where the group they were added to is listed. The sign-in link is minted rather than
-  # read out of a delivered mail, which is what `sign_in_through_the_browser` already does.
-  it "signs an added member in from the welcome mail, landing where their group is listed" do
+  # lands them on the profile form, since an added member is known by the address alone (#472 AC1).
+  # The sign-in link is minted rather than read out of a delivered mail, which is what
+  # `sign_in_through_the_browser` already does.
+  it "signs an added member in from the welcome mail, landing on the profile form" do
     member = Member.create!(group: create(:group, name: "Riverside Choir"), email: "added@example.com")
     link   = URI.parse(MemberMailer.welcome(member).body.encoded[%r{https?://\S+?/session/new\?email=[^\s"<]+}])
 
@@ -28,7 +29,7 @@ RSpec.describe "Authentication", type: :system do
     expect(page).to have_text "Check your inbox"
 
     sign_in_through_the_browser member.user
-    expect(page).to have_text "Riverside Choir"
+    expect(page).to have_current_path edit_user_profile_path, ignore_query: true
   end
 
   # WHY: #430 AC1 walked in the browser, with the link read out of the delivered mail so every hop is the real one; the event's creator is the member, since the factory makes them one of its group.
@@ -47,8 +48,8 @@ RSpec.describe "Authentication", type: :system do
     expect(page).to have_current_path group_event_path(event.group, event)
   end
 
-  # WHY: #446 AC7 walked in the browser, a visitor nobody has heard of yet following a join link and coming back to it, with the link read out of the delivered mail so every hop is the real one; landing on the join page from the Sign in button is the session having started, since a refused link lands on the sign-in form.
-  it "returns a visitor who asked from a join link to the join page, signed in" do
+  # WHY: #446 AC7 walked in the browser, a visitor nobody has heard of yet following a join link and coming back to it, with the link read out of the delivered mail so every hop is the real one; landing on the profile form from the Sign in button is the session having started, since a refused link lands on the sign-in form, and #472 AC1 sends a visitor known by the address alone there first, carrying the join page that its Save returns to.
+  it "returns a visitor who asked from a join link towards the join page, signed in" do
     token = JoinLink.mint(create(:group))
 
     visit new_join_request_path(token:)
@@ -60,7 +61,7 @@ RSpec.describe "Authentication", type: :system do
     visit mailed_sign_in_link("visitor@example.com").request_uri
     click_button "Sign in"
 
-    expect(page).to have_current_path new_join_request_path(token:)
+    expect(page).to have_current_path edit_user_profile_path(return_to: new_join_request_path(token:))
   end
 
   # Guards the helper every other system spec depends on: a cookie the browser rejects would make

@@ -2,6 +2,18 @@ require 'rails_helper'
 
 RSpec.describe "JoinRequests", type: :request do
   describe "GET /join/new" do
+    # WHY: #472 AC1, the join page reaching a signed-out visitor too, so the gate cannot lean on `Current.user` having been resumed.
+    context "when signed in without a first name and a mobile" do
+      it "sends them to the profile form, carrying the join page to come back to" do
+        token = JoinLink.mint(create(:group))
+        sign_in_as(create(:user, :not_set_up))
+
+        get new_join_request_path(token:)
+
+        expect(response).to redirect_to edit_user_profile_path(return_to: new_join_request_path(token:))
+      end
+    end
+
     context "when not signed in" do
       it "names the group a live link belongs to" do
         token = JoinLink.mint(create(:group, name: "Riverside Choir"))

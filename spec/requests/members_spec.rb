@@ -205,7 +205,7 @@ RSpec.describe "Members", type: :request do
       it "offers a call link only for a member with a mobile, and an email link for everyone" do
         reader  = create(:member, :active)
         with    = create(:member, group: reader.group, user: create(:user, :with_full_profile))
-        without = create(:member, group: reader.group)
+        without = create(:member, group: reader.group, user: create(:user, :not_set_up))
         sign_in_as(reader.user)
 
         get group_members_path(reader.group)

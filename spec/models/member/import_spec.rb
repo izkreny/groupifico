@@ -27,7 +27,7 @@ RSpec.describe Member::Import do
   end
 
   describe "a row whose address belongs to an account outside the group" do
-    let!(:user) { create(:user, email: "marko@example.com") }
+    let!(:user) { create(:user, :not_set_up, email: "marko@example.com") }
     let(:import) { described_class.new(group, csv("Marko,Babić,marko@example.com,+385922222222")) }
 
     before { user.profile.update!(first_name: "Mark") }
@@ -53,7 +53,7 @@ RSpec.describe Member::Import do
 
   describe "a row whose address already belongs to a member of the group" do
     it "changes nothing" do
-      member = create(:member, group:, user: create(:user, email: "iva@example.com"))
+      member = create(:member, group:, user: create(:user, :not_set_up, email: "iva@example.com"))
       import = described_class.new(group, csv("Iva,Kovač,iva@example.com,+385933333333"))
 
       expect { import.save }.not_to change(Member, :count)
@@ -95,6 +95,40 @@ RSpec.describe Member::Import do
         have_attributes(line: 3, outcome: :refused, reasons: [ "User email is invalid" ]),
         have_attributes(line: 4, outcome: :added)
       )
+    end
+  end
+
+  # WHY: #472 AC4. A member without a first name, a last name and a mobile is sent to the profile form at every sign-in, so the import never adds one.
+  describe "a row without a first name, a last name or a mobile" do
+    it "refuses a new account's row without a first name, naming its line" do
+      import = described_class.new(group, csv(",Horvat,ana@example.com,+385911111111"))
+
+      expect { expect(import.save).to be(false) }.not_to change(User, :count)
+      expect(import.rows).to contain_exactly(have_attributes(line: 2, outcome: :refused, reasons: [ "First name can't be blank" ]))
+    end
+
+    # WHY: #472 AC5.
+    it "refuses a new account's row without a last name, naming its line" do
+      import = described_class.new(group, csv("Ana,,ana@example.com,+385911111111"))
+
+      expect { expect(import.save).to be(false) }.not_to change(User, :count)
+      expect(import.rows).to contain_exactly(have_attributes(line: 2, outcome: :refused, reasons: [ "Last name can't be blank" ]))
+    end
+
+    it "refuses a new account's row without a mobile, naming its line" do
+      import = described_class.new(group, csv("Ana,Horvat,ana@example.com,"))
+
+      expect { expect(import.save).to be(false) }.not_to change(User, :count)
+      expect(import.rows).to contain_exactly(have_attributes(line: 2, outcome: :refused, reasons: [ "Mobile phone can't be blank" ]))
+    end
+
+    it "adds an account whose profile already holds all three, the row's blanks left to it" do
+      user = create(:user, email: "marko@example.com")
+      import = described_class.new(group, csv(",,marko@example.com,"))
+
+      expect(import.save).to be(true)
+      expect(import.rows).to contain_exactly(have_attributes(line: 2, outcome: :joined))
+      expect(group.members.find_by!(user:)).to be_active
     end
   end
 

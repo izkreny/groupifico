@@ -310,7 +310,7 @@ RSpec.describe Member, type: :model do
 
   describe "#full_name" do
     it "answers the email local part for a fresh signup whose profile has no name yet" do
-      member = create(:member, user: create(:user, email: "fresh.signup@example.com"))
+      member = create(:member, user: create(:user, :not_set_up, email: "fresh.signup@example.com"))
 
       expect(member.full_name).to eq "fresh.signup"
     end
