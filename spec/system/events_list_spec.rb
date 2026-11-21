@@ -131,7 +131,7 @@ RSpec.describe "The events list", type: :system do
     JS
   end
 
-  # WHY: #460 AC12. The tabs and the chips paint differently in each theme, and an inactive tab is where daisyUI's own dimming fell short of 4.5:1.
+  # WHY: #460 AC12. The tabs and the chips paint differently in each theme, and an inactive tab is where daisyUI's own dimming fell short of 4.5:1. #462 AC2: an owner's row carries To do too, so the pass waits for that tab before running.
   it "passes axe on the list with its tabs and chips, in organic" do
     member = create(:member, :owner)
     next_event_for(member)
@@ -140,7 +140,7 @@ RSpec.describe "The events list", type: :system do
 
     visit group_events_path(member.group, category: %w[ rehearsal ])
 
-    expect(page).to have_link("Clear all").and be_accessible
+    expect(page).to have_link("Clear all").and have_css("nav[aria-label='Event lists'] a", text: /\ATo do /).and be_accessible
   end
 
   it "passes axe on the list with its tabs and chips, in organic-dark" do
@@ -151,7 +151,7 @@ RSpec.describe "The events list", type: :system do
 
     visit group_events_path(member.group, category: %w[ rehearsal ])
 
-    expect(page).to have_link("Clear all").and be_accessible
+    expect(page).to have_link("Clear all").and have_css("nav[aria-label='Event lists'] a", text: /\ATo do /).and be_accessible
   end
 
   # WHY: #460 AC12. The sheet is only in the accessibility tree while it is open, which only a browser can make it, and its picks paint differently in each theme.
@@ -364,7 +364,7 @@ RSpec.describe "The events list", type: :system do
     expect([ clear.top == show.top && clear.left < show.left, narrow_show.top < narrow_clear.top ]).to eq [ true, true ]
   end
 
-  # WHY: #484 AC12 and AC13. The browser's accessibility tree names each tab with what its count counts, while the tab shows the count alone.
+  # WHY: #484 AC12 and AC13. The browser's accessibility tree names each tab with what its count counts, while the tab shows the count alone; an owner's row carries To do third, after Past, "(0)" included, per #462 AC2 and AC8.
   it "names each tab with what its count counts, showing the count alone" do
     member = create(:member, :owner)
     next_event_for(member)
@@ -372,8 +372,8 @@ RSpec.describe "The events list", type: :system do
 
     visit group_events_path(member.group)
 
-    expect(tab_names(%w[ Upcoming Past Canceled ])).to eq [ "Upcoming (1 event)", "Past (0 events)", "Canceled (0 events)" ]
-    expect(page.all("nav[aria-label='Event lists'] a").map(&:text)).to eq [ "Upcoming (1)", "Past (0)", "Canceled (0)" ]
+    expect(tab_names([ "Upcoming", "Past", "To do", "Canceled" ])).to eq [ "Upcoming (1 event)", "Past (0 events)", "To do (0 events)", "Canceled (0 events)" ]
+    expect(page.all("nav[aria-label='Event lists'] a").map(&:text)).to eq [ "Upcoming (1)", "Past (0)", "To do (0)", "Canceled (0)" ]
   end
 
   # A Turbo visit away and Back, the way a member leaves the list and returns, where a `visit` would be a full page load.

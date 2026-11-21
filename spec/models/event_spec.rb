@@ -245,6 +245,22 @@ RSpec.describe Event, type: :model do
     end
   end
 
+  describe ".to_do" do
+    # WHY: #462 AC1. An unconfirmed event waits on whoever runs it whatever its dates, and a confirmed one once it has ended; a confirmed one still running or ahead, a concluded one and a canceled one do not.
+    it "returns every unconfirmed event and every ended one still confirmed" do
+      ended_unconfirmed = create(:event, :from_the_past, status: :unconfirmed)
+      ongoing_unconfirmed = create(:event, :ongoing, status: :unconfirmed)
+      ahead_unconfirmed = create(:event, :from_the_future, status: :unconfirmed)
+      ended_confirmed = create(:event, :from_the_past, status: :confirmed)
+      create(:event, :ongoing, status: :confirmed)
+      create(:event, :from_the_future, status: :confirmed)
+      create(:event, :from_the_past, status: :concluded)
+      create(:event, :from_the_past, status: :canceled)
+
+      expect(described_class.to_do).to contain_exactly(ended_unconfirmed, ongoing_unconfirmed, ahead_unconfirmed, ended_confirmed)
+    end
+  end
+
   describe "#ongoing?" do
     it "is true between the event's start and its end" do
       freeze_time do
