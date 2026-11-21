@@ -41,6 +41,18 @@ RSpec.describe "Members", type: :request do
         expect(response.body).not_to include(ActionView::RecordIdentifier.dom_id(other_member))
       end
 
+      # WHY: #508 AC4. The whole row opens the member's screen through its name's stretched link, so it still carries that one link and nothing new for a screen reader or the Tab order to meet.
+      it "links each row to its member's screen once, by the name" do
+        member = create(:member, :active)
+        other  = create(:member, :with_all_attributes, group: member.group)
+        sign_in_as(member.user)
+
+        get group_members_path(member.group)
+
+        links = Nokogiri::HTML(response.body).css("##{ActionView::RecordIdentifier.dom_id(other, :row)} a[href='#{group_member_path(member.group, other)}']")
+        expect(links.map(&:text)).to eq [ other.full_name ]
+      end
+
       it "does not say who has not signed in yet" do
         member = create(:member, :active)
         create(:member, group: member.group, user: create(:user, first_signed_in_at: nil))

@@ -39,6 +39,18 @@ RSpec.describe "Events", type: :request do
         expect(response).to have_http_status :ok
       end
 
+      # WHY: #508 AC4. The whole row opens the event's screen through its name's stretched link, so it still carries that one link and nothing new for a screen reader or the Tab order to meet.
+      it "links each row to its event's screen once, by the name" do
+        member = create(:member, :active)
+        event  = create(:event, group: member.group, name: "Spring concert", status: :confirmed, starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group)
+
+        links = Nokogiri::HTML(response.body).css("##{ActionView::RecordIdentifier.dom_id(event)} a[href='#{group_event_path(member.group, event)}']")
+        expect(links.map(&:text)).to eq [ "Spring concert" ]
+      end
+
       # WHY: #460 AC1. The screen's title names it, the list is a tab under it, and the funnel beside the + carries no text, so its accessible name is the only label it has.
       it "titles the screen Events, with an icon-only funnel named Filter events, the lists as tabs and no list menu" do
         member = create(:member, :active)

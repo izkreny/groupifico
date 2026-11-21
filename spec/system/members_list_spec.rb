@@ -69,6 +69,35 @@ RSpec.describe "The members list", type: :system do
     expect(page).to have_button "Save member"
   end
 
+  # WHY: #508 AC1. The avatar is no control, so pressing it is pressing the row. Pressed by its coordinates, because Cuprite refuses to click an element something else covers, and being covered by the name's link is the point.
+  it "lands on a member's screen from anywhere on their row" do
+    actor  = create(:member, :active, :with_all_attributes)
+    target = create(:member, :with_all_attributes, group: actor.group)
+    sign_in_as actor.user
+
+    visit group_members_path(actor.group)
+    x, y = find("##{ActionView::RecordIdentifier.dom_id(target, :row)} .avatar").evaluate_script("(box => [ box.left + box.width / 2, box.top + box.height / 2 ])(this.getBoundingClientRect())")
+    page.driver.browser.mouse.click(x:, y:)
+
+    expect(page).to have_current_path group_member_path(actor.group, target)
+  end
+
+  # WHY: #508 AC3. A press lands on whatever is topmost under it, so every control on the row has to be the topmost element at its own centre rather than the name's overlay.
+  it "keeps every control on a row above the link to its member" do
+    actor  = create(:member, :active, :members_administrator, :with_all_attributes)
+    target = create(:member, :with_all_attributes, group: actor.group)
+    sign_in_as actor.user
+    page.current_window.resize_to(1280, 900)
+
+    visit group_members_path(actor.group)
+
+    topmost = find_by_id(ActionView::RecordIdentifier.dom_id(target, :row)).evaluate_script(<<~JS)
+      [...this.querySelectorAll("a, button")].slice(1).map(control => (box => [ control.getAttribute("aria-label"), control.contains(document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2)) ])(control.getBoundingClientRect()))
+    JS
+    name = target.full_name
+    expect(topmost).to eq [ [ "Call #{name}", true ], [ "Email #{name}", true ], [ "Edit #{name}", true ] ]
+  end
+
   it "draws a row's icons at 20px, 20px apart" do
     actor  = create(:member, :active, :members_administrator, :with_all_attributes)
     target = create(:member, :with_all_attributes, group: actor.group)
