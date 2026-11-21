@@ -364,7 +364,7 @@ RSpec.describe "The events list", type: :system do
     expect([ clear.top == show.top && clear.left < show.left, narrow_show.top < narrow_clear.top ]).to eq [ true, true ]
   end
 
-  # WHY: #484 AC12 and AC13. The browser's accessibility tree names each tab with what its count counts, while the tab shows the count alone; an owner's row carries To do second, "(0)" included, per #462 AC2 and AC8.
+  # WHY: #484 AC12 and AC13. The browser's accessibility tree names each tab with what its count counts, while the tab shows the count alone; an owner's row carries To do third, after Past, "(0)" included, per #462 AC2 and AC8.
   it "names each tab with what its count counts, showing the count alone" do
     member = create(:member, :owner)
     next_event_for(member)
@@ -372,8 +372,8 @@ RSpec.describe "The events list", type: :system do
 
     visit group_events_path(member.group)
 
-    expect(tab_names([ "Upcoming", "To do", "Past", "Canceled" ])).to eq [ "Upcoming (1 event)", "To do (0 events)", "Past (0 events)", "Canceled (0 events)" ]
-    expect(page.all("nav[aria-label='Event lists'] a").map(&:text)).to eq [ "Upcoming (1)", "To do (0)", "Past (0)", "Canceled (0)" ]
+    expect(tab_names([ "Upcoming", "Past", "To do", "Canceled" ])).to eq [ "Upcoming (1 event)", "Past (0 events)", "To do (0 events)", "Canceled (0 events)" ]
+    expect(page.all("nav[aria-label='Event lists'] a").map(&:text)).to eq [ "Upcoming (1)", "Past (0)", "To do (0)", "Canceled (0)" ]
   end
 
   # A Turbo visit away and Back, the way a member leaves the list and returns, where a `visit` would be a full page load.

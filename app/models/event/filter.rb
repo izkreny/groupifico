@@ -4,7 +4,7 @@ class Event::Filter
 
   TAB = :scope
   # WHY: each list by the name a URL gives it, in the order the tabs read. The first one offered is the reader's default, which `#offered_tabs` gives the screen's own URL, with no `scope`.
-  TABS = { "upcoming" => "Upcoming", "to_do" => "To do", "past" => "Past", "canceled" => "Canceled" }.freeze
+  TABS = { "upcoming" => "Upcoming", "past" => "Past", "to_do" => "To do", "canceled" => "Canceled" }.freeze
   # WHY: the events waiting on whoever runs them are the `EventPolicy#oversee?` columns' read, so the tab is theirs alone, the way Pending is on the members list.
   OVERSEER_TABS = %w[ to_do ].freeze
   # WHY: in the sheet's order rather than the enum's, so the chips read in the order the sheet offers them.

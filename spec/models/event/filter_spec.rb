@@ -35,9 +35,9 @@ RSpec.describe Event::Filter do
   end
 
   describe "#offered_tabs" do
-    # WHY: #462 AC2. To do comes second for a member who oversees the events, after Upcoming, which keeps the screen's own URL.
-    it "offers To do second to a member who oversees the events" do
-      expect(described_class.new(member, oversees: true).offered_tabs).to eq({ nil => "Upcoming", "to_do" => "To do", "past" => "Past", "canceled" => "Canceled" })
+    # WHY: #462 AC2. To do comes third for a member who oversees the events, after Past, where Pending sits on the members list; compared as pairs because a hash compares equal whatever its order.
+    it "offers To do third, after Past, to a member who oversees the events" do
+      expect(described_class.new(member, oversees: true).offered_tabs.to_a).to eq [ [ nil, "Upcoming" ], [ "past", "Past" ], [ "to_do", "To do" ], [ "canceled", "Canceled" ] ]
     end
 
     # WHY: #462 AC4. Anyone else is offered no To do tab.
@@ -169,7 +169,7 @@ RSpec.describe Event::Filter do
     it "links To do with every filter still on" do
       filter = described_class.new(member, oversees: true, scope: "past", categories: %w[ gig ])
 
-      expect(filter.tabs[1]).to eq [ "To do", "to_do", { scope: "to_do", category: %w[ gig ] } ]
+      expect(filter.tabs[2]).to eq [ "To do", "to_do", { scope: "to_do", category: %w[ gig ] } ]
     end
   end
 
