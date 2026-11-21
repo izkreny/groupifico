@@ -256,18 +256,28 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include %(href="#{new_group_event_path(actor.group)}")
       end
 
-      # WHY: #462 AC1, AC2 and AC3. To do is the third tab, after Past, and Upcoming the one a bare URL opens on; To do lists the event that ended while still confirmed and leaves out the one still ahead.
-      it "offers To do third, listing an event that ended without being concluded, and opens on Upcoming" do
+      # WHY: #462 AC2 and AC3. To do is the third tab, after Past, and Upcoming the one a bare URL opens on.
+      it "offers To do third and opens on Upcoming" do
         actor = create(:member, :active, :events_administrator)
         confirmed_event(actor, days: -2, name: "Summer gig")
         confirmed_event(actor, days: 3, name: "Advent concert")
         sign_in_as(actor.user)
 
         get group_events_path(actor.group)
+
         tabs = Nokogiri::HTML(response.body).css("nav[aria-label='Event lists'] a")
+        expect([ tabs.map(&:text), tabs.map { it["aria-current"] } ]).to eq [ [ "Upcoming (1)", "Past (1)", "To do (1)", "Canceled (0)" ], [ "page", nil, nil, nil ] ]
+      end
+
+      # WHY: #462 AC1. To do lists the event that ended while still confirmed and leaves out the confirmed one still ahead.
+      it "lists on To do an event that ended without being concluded" do
+        actor = create(:member, :active, :events_administrator)
+        confirmed_event(actor, days: -2, name: "Summer gig")
+        confirmed_event(actor, days: 3, name: "Advent concert")
+        sign_in_as(actor.user)
+
         get group_events_path(actor.group, scope: "to_do")
 
-        expect([ tabs.map(&:text), tabs.map { it["aria-current"] } ]).to eq [ [ "Upcoming (1)", "Past (1)", "To do (1)", "Canceled (0)" ], [ "page", nil, nil, nil ] ]
         expect([ response.body.include?("Summer gig"), response.body.include?("Advent concert") ]).to eq [ true, false ]
       end
 
