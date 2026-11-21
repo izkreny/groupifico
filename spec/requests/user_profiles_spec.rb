@@ -257,15 +257,15 @@ RSpec.describe "UserProfiles", type: :request do
         expect(document.at_css("#user_profile_mobile_phone_error").text).to eq "Mobile phone can't be blank"
       end
 
-      # WHY: #472 AC5, the last name alone being enough to refuse.
-      it "refuses a save without a last name" do
-        user = create(:user, :not_set_up)
+      # WHY: #472 AC5, the last name alone being enough to refuse, with the stored profile left as it was.
+      it "refuses a save that clears the last name, keeping the stored one" do
+        user = create(:user)
         sign_in_as(user)
 
-        patch user_profile_path, params: { user_profile: { first_name: "Ada", last_name: "", mobile_phone: "+385911111111" } }
+        patch user_profile_path, params: { user_profile: { last_name: "" } }
 
         expect(response).to have_http_status :unprocessable_content
-        expect(user.profile.reload).not_to be_setup
+        expect(user.profile.reload).to be_setup
       end
 
       it "returns to the page the member was sent from" do

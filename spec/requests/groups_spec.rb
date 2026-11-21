@@ -15,7 +15,7 @@ RSpec.describe "Groups", type: :request do
 
       it "sends them when only the mobile is missing" do
         user = create(:user, :not_set_up)
-        user.profile.update!(first_name: "Ada")
+        user.profile.update!(first_name: "Ada", last_name: "Lovelace")
         sign_in_as(user)
 
         get groups_path
