@@ -30,8 +30,8 @@ None of these gates can read. They say nothing about whether the ADR states the 
 
 ## Open questions
 
-None. The design questions were settled in the grilling session. The one choice left open, plain Rails or `state_machines`, is the ADR's to record as open rather than this branch's to settle, which is why the pull request refers to #329 rather than closing it.
+None. The design questions were settled in the grilling session, and the one choice it left open is under `## Settled`.
 
 ## Settled
 
-None yet.
+- ::Q1:: Plain Rails or the `state_machines` gem family for the transitions? The gem family, decided by the owner on 2026-11-21 after a recheck found no upstream change since the versions tested, so ADR 0008 is Accepted and this pull request closes #329.

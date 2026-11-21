@@ -4,9 +4,9 @@
 
 ## Status
 
-Proposed, 2026-11-18.
+Accepted, 2026-11-21.
 
-Records what #329 decided about how a member's status changes, so #126 and the issues that hang off it cite this file rather than each carrying the reasoning. One choice is still open: whether the transitions are written in plain Rails or with the `state_machines` gem, which waits on questions put to that gem's maintainers. Everything else below is decided, and this record moves to Accepted when that choice is made.
+Records what #329 decided about how a member's status changes, so #126 and the issues that hang off it cite this file rather than each carrying the reasoning. It was proposed on 2026-11-18 with one choice open, plain Rails or the `state_machines` gem family, and the owner chose the gem family on 2026-11-21, on the evidence below and before its maintainers had answered the questions put to them.
 
 ## Context
 
@@ -45,11 +45,11 @@ The owner, the administrator and the members administrator may add, edit and del
 
 Every way a member comes into being writes the first change in the same save. The "Add member" form and the member edit form carry a start date that defaults to today. A join request and a new group's owner start today, the import brings its own dates, and the one-time backfill gives every existing member one change dated the day their membership was created.
 
-### One verb method per transition, and no callbacks
+### One event per transition, and no model callbacks
 
-Every change of the current status goes through a named method on `Member`, such as approving, pausing or deactivating, whichever path asks for it: the member form, an edit or delete of the current row, or an approval. In one transaction the method checks that the move is allowed, writes the change and the copy, and runs the cleanup below, and it queues the email with `ActiveRecord.after_all_transactions_commit`, as `Registration#request_response` already does, so a rolled-back save sends nothing. Imports and edits to past rows write rows directly and fire nothing.
+Every change of the current status fires a named event on `Member`'s state machine, such as approve, pause or deactivate, whichever path asks for it: the member form, an edit or delete of the current row, or an approval. In one transaction the machine checks that the move is allowed and saves the status, a `before_transition` runs the cleanup below, and the audit trail writes the status change row, while an `after_transition` with `after_commit: true` queues the email, so a rolled-back save sends nothing. Imports and edits to past rows write rows directly and fire nothing.
 
-No model callback reacts to the status column. A sweep of every status writer found that a callback would also fire for the CSV import, the seeds and the test factories, all of which must stay silent, and the house style keeps business logic out of callbacks.
+No model callback reacts to the status column. The machine's transition callbacks run only for an event, so the CSV import, the seeds and the test factories, which write the column without one, stay silent. A sweep of every status writer found that a callback on the column would fire for all of them, and the house style keeps business logic out of callbacks.
 
 ### What each transition does
 
@@ -67,25 +67,32 @@ A status change never edits a concluded event. A member's status on any date is 
 
 ### The pattern carries over to `Event` and `Registration`
 
-Both get the same shape, history included: a list of allowed transitions, a verb method per transition, and a row per change. Their timing differs from a member's, since a registration can go from `yes` to `maybe` to `no` in one afternoon, so whether their changes are dated or timestamped, and whether the one-change-a-day rule holds, is decided per model.
+Both get the same shape, history included: a state machine with its allowed transitions, an event per transition, and a row per change. Their timing differs from a member's, since a registration can go from `yes` to `maybe` to `no` in one afternoon, so whether their changes are dated or timestamped, and whether the one-change-a-day rule holds, is decided per model.
 
-### Still open: plain Rails or `state_machines`
+### The transitions use the `state_machines` family
 
-Plain Rails expresses the pattern with an enum, a constant of allowed transitions, and the verb methods, using only what Rails 8.1 ships. The `state_machines` family covers the transitions, the guards and the after-commit email, and its audit trail can write a row per transition into the app's own history model, but editing, deleting and importing that history are hand-built either way. The findings are under *Alternatives considered*. The maintainers have been asked about the gaps, and the answer decides this one choice.
+`state_machines-activerecord` drives the transitions, and `state_machines-audit_trail` writes each one as a `Member::StatusChange` row, through `class:` and through `context:` methods that read the new status from `transition.to` and `starts_on` and `updater` from the event's arguments. Editing, deleting and importing that history stay hand-built, as they would be either way.
+
+The versions are pinned exactly: `state_machines-activerecord` 0.304.0 with `state_machines` 0.305.0 and `state_machines-activemodel` 0.300.0, and `state_machines-audit_trail` 4.0.0. They move only as a deliberate step of an update round, because 0.300 to 0.305 shipped within three days with behaviour changes.
+
+These costs are accepted for now, each raised upstream: the enum integration adds prefixed methods and prints a conflict warning for each enum predicate when the class loads; the status change model carries no-op `event=`, `from=` and `to=` writers and an `alias_attribute` for its status, because the audit trail always assigns those three; and the first row's date reaches the audit trail through an attribute set on the member, because the initial entry carries no event arguments. States are declared by name beside the enum, never with `value:`, which breaks creation.
+
+The evidence, from reading the repositories and running the gems against this app's enum shape:
+
+- The gems require Ruby 4.0 and Active Record 8.1, which this app runs, and their CI runs on SQLite.
+- `before_transition` runs inside the save's transaction and `after_transition` with `after_commit: true` waits for the outermost commit, which is what the cleanup and the email need. Guards and refusal reasons come with it.
+- On an existing integer enum, states declared without values worked with `{ pending: 3, active: 0, paused: 1, inactive: 2 }`: every transition stored the enum's integer, a refused event returned `false` with an error, and the enum's predicates, scopes and `validate: true` kept working. Declaring the integers explicitly beside the enum failed on create with "Status is invalid".
+- Beside an enum it generates prefixed methods, 16 per model for four statuses (`status_active?`, `status_active!`, `status_active`, `not_status_active`), and prints a method-conflict warning for each enum predicate when the class loads. In 0.304.0 the prefix and the scopes are fixed rather than configurable.
+- `direct_assignment: :allow`, the default, leaves plain `update` and `update_columns` outside the machine, so imports stay silent.
+- The core and Active Record releases 0.300 to 0.305 shipped between 15 and 17 November 2026, two of them changing behaviour, among them the `around_transition` semantics and the `direct_assignment` default.
+- `state_machines-audit_trail` 4.0.0 writes a row per transition inside the save's transaction, into a model the app chooses with `class:`, and a `context:` method that takes the transition can fill columns such as a start date and an updater from the event's arguments. It never touches a row afterwards, so backdating, editing, deleting and importing stay the app's own writes, and it always assigns `event`, `from` and `to`, which a model without those columns would need setters for.
+- Rechecked on 2026-11-21: no release and no code change in any of the four gems since those versions.
 
 ## Alternatives considered
 
 **A callback on `saved_change_to_status?`**, the most common shape among production Rails applications without a state-machine gem. It fires for every writer, the silent ones included, and hides the side effects of a transition from whoever reads the method that made it.
 
-**The `state_machines` gem with its Active Record integration**, `state_machines` 0.305.0 and `state_machines-activerecord` 0.304.0, read in their repositories and tried against this app's enum shape:
-
-- It requires Ruby 4.0 and Active Record 8.1, which this app runs, and its CI runs on SQLite.
-- `before_transition` runs inside the save's transaction and `after_transition` with `after_commit: true` waits for the outermost commit, which is what the cleanup and the email need. Guards and refusal reasons come with it.
-- On an existing integer enum, states declared without values worked with `{ pending: 3, active: 0, paused: 1, inactive: 2 }`: every transition stored the enum's integer, a refused event returned `false` with an error, and the enum's predicates, scopes and `validate: true` kept working. Declaring the integers explicitly beside the enum failed on create with "Status is invalid".
-- Beside an enum it generates prefixed methods, 16 per model for four statuses (`status_active?`, `status_active!`, `status_active`, `not_status_active`), and prints a method-conflict warning for each enum predicate when the class loads. In 0.304.0 the prefix and the scopes are fixed rather than configurable.
-- `direct_assignment: :allow`, the default, leaves plain `update` and `update_columns` outside the machine, so imports stay silent.
-- Its releases 0.300 to 0.305 shipped between 15 and 17 November 2026, two of them changing behaviour, among them the `around_transition` semantics and the `direct_assignment` default.
-- `state_machines-audit_trail` 4.0.0 writes a row per transition inside the save's transaction, into a model the app chooses with `class:`, and a `context:` method that takes the transition can fill columns such as a start date and an updater from the event's arguments. It never touches a row afterwards, so backdating, editing, deleting and importing stay the app's own writes, and it always assigns `event`, `from` and `to`, which a model without those columns would need setters for.
+**Plain Rails**: an enum, a constant of allowed transitions and a verb method per transition, using only what Rails 8.1 ships. It carries none of the costs above, at roughly twice the transition code per model, and it was the recommendation until the audit trail turned out to write the history rows already.
 
 **Other state-machine gems.** In the public real-world-rails corpus, about 39 of 239 applications use one: aasm in 14, the `state_machines` family in about 10, and Statesman, workflow and transitions in a few each. None of the 37signals applications (Fizzy, Campfire, Writebook) uses one, and neither does Hitobito, the association-management application closest to this domain. Statesman keeps a transitions table, and Sharetribe still writes the current state back onto the parent row, which is the copy this record keeps. None of the gem-using applications read backdates a transition. The comments in the applications that use a gem record its costs: callbacks skipped by bulk writes and copied by hand (GitLab), a callback returning `false` silently stopping the chain (Gumroad), and `skip_callbacks` flags (Catarse).
 
@@ -97,9 +104,9 @@ Plain Rails expresses the pattern with an enum, a constant of allowed transition
 
 ## Consequences
 
-**#126 builds this**, and #322 and #330 wait for it, so the release-candidate work in this set waits on the open choice. The history screen and the history import are their own issues, and returning a member to their events is a draft.
+**#126 builds this**, and #322 and #330 wait for it. It adds the four gems at their pinned versions and records them in `.agents/dependencies.md` as moved only on purpose. The history screen and the history import are their own issues, and returning a member to their events is a draft.
 
-**Every write of a status goes through the verb methods or through the history edit**, never through `update(status:)` from a controller. #448 ships its approval as a plain write and moves onto the approval method when #126 lands.
+**Every write of a status goes through the machine's events or through the history edit**, never through `update(status:)` from a controller. #448 ships its approval as a plain write and moves onto the approve event when #126 lands.
 
 **Statistics read status from the history** (#115), so a member's registrations are never edited to make a report come out right.
 
