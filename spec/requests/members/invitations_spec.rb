@@ -23,19 +23,43 @@ RSpec.describe "Members::Invitations", type: :request do
       end
     end
 
-    # The *Add a person* row, one example per column, because resending is inviting again.
-    %i[ owner administrator members_administrator ].each do |role|
-      context "when signed in as an #{role.to_s.humanize(capitalize: false)}" do
-        it "sends the pending member their invitation again and returns to the Pending tab" do
-          actor   = create(:member, :active, role)
-          invitee = create(:member, :pending, group: actor.group)
-          sign_in_as actor.user
+    # The *Add a person* row, one context per column, because resending is inviting again.
+    context "when signed in as an owner" do
+      it "sends the pending member their invitation again and returns to the Pending tab" do
+        actor   = create(:member, :active, :owner)
+        invitee = create(:member, :pending, group: actor.group)
+        sign_in_as actor.user
 
-          expect { post group_member_invitation_path(actor.group, invitee) }
-            .to have_enqueued_mail(MemberMailer, :invitation).with(invitee)
+        expect { post group_member_invitation_path(actor.group, invitee) }
+          .to have_enqueued_mail(MemberMailer, :invitation).with(invitee)
 
-          expect(response).to redirect_to group_members_path(actor.group, status: "pending")
-        end
+        expect(response).to redirect_to group_members_path(actor.group, status: "pending")
+      end
+    end
+
+    context "when signed in as an administrator" do
+      it "sends the pending member their invitation again and returns to the Pending tab" do
+        actor   = create(:member, :active, :administrator)
+        invitee = create(:member, :pending, group: actor.group)
+        sign_in_as actor.user
+
+        expect { post group_member_invitation_path(actor.group, invitee) }
+          .to have_enqueued_mail(MemberMailer, :invitation).with(invitee)
+
+        expect(response).to redirect_to group_members_path(actor.group, status: "pending")
+      end
+    end
+
+    context "when signed in as a members administrator" do
+      it "sends the pending member their invitation again and returns to the Pending tab" do
+        actor   = create(:member, :active, :members_administrator)
+        invitee = create(:member, :pending, group: actor.group)
+        sign_in_as actor.user
+
+        expect { post group_member_invitation_path(actor.group, invitee) }
+          .to have_enqueued_mail(MemberMailer, :invitation).with(invitee)
+
+        expect(response).to redirect_to group_members_path(actor.group, status: "pending")
       end
     end
 
