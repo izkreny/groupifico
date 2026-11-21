@@ -64,6 +64,15 @@ RSpec.describe "UserProfiles", type: :request do
         expect(response).to have_http_status :ok
       end
 
+      # WHY: #472 AC1, the form being the one screen `ProfileSetup` lets a user without a first name and a mobile reach.
+      it "shows the edit profile page to a user without a first name and a mobile" do
+        sign_in_as(create(:user, :not_set_up))
+
+        get edit_user_profile_path
+
+        expect(response).to have_http_status :ok
+      end
+
       it "goes back home, there being no profile screen to return to" do
         sign_in_as(create(:user))
 
