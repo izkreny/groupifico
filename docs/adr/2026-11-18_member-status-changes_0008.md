@@ -27,7 +27,7 @@ The history is a hard requirement rather than a nice-to-have. A group's reports 
 ### The rules of a history
 
 - `starts_on` is a date and never after today, so a status never switches on by itself on a later day and the copy cannot go stale.
-- At most one change per member starts on any day. A second change on the same day is refused, and the day's row is edited instead.
+- At most one change per member starts on any day. A second change on the same day folds into that day's row, which takes the new status, so a join request approved the day it arrives reads as `active` from that day.
 - A new change never starts before the latest change's `starts_on`, so it always becomes the latest row and the copy follows it. A row added further back is a history edit, which leaves the current status alone.
 - An edit keeps a row's date strictly between its neighbours' dates, so the history never reorders.
 - When a delete or a status edit leaves two neighbouring rows with the same status, they merge and the earlier row is kept.
@@ -48,7 +48,7 @@ Every way a member comes into being writes the first change in the same save. Th
 
 ### One event per transition, and no model callbacks
 
-Every change of the current status fires a named event on `Member`'s state machine, such as approve, pause or deactivate, whichever path asks for it: the member form, an edit or delete of the current row, or an approval. In one transaction the machine checks that the move is allowed and saves the status, a `before_transition` runs the cleanup below, and the audit trail writes the status change row, while an `after_transition` with `after_commit: true` queues the email, so a rolled-back save sends nothing. An edit or delete of the current row writes its own row change and fires the event only for its callbacks, and the audit trail's `if:` option, evaluated with the event's arguments, skips the insert on that path. Imports and edits to past rows write rows directly and fire nothing.
+Every change of the current status fires a named event on `Member`'s state machine, such as approve, pause or deactivate, whichever path asks for it: the member form, an edit or delete of the current row, or an approval. In one transaction the machine checks that the move is allowed and saves the status, a `before_transition` runs the cleanup below, and the audit trail writes the status change row, while an `after_transition` with `after_commit: true` queues the email, so a rolled-back save sends nothing. An edit or delete of the current row writes its own row change and fires the event only for its callbacks, and the audit trail's `if:` option, evaluated with the event's arguments, skips the insert on that path. A second event on the same day takes the same path: it updates that day's row and fires its callbacks, and the audit trail adds nothing. Imports and edits to past rows write rows directly and fire nothing.
 
 No model callback reacts to the status column. The machine's transition callbacks run only for an event, so the CSV import, the seeds and the test factories, which write the column without one, stay silent. A sweep of every status writer found that a callback on the column would fire for all of them, and the house style keeps business logic out of callbacks.
 
@@ -72,7 +72,7 @@ Both get the same shape, history included: a state machine with its allowed tran
 
 ### The transitions use the `state_machines` family
 
-`state_machines-activerecord` drives the transitions, and `state_machines-audit_trail` writes each one as a `Member::StatusChange` row, through `class:` and through `context:` methods that read the new status from `transition.to` and `starts_on` and `updater` from the event's arguments, and its `if:` option skips the row when a history edit of the current row has already written it. Editing, deleting and importing that history stay hand-built, as they would be either way.
+`state_machines-activerecord` drives the transitions, and `state_machines-audit_trail` writes each one as a `Member::StatusChange` row, through `class:` and through `context:` methods that read the new status from `transition.to` and `starts_on` and `updater` from the event's arguments, and its `if:` option skips the row when a history edit of the current row, or a second change that day folded into its row, has already written it. Editing, deleting and importing that history stay hand-built, as they would be either way.
 
 The versions are pinned exactly: `state_machines-activerecord` 0.304.0 with `state_machines` 0.305.0 and `state_machines-activemodel` 0.300.0, and `state_machines-audit_trail` 4.0.0. They move only as a deliberate step of an update round, because 0.300 to 0.305 shipped within three days with behaviour changes.
 
