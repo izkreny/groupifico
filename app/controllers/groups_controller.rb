@@ -20,7 +20,7 @@ class GroupsController < ApplicationController
     @next_rehearsal = @group.featured_event(:rehearsal)
     @next_gig       = @group.featured_event(:gig)
     # WHY: counted through the events list's own filter and scope, so the number on the gig slot's link is exactly what that link opens, unconfirmed gigs included; the empty gig slot reads it too, to lead to unconfirmed gigs when no confirmed one is ahead.
-    @upcoming_gig_count = Event::Filter.new(@membership, scope: "upcoming", categories: %w[ gig ]).apply(authorized_scope(@group.events)).count
+    @upcoming_gig_count = Event::Filter.new(@membership, categories: %w[ gig ]).apply(authorized_scope(@group.events)).count
   end
 
   def new

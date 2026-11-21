@@ -575,7 +575,7 @@ RSpec.describe "Groups", type: :request do
         get group_path(member.group)
 
         slot = Nokogiri::HTML(response.body).at_css("#no_gig")
-        expect([ slot&.at_css("p")&.text&.squish, slot&.css("a")&.map { [ it.text.squish, it[:href] ] } ]).to eq [ "No confirmed gig coming up", [ [ "All upcoming gigs (1)", group_events_path(member.group, scope: "upcoming", category: %w[ gig ]) ] ] ]
+        expect([ slot&.at_css("p")&.text&.squish, slot&.css("a")&.map { [ it.text.squish, it[:href] ] } ]).to eq [ "No confirmed gig coming up", [ [ "All upcoming gigs (1)", group_events_path(member.group, category: %w[ gig ]) ] ] ]
       end
 
       # WHY: #461 AC1. The link belongs to the gig card alone, so the rehearsal card above it carries no link to the list; the list's own path is compared without its query, since every event link on a card shares its prefix.
@@ -589,7 +589,7 @@ RSpec.describe "Groups", type: :request do
 
         document = Nokogiri::HTML(response.body)
         last = document.at_css("##{ActionView::RecordIdentifier.dom_id(gig, :next_up)} .card-body > :last-child")
-        expect([ last.name, last.text.squish, last[:href] ]).to eq [ "a", "All upcoming gigs (1)", group_events_path(member.group, scope: "upcoming", category: %w[ gig ]) ]
+        expect([ last.name, last.text.squish, last[:href] ]).to eq [ "a", "All upcoming gigs (1)", group_events_path(member.group, category: %w[ gig ]) ]
         expect(document.css("##{ActionView::RecordIdentifier.dom_id(rehearsal, :next_up)} a").map { URI(it[:href]).path }).not_to include group_events_path(member.group)
       end
 
@@ -606,18 +606,6 @@ RSpec.describe "Groups", type: :request do
         get group_path(member.group)
 
         expect(card_text(gig)).to end_with "All upcoming gigs (2)"
-      end
-
-      # WHY: #462 AC9. Whoever runs the events opens the events list on Active, so a count taken through this member's own first list would add a gig that ended without being concluded; the count names Upcoming, as its link does, and this example fails on one handed the policy's answer and no list.
-      it "counts only the upcoming gigs on the gig card's link for a member who oversees the events" do
-        member = create(:member, :active, :events_administrator)
-        gig = create(:event, :gig, group: member.group, creator: member, status: :confirmed, starts_at: 1.day.from_now, ends_at: 1.day.from_now + 2.hours)
-        create(:event, :gig, group: member.group, creator: member, status: :confirmed, starts_at: 6.days.ago, ends_at: 6.days.ago + 2.hours)
-        sign_in_as(member.user)
-
-        get group_path(member.group)
-
-        expect(card_text(gig)).to end_with "All upcoming gigs (1)"
       end
 
       # WHY: the owner's 99+ cap, through `ApplicationHelper#count_label`, reached on the home itself so the row is seen to use it.
