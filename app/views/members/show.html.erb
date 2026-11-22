@@ -8,7 +8,7 @@
   a member happens there.
 %>
 <% name = @member.full_name %>
-<%# WHY: `wrap-anywhere` on the whole screen, which every line inherits, because a long one-word name, email or mobile would otherwise push the pencil and the Email and Call buttons off a phone. %>
+<%# WHY: `wrap-anywhere` on the whole screen, which every line inherits, because a long one-word name or mobile would otherwise push the pencil and the Call button off a phone; the email trims instead, since its copy button puts the whole of it a tap away. %>
 <div class="flex flex-col gap-4 w-full wrap-anywhere">
   <div id="<%= dom_id @member %>" class="flex items-start gap-3">
     <div class="avatar avatar-placeholder flex-none">
@@ -44,7 +44,8 @@
         <dt class="text-xs">Email</dt>
         <%= tag.dd data: { controller: "clipboard", clipboard_content_value: @member.email, clipboard_copied_value: "Email copied", clipboard_failed_value: "Couldn't copy. Select the email and copy it yourself." } do %>
           <div class="flex items-center gap-2">
-            <span><%= @member.email %></span>
+            <%# WHY: capped at three quarters of the row, which on a phone still leaves the copy and Email buttons their room; `min-w-0` lets the row shrink it so the trim can happen. %>
+            <%= trimmed @member.email, class: "max-w-3/4 min-w-0" %>
 
             <%= tag.button type: "button", class: "btn btn-ghost btn-circle btn-sm flex-none", aria: { label: "Copy #{name}'s email" }, data: { clipboard_target: "button", action: "clipboard#copy" } do %>
               <span class="contents" data-clipboard-target="idle"><%= icon :copy, class: "size-icon-control" %></span>

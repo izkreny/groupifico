@@ -35,8 +35,8 @@ RSpec.describe "The member detail page", type: :system do
     expect(page).to be_accessible
   end
 
-  # WHY: #368; the screen wraps a long name, email and mobile, and keeps the pencil and the Email and Call buttons inside it.
-  it "wraps a long one-word name, email and mobile inside the screen on a phone" do
+  # WHY: #368; the screen wraps a long name and mobile, and keeps the pencil and the Email and Call buttons inside it, a long email included.
+  it "wraps a long one-word name and mobile inside the screen on a phone" do
     owner = create(:member, :active, :owner)
     target = create(:member, :active, group: owner.group, user: create(:user, first_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", last_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", email: "simpsoncalifragilisticexpialaciousannoyedgruntcious@example.com"))
     target.profile.update!(mobile_phone: "+38591234567890123456789012345678901234567890123")
@@ -63,6 +63,22 @@ RSpec.describe "The member detail page", type: :system do
     expect(gap_to_row_end("##{ActionView::RecordIdentifier.dom_id(target)} a[aria-label='Edit']", "##{ActionView::RecordIdentifier.dom_id(target)}")).to be >= 0
     expect(gap_to_row_end("main a[aria-label^='Email ']", "main .card-body")).to be >= 0
     expect(gap_to_row_end("main a[aria-label^='Call ']", "main .card-body")).to be >= 0
+    expect(horizontal_overflow).to eq 0
+  end
+
+  # WHY: #370 AC5; once the email can be copied it trims rather than wraps, within three quarters of its row, the cap read from the computed style so a class Tailwind never compiled fails it.
+  it "trims a long email within three quarters of its row on a phone" do
+    owner = create(:member, :active, :owner)
+    target = create(:member, :active, group: owner.group, user: create(:user, email: "simpsoncalifragilisticexpialaciousannoyedgruntcious@example.com"))
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_member_path(target.group, target)
+
+    expect(truncated?("main dd span[title]")).to be true
+    expect(page.evaluate_script(<<~JS)).to eq [ "75%", true ]
+      (email => [ getComputedStyle(email).maxWidth, email.getBoundingClientRect().width <= email.parentElement.getBoundingClientRect().width * 0.75 + 0.5 ])(document.querySelector("main dd span[title]"))
+    JS
     expect(horizontal_overflow).to eq 0
   end
 

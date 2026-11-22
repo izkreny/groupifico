@@ -587,6 +587,17 @@ RSpec.describe "Members", type: :request do
         expect(buttons.map { it.ancestors("dd").first["data-clipboard-content-value"] }).to eq [ target.email, target.mobile_phone ]
       end
 
+      # WHY: #370 AC5; the email trims once it can be copied, so its span carries the whole of it in the `title`.
+      it "carries the member's whole email in its title" do
+        reader = create(:member, :active)
+        target = create(:member, group: reader.group)
+        sign_in_as(reader.user)
+
+        get group_member_path(target.group, target)
+
+        expect(Nokogiri::HTML(response.body).at_css("dd span + button").previous_element["title"]).to eq target.email
+      end
+
       # WHY: #370 AC4; a member without a mobile has no mobile to copy, just as they have none to call.
       it "offers no mobile copy button for a member without a mobile" do
         reader = create(:member, :active)
