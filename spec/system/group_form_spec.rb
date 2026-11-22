@@ -181,6 +181,29 @@ RSpec.describe "The group form", type: :system do
       expect(horizontal_overflow).to eq 0
     end
 
+    # WHY: #368; the screen's heading names the group, so it wraps a long name inside the screen.
+    it "wraps a long one-word group name in its heading on a phone" do
+      member = create(:member, :active, :owner, group: create(:group, name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious"))
+      sign_in_as member.user
+      resize_to ViewportHelper::MOBILE
+
+      visit edit_group_path(member.group)
+
+      expect(page).to have_button "Delete group"
+      expect(horizontal_overflow).to eq 0
+    end
+
+    it "wraps a long multi-word group name in its heading on a phone" do
+      member = create(:member, :active, :owner, group: create(:group, name: "The Extraordinarily Long Named Riverside Community Choir Of Greater Springfield"))
+      sign_in_as member.user
+      resize_to ViewportHelper::MOBILE
+
+      visit edit_group_path(member.group)
+
+      expect(page).to have_button "Delete group"
+      expect(horizontal_overflow).to eq 0
+    end
+
     it "lands on the address's own form when the pencil is used" do
       member = create(:member, :active, :owner, :with_all_attributes)
       sign_in_as member.user
