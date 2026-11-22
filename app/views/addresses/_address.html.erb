@@ -9,7 +9,8 @@
 %>
 <% street, area = address_street(address), address_area(address) %>
 <% line = street.presence || area.presence %>
-<div id="<%= dom_id address %>" class="flex flex-col gap-2">
+<%# WHY: `wrap-anywhere` on the whole block, which every line inherits, because a long one-word name, street or group name would otherwise push Correct and the lines themselves off a phone. %>
+<div id="<%= dom_id address %>" class="flex flex-col gap-2 wrap-anywhere">
   <div class="flex items-start justify-between gap-2">
     <h2 class="text-record"><%= link_to_if line.nil?, address.name, address_map_url(address), class: "link link-hover", target: "_blank" %></h2>
 

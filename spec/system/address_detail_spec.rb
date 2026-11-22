@@ -29,6 +29,33 @@ RSpec.describe "The place screen", type: :system do
     expect(page).to be_accessible
   end
 
+  # WHY: #368; the screen wraps a long place name, street and home group's name, and keeps Correct and the map link inside it.
+  it "wraps a long one-word place, street and group name inside the screen on a phone" do
+    address = create(:address, name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", street_name: "SimpsoncalifragilisticexpialaciousannoyedgruntciousSimpsoncalifragilisticexpialaciousannoyedgruntcious", city: "Springfield")
+    owner = create(:member, :active, :owner, group: create(:group, name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", address:))
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit address_path(address)
+
+    expect(gap_to_row_end("#address_#{address.id} a.btn", "#address_#{address.id}")).to be >= 0
+    expect(gap_to_row_end("#address_#{address.id} address a", "#address_#{address.id}")).to be >= 0
+    expect(horizontal_overflow).to eq 0
+  end
+
+  it "wraps a long multi-word place, street and group name inside the screen on a phone" do
+    address = create(:address, name: "The Extraordinarily Long Named Community Hall Of Greater Springfield", street_name: "The Extraordinarily Long Named Avenue Of The Riverside Community", city: "Springfield")
+    owner = create(:member, :active, :owner, group: create(:group, name: "The Extraordinarily Long Named Riverside Community Choir Of Greater Springfield", address:))
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit address_path(address)
+
+    expect(gap_to_row_end("#address_#{address.id} a.btn", "#address_#{address.id}")).to be >= 0
+    expect(gap_to_row_end("#address_#{address.id} address a", "#address_#{address.id}")).to be >= 0
+    expect(horizontal_overflow).to eq 0
+  end
+
   it "lands on the correction form from Correct" do
     sign_in_as member.user
 
