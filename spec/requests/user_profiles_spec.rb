@@ -24,6 +24,18 @@ RSpec.describe "UserProfiles", type: :request do
       expect(menu.css("li a").map { [ it.text.squish, it["href"] ] }).to eq [ [ "Edit profile", edit_user_profile_path ], [ "Send feedback", new_feedback_path ], [ "New group", new_group_path ] ]
     end
 
+    # WHY: #368; the menu trims the name and the email, so each line carries its whole value in the `title`.
+    it "carries the whole name and email in each line's title" do
+      user = create(:user, email: "ada.lovelace.countess.of.lovelace@example.com")
+      user.profile.update!(first_name: "Augusta Ada", last_name: "King-Noel")
+      sign_in_as(user)
+
+      get groups_path
+      menu = Nokogiri::HTML(response.body).at_css("header details#me-menu")
+
+      expect(menu.css(".dropdown-content p").map { it["title"] }).to eq [ "Augusta Ada King-Noel", "ada.lovelace.countess.of.lovelace@example.com" ]
+    end
+
     it "leads each row with its legend glyph, in the muted icon ink" do
       sign_in_as(create(:user))
 
