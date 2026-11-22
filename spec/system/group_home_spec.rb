@@ -287,8 +287,7 @@ RSpec.describe "The group home", type: :system do
   # WHY: #368; the card wraps a long event name and place name, and its Duplicate and Edit stay inside it.
   it "wraps a long one-word event and place name inside the card on a phone" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
-    event = create(:event, :rehearsal, group: member.group, creator: member, status: :confirmed, name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious",
-      address: create(:address, name: "SimpsoncalifragilisticexpialaciousannoyedgruntciousSimpsoncalifragilisticexpialaciousannoyedgruntcious"), starts_at: 2.days.from_now.change(hour: 19), ends_at: 2.days.from_now.change(hour: 21))
+    event = create(:event, :rehearsal, group: member.group, creator: member, status: :confirmed, name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", address: create(:address, name: "SimpsoncalifragilisticexpialaciousannoyedgruntciousSimpsoncalifragilisticexpialaciousannoyedgruntcious"), starts_at: 2.days.from_now.change(hour: 19), ends_at: 2.days.from_now.change(hour: 21))
     sign_in_as member.user
     resize_to ViewportHelper::MOBILE
 
@@ -302,8 +301,7 @@ RSpec.describe "The group home", type: :system do
 
   it "wraps a long multi-word event and place name inside the card on a phone" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
-    event = create(:event, :rehearsal, group: member.group, creator: member, status: :confirmed, name: "The Extraordinarily Long Named Spring Concert Of The Riverside Community Choir",
-      address: create(:address, name: "The Extraordinarily Long Named Community Hall Of Greater Springfield"), starts_at: 2.days.from_now.change(hour: 19), ends_at: 2.days.from_now.change(hour: 21))
+    event = create(:event, :rehearsal, group: member.group, creator: member, status: :confirmed, name: "The Extraordinarily Long Named Spring Concert Of The Riverside Community Choir", address: create(:address, name: "The Extraordinarily Long Named Community Hall Of Greater Springfield"), starts_at: 2.days.from_now.change(hour: 19), ends_at: 2.days.from_now.change(hour: 21))
     sign_in_as member.user
     resize_to ViewportHelper::MOBILE
 

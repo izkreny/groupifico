@@ -52,8 +52,7 @@ RSpec.describe "The events list", type: :system do
   # WHY: #368; daisyUI's `list-row` breaks a long word, so a row wraps a long event and place name and keeps its pencil inside it, on Upcoming and on To do alike.
   it "wraps a long one-word event and place name inside an Upcoming row on a phone" do
     member = create(:member, :owner)
-    event = create(:event, group: member.group, creator: member, status: :unconfirmed, name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious",
-      address: create(:address, name: "SimpsoncalifragilisticexpialaciousannoyedgruntciousSimpsoncalifragilisticexpialaciousannoyedgruntcious"), starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours)
+    event = create(:event, group: member.group, creator: member, status: :unconfirmed, name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", address: create(:address, name: "SimpsoncalifragilisticexpialaciousannoyedgruntciousSimpsoncalifragilisticexpialaciousannoyedgruntcious"), starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours)
     sign_in_as member.user
     resize_to ViewportHelper::MOBILE
 
@@ -66,8 +65,7 @@ RSpec.describe "The events list", type: :system do
 
   it "wraps a long multi-word event and place name inside an Upcoming row on a phone" do
     member = create(:member, :owner)
-    event = create(:event, group: member.group, creator: member, status: :unconfirmed, name: "The Extraordinarily Long Named Spring Concert Of The Riverside Community Choir",
-      address: create(:address, name: "The Extraordinarily Long Named Community Hall Of Greater Springfield"), starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours)
+    event = create(:event, group: member.group, creator: member, status: :unconfirmed, name: "The Extraordinarily Long Named Spring Concert Of The Riverside Community Choir", address: create(:address, name: "The Extraordinarily Long Named Community Hall Of Greater Springfield"), starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours)
     sign_in_as member.user
     resize_to ViewportHelper::MOBILE
 
@@ -80,8 +78,7 @@ RSpec.describe "The events list", type: :system do
 
   it "wraps a long one-word event and place name inside a To do row on a phone" do
     member = create(:member, :owner)
-    event = create(:event, group: member.group, creator: member, status: :unconfirmed, name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious",
-      address: create(:address, name: "SimpsoncalifragilisticexpialaciousannoyedgruntciousSimpsoncalifragilisticexpialaciousannoyedgruntcious"), starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours)
+    event = create(:event, group: member.group, creator: member, status: :unconfirmed, name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", address: create(:address, name: "SimpsoncalifragilisticexpialaciousannoyedgruntciousSimpsoncalifragilisticexpialaciousannoyedgruntcious"), starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours)
     sign_in_as member.user
     resize_to ViewportHelper::MOBILE
 
@@ -94,8 +91,7 @@ RSpec.describe "The events list", type: :system do
 
   it "wraps a long multi-word event and place name inside a To do row on a phone" do
     member = create(:member, :owner)
-    event = create(:event, group: member.group, creator: member, status: :unconfirmed, name: "The Extraordinarily Long Named Spring Concert Of The Riverside Community Choir",
-      address: create(:address, name: "The Extraordinarily Long Named Community Hall Of Greater Springfield"), starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours)
+    event = create(:event, group: member.group, creator: member, status: :unconfirmed, name: "The Extraordinarily Long Named Spring Concert Of The Riverside Community Choir", address: create(:address, name: "The Extraordinarily Long Named Community Hall Of Greater Springfield"), starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours)
     sign_in_as member.user
     resize_to ViewportHelper::MOBILE
 
