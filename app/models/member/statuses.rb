@@ -83,7 +83,7 @@ module Member::Statuses
 
     # A change on a day that already has one takes that row over rather than adding a second, so the audit trail writes a row only for a day that has none. Read before the transition, since the audit trail's own row is on the day by the time it runs.
     def find_the_days_change
-      @days_change = status_changes.where(starts_on: status_starts_on).first
+      @days_change = status_changes.find_by(starts_on: status_starts_on)
     end
 
     def starts_a_new_day?
