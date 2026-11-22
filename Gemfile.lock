@@ -437,6 +437,17 @@ GEM
       net-sftp (>= 2.1.2)
       net-ssh (>= 2.8.0)
       ostruct
+    state_machines (0.305.0)
+    state_machines-activemodel (0.300.0)
+      activemodel (>= 8.1)
+      state_machines (>= 0.300.0)
+    state_machines-activerecord (0.304.0)
+      activerecord (>= 8.1)
+      state_machines (>= 0.304.0)
+      state_machines-activemodel (>= 0.300.0)
+    state_machines-audit_trail (4.1.0)
+      state_machines (>= 0.305.0)
+      state_machines-activerecord (>= 0.304.0)
     stimulus-rails (1.3.4)
       railties (>= 6.0.0)
     tailwindcss-rails (4.7.0)
@@ -525,6 +536,8 @@ DEPENDENCIES
   solid_cache
   solid_queue
   sqlite3 (>= 2.1)
+  state_machines-activerecord
+  state_machines-audit_trail
   stimulus-rails
   tailwindcss-rails
   thruster
@@ -693,6 +706,10 @@ CHECKSUMS
   sqlite3 (2.10.2-x86_64-linux-gnu) sha256=ca92731ab464df9cae503fa1a439a549e2724f6953c8c05a7769b59366e38f15
   sqlite3 (2.10.2-x86_64-linux-musl) sha256=b9f8fc62f3e0eb8966b41de251b492b4c8e9d1b23559beb6e150ad7f8d590941
   sshkit (1.25.1) sha256=be3f10b9d6eb0b44d5eaba3f7cbe41bc6bb894bce4339688ac20124391455b78
+  state_machines (0.305.0) sha256=4477fcf518c2717bb5284bf95590bd2cecd2d2c94a405ad8a363c658fd3266c8
+  state_machines-activemodel (0.300.0) sha256=b062ea240ae6cb95f873d355d8dfb8c72d61fb7bbafe9df086298551bcb9d9a4
+  state_machines-activerecord (0.304.0) sha256=d138bba68ad48cff1c07a0fc1fe5c6ef4d03c6cb1d3b0071fdd60f110c1f3a38
+  state_machines-audit_trail (4.1.0) sha256=9d985137ffe204fbbefc48984941718a850a9960fcc32f3e38a4d3ab146a8158
   stimulus-rails (1.3.4) sha256=765676ffa1f33af64ce026d26b48e8ffb2e0b94e0f50e9119e11d6107d67cb06
   tailwindcss-rails (4.7.0) sha256=9b09bd677d7cd226fc8ff3f7d2d91c6dc6c3da75dd74dc4cab5f94711f69ba41
   tailwindcss-ruby (4.3.4) sha256=9efb1c084c43cb53578b708f66c3f541616d49f094b1c4881691b4f332356b55

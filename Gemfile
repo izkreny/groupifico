@@ -44,6 +44,12 @@ gem "image_processing", "~> 2.0"
 # Authorization policies [https://github.com/palkan/action_policy]
 gem "action_policy"
 
+# Member status transitions, per ADR 0008 [https://github.com/state-machines/state_machines-activerecord]
+gem "state_machines-activerecord"
+
+# A member status change row per transition, per ADR 0008 [https://github.com/state-machines/state_machines-audit_trail]
+gem "state_machines-audit_trail"
+
 # WHY: Ruby 4.0 ships `csv` as a bundled gem rather than a default one, so `require "csv"` fails under Bundler unless it is listed; `members:import` reads its rows with it.
 gem "csv"
 
