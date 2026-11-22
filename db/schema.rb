@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_12_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_22_120000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -95,6 +95,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_12_120000) do
     t.datetime "updated_at", null: false
     t.index ["group_id"], name: "index_join_links_on_group_id", unique: true
     t.index ["token"], name: "index_join_links_on_token", unique: true
+  end
+
+  create_table "member_status_changes", force: :cascade do |t|
+    t.integer "member_id", null: false
+    t.integer "status", null: false
+    t.date "starts_on", null: false
+    t.integer "updater_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["member_id", "starts_on"], name: "index_member_status_changes_on_member_id_and_starts_on", unique: true
+    t.index ["updater_id"], name: "index_member_status_changes_on_updater_id"
   end
 
   create_table "members", force: :cascade do |t|
@@ -185,6 +196,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_12_120000) do
   add_foreign_key "feedbacks", "users", on_update: :cascade, on_delete: :cascade
   add_foreign_key "groups", "addresses", on_update: :cascade, on_delete: :restrict
   add_foreign_key "join_links", "groups", on_update: :cascade, on_delete: :cascade
+  add_foreign_key "member_status_changes", "members", column: "updater_id", on_update: :cascade, on_delete: :nullify
+  add_foreign_key "member_status_changes", "members", on_update: :cascade, on_delete: :cascade
   add_foreign_key "members", "groups", on_update: :cascade, on_delete: :cascade
   add_foreign_key "members", "users", on_update: :cascade, on_delete: :cascade
   add_foreign_key "registrations", "events", on_update: :cascade, on_delete: :cascade
