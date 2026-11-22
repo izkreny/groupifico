@@ -8,7 +8,8 @@
   a member happens there.
 %>
 <% name = @member.full_name %>
-<div class="flex flex-col gap-4 w-full">
+<%# WHY: `wrap-anywhere` on the whole screen, which every line inherits, because a long one-word name, email or mobile would otherwise push the pencil and the Email and Call buttons off a phone. %>
+<div class="flex flex-col gap-4 w-full wrap-anywhere">
   <div id="<%= dom_id @member %>" class="flex items-start gap-3">
     <div class="avatar avatar-placeholder flex-none">
       <div class="bg-base-300 text-base-content w-16 rounded-full">

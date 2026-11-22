@@ -97,6 +97,31 @@ RSpec.describe "The members list", type: :system do
     expect(topmost).to eq [ [ "Call Ana Horvat", true ], [ "Email Ana Horvat", true ], [ "Edit Ana Horvat", true ] ]
   end
 
+  # WHY: #368; daisyUI's `list-row` breaks a long word, so a row wraps a long name and keeps Call, Email and the pencil inside it.
+  it "wraps a long one-word name inside its row on a phone" do
+    owner = create(:member, :active, :owner)
+    member = create(:member, :active, group: owner.group, user: create(:user, first_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", last_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious"))
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_members_path(owner.group)
+
+    expect(gap_to_row_end("##{ActionView::RecordIdentifier.dom_id(member, :row)} a[aria-label^='Edit ']", "##{ActionView::RecordIdentifier.dom_id(member, :row)}")).to be >= 0
+    expect(horizontal_overflow).to eq 0
+  end
+
+  it "wraps a long multi-word name inside its row on a phone" do
+    owner = create(:member, :active, :owner)
+    member = create(:member, :active, group: owner.group, user: create(:user, first_name: "Maximilian Bartholomew Featherstonehaugh", last_name: "Montgomery Worthington Smythe"))
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_members_path(owner.group)
+
+    expect(gap_to_row_end("##{ActionView::RecordIdentifier.dom_id(member, :row)} a[aria-label^='Edit ']", "##{ActionView::RecordIdentifier.dom_id(member, :row)}")).to be >= 0
+    expect(horizontal_overflow).to eq 0
+  end
+
   it "draws a row's icons at 20px, 20px apart" do
     actor  = create(:member, :active, :members_administrator, :with_all_attributes)
     target = create(:member, :with_all_attributes, group: actor.group)
