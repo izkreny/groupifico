@@ -1184,58 +1184,6 @@ RSpec.describe "Members", type: :request do
         expect(member.reload).to be_active
       end
 
-      describe "the start date of a status change" do
-        def changes_of(member) = member.status_changes.order(:starts_on).pluck(:status, :starts_on, :updater_id)
-
-        let(:actor)  { create(:member, :active, :members_administrator) }
-        let(:member) { create(:member, :active, group: actor.group) }
-
-        before do
-          travel_to Time.zone.local(2026, 11, 2, 12)
-          member
-          sign_in_as(actor.user)
-          travel_to Time.zone.local(2026, 11, 9, 12)
-        end
-
-        it "records the change from the posted start date, made by the acting member (#126 AC4)" do
-          patch group_member_path(member.group, member), params: { member: { status: "paused", status_starts_on: "2026-11-05" } }
-
-          expect(changes_of(member)).to eq [ [ "active", Date.new(2026, 11, 2), member.id ], [ "paused", Date.new(2026, 11, 5), actor.id ] ]
-        end
-
-        it "refuses a start date after today on the start date field, recording nothing (#126 AC5)" do
-          patch group_member_path(member.group, member), params: { member: { status: "paused", status_starts_on: "2026-11-10" } }
-
-          expect(response).to have_http_status :unprocessable_content
-          expect(Nokogiri::HTML(response.body).at_css("#member_status_starts_on_error").text).to eq "Status starts on cannot be after today"
-          expect([ member.reload.status, changes_of(member).size ]).to eq [ "active", 1 ]
-        end
-
-        it "refuses a start date before the latest change on the start date field, recording nothing (#126 AC12)" do
-          patch group_member_path(member.group, member), params: { member: { status: "paused", status_starts_on: "2026-11-01" } }
-
-          expect(response).to have_http_status :unprocessable_content
-          expect(Nokogiri::HTML(response.body).at_css("#member_status_starts_on_error").text).to eq "Status starts on cannot be before 2 Nov 2026, when the current status started"
-          expect([ member.reload.status, changes_of(member).size ]).to eq [ "active", 1 ]
-        end
-
-        it "sends a refused change back with the picked status still checked" do
-          patch group_member_path(member.group, member), params: { member: { status: "paused", status_starts_on: "2026-11-10" } }
-
-          expect(Nokogiri::HTML(response.body).css("input[type=radio][name='member[status]'][checked]").map { it["value"] }).to eq [ "paused" ]
-        end
-
-        it "records no change when only the roles are saved, whatever start date is posted (#126 AC7)" do
-          owner = create(:member, :active, :owner, group: actor.group)
-          sign_in_as(owner.user)
-
-          patch group_member_path(member.group, member), params: { member: { status: "active", status_starts_on: "2026-11-10", roles: [ "events_administrator" ] } }
-
-          expect(response).to redirect_to group_member_path(member.group, member)
-          expect([ member.reload.role_names, changes_of(member).size ]).to eq [ [ "events_administrator" ], 1 ]
-        end
-      end
-
       it "ignores a posted group_id, leaving the membership in its own group" do
         actor  = create(:member, :active, :members_administrator)
         member = create(:member, group: actor.group)
@@ -1276,6 +1224,58 @@ RSpec.describe "Members", type: :request do
     # a `roles` key arrived. The form posts roles only for an acting user who may grant them, but one
     # loaded while they could and submitted after they no longer can still carries the unchanged list,
     # and an administrator must keep their own row.
+    context "when a members administrator changes a status from a start date" do
+      def changes_of(member) = member.status_changes.order(:starts_on).pluck(:status, :starts_on, :updater_id)
+
+      let(:actor)  { create(:member, :active, :members_administrator) }
+      let(:member) { create(:member, :active, group: actor.group) }
+
+      before do
+        travel_to Time.zone.local(2026, 11, 2, 12)
+        member
+        sign_in_as(actor.user)
+        travel_to Time.zone.local(2026, 11, 9, 12)
+      end
+
+      it "records the change from the posted start date, made by the acting member (#126 AC4)" do
+        patch group_member_path(member.group, member), params: { member: { status: "paused", status_starts_on: "2026-11-05" } }
+
+        expect(changes_of(member)).to eq [ [ "active", Date.new(2026, 11, 2), member.id ], [ "paused", Date.new(2026, 11, 5), actor.id ] ]
+      end
+
+      it "refuses a start date after today on the start date field, recording nothing (#126 AC5)" do
+        patch group_member_path(member.group, member), params: { member: { status: "paused", status_starts_on: "2026-11-10" } }
+
+        expect(response).to have_http_status :unprocessable_content
+        expect(Nokogiri::HTML(response.body).at_css("#member_status_starts_on_error").text).to eq "Status starts on cannot be after today"
+        expect([ member.reload.status, changes_of(member).size ]).to eq [ "active", 1 ]
+      end
+
+      it "refuses a start date before the latest change on the start date field, recording nothing (#126 AC12)" do
+        patch group_member_path(member.group, member), params: { member: { status: "paused", status_starts_on: "2026-11-01" } }
+
+        expect(response).to have_http_status :unprocessable_content
+        expect(Nokogiri::HTML(response.body).at_css("#member_status_starts_on_error").text).to eq "Status starts on cannot be before 2 Nov 2026, when the current status started"
+        expect([ member.reload.status, changes_of(member).size ]).to eq [ "active", 1 ]
+      end
+
+      it "sends a refused change back with the picked status still checked" do
+        patch group_member_path(member.group, member), params: { member: { status: "paused", status_starts_on: "2026-11-10" } }
+
+        expect(Nokogiri::HTML(response.body).css("input[type=radio][name='member[status]'][checked]").map { it["value"] }).to eq [ "paused" ]
+      end
+
+      it "records no change when only the roles are saved, whatever start date is posted (#126 AC7)" do
+        owner = create(:member, :active, :owner, group: actor.group)
+        sign_in_as(owner.user)
+
+        patch group_member_path(member.group, member), params: { member: { status: "active", status_starts_on: "2026-11-10", roles: [ "events_administrator" ] } }
+
+        expect(response).to redirect_to group_member_path(member.group, member)
+        expect([ member.reload.role_names, changes_of(member).size ]).to eq [ [ "events_administrator" ], 1 ]
+      end
+    end
+
     context "when signed in as an administrator" do
       it "changes a status while posting the roles the member already holds" do
         actor  = create(:member, :active, :administrator)
