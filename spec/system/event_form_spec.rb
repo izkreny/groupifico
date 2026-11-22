@@ -98,7 +98,7 @@ RSpec.describe "The event form", type: :system do
     expect(horizontal_overflow).to eq 0
   end
 
-  # WHY: #368; the forms draw a member's name in the manager select and the list, and a place's name in the place select, and the selects' own boxes trim while the list wraps, so nothing widens a phone.
+  # WHY: #368; the forms draw a member's name in the manager select, and the edit form in its folded list too, whose collapse clips rather than scrolls, so a row's own end is what is measured; a place's name is in the Where rows; the selects' own boxes trim while the list and the rows wrap.
   it "keeps the new event screen inside a phone's width with a long one-word member and place name" do
     owner = create(:member, :active, :owner)
     create(:member, :active, group: owner.group, user: create(:user, first_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", last_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious"))
@@ -134,8 +134,9 @@ RSpec.describe "The event form", type: :system do
     resize_to ViewportHelper::MOBILE
 
     visit edit_group_event_path(owner.group, event)
+    find("summary", text: "Who’s on the list").click
 
-    expect(page).to have_text "Simpsoncalifragilisticexpialaciousannoyedgruntcious Simpsoncalifragilisticexpialaciousannoyedgruntcious"
+    expect(gap_to_row_end("#event_list li:first-child label.btn", "#event_list .collapse-content")).to be >= 0
     expect(horizontal_overflow).to eq 0
   end
 
@@ -148,8 +149,9 @@ RSpec.describe "The event form", type: :system do
     resize_to ViewportHelper::MOBILE
 
     visit edit_group_event_path(owner.group, event)
+    find("summary", text: "Who’s on the list").click
 
-    expect(page).to have_text "Maximilian Bartholomew Featherstonehaugh Montgomery Worthington Smythe"
+    expect(gap_to_row_end("#event_list li:first-child label.btn", "#event_list .collapse-content")).to be >= 0
     expect(horizontal_overflow).to eq 0
   end
 

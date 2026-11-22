@@ -29,10 +29,11 @@ RSpec.describe "The place screen", type: :system do
     expect(page).to be_accessible
   end
 
-  # WHY: #368; the screen wraps a long place name, street and home group's name, and keeps Correct and the map link inside it.
-  it "wraps a long one-word place, street and group name inside the screen on a phone" do
-    address = create(:address, name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", street_name: "SimpsoncalifragilisticexpialaciousannoyedgruntciousSimpsoncalifragilisticexpialaciousannoyedgruntcious", city: "Springfield")
+  # WHY: #368; the screen wraps a long place name, street, area, home group's name and Used by event name, and keeps Correct and the map link inside it.
+  it "wraps a long one-word place, street, area, group and event name inside the screen on a phone" do
+    address = create(:address, name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", street_name: "SimpsoncalifragilisticexpialaciousannoyedgruntciousSimpsoncalifragilisticexpialaciousannoyedgruntcious", city: "SimpsoncalifragilisticexpialaciousannoyedgruntciousSimpsoncalifragilisticexpialaciousannoyedgruntcious")
     owner = create(:member, :active, :owner, group: create(:group, name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", address:))
+    create(:event, group: owner.group, creator: owner, address:, name: "SimpsoncalifragilisticexpialaciousannoyedgruntciousSimpsoncalifragilisticexpialaciousannoyedgruntcious")
     sign_in_as owner.user
     resize_to ViewportHelper::MOBILE
 
@@ -43,9 +44,10 @@ RSpec.describe "The place screen", type: :system do
     expect(horizontal_overflow).to eq 0
   end
 
-  it "wraps a long multi-word place, street and group name inside the screen on a phone" do
-    address = create(:address, name: "The Extraordinarily Long Named Community Hall Of Greater Springfield", street_name: "The Extraordinarily Long Named Avenue Of The Riverside Community", city: "Springfield")
+  it "wraps a long multi-word place, street, area, group and event name inside the screen on a phone" do
+    address = create(:address, name: "The Extraordinarily Long Named Community Hall Of Greater Springfield", street_name: "The Extraordinarily Long Named Avenue Of The Riverside Community", city: "The Extraordinarily Long Named City Of Greater Springfield In The Valley")
     owner = create(:member, :active, :owner, group: create(:group, name: "The Extraordinarily Long Named Riverside Community Choir Of Greater Springfield", address:))
+    create(:event, group: owner.group, creator: owner, address:, name: "The Extraordinarily Long Named Spring Concert Of The Riverside Community Choir")
     sign_in_as owner.user
     resize_to ViewportHelper::MOBILE
 

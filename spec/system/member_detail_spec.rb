@@ -66,6 +66,33 @@ RSpec.describe "The member detail page", type: :system do
     expect(horizontal_overflow).to eq 0
   end
 
+  # WHY: #368; Manages lists the member's events in `list-row`s, which break a long name inside the screen.
+  it "wraps a long one-word managed event name inside the screen on a phone" do
+    owner = create(:member, :active, :owner)
+    target = create(:member, :active, group: owner.group)
+    create(:event, group: owner.group, creator: owner, manager: target, name: "SimpsoncalifragilisticexpialaciousannoyedgruntciousSimpsoncalifragilisticexpialaciousannoyedgruntcious")
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_member_path(target.group, target)
+
+    expect(page).to have_css "#manages"
+    expect(horizontal_overflow).to eq 0
+  end
+
+  it "wraps a long multi-word managed event name inside the screen on a phone" do
+    owner = create(:member, :active, :owner)
+    target = create(:member, :active, group: owner.group)
+    create(:event, group: owner.group, creator: owner, manager: target, name: "The Extraordinarily Long Named Spring Concert Of The Riverside Community Choir")
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_member_path(target.group, target)
+
+    expect(page).to have_css "#manages"
+    expect(horizontal_overflow).to eq 0
+  end
+
   it "draws its edit, email and call icons at 20px" do
     reader = create(:member, :active, :members_administrator, :with_all_attributes)
     target = create(:member, :active, :with_all_attributes, group: reader.group)

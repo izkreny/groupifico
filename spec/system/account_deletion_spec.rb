@@ -141,7 +141,7 @@ RSpec.describe "Deleting my account", type: :system do
     end
   end
 
-  # WHY: #368; the sheet's body names the groups the reader leaves and its block the groups they own alone, so both wrap a long name inside the box, read as the block's example above reads it.
+  # WHY: #368; the sheet's body names the groups the member leaves and its block the groups they own alone, so both wrap a long name inside the box, read as the block's example above reads it.
   it "keeps the open sheet inside a phone's width when its groups have long one-word names" do
     member = create(:member, :owner, group: create(:group, name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious"))
     create(:member, user: member.user, group: create(:group, name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious Two"))
