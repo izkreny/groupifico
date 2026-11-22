@@ -1,5 +1,5 @@
 module ClipboardHelper
-  # WHY: the `clipboard` controller's contract in one place, so a caller names only the text, its noun and any colour swap, and a renamed value or target reaches every copy button at once.
+  # WHY: the `clipboard` controller's values and status line in one place, so a caller names only the text, its noun and any colour swap; the join link's labelled button still wires its own `button`, `idle` and `done` targets, so renaming one of those means editing `groups/_join_link` as well.
   def clipboard_data(content, noun, idle_class: nil, done_class: nil)
     { controller: "clipboard", clipboard_content_value: content, clipboard_copied_value: "#{noun.capitalize} copied", clipboard_failed_value: "Couldn't copy. Select the #{noun} and copy it yourself.", clipboard_idle_class: idle_class, clipboard_done_class: done_class }.compact
   end
