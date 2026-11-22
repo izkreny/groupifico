@@ -87,13 +87,12 @@ RSpec.describe "Events::Reservations", type: :request do
       it "leaves an invitee off the roster" do
         actor   = create(:member, :active, :events_administrator)
         event   = create(:event, group: actor.group, creator: actor)
-        invitee = create(:member, :pending, group: event.group)
+        create(:member, :pending, group: event.group)
         sign_in_as(actor.user)
 
         post group_event_reservation_path(event.group, event)
 
         expect(event.registrations.pluck(:member_id)).to eq [ actor.id ]
-        expect(event.registrations.pluck(:member_id)).not_to include invitee.id
       end
     end
   end
