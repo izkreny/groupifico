@@ -156,6 +156,31 @@ RSpec.describe "The group form", type: :system do
       expect(page).to be_accessible
     end
 
+    # WHY: #368; the card wraps a long saved place name and its street whole and keeps the pencil inside it.
+    it "wraps a long one-word place name and street inside its card on a phone" do
+      address = create(:address, name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", street_name: "SimpsoncalifragilisticexpialaciousannoyedgruntciousSimpsoncalifragilisticexpialaciousannoyedgruntcious", city: "Springfield")
+      member = create(:member, :active, :owner, group: create(:group, address:))
+      sign_in_as member.user
+      resize_to ViewportHelper::MOBILE
+
+      visit edit_group_path(member.group)
+
+      expect(gap_to_row_end("a[aria-label='Correct address']", "main .card-body")).to be >= 0
+      expect(horizontal_overflow).to eq 0
+    end
+
+    it "wraps a long multi-word place name and street inside its card on a phone" do
+      address = create(:address, name: "The Extraordinarily Long Named Community Hall Of Greater Springfield", street_name: "The Extraordinarily Long Named Avenue Of The Riverside Community", city: "Springfield")
+      member = create(:member, :active, :owner, group: create(:group, address:))
+      sign_in_as member.user
+      resize_to ViewportHelper::MOBILE
+
+      visit edit_group_path(member.group)
+
+      expect(gap_to_row_end("a[aria-label='Correct address']", "main .card-body")).to be >= 0
+      expect(horizontal_overflow).to eq 0
+    end
+
     it "lands on the address's own form when the pencil is used" do
       member = create(:member, :active, :owner, :with_all_attributes)
       sign_in_as member.user
