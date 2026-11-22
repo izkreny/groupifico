@@ -1247,7 +1247,7 @@ RSpec.describe "Members", type: :request do
         patch group_member_path(member.group, member), params: { member: { status: "paused", status_starts_on: "2026-11-10" } }
 
         expect(response).to have_http_status :unprocessable_content
-        expect(Nokogiri::HTML(response.body).at_css("#member_status_starts_on_error").text).to eq "Status starts on cannot be after today"
+        expect(Nokogiri::HTML(response.body).at_css("#member_status_starts_on_error").text).to eq "Starts on cannot be after today"
         expect([ member.reload.status, changes_of(member).size ]).to eq [ "active", 1 ]
       end
 
@@ -1255,7 +1255,7 @@ RSpec.describe "Members", type: :request do
         patch group_member_path(member.group, member), params: { member: { status: "paused", status_starts_on: "" } }
 
         expect(response).to have_http_status :unprocessable_content
-        expect(Nokogiri::HTML(response.body).at_css("#member_status_starts_on_error").text).to eq "Status starts on can't be blank"
+        expect(Nokogiri::HTML(response.body).at_css("#member_status_starts_on_error").text).to eq "Starts on can't be blank"
         expect([ member.reload.status, changes_of(member).size ]).to eq [ "active", 1 ]
       end
 
@@ -1263,7 +1263,7 @@ RSpec.describe "Members", type: :request do
         patch group_member_path(member.group, member), params: { member: { status: "paused", status_starts_on: "2026-11-01" } }
 
         expect(response).to have_http_status :unprocessable_content
-        expect(Nokogiri::HTML(response.body).at_css("#member_status_starts_on_error").text).to eq "Status starts on cannot be before 2 Nov 2026, when the current status started"
+        expect(Nokogiri::HTML(response.body).at_css("#member_status_starts_on_error").text).to eq "Starts on cannot be before 2 Nov 2026, when the current status started"
         expect([ member.reload.status, changes_of(member).size ]).to eq [ "active", 1 ]
       end
 

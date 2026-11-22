@@ -14,7 +14,7 @@
         <div class="group/status contents" data-controller="disable-hidden" data-action="change->disable-hidden#update">
           <%= form.segmented_field :status, choices: member_status_choices %>
           <div class="<%= class_names("contents" => member.status_changed?, "hidden group-has-[:checked:not(:default)]/status:contents" => !member.status_changed?) %>">
-            <%= form.field :status_starts_on, as: :date_field, label: "Starts on", required: true, max: Date.current, hint: "The day the new status takes effect, today or earlier.", data: { disable_hidden_target: "field" } %>
+            <%= form.field :status_starts_on, as: :date_field, required: true, max: Date.current, hint: "The day the new status takes effect, today or earlier.", data: { disable_hidden_target: "field" } %>
           </div>
         </div>
       <% end %>
