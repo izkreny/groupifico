@@ -33,6 +33,7 @@ RSpec.describe "The member edit page", type: :system do
 
     # WHY: the start date is drawn on every edit and revealed by CSS alone, so whether it shows is only seen in a browser.
     it "shows the start date once a different status is picked, and hides it again on the saved one" do
+      expect(page).to have_css ".join input[type=radio][value='active']:checked"
       expect(page).to have_no_field "Starts on"
 
       find(".join input[type=radio][value='paused']").click
