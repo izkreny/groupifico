@@ -48,6 +48,32 @@ RSpec.describe "The Me menu", type: :system do
     expect(page.evaluate_script("document.querySelector('#me-menu .dropdown-content').getBoundingClientRect().left")).to be >= 0
   end
 
+  # WHY: #368; the menu is fixed-height chrome, so a long name and email each trim to their line, with the whole value in the `title` for a desktop pointer and on the Me screen for a tap.
+  it "trims a long one-word name and a long email in the open menu, each whole in its title" do
+    sign_in_as create(:user, first_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", last_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", email: "simpsoncalifragilisticexpialaciousannoyedgruntcious@example.com")
+    resize_to ViewportHelper::MOBILE
+
+    visit root_path
+    open_me_menu
+
+    expect([ truncated?("#me-menu p.font-heading"), truncated?("#me-menu p.text-meta") ]).to eq [ true, true ]
+    expect(find("#me-menu p.font-heading")[:title]).to eq "Simpsoncalifragilisticexpialaciousannoyedgruntcious Simpsoncalifragilisticexpialaciousannoyedgruntcious"
+    expect(find("#me-menu p.text-meta")[:title]).to eq "simpsoncalifragilisticexpialaciousannoyedgruntcious@example.com"
+    expect(horizontal_overflow).to eq 0
+  end
+
+  it "trims a long multi-word name in the open menu, whole in its title" do
+    sign_in_as create(:user, first_name: "Maximilian Bartholomew Featherstonehaugh", last_name: "Montgomery Worthington Smythe")
+    resize_to ViewportHelper::MOBILE
+
+    visit root_path
+    open_me_menu
+
+    expect(truncated?("#me-menu p.font-heading")).to be true
+    expect(find("#me-menu p.font-heading")[:title]).to eq "Maximilian Bartholomew Featherstonehaugh Montgomery Worthington Smythe"
+    expect(horizontal_overflow).to eq 0
+  end
+
   it "lands on Edit profile from its row" do
     sign_in_as create(:user)
 
@@ -113,6 +139,29 @@ RSpec.describe "The Me menu", type: :system do
       expect(page).to paint "button.btn-primary[type=submit]"
       expect(page).to paint "main .avatar > div"
       expect(page).to be_accessible
+    end
+
+    # WHY: #368; the Me screen is where the menu's trimmed name is read whole, so its heading wraps instead of trimming.
+    it "draws a long one-word name whole in its heading on a phone" do
+      sign_in_as create(:user, first_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", last_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious")
+      resize_to ViewportHelper::MOBILE
+
+      visit edit_user_profile_path
+
+      expect(page).to have_button "Delete my account"
+      expect(truncated?("main [id^='user_profile_'] h1")).to be false
+      expect(horizontal_overflow).to eq 0
+    end
+
+    it "draws a long multi-word name whole in its heading on a phone" do
+      sign_in_as create(:user, first_name: "Maximilian Bartholomew Featherstonehaugh", last_name: "Montgomery Worthington Smythe")
+      resize_to ViewportHelper::MOBILE
+
+      visit edit_user_profile_path
+
+      expect(page).to have_button "Delete my account"
+      expect(truncated?("main [id^='user_profile_'] h1")).to be false
+      expect(horizontal_overflow).to eq 0
     end
 
     it "keeps every row and line inside a phone's width" do
