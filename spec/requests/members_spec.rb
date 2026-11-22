@@ -849,7 +849,7 @@ RSpec.describe "Members", type: :request do
         expect(radios.select { it["checked"] }.map { it["value"] }).to eq [ "paused" ]
       end
 
-      it "offers a required start date that defaults to today and goes no later (#126 AC4)" do
+      it "offers a start date that defaults to today (#126 AC4)" do
         actor  = create(:member, :active, :members_administrator)
         target = create(:member, :paused, group: actor.group)
         sign_in_as(actor.user)
@@ -857,8 +857,7 @@ RSpec.describe "Members", type: :request do
 
         get edit_group_member_path(target.group, target)
 
-        field = Nokogiri::HTML(response.body).at_css("input[type=date][name='member[status_starts_on]']")
-        expect(field.attributes.slice("value", "max", "required").transform_values(&:value)).to eq("value" => "2026-11-09", "max" => "2026-11-09", "required" => "required")
+        expect(Nokogiri::HTML(response.body).at_css("input[type=date][name='member[status_starts_on]']")["value"]).to eq "2026-11-09"
       end
 
       it "offers Remove" do
@@ -1248,6 +1247,14 @@ RSpec.describe "Members", type: :request do
 
         expect(response).to have_http_status :unprocessable_content
         expect(Nokogiri::HTML(response.body).at_css("#member_status_starts_on_error").text).to eq "Status starts on cannot be after today"
+        expect([ member.reload.status, changes_of(member).size ]).to eq [ "active", 1 ]
+      end
+
+      it "refuses a blank start date on the start date field, recording nothing" do
+        patch group_member_path(member.group, member), params: { member: { status: "paused", status_starts_on: "" } }
+
+        expect(response).to have_http_status :unprocessable_content
+        expect(Nokogiri::HTML(response.body).at_css("#member_status_starts_on_error").text).to eq "Status starts on can't be blank"
         expect([ member.reload.status, changes_of(member).size ]).to eq [ "active", 1 ]
       end
 

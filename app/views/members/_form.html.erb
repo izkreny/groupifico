@@ -11,10 +11,11 @@
               hint: "They are emailed an invitation to join, and an account is made for a new address." %>
       <% else %>
         <%# The start date shows once a status other than the saved one is picked: `:default` matches the radio the page was served with checked. A form sent back over a refused change shows it from the start, since the picked status is then the served one. %>
+        <%# WHY: no `required` or `max`, because the browser refuses a hidden field that breaks either and the save then does nothing, with no message to show; the model refuses a blank or later date on this field instead. %>
         <div class="group/status contents">
           <%= form.segmented_field :status, choices: member_status_choices %>
           <div class="<%= class_names("contents" => member.status_changed?, "hidden group-has-[:checked:not(:default)]/status:contents" => !member.status_changed?) %>">
-            <%= form.field :status_starts_on, as: :date_field, label: "Starts on", required: true, max: Date.current, hint: "The day the new status takes effect, today or earlier." %>
+            <%= form.field :status_starts_on, as: :date_field, label: "Starts on", hint: "The day the new status takes effect, today or earlier." %>
           </div>
         </div>
       <% end %>
