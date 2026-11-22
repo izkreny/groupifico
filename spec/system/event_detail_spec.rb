@@ -301,7 +301,7 @@ RSpec.describe "The event detail", type: :system do
 
     expect(gap_to_row_end("main a[aria-label='Edit']", "##{ActionView::RecordIdentifier.dom_id(event)}")).to be >= 0
     expect(gap_to_row_end("##{ActionView::RecordIdentifier.dom_id(event)} a[target='_blank']", "##{ActionView::RecordIdentifier.dom_id(event)}")).to be >= 0
-    expect(gap_to_row_end("##{ActionView::RecordIdentifier.dom_id(event)} span.wrap-anywhere", "##{ActionView::RecordIdentifier.dom_id(event)}")).to be >= 0
+    expect(gap_to_row_end("##{ActionView::RecordIdentifier.dom_id(event)} a[href='#{group_member_path(owner.group, manager)}']", "##{ActionView::RecordIdentifier.dom_id(event)}")).to be >= 0
     expect(horizontal_overflow).to eq 0
   end
 
@@ -316,7 +316,7 @@ RSpec.describe "The event detail", type: :system do
 
     expect(gap_to_row_end("main a[aria-label='Edit']", "##{ActionView::RecordIdentifier.dom_id(event)}")).to be >= 0
     expect(gap_to_row_end("##{ActionView::RecordIdentifier.dom_id(event)} a[target='_blank']", "##{ActionView::RecordIdentifier.dom_id(event)}")).to be >= 0
-    expect(gap_to_row_end("##{ActionView::RecordIdentifier.dom_id(event)} span.wrap-anywhere", "##{ActionView::RecordIdentifier.dom_id(event)}")).to be >= 0
+    expect(gap_to_row_end("##{ActionView::RecordIdentifier.dom_id(event)} a[href='#{group_member_path(owner.group, manager)}']", "##{ActionView::RecordIdentifier.dom_id(event)}")).to be >= 0
     expect(horizontal_overflow).to eq 0
   end
 
