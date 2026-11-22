@@ -42,16 +42,17 @@ RSpec.describe "The member edit page", type: :system do
       expect(page).to have_no_field "Starts on"
     end
 
-    it "refuses a start date after today, showing the message under the field (#126 AC5)" do
+    # WHY: a date after today never reaches the server, since the field's `max` stops the browser submitting it, so the refusal drawn here is the one no attribute can catch.
+    it "refuses a start date before the current status started, showing the message under the field (#126 AC12)" do
       find(".join input[type=radio][value='paused']").click
-      fill_in "Starts on", with: Date.tomorrow.iso8601
+      fill_in "Starts on", with: Date.yesterday.iso8601
       click_button "Save member"
 
       colour_of = ->(selector) { page.evaluate_script "getComputedStyle(document.querySelector(arguments[0])).color", selector }
 
-      expect(page).to have_css "#member_status_starts_on_error", text: "cannot be after today"
+      expect(page).to have_css "#member_status_starts_on_error", text: "cannot be before #{Date.current.strftime("%-d %b %Y")}"
       expect(colour_of["#member_status_starts_on_error"]).not_to eq colour_of["label[for='member_status_starts_on']"]
-      expect(page).to have_field "Starts on", with: Date.tomorrow.iso8601
+      expect(page).to have_field "Starts on", with: Date.yesterday.iso8601
       expect(page).to be_accessible
     end
 

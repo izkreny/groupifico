@@ -849,7 +849,7 @@ RSpec.describe "Members", type: :request do
         expect(radios.select { it["checked"] }.map { it["value"] }).to eq [ "paused" ]
       end
 
-      it "offers a start date that defaults to today (#126 AC4)" do
+      it "offers a required start date that defaults to today and goes no later (#126 AC4)" do
         actor  = create(:member, :active, :members_administrator)
         target = create(:member, :paused, group: actor.group)
         sign_in_as(actor.user)
@@ -857,7 +857,8 @@ RSpec.describe "Members", type: :request do
 
         get edit_group_member_path(target.group, target)
 
-        expect(Nokogiri::HTML(response.body).at_css("input[type=date][name='member[status_starts_on]']")["value"]).to eq "2026-11-09"
+        field = Nokogiri::HTML(response.body).at_css("input[type=date][name='member[status_starts_on]']")
+        expect(field.attributes.slice("value", "max", "required").transform_values(&:value)).to eq("value" => "2026-11-09", "max" => "2026-11-09", "required" => "required")
       end
 
       it "offers Remove" do
