@@ -128,5 +128,16 @@ RSpec.describe "Authentication", type: :system do
 
       expect(horizontal_overflow).to eq 0
     end
+
+    # WHY: #368; an email is one word by its format, so a long one is the only long value this page draws.
+    it "breaks a long one-word email rather than scrolling sideways at phone width" do
+      user = create(:user, email: "simpsoncalifragilisticexpialaciousannoyedgruntcious@example.com")
+
+      resize_to ViewportHelper::MOBILE
+      visit sign_in_path(token: SignInToken.mint(user))
+
+      expect(page).to have_css "h1", text: "simpsoncalifragilisticexpialaciousannoyedgruntcious@example.com"
+      expect(horizontal_overflow).to eq 0
+    end
   end
 end
