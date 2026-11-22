@@ -59,7 +59,7 @@ RSpec.describe "The join page", type: :system do
     expect(page).to be_accessible
   end
 
-  # WHY: #504 AC1 and AC2 in the browser, the button posting, the redirect landing on the membership it created, and Open reaching the group.
+  # WHY: #504 AC1 and AC2 and #517 AC1 in the browser, the button posting and the redirect landing on the group's page with the notice that they joined.
   it "takes a signed-in visitor who presses the button into the group" do
     sign_in_as create(:user)
     group = create(:group, name: "Riverside Choir")
@@ -68,10 +68,9 @@ RSpec.describe "The join page", type: :system do
 
     visit new_join_request_path(token:)
     click_button "Ask to join Riverside Choir"
-    expect(page).to have_text "You are already in this group."
-    click_link "Open Riverside Choir"
 
     expect(page).to have_current_path group_path(group)
+    expect(page).to have_text "You joined Riverside Choir."
   end
 
   it "has no accessibility violations on the ask to join button in light" do
