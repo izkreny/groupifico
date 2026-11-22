@@ -11,7 +11,8 @@
     <div class="flex items-center justify-between gap-2">
       <%# WHY: `wrap-anywhere` rather than `break-words`, because `card-title` is a flex row whose link keeps a long one-word name's full width unless the break counts toward its minimum. %>
       <h2 class="card-title min-w-0 wrap-anywhere">
-        <%= link_to event.name, group_event_path(event.group, event), class: "link link-hover after:absolute after:inset-0" %>
+        <%# WHY: the name stops at two lines, since the card opens the event's screen, which draws it whole. %>
+        <%= trimmed event.name, :a, lines: 2, href: group_event_path(event.group, event), class: "link link-hover after:absolute after:inset-0" %>
       </h2>
 
       <div class="flex flex-none gap-controls">

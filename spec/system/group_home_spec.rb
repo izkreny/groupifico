@@ -284,30 +284,30 @@ RSpec.describe "The group home", type: :system do
     end
   end
 
-  # WHY: #368; the card wraps a long event name and place name, and its Duplicate and Edit stay inside it.
-  it "wraps a long one-word event and place name inside the card on a phone" do
+  # WHY: #368; the card clamps a long event name at two lines, since it opens the event's screen, which draws the name whole; it wraps a long place name, and its Duplicate and Edit stay inside it.
+  it "clamps a long one-word event name at two lines and wraps the place on a phone" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
-    event = create(:event, :rehearsal, group: member.group, creator: member, status: :confirmed, name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", address: create(:address, name: "SimpsoncalifragilisticexpialaciousannoyedgruntciousSimpsoncalifragilisticexpialaciousannoyedgruntcious"), starts_at: 2.days.from_now.change(hour: 19), ends_at: 2.days.from_now.change(hour: 21))
+    event = create(:event, :rehearsal, group: member.group, creator: member, status: :confirmed, name: "SimpsoncalifragilisticexpialaciousannoyedgruntciousSimpsoncalifragilisticexpialaciousannoyedgruntcious", address: create(:address, name: "SimpsoncalifragilisticexpialaciousannoyedgruntciousSimpsoncalifragilisticexpialaciousannoyedgruntcious"), starts_at: 2.days.from_now.change(hour: 19), ends_at: 2.days.from_now.change(hour: 21))
     sign_in_as member.user
     resize_to ViewportHelper::MOBILE
 
     visit group_path(member.group)
 
-    expect(page).to have_css "##{ActionView::RecordIdentifier.dom_id(event, :next_up)} [aria-label^='Edit']"
+    expect(clamped_lines("##{ActionView::RecordIdentifier.dom_id(event, :next_up)} h2 a")).to eq 2
     expect(gap_to_row_end("##{ActionView::RecordIdentifier.dom_id(event, :next_up)} [aria-label^='Edit']", "##{ActionView::RecordIdentifier.dom_id(event, :next_up)} .card-body")).to be >= 0
     expect(gap_to_row_end("##{ActionView::RecordIdentifier.dom_id(event, :next_up)} a[target='_blank'] span", "##{ActionView::RecordIdentifier.dom_id(event, :next_up)} .card-body")).to be >= 0
     expect(horizontal_overflow).to eq 0
   end
 
-  it "wraps a long multi-word event and place name inside the card on a phone" do
+  it "clamps a long multi-word event name at two lines and wraps the place on a phone" do
     member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
-    event = create(:event, :rehearsal, group: member.group, creator: member, status: :confirmed, name: "The Extraordinarily Long Named Spring Concert Of The Riverside Community Choir", address: create(:address, name: "The Extraordinarily Long Named Community Hall Of Greater Springfield"), starts_at: 2.days.from_now.change(hour: 19), ends_at: 2.days.from_now.change(hour: 21))
+    event = create(:event, :rehearsal, group: member.group, creator: member, status: :confirmed, name: "The Extraordinarily Long Named Spring Concert Of The Riverside Community Choir Of Greater Springfield In The Valley", address: create(:address, name: "The Extraordinarily Long Named Community Hall Of Greater Springfield"), starts_at: 2.days.from_now.change(hour: 19), ends_at: 2.days.from_now.change(hour: 21))
     sign_in_as member.user
     resize_to ViewportHelper::MOBILE
 
     visit group_path(member.group)
 
-    expect(page).to have_css "##{ActionView::RecordIdentifier.dom_id(event, :next_up)} [aria-label^='Edit']"
+    expect(clamped_lines("##{ActionView::RecordIdentifier.dom_id(event, :next_up)} h2 a")).to eq 2
     expect(gap_to_row_end("##{ActionView::RecordIdentifier.dom_id(event, :next_up)} [aria-label^='Edit']", "##{ActionView::RecordIdentifier.dom_id(event, :next_up)} .card-body")).to be >= 0
     expect(gap_to_row_end("##{ActionView::RecordIdentifier.dom_id(event, :next_up)} a[target='_blank'] span", "##{ActionView::RecordIdentifier.dom_id(event, :next_up)} .card-body")).to be >= 0
     expect(horizontal_overflow).to eq 0

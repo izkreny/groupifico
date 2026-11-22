@@ -306,6 +306,17 @@ RSpec.describe "Groups", type: :request do
         expect(Nokogiri::HTML(response.body).at_css("header h1")["title"]).to eq "The Extraordinarily Long Named Riverside Community Choir"
       end
 
+      # WHY: #368; the next-up card clamps a long event name at two lines, so its link carries the whole name in the `title`.
+      it "carries the next-up event's whole name in its link's title" do
+        member = create(:member, :active)
+        create(:event, :rehearsal, group: member.group, creator: member, status: :confirmed, name: "The Extraordinarily Long Named Spring Rehearsal", starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        sign_in_as(member.user)
+
+        get group_path(member.group)
+
+        expect(Nokogiri::HTML(response.body).at_css(".card-title a")["title"]).to eq "The Extraordinarily Long Named Spring Rehearsal"
+      end
+
       it "carries the group's whole name in the switcher's title for a member of two groups" do
         member = create(:member, :active, group: create(:group, name: "The Extraordinarily Long Named Riverside Community Choir"))
         create(:member, :active, user: member.user)

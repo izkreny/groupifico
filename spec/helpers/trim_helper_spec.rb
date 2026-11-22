@@ -14,5 +14,11 @@ RSpec.describe TrimHelper, type: :helper do
 
       expect(tag["title"]).to eq "The Extraordinarily Long Named Riverside Community Choir"
     end
+
+    it "clamps the value at two lines rather than one when asked" do
+      tag = Nokogiri::HTML.fragment(helper.trimmed("Spring concert", :a, lines: 2, class: "link")).at("a")
+
+      expect(tag["class"].split).to contain_exactly("line-clamp-2", "link")
+    end
   end
 end
