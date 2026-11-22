@@ -111,8 +111,18 @@ RSpec.describe "The styleguide", type: :request do
 
         get "/styleguide"
 
-        section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Member rows, owner and paused" }
+        section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Member rows, owner, paused and pending" }
         expect(section.text).to include "not signed in yet"
+      end
+
+      it "draws the plane that resends an invitation on the pending member's row for the owner" do
+        plant_styleguide_group(manager: "Ana Horvat")
+        sign_in_as(planted_member("Ana Horvat").user)
+
+        get "/styleguide"
+
+        section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Member rows, owner, paused and pending" }
+        expect(section.css("button[aria-label]").map { it["aria-label"] }).to include "Resend invitation to Petra Novak"
       end
 
       it "draws no not-signed-in mark on the member rows for a member who does not oversee the list" do
@@ -121,7 +131,7 @@ RSpec.describe "The styleguide", type: :request do
 
         get "/styleguide"
 
-        section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Member rows, owner and paused" }
+        section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Member rows, owner, paused and pending" }
         expect(section.text).not_to include "not signed in yet"
       end
 
@@ -190,7 +200,7 @@ RSpec.describe "The styleguide", type: :request do
         get "/styleguide"
 
         listed = Nokogiri::HTML(response.body).css("#member_switcher select option[value!='']").map { it["value"].to_i }
-        expect(listed).to eq [ "Ana Horvat", "Ivan Kovačević", "Marija Babić", "Luka Marić" ].map { planted_member(it).id }
+        expect(listed).to eq [ "Ana Horvat", "Ivan Kovačević", "Marija Babić", "Luka Marić", "Petra Novak" ].map { planted_member(it).id }
       end
 
       it "names the signed-in user in the switcher, though they are not a member" do
@@ -415,7 +425,7 @@ RSpec.describe "The styleguide", type: :request do
 
         get "/styleguide"
 
-        section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Member rows, owner and paused" }
+        section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Member rows, owner, paused and pending" }
         expect(section.at_css("[data-theme=organic] li a").text.squish).to eq "Ana Horvat"
       end
 

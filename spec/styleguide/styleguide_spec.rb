@@ -237,7 +237,7 @@ RSpec.describe "The styleguide", type: :system do
   it "keeps the same section in view through a switch that draws sections above it" do
     plant_styleguide_group(manager: "Ana Horvat")
     sign_in_as create(:user)
-    member_rows_top = "[...document.querySelectorAll('section')].find(section => section.querySelector('h2').textContent == 'Member rows, owner and paused').getBoundingClientRect().top"
+    member_rows_top = "[...document.querySelectorAll('section')].find(section => section.querySelector('h2').textContent == 'Member rows, owner, paused and pending').getBoundingClientRect().top"
 
     visit styleguide_path
     page.execute_script("window.scrollBy(0, #{member_rows_top} - 100)")

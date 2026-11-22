@@ -1,5 +1,6 @@
-<%# locals: (owner:, paused:, manages:, oversees:) %>
+<%# locals: (owner:, paused:, pending:, manages:, oversees:) %>
 <%= render layout: "shared/filter_list" do %>
   <%= render "members/member", member: owner, manages:, oversees: %>
   <%= render "members/member", member: paused, manages:, oversees: %>
+  <%= render "members/member", member: pending, manages:, oversees: %>
 <% end %>

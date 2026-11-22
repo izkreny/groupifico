@@ -11,7 +11,7 @@ class StyleguidesController < ApplicationController
     @group = Group.find_by(name: GROUP_NAME)
     @next_up, @unconfirmed, @ongoing, @concluded, @canceled = pick_events
     @members = @group ? @group.members.preloaded.order(:id).to_a : []
-    @owner, @paused = pick_members
+    @owner, @paused, @pending = pick_members
     # WHY: the owner is active here, so a paused membership is in another group, which is what gives the switcher both a row that is not current and a paused one.
     @memberships = @owner ? @owner.user.current_memberships.preloaded.to_a : []
 
@@ -38,6 +38,7 @@ class StyleguidesController < ApplicationController
           "a canceled event"                   => @canceled,
           "an active owner"                    => @owner,
           "a paused member"                    => @paused,
+          "a pending member"                   => @pending,
           "a home address"                     => @group.address,
           "the owner paused in a second group" => @memberships.find(&:paused?)
         }.reject { |_name, record| record }.keys
@@ -61,10 +62,10 @@ class StyleguidesController < ApplicationController
       ]
     end
 
-    # An active owner, whose membership draws the owner tags and whose profile the account sections draw, and a paused member for the status tags. Each picked by status as the events are.
+    # An active owner, whose membership draws the owner tags and whose profile the account sections draw, a paused member for the status tags, and a pending one for the plane that resends an invitation. Each picked by status as the events are.
     #
     # WHY: from `@members`, in the order they joined, because the seed makes two active owners and only the first is paused in the second group the group switcher needs; an unordered read leaves which one is drawn to the database.
     def pick_members
-      [ @members.find { it.active? && it.owner? }, @members.find(&:paused?) ]
+      [ @members.find { it.active? && it.owner? }, @members.find(&:paused?), @members.find(&:pending?) ]
     end
 end
