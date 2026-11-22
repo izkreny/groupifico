@@ -1,8 +1,10 @@
 import { Controller } from "@hotwired/stimulus"
 
-// WHY: the button itself says the link was copied and turns back after two seconds, so a second copy shows again; the status line carries the same news to a screen reader, and shows only when the copy fails.
+// WHY: the button itself says the text was copied and turns back after two seconds, so a second copy shows again; the status line carries the same news to a screen reader, and shows only when the copy fails.
 export default class extends Controller {
-  static targets = [ "source", "button", "idle", "done", "status" ]
+  static targets = [ "button", "idle", "done", "status" ]
+  static values = { content: String, copied: String, failed: String }
+  static classes = [ "idle", "done" ]
 
   disconnect() {
     clearTimeout(this.timer)
@@ -12,12 +14,12 @@ export default class extends Controller {
     clearTimeout(this.timer)
 
     try {
-      await navigator.clipboard.writeText(this.sourceTarget.value)
+      await navigator.clipboard.writeText(this.contentValue)
       this.#mark(true)
-      this.#say("Link copied", { visible: false })
+      this.#say(this.copiedValue, { visible: false })
       this.timer = setTimeout(() => this.#reset(), 2000)
     } catch {
-      this.#say("Couldn't copy. Select the link and copy it yourself.", { visible: true })
+      this.#say(this.failedValue, { visible: true })
     }
   }
 
@@ -29,8 +31,8 @@ export default class extends Controller {
   #mark(copied) {
     this.idleTarget.hidden = copied
     this.doneTarget.hidden = !copied
-    this.buttonTarget.classList.toggle("btn-primary", !copied)
-    this.buttonTarget.classList.toggle("btn-secondary", copied)
+    this.idleClasses.forEach(name => this.buttonTarget.classList.toggle(name, !copied))
+    this.doneClasses.forEach(name => this.buttonTarget.classList.toggle(name, copied))
   }
 
   #say(text, { visible }) {
