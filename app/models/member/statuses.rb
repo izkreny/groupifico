@@ -39,8 +39,11 @@ module Member::Statuses
 
       audit_trail class: Member::StatusChange, context: %i[ status_starts_on status_updater ], if: :starts_a_new_day?
 
-      before_transition { |member| member.send(:find_the_days_change) }
-      after_transition  { |member| member.send(:fold_into_the_days_change) }
+      before_transition do: :find_the_days_change
+      after_transition  do: :fold_into_the_days_change
+
+      # WHY: before the save rather than after it, inside the transition's transaction, per ADR 0008, so a change a validation refuses rolls the removal back with it.
+      before_transition from: :active, to: %i[ paused inactive ], do: :remove_registrations_from_the_start_date
     end
 
     # WHY: `pending` is where an invitation starts and nothing else, so no update moves a member into it. A member with registrations set back to pending would keep their places on rosters every member reads, which is the one thing a pending member must never be seen on.
@@ -108,5 +111,15 @@ module Member::Statuses
 
     def latest_status_change
       status_changes.order(:starts_on).last
+    end
+
+    # WHY: an answer on an event that has ended stays, since it may be the record that the member was there, and a concluded or canceled event is never touched, per ADR 0008.
+    #
+    # WHY: a blank start date removes nothing and leaves the refusal to `status_starts_on_in_order`, which runs after this callback and puts it on the form's field.
+    def remove_registrations_from_the_start_date
+      return if status_starts_on.blank?
+
+      from_the_start = registrations.joins(:event).where(events: { status: Event::OPEN_TO_ANSWERS, ends_at: status_starts_on.beginning_of_day.. })
+      from_the_start.where(events: { ends_at: Time.current.. }).or(from_the_start.where.not(status: Registration::ANSWERS)).destroy_all
     end
 end

@@ -396,6 +396,136 @@ RSpec.describe Member, type: :model do
       expect(member.errors[:status_starts_on]).to eq [ "cannot be before 5 Nov 2026, when the current status started" ]
       expect([ member.reload.status, history(member).size ]).to eq [ "paused", 2 ]
     end
+
+    context "when the member leaves active" do
+      def event_ending_at(year, month, day, hour, minute = 0, status: :confirmed)
+        ends_at = Time.zone.local(year, month, day, hour, minute)
+        create(:event, group: owner.group, starts_at: ends_at - 1.hour, ends_at:, status:)
+      end
+
+      it "removes every registration of a paused member, answered or not, on every event that has not ended (#330 AC1)" do
+        on(2026, 11, 9)
+        upcoming = event_ending_at(2026, 11, 12, 19)
+        create(:registration, member:, event: upcoming, status: :yes)
+        create(:registration, member:, event: event_ending_at(2026, 11, 14, 19, status: :unconfirmed), status: :response_requested)
+        create(:registration, member:, event: event_ending_at(2026, 11, 9, 12, 30), status: :maybe)
+        kept = create(:registration, member: owner, event: upcoming, status: :yes)
+
+        member.change_status(:paused, updater: owner)
+
+        expect(Registration.where(member: [ member, owner ])).to contain_exactly(kept)
+      end
+
+      it "removes every registration of a deactivated member on every event that has not ended (#330 AC2)" do
+        on(2026, 11, 9)
+        create(:registration, member:, event: event_ending_at(2026, 11, 12, 19), status: :yes)
+        create(:registration, member:, event: event_ending_at(2026, 11, 14, 19), status: :reserved)
+
+        member.change_status(:inactive, updater: owner)
+
+        expect(Registration.where(member:)).to be_empty
+      end
+
+      it "keeps the registrations of a member deactivated from paused, who is not leaving active (#330 AC2)" do
+        paused = create(:member, :paused, group: owner.group)
+        on(2026, 11, 9)
+        registration = create(:registration, member: paused, event: event_ending_at(2026, 11, 12, 19), status: :yes)
+
+        paused.change_status(:inactive, updater: owner)
+
+        expect(Registration.where(member: paused)).to contain_exactly(registration)
+      end
+
+      it "removes the unanswered registrations on events that have ended since the start date and still take answers (#330 AC9)" do
+        create(:registration, member:, event: event_ending_at(2026, 11, 6, 19), status: :reserved)
+        create(:registration, member:, event: event_ending_at(2026, 11, 7, 19, status: :unconfirmed), status: :response_requested)
+
+        on(2026, 11, 9)
+        member.change_status(:paused, starts_on: Date.new(2026, 11, 5), updater: owner)
+
+        expect(Registration.where(member:)).to be_empty
+      end
+
+      it "keeps the answers on events that have ended since the start date and still take answers (#330 AC9)" do
+        answers = [
+          create(:registration, member:, event: event_ending_at(2026, 11, 6, 19), status: :yes),
+          create(:registration, member:, event: event_ending_at(2026, 11, 7, 19, status: :unconfirmed), status: :maybe),
+          create(:registration, member:, event: event_ending_at(2026, 11, 8, 19), status: :no)
+        ]
+
+        on(2026, 11, 9)
+        member.change_status(:paused, starts_on: Date.new(2026, 11, 5), updater: owner)
+
+        expect(Registration.where(member:)).to match_array(answers)
+      end
+
+      it "keeps every registration on concluded and canceled events, whether or not they have ended (#330 AC10)" do
+        canceled = event_ending_at(2026, 11, 12, 19)
+        on_canceled = create(:registration, member:, event: canceled, status: :yes)
+        canceled.update!(status: :canceled)
+        on_concluded = create(:registration, member:, event: event_ending_at(2026, 11, 6, 19, status: :concluded), status: :reserved)
+
+        on(2026, 11, 9)
+        member.change_status(:paused, starts_on: Date.new(2026, 11, 5), updater: owner)
+
+        expect(Registration.where(member:)).to contain_exactly(on_canceled, on_concluded)
+      end
+
+      it "keeps every registration on events that ended before the start date (#330 AC10)" do
+        before_the_start = create(:registration, member:, event: event_ending_at(2026, 11, 4, 19), status: :response_requested)
+
+        on(2026, 11, 9)
+        member.change_status(:paused, starts_on: Date.new(2026, 11, 5), updater: owner)
+
+        expect(Registration.where(member:)).to contain_exactly(before_the_start)
+      end
+
+      it "reads the start date as the start of its day in the app's zone" do
+        create(:registration, member:, event: event_ending_at(2026, 11, 5, 0, 30), status: :reserved)
+        day_before = create(:registration, member:, event: event_ending_at(2026, 11, 4, 23, 30), status: :reserved)
+
+        on(2026, 11, 9)
+        member.change_status(:paused, starts_on: Date.new(2026, 11, 5), updater: owner)
+
+        expect(Registration.where(member:)).to contain_exactly(day_before)
+      end
+
+      it "creates no registration when the member returns to active (#330 AC5)" do
+        create(:registration, member:, event: event_ending_at(2026, 11, 12, 19), status: :yes)
+        on(2026, 11, 5)
+        member.change_status(:paused, updater: owner)
+
+        on(2026, 11, 9)
+        member.change_status(:active, updater: owner)
+
+        expect(Registration.where(member:)).to be_empty
+      end
+
+      it "removes nothing when the change is refused, as pausing the group's last active owner is (#330 AC6)" do
+        on(2026, 11, 9)
+        registration = create(:registration, member: owner, event: event_ending_at(2026, 11, 12, 19), status: :yes)
+
+        expect(owner.change_status(:paused, updater: owner)).to be false
+        expect(Registration.exists?(registration.id)).to be true
+      end
+
+      it "removes nothing when the start date is after today (#330 AC6)" do
+        on(2026, 11, 9)
+        registration = create(:registration, member:, event: event_ending_at(2026, 11, 12, 19), status: :yes)
+
+        expect(member.change_status(:paused, starts_on: Date.new(2026, 11, 10), updater: owner)).to be false
+        expect(Registration.exists?(registration.id)).to be true
+      end
+
+      it "removes nothing for a blank start date, refusing it on the start date (#330 AC6)" do
+        on(2026, 11, 9)
+        registration = create(:registration, member:, event: event_ending_at(2026, 11, 12, 19), status: :yes)
+
+        expect(member.change_status(:paused, starts_on: nil, updater: owner)).to be false
+        expect(member.errors[:status_starts_on]).to eq [ "can't be blank" ]
+        expect(Registration.exists?(registration.id)).to be true
+      end
+    end
   end
 
   it { is_expected.to delegate_method(:full_name).to(:profile) }

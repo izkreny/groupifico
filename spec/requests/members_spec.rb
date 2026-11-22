@@ -1304,6 +1304,24 @@ RSpec.describe "Members", type: :request do
         expect(response).to redirect_to group_member_path(member.group, member)
         expect([ member.reload.role_names, changes_of(member).size ]).to eq [ [ "events_administrator" ], 1 ]
       end
+
+      it "removes the member's registration on an event that has not ended when the form pauses them (#330 AC7)" do
+        registration = create(:registration, member:, event: create(:event, group: member.group, starts_at: Time.zone.local(2026, 11, 12, 18)), status: :yes)
+
+        patch group_member_path(member.group, member), params: { member: { status: "paused", status_starts_on: "2026-11-09" } }
+
+        expect(response).to redirect_to group_member_path(member.group, member)
+        expect(Registration.exists?(registration.id)).to be false
+      end
+
+      it "removes nothing when the form's start date is refused (#330 AC6)" do
+        registration = create(:registration, member:, event: create(:event, group: member.group, starts_at: Time.zone.local(2026, 11, 12, 18)), status: :yes)
+
+        patch group_member_path(member.group, member), params: { member: { status: "paused", status_starts_on: "2026-11-10" } }
+
+        expect(response).to have_http_status :unprocessable_content
+        expect(Registration.exists?(registration.id)).to be true
+      end
     end
 
     context "when signed in as an administrator" do

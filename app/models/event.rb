@@ -131,9 +131,9 @@ class Event < ApplicationRecord
   #
   # The open statuses are named rather than the closed ones excluded, so a fifth status arrives
   # unable to take answers until somebody decides it should.
-  def open_to_answers?
-    unconfirmed? || confirmed?
-  end
+  OPEN_TO_ANSWERS = %w[ unconfirmed confirmed ].freeze
+
+  def open_to_answers? = status.in?(OPEN_TO_ANSWERS)
 
   # WHY: the answers this event takes now, read by every answer row and by `Registration`'s own check, so the screens and the model offer the same list. Once the event has ended, whether somebody went is a yes or a no; a `maybe` given before it leaves that unknown, so it is not offered and its holder's response is due again.
   def available_registration_answers
