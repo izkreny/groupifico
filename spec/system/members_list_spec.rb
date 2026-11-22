@@ -17,18 +17,37 @@ RSpec.describe "The members list", type: :system do
     expect(page).to be_accessible
   end
 
-  # WHY: N7 in the browser, the button readable on a dimmed row and its press landing back on the Pending tab.
-  it "resends an invitation from a pending row, with no accessibility violations" do
-    actor   = create(:member, :active, :members_administrator, :with_all_attributes)
-    invitee = create(:member, :pending, group: actor.group)
-    sign_in_as actor.user
+  # WHY: N7 in the browser, the plane on a dimmed row opening its dialog rather than posting, and the dialog itself undimmed.
+  it "opens the Send again dialog from a pending row's plane, with no accessibility violations" do
+    open_caseys_invitation
 
-    visit group_members_path(actor.group, status: "pending")
+    expect(page).to have_css "dialog[open]", text: "Send Casey Moreno the invitation again?"
+    expect(page.evaluate_script("getComputedStyle(document.querySelector('dialog[open] h3')).color")).not_to match %r{/ 0\.\d+\)}
     expect(page).to be_accessible
-    within("##{ActionView::RecordIdentifier.dom_id(invitee, :row)}") { click_button "Resend invitation" }
+  end
+
+  it "resends an invitation on Send again, landing back on the Pending tab" do
+    actor = open_caseys_invitation
+
+    within("dialog[open]") { click_button "Send again" }
 
     expect(page).to have_text "Invitation sent again."
     expect(page).to have_current_path group_members_path(actor.group, status: "pending")
+  end
+
+  # WHY: at phone width a text Resend button squeezed the name column until each name broke letter by letter, so the name has to stay on one line beside the row's controls.
+  it "keeps a pending member's name on one line beside its controls at phone width, with no accessibility violations" do
+    actor   = create(:member, :active, :members_administrator, :with_all_attributes)
+    invitee = create(:member, :pending, group: actor.group, user: create(:user, first_name: "Casey", last_name: "Moreno"))
+    sign_in_as actor.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_members_path(actor.group, status: "pending")
+
+    expect(page.evaluate_script(<<~JS)).to eq 1
+      (() => { const range = document.createRange(); range.selectNodeContents(document.querySelector("##{ActionView::RecordIdentifier.dom_id(invitee)} a")); return range.getClientRects().length })()
+    JS
+    expect(page).to be_accessible
   end
 
   it "paints the roster in light, its paused row dimmed and still readable" do
@@ -578,5 +597,15 @@ RSpec.describe "The members list", type: :system do
 
       expect([ clear.top == show.top && clear.left < show.left, narrow_show.top < narrow_clear.top ]).to eq [ true, true ]
     end
+  end
+
+  # Casey is a pending member of the administrator's group, whose plane opens the Send again dialog.
+  def open_caseys_invitation
+    actor = create(:member, :active, :members_administrator, :with_all_attributes)
+    create(:member, :pending, group: actor.group, user: create(:user, first_name: "Casey", last_name: "Moreno"))
+    sign_in_as actor.user
+    visit group_members_path(actor.group, status: "pending")
+    click_button "Resend invitation to Casey Moreno"
+    actor
   end
 end

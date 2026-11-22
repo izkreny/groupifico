@@ -254,8 +254,8 @@ RSpec.describe "Members", type: :request do
         expect(Nokogiri::HTML(response.body).at_css("#join_link_url")["value"]).to eq new_join_request_url(token:)
       end
 
-      # WHY: #505 AC4, an invitee under Pending only, and N7's Resend on their row.
-      it "lists an invitee under Pending alone, offering to resend their invitation" do
+      # WHY: #505 AC4, an invitee under Pending only.
+      it "lists an invitee under Pending alone" do
         actor   = create(:member, :active, :members_administrator)
         invitee = create(:member, :pending, group: actor.group)
         sign_in_as(actor.user)
@@ -263,11 +263,22 @@ RSpec.describe "Members", type: :request do
         get group_members_path(actor.group)
         active_rows = Nokogiri::HTML(response.body).css("#members li[id]").map { it["id"] }
         get group_members_path(actor.group, status: "pending")
-        pending_page = Nokogiri::HTML(response.body)
 
         expect(active_rows).not_to include ActionView::RecordIdentifier.dom_id(invitee, :row)
-        expect(pending_page.css("#members li[id]").map { it["id"] }).to eq [ ActionView::RecordIdentifier.dom_id(invitee, :row) ]
-        expect(pending_page.at_css(%(form[action="#{group_member_invitation_path(actor.group, invitee)}"])).text.strip).to eq "Resend invitation"
+        expect(Nokogiri::HTML(response.body).css("#members li[id]").map { it["id"] }).to eq [ ActionView::RecordIdentifier.dom_id(invitee, :row) ]
+      end
+
+      # WHY: N7's Resend on an invitee's row, a plane whose dialog names where the invitation goes.
+      it "offers to resend an invitee's invitation" do
+        actor   = create(:member, :active, :members_administrator)
+        invitee = create(:member, :pending, group: actor.group, user: create(:user, first_name: "Casey", last_name: "Moreno", email: "casey@example.com"))
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group, status: "pending")
+        row = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(invitee, :row)}")
+
+        expect(row.at_css(%(form[action="#{group_member_invitation_path(actor.group, invitee)}"] button))["aria-label"]).to eq "Resend invitation to Casey Moreno"
+        expect(row.at_css("dialog").text.squish).to include "Send Casey Moreno the invitation again? It goes to casey@example.com."
       end
 
       it "marks a member who has never signed in" do

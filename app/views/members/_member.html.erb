@@ -14,7 +14,7 @@
     </div>
   </div>
 
-  <%# WHY: the name's link is stretched over the whole row, daisyUI's `list-row` being its positioned container, so pressing anywhere on it opens the member while a screen reader still meets one link; Call, Email, the pencil and Resend are each lifted above that overlay with `relative z-1`, so the gaps between them still open the member. %>
+  <%# WHY: the name's link is stretched over the whole row, daisyUI's `list-row` being its positioned container, so pressing anywhere on it opens the member while a screen reader still meets one link; the plane, Call, Email and the pencil are each lifted above that overlay with `relative z-1`, so the gaps between them still open the member. %>
   <div id="<%= dom_id member %>" class="flex flex-col gap-1">
     <%= link_to name, group_member_path(member.group, member), class: "link link-hover after:absolute after:inset-0" %>
 
@@ -28,6 +28,10 @@
   </div>
 
   <div class="flex flex-none gap-controls">
+    <% if manages && member.pending? %>
+      <%= render "members/resend_invitation", member:, name: %>
+    <% end %>
+
     <% if member.mobile_phone %>
       <%= phone_to member.mobile_phone, class: "btn btn-ghost btn-circle btn-sm relative z-1", aria: { label: "Call #{name}" } do %>
         <%= icon :call, class: "size-icon-control" %>
@@ -38,11 +42,7 @@
       <%= icon :email, class: "size-icon-control" %>
     <% end %>
 
-    <%# WHY: text rather than an icon alone, as Slack and User Interviews draw it, because a paper plane beside the envelope reads as a second way to email them. %>
-    <% if manages && member.pending? %>
-      <%= button_to safe_join([ icon(:send_invite, class: "size-icon-control"), "Resend invitation" ]), group_member_invitation_path(member.group, member),
-            class: "btn btn-ghost btn-sm relative z-1 text-primary" %>
-    <% elsif manages %>
+    <% if manages && !member.pending? %>
       <%= link_to edit_group_member_path(member.group, member), class: "btn btn-ghost btn-circle btn-sm relative z-1 text-primary", aria: { label: "Edit #{name}" } do %>
         <%= icon :edit, class: "size-icon-control" %>
       <% end %>
