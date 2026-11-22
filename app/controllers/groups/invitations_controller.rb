@@ -15,9 +15,8 @@ class Groups::InvitationsController < ApplicationController
     render "join_requests/new"
   end
 
-  # WHY: a plain status write, as ADR 0008 says #505 ships until #126 moves it onto the join event.
   def update
-    @member.update!(status: :active)
+    @member.change_status(:active) || raise(ActiveRecord::RecordInvalid, @member)
 
     redirect_to group_path(@group), notice: "You joined #{@group.name}.", status: :see_other
   end
