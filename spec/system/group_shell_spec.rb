@@ -284,7 +284,7 @@ RSpec.describe "The group shell", type: :system do
     visit group_path(member.group)
     find("#group-switcher summary").click
 
-    expect(truncated?("#group-switcher a[aria-current='true']")).to be false
+    expect(truncated?("#group-switcher a[aria-current='true'] span.font-heading")).to be false
     expect(gap_to_row_end("#group-switcher a[aria-current='true'] .badge", "#group-switcher ul")).to be >= 0
     expect(horizontal_overflow).to eq 0
   end
@@ -298,7 +298,7 @@ RSpec.describe "The group shell", type: :system do
     visit group_path(member.group)
     find("#group-switcher summary").click
 
-    expect(truncated?("#group-switcher a[aria-current='true']")).to be false
+    expect(truncated?("#group-switcher a[aria-current='true'] span.font-heading")).to be false
     expect(gap_to_row_end("#group-switcher a[aria-current='true'] .badge", "#group-switcher ul")).to be >= 0
     expect(horizontal_overflow).to eq 0
   end
