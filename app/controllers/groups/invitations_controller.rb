@@ -3,6 +3,8 @@ class Groups::InvitationsController < ApplicationController
   # Permanent, all three: the membership is found through the caller's own session and never named by the URL, so a rule would have one possible input and one possible answer, the argument `UsersController#destroy` makes; and both pre-checks in `ApplicationPolicy` refuse a pending member, so a policy would have to skip them to say anything at all. `docs/AUTHORIZATION.md` records it under the records with no group at all.
   skip_verify_authorized only: %i[ show update destroy ]
 
+  include GroupScoped
+
   layout "entry"
 
   before_action :set_member, only: :show
@@ -28,13 +30,11 @@ class Groups::InvitationsController < ApplicationController
 
   private
     def set_member
-      @group = Group.find(params.expect(:group_id))
       @member = Current.user.members.find_by!(group: @group)
     end
 
     # WHY: pending only, so Join cannot bring back a member who left and Decline cannot remove one who already belongs; either answers the 404 a missing invitation does.
     def set_pending_member
-      @group = Group.find(params.expect(:group_id))
       @member = Current.user.members.pending.preloaded.find_by!(group: @group)
     end
 end
