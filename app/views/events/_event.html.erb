@@ -37,14 +37,14 @@
 
   <% if event.address %>
     <p class="flex items-center gap-icon-text">
-      <%= icon :where, class: "size-icon-inline text-icon-muted" %><%= link_to event.address.name, address_map_url(event.address), class: "link link-hover", target: "_blank" %>
+      <%= icon :where, class: "size-icon-inline text-icon-muted" %><%= link_to event.address.name, address_map_url(event.address), class: "link link-hover wrap-anywhere", target: "_blank" %>
     </p>
   <% end %>
 
   <% if (credits = event_credits(event)) %>
     <p class="flex items-center gap-icon-text">
       <%= icon :members, class: "size-icon-inline flex-none text-icon-muted" %>
-      <span><%= credits %></span>
+      <span class="wrap-anywhere"><%= credits %></span>
     </p>
   <% end %>
 
