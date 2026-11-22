@@ -193,8 +193,8 @@ RSpec.describe "JoinRequests", type: :request do
     end
 
     context "when signed in" do
-      # WHY: #504 AC1, active from the moment they ask rather than pending an approval.
-      it "adds the visitor to the link's group as an active member and returns to the join page" do
+      # WHY: #504 AC1, active from the moment they ask rather than pending an approval, and #517 AC1, landing in the group they just joined rather than back on the join page.
+      it "adds the visitor to the link's group as an active member and takes them to the group's page" do
         user = create(:user)
         sign_in_as user
         group = create(:group)
@@ -202,7 +202,7 @@ RSpec.describe "JoinRequests", type: :request do
 
         expect { post join_request_path(token:) }.to change { group.members.active.where(user:).count }.from(0).to(1)
         expect(group.members.where(user:).count).to eq 1
-        expect(response).to redirect_to new_join_request_path(token:)
+        expect(response).to redirect_to group_path(group)
       end
 
       # WHY: #504 AC2, the group's page answered as it is for any member, rather than with the 404 a pending member gets.
@@ -217,7 +217,7 @@ RSpec.describe "JoinRequests", type: :request do
         expect(response).to have_http_status :ok
       end
 
-      # WHY: #447 AC4, a second press or a page left open leaves the membership as it is; one example per status, since the inactive one is the member who must not let themselves back in.
+      # WHY: #447 AC4, a second press or a page left open leaves the membership as it is; one example per status, since the inactive one is the member who must not let themselves back in; and #517 AC2, each answered with the join page and no notice that they joined.
       it "leaves an active member as they are" do
         member = create(:member, :active)
         sign_in_as member.user
@@ -226,6 +226,7 @@ RSpec.describe "JoinRequests", type: :request do
         expect { post join_request_path(token:) }.not_to change(Member, :count)
         expect(member.reload).to be_active
         expect(response).to redirect_to new_join_request_path(token:)
+        expect(flash[:notice]).to be_nil
       end
 
       it "leaves a paused member as they are" do
@@ -236,6 +237,7 @@ RSpec.describe "JoinRequests", type: :request do
         expect { post join_request_path(token:) }.not_to change(Member, :count)
         expect(member.reload).to be_paused
         expect(response).to redirect_to new_join_request_path(token:)
+        expect(flash[:notice]).to be_nil
       end
 
       it "leaves a pending member as they are" do
@@ -246,6 +248,7 @@ RSpec.describe "JoinRequests", type: :request do
         expect { post join_request_path(token:) }.not_to change(Member, :count)
         expect(member.reload).to be_pending
         expect(response).to redirect_to new_join_request_path(token:)
+        expect(flash[:notice]).to be_nil
       end
 
       it "leaves a member who left inactive rather than letting them back in" do
@@ -256,6 +259,7 @@ RSpec.describe "JoinRequests", type: :request do
         expect { post join_request_path(token:) }.not_to change(Member, :count)
         expect(member.reload).to be_inactive
         expect(response).to redirect_to new_join_request_path(token:)
+        expect(flash[:notice]).to be_nil
       end
 
       # WHY: #447 AC6, the link turned off between opening the page and pressing the button.

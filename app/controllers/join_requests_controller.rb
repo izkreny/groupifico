@@ -16,11 +16,15 @@ class JoinRequestsController < ApplicationController
     end
   end
 
-  # WHY: found before it is created, so a second press or a page left open in another tab leaves a membership that already exists as it is, whatever its status, rather than bringing back a member who left; no bang, because two presses in flight at once both find nothing and the later one's create is refused by the membership the earlier one just wrote, and that refusal is answered with the same join page, which shows the member already in the group; no status is stated, because the `active` a member is created with is what a link joiner becomes.
+  # WHY: found before it is created, so a second press or a page left open in another tab leaves a membership that already exists as it is, whatever its status, rather than bringing back a member who left; no bang, because two presses in flight at once both find nothing and the later one's create is refused by the membership the earlier one just wrote, and that refusal is answered with the same join page, which shows the member already in the group; no status is stated, because the `active` a member is created with is what a link joiner becomes; only a membership this press created lands in the group with the notice that they joined, since `previously_new_record?` is set by a successful insert alone, so a membership found or a refused create gets the join page's answer for its status.
   def create
-    @group.members.find_or_create_by(user: Current.user)
+    member = @group.members.find_or_create_by(user: Current.user)
 
-    redirect_to new_join_request_path(token: params[:token])
+    if member.previously_new_record?
+      redirect_to group_path(@group), notice: "You joined #{@group.name}.", status: :see_other
+    else
+      redirect_to new_join_request_path(token: params[:token])
+    end
   end
 
   private
