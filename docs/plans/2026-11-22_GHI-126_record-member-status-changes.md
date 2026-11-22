@@ -81,5 +81,5 @@ The gates cannot judge the start date field's wording or placement, nor run the 
 
 - ::Q4:: Is there a backfill for the members that exist before this ships? No. Production is dropped before launch and starts again from an import, so the migration only creates the table, AC9 leaves the issue, and its backfill spec goes with it.
 - ::Q5:: When may a status change have no updater? Only once the member who made it is deleted and the foreign key nullifies it. Every way a member comes into being names a real member, the factories and seeds name the member themselves, and ADR 0008 is amended on this branch in place of its null backfill and null import rows.
-- ::Q6:: Who is the CSV import's updater? Its own issue, #478, decides it: the super admin imports in the name of the group's real owner.
+- ::Q6:: Who is the CSV import's updater? The group's oldest active owner, who always exists and stays the same as owners are added. `Member::Import` records it here, and #478's history import does the same.
 - ::Q7:: When does the start date field show? Only once a status other than the saved one is picked, pre-filled with today and required. With the status unchanged it is hidden and ignored.
