@@ -66,8 +66,8 @@ RSpec.describe "The member detail page", type: :system do
     expect(horizontal_overflow).to eq 0
   end
 
-  # WHY: #368; Manages lists the member's events in `list-row`s, which break a long name inside the screen.
-  it "wraps a long one-word managed event name inside the screen on a phone" do
+  # WHY: #368; Manages trims a long event name, which links to the event's screen, so the list stays inside the screen.
+  it "trims a long one-word managed event name on a phone" do
     owner = create(:member, :active, :owner)
     target = create(:member, :active, group: owner.group)
     create(:event, group: owner.group, creator: owner, manager: target, name: "SimpsoncalifragilisticexpialaciousannoyedgruntciousSimpsoncalifragilisticexpialaciousannoyedgruntcious")
@@ -77,10 +77,11 @@ RSpec.describe "The member detail page", type: :system do
     visit group_member_path(target.group, target)
 
     expect(page).to have_css "#manages"
+    expect(truncated?("section[aria-labelledby='manages'] li a")).to be true
     expect(horizontal_overflow).to eq 0
   end
 
-  it "wraps a long multi-word managed event name inside the screen on a phone" do
+  it "trims a long multi-word managed event name on a phone" do
     owner = create(:member, :active, :owner)
     target = create(:member, :active, group: owner.group)
     create(:event, group: owner.group, creator: owner, manager: target, name: "The Extraordinarily Long Named Spring Concert Of The Riverside Community Choir")
@@ -90,6 +91,7 @@ RSpec.describe "The member detail page", type: :system do
     visit group_member_path(target.group, target)
 
     expect(page).to have_css "#manages"
+    expect(truncated?("section[aria-labelledby='manages'] li a")).to be true
     expect(horizontal_overflow).to eq 0
   end
 

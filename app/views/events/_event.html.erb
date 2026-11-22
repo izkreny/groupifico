@@ -43,7 +43,8 @@
   <% if (credits = event_credits(event)) %>
     <p class="flex items-center gap-icon-text">
       <%= icon :members, class: "size-icon-inline flex-none text-icon-muted" %>
-      <span class="wrap-anywhere"><%= credits %></span>
+      <%# WHY: `min-w-0`, because a trimmed name keeps its full width when the row measures the span, so without it the names never trim. %>
+      <span class="min-w-0"><%= credits %></span>
     </p>
   <% end %>
 

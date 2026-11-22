@@ -38,7 +38,8 @@ module EventsHelper
   # pointing at nobody; either half is left out rather than raising, and nil means nobody to name.
   def event_credits(event)
     credits = { "Managed by" => event.manager, "Created by" => event.creator }.filter_map do |role, member|
-      safe_join([ role, " ", link_to(member.short_name, group_member_path(event.group, member), class: "link link-hover") ]) if member
+      # WHY: trimmed rather than wrapped, because the name links to the member's screen, which draws it whole; `inline-block` is what lets a link inside a sentence trim.
+      safe_join([ role, " ", trimmed(member.short_name, :a, href: group_member_path(event.group, member), class: "link link-hover inline-block max-w-full align-bottom") ]) if member
     end
 
     safe_join(credits, DOT) if credits.any?

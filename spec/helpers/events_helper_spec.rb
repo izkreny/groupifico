@@ -54,6 +54,14 @@ RSpec.describe EventsHelper, type: :helper do
       expect(Nokogiri::HTML(helper.event_credits(event)).text).to eq "Managed by Ben C. · Created by Alice B."
     end
 
+    it "trims each name, carrying it whole in the link's title" do
+      alice = create(:member, user: create(:user, :with_full_profile, first_name: "Alice", last_name: "Bird"))
+      ben = create(:member, group: alice.group, user: create(:user, :with_full_profile, first_name: "Ben", last_name: "Cole"))
+      event = create(:event, group: alice.group, creator: alice, manager: ben)
+
+      expect(Nokogiri::HTML(helper.event_credits(event)).css("a").map { [ it["title"], it.classes.include?("truncate") ] }).to eq [ [ "Ben C.", true ], [ "Alice B.", true ] ]
+    end
+
     it "leaves the manager half out of an event with no manager" do
       alice = create(:member, user: create(:user, :with_full_profile, first_name: "Alice", last_name: "Bird"))
       event = create(:event, group: alice.group, creator: alice)

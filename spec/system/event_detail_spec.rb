@@ -289,8 +289,8 @@ RSpec.describe "The event detail", type: :system do
     expect(gap_to_row_end("##{roster_row(ben)} [aria-label='No for Ben Cole']", ".card-body")).to be >= 0
   end
 
-  # WHY: #368; the screen wraps a long event name, place name and manager's name, and keeps Duplicate and Edit, the place and the credits inside it.
-  it "wraps a long one-word event, place and manager name inside the screen on a phone" do
+  # WHY: #368; the screen wraps a long event name and place name, and trims the manager's name, which links to their screen; Duplicate and Edit, the place and the credits stay inside it.
+  it "wraps a long one-word event and place name and trims the manager's on a phone" do
     owner = create(:member, :active, :owner)
     manager = create(:member, :active, group: owner.group, user: create(:user, first_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", last_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious"))
     event = create(:event, group: owner.group, creator: owner, manager:, name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", address: create(:address, name: "SimpsoncalifragilisticexpialaciousannoyedgruntciousSimpsoncalifragilisticexpialaciousannoyedgruntcious"))
@@ -301,11 +301,11 @@ RSpec.describe "The event detail", type: :system do
 
     expect(gap_to_row_end("main a[aria-label='Edit']", "##{ActionView::RecordIdentifier.dom_id(event)}")).to be >= 0
     expect(gap_to_row_end("##{ActionView::RecordIdentifier.dom_id(event)} a[target='_blank']", "##{ActionView::RecordIdentifier.dom_id(event)}")).to be >= 0
-    expect(gap_to_row_end("##{ActionView::RecordIdentifier.dom_id(event)} a[href='#{group_member_path(owner.group, manager)}']", "##{ActionView::RecordIdentifier.dom_id(event)}")).to be >= 0
+    expect(truncated?("##{ActionView::RecordIdentifier.dom_id(event)} a[href='#{group_member_path(owner.group, manager)}']")).to be true
     expect(horizontal_overflow).to eq 0
   end
 
-  it "wraps a long multi-word event, place and manager name inside the screen on a phone" do
+  it "wraps a long multi-word event and place name and keeps the manager's inside the screen on a phone" do
     owner = create(:member, :active, :owner)
     manager = create(:member, :active, group: owner.group, user: create(:user, first_name: "Maximilian Bartholomew Featherstonehaugh", last_name: "Montgomery Worthington Smythe"))
     event = create(:event, group: owner.group, creator: owner, manager:, name: "The Extraordinarily Long Named Spring Concert Of The Riverside Community Choir", address: create(:address, name: "The Extraordinarily Long Named Community Hall Of Greater Springfield"))
