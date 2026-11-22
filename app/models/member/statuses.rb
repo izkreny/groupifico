@@ -119,8 +119,7 @@ module Member::Statuses
     def remove_registrations_from_the_start_date
       return if status_starts_on.blank?
 
-      registrations.eager_load(:event).where(events: { ends_at: status_starts_on.beginning_of_day.. })
-        .select { it.event.open_to_answers? && !(it.event.ended? && it.answered?) }
-        .each(&:destroy!)
+      from_the_start = registrations.joins(:event).where(events: { status: Event::OPEN_TO_ANSWERS, ends_at: status_starts_on.beginning_of_day.. })
+      from_the_start.where(events: { ends_at: Time.current.. }).or(from_the_start.where.not(status: Registration::ANSWERS)).destroy_all
     end
 end
