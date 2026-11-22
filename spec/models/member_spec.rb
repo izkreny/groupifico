@@ -336,6 +336,14 @@ RSpec.describe Member, type: :model do
       expect(history(member).last).to eq [ Date.new(2026, 11, 9), "paused", owner.id ]
     end
 
+    it "starts a change given no date today, even when the change before it on the same record was backdated (#126 AC4)" do
+      on(2026, 11, 9)
+      member.change_status(:paused, starts_on: Date.new(2026, 11, 5), updater: owner)
+      member.change_status(:inactive, updater: owner)
+
+      expect(history(member).last(2)).to eq [ [ Date.new(2026, 11, 5), "paused", owner.id ], [ Date.new(2026, 11, 9), "inactive", owner.id ] ]
+    end
+
     it "refuses a start date after today, recording nothing (#126 AC5)" do
       on(2026, 11, 9)
       expect(member.change_status(:paused, starts_on: Date.new(2026, 11, 10), updater: owner)).to be false

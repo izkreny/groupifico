@@ -1,6 +1,9 @@
 module Member::Statuses
   extend ActiveSupport::Concern
 
+  # WHY: a lambda rather than the attribute's current value, which a second change on the same record would inherit from the first; the first change and any later one given no date both start today, spelled once.
+  STARTS_TODAY = -> { Date.current }
+
   included do
     # WHY: each value names its stored integer, so the declaration can read in lifecycle order while the integers already in the column keep their meaning. `order(:status)` still sorts by those integers, `active` before `paused`.
     enum :status, { pending: 3, active: 0, paused: 1, inactive: 2 }, default: :active, validate: true
@@ -11,7 +14,7 @@ module Member::Statuses
     has_many :status_changes
 
     # The day the next change starts on and who makes it, read by the audit trail for the first change and every later one alike, so the start date's refusals land on the form's own field.
-    attribute :status_starts_on, :date, default: -> { Date.current }
+    attribute :status_starts_on, :date, default: STARTS_TODAY
     attr_writer :status_updater
 
     # WHY: states by name beside the enum and never with `value:`, which breaks creation, per ADR 0008; the enum keeps the integers.
@@ -46,7 +49,7 @@ module Member::Statuses
   end
 
   # The one way a status moves: the event that reaches `to` from the current status, fired with the day it starts on and who made it. The same status fires nothing and records nothing.
-  def change_status(to, starts_on: Date.current, updater: Current.member)
+  def change_status(to, starts_on: STARTS_TODAY.call, updater: Current.member)
     return true if to.to_s == status
 
     self.status_starts_on = starts_on
