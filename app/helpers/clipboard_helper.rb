@@ -5,8 +5,8 @@ module ClipboardHelper
   end
 
   def clipboard_icon_button(accessible_name)
-    tag.button type: "button", class: "btn btn-ghost btn-circle btn-sm flex-none", aria: { label: accessible_name }, data: { clipboard_target: "button", action: "clipboard#copy" } do
-      tag.span(icon(:copy, class: "size-icon-control"), class: "contents", data: { clipboard_target: "idle" }) + tag.span(icon(:copied, class: "size-icon-control"), class: "contents", hidden: true, data: { clipboard_target: "done" })
+    tag.button type: "button", class: "btn btn-ghost btn-circle btn-sm flex-none ms-text-control me-controls", aria: { label: accessible_name }, data: { clipboard_target: "button", action: "clipboard#copy" } do
+      tag.span(icon(:copy, class: "size-icon-inline"), class: "contents", data: { clipboard_target: "idle" }) + tag.span(icon(:copied, class: "size-icon-inline"), class: "contents", hidden: true, data: { clipboard_target: "done" })
     end
   end
 

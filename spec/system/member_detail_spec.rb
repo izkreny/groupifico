@@ -111,16 +111,30 @@ RSpec.describe "The member detail page", type: :system do
     expect(horizontal_overflow).to eq 0
   end
 
-  it "draws its edit, email, call and copy icons at 20px" do
+  # WHY: the copy buttons sit inline after their values, so their glyphs are the inline size while the Edit, Email and Call buttons keep the control size.
+  it "draws its edit, email and call icons at 20px and its copy icons at 16px" do
     reader = create(:member, :active, :members_administrator, :with_all_attributes)
     target = create(:member, :active, :with_all_attributes, group: reader.group)
     sign_in_as reader.user
 
     visit group_member_path(target.group, target)
 
-    expect(page.evaluate_script(<<~JS)).to eq [ 20, 20, 20, 20, 20 ]
+    expect(page.evaluate_script(<<~JS)).to eq [ 20, 20, 20, 16, 16 ]
       [ "a[aria-label^='Edit']", "a[aria-label^='Email ']", "a[aria-label^='Call ']", "button[aria-label$=' email']", "button[aria-label$=' mobile']" ]
         .map(control => document.querySelector(`main ${control} svg`).getBoundingClientRect().width)
+    JS
+  end
+
+  # WHY: an inline glyph after text sits `text-icon`, 12px, after it; the button's box around the glyph is what the margin has to account for.
+  it "sets each copy glyph 12px after its value" do
+    reader = create(:member, :active)
+    target = create(:member, :active, group: reader.group)
+    sign_in_as reader.user
+
+    visit group_member_path(target.group, target)
+
+    expect(page.evaluate_script(<<~JS)).to eq [ 12, 12 ]
+      [ ...document.querySelectorAll("main dd [data-clipboard-target='idle'] svg") ].map(glyph => Math.round(glyph.getBoundingClientRect().left - glyph.closest("div").firstElementChild.getBoundingClientRect().right))
     JS
   end
 

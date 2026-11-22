@@ -43,7 +43,7 @@
       <div>
         <dt class="text-xs">Email</dt>
         <%= tag.dd data: clipboard_data(@member.email, "email") do %>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center">
             <%# WHY: capped at three quarters of the row, which on a phone still leaves the copy and Email buttons their room; `min-w-0` lets the row shrink it so the trim can happen. %>
             <%= trimmed @member.email, class: "max-w-3/4 min-w-0" %>
 
@@ -62,7 +62,7 @@
         <div>
           <dt class="text-xs">Mobile</dt>
           <%= tag.dd data: clipboard_data(@member.mobile_phone, "mobile") do %>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center">
               <span><%= @member.mobile_phone %></span>
 
               <%= clipboard_icon_button "Copy #{name}'s mobile" %>

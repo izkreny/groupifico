@@ -188,6 +188,7 @@
 
   --spacing-icon-label: 0.5rem;       /* 8px: a button's icon → its label, through the `.btn` rule */
   --spacing-icon-text: 0.375rem;      /* 6px: a fact line's icon → its text */
+  --spacing-text-icon: 0.75rem;       /* 12px: text → an inline glyph after it, such as a value's copy button */
   --spacing-icons-micro: 0.125rem;    /* 2px: glyph to glyph between micro icons drawn as one icon */
   --spacing-arrow-inset: 0.296875rem; /* 4.75px: the empty space either side of a micro long arrow inside its 16px box, measured on the rendered glyph */
 
@@ -198,6 +199,7 @@
   /* WHY: derived, so each follows the tokens it is worked out from. */
   --spacing-control-inset: calc((var(--spacing-control) - var(--spacing-icon-control)) / 2);  /* 6px: a glyph inside its icon button */
   --spacing-label-control: calc(var(--spacing-icon-label) - var(--spacing-control-inset));    /* 2px: the box gap that sets a label `icon-label` from a button's glyph */
+  --spacing-text-control: calc(var(--spacing-text-icon) - (var(--spacing-control) - var(--spacing-icon-inline)) / 2);  /* 4px: the box margin that sets an inline glyph in its icon button `text-icon` after the text before it */
   --spacing-tally-rest: calc(var(--spacing-tally) - var(--spacing-icon-text));                /* 6px: a tag's margin, beside a row whose own gap is `icon-text` */
   --spacing-icon-pair: calc(2 * var(--spacing-arrow-inset) - var(--spacing-icons-micro));     /* 7.5px: how far the second of two long arrows drawn as one icon overlaps the first */
 }
