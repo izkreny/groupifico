@@ -3,7 +3,7 @@
 <div class="grow flex flex-col gap-5">
   <%# "group" rather than the group's type. Frame 10b reads "create your choir Riverside Choir",
       but `SignUp` carries no type until #137 puts the hostname's own on it. %>
-  <h1 class="text-record text-center break-words">Sign in as <span class="block text-secondary"><%= @sign_up.email %></span> and create your group <span class="block text-secondary"><%= @sign_up.group_name %></span></h1>
+  <h1 class="text-record text-center wrap-anywhere">Sign in as <span class="block text-secondary"><%= @sign_up.email %></span> and create your group <span class="block text-secondary"><%= @sign_up.group_name %></span></h1>
 
   <%= button_to sign_up_confirmation_path, class: "btn btn-primary btn-block" do %>
     <%= icon :confirm, class: "size-icon-control" %> Sign in and create group
