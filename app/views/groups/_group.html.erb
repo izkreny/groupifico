@@ -18,7 +18,8 @@
 %>
 <%= link_to group_path(group), id: dom_id(group), class: "card card-sm bg-base-200" do %>
   <div class="card-body gap-1">
-    <h2 class="card-title text-row-title">
+    <%# WHY: `wrap-anywhere`, because `card-title` is a flex row, so a long one-word name would otherwise keep its full width and push the badges off a phone. %>
+    <h2 class="card-title text-row-title wrap-anywhere">
       <%= group.name %>
 
       <% if membership&.owner? %>
