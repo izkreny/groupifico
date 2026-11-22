@@ -46,3 +46,5 @@ en:
         building_number: "Number"
         postal_code: "Postcode"
         country_code: "Country"
+      member:
+        status_starts_on: "Starts on"

@@ -34,6 +34,14 @@ RSpec.describe SignUp, type: :model do
       expect(member).to be_owner
     end
 
+    it "records the starter's first change as active from today, made by themselves (#126 AC8)" do
+      travel_to Time.zone.local(2026, 11, 9, 12)
+
+      member = described_class.redeem!(described_class.mint(email: "starter@example.com", group_name: "Chamber Choir"))
+
+      expect(Member::StatusChange.where(member:).pluck(:status, :starts_on, :updater_id)).to eq [ [ "active", Date.new(2026, 11, 9), member.id ] ]
+    end
+
     it "adds the group to an account already holding the address, never a second account" do
       user = create(:user, email: "starter@example.com")
       token = described_class.mint(email: "starter@example.com", group_name: "Chamber Choir")

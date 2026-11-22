@@ -22,6 +22,61 @@ RSpec.describe "The member edit page", type: :system do
     end
   end
 
+  context "when a members administrator changes a member's status" do
+    let(:actor)  { create(:member, :active, :members_administrator, :with_all_attributes) }
+    let(:member) { create(:member, :active, group: actor.group) }
+
+    before do
+      sign_in_as actor.user
+      visit edit_group_member_path(member.group, member)
+    end
+
+    # WHY: the start date is drawn on every edit and revealed by CSS alone, so whether it shows is only seen in a browser.
+    it "shows the start date once a different status is picked, and hides it again on the saved one" do
+      expect(page).to have_css ".join input[type=radio][value='active']:checked"
+      expect(page).to have_no_field "Starts on"
+
+      find(".join input[type=radio][value='paused']").click
+      expect(page).to have_field "Starts on", with: Date.current.iso8601
+
+      find(".join input[type=radio][value='active']").click
+      expect(page).to have_no_field "Starts on"
+    end
+
+    # WHY: a date after today never reaches the server, since the field's `max` stops the browser submitting it, so the refusal drawn here is the one no attribute can catch.
+    it "refuses a start date before the current status started, showing the message under the field (#126 AC12)" do
+      find(".join input[type=radio][value='paused']").click
+      fill_in "Starts on", with: Date.yesterday.iso8601
+      click_button "Save member"
+
+      colour_of = ->(selector) { page.evaluate_script "getComputedStyle(document.querySelector(arguments[0])).color", selector }
+
+      expect(page).to have_css "#member_status_starts_on_error", text: "cannot be before #{Date.current.strftime("%-d %b %Y")}"
+      expect(colour_of["#member_status_starts_on_error"]).not_to eq colour_of["label[for='member_status_starts_on']"]
+      expect(page).to have_field "Starts on", with: Date.yesterday.iso8601
+      expect(page).to be_accessible
+    end
+
+    # WHY: a hidden field the browser refuses blocks the save with nothing on screen, so whatever the hidden start date holds must not stop a save that changes no status.
+    it "saves with the start date cleared once the saved status is picked again" do
+      find(".join input[type=radio][value='paused']").click
+      fill_in "Starts on", with: ""
+      find(".join input[type=radio][value='active']").click
+      click_button "Save member"
+
+      expect(page).to have_text "Member was successfully updated."
+    end
+
+    it "saves with the start date after today once the saved status is picked again" do
+      find(".join input[type=radio][value='paused']").click
+      fill_in "Starts on", with: Date.tomorrow.iso8601
+      find(".join input[type=radio][value='active']").click
+      click_button "Save member"
+
+      expect(page).to have_text "Member was successfully updated."
+    end
+  end
+
   context "when an owner edits a member's roles" do
     it "revokes every role once every box is unticked" do
       owner  = create(:member, :active, :owner, :with_all_attributes)

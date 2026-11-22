@@ -84,6 +84,18 @@ RSpec.describe "Groups::Invitations", type: :request do
         expect(response).to redirect_to group_path(member.group)
       end
 
+      it "records their joining as an active change from the day they join, made by them rather than whoever invited them (#126 AC3)" do
+        travel_to Time.zone.local(2026, 11, 2, 12)
+        inviter = create(:member, :active, :members_administrator)
+        member  = create(:member, :pending, group: inviter.group, status_updater: inviter)
+        sign_in_as member.user
+        travel_to Time.zone.local(2026, 11, 9, 12)
+
+        patch group_invitation_path(member.group)
+
+        expect(Member::StatusChange.where(member:).order(:starts_on).pluck(:status, :starts_on, :updater_id)).to eq [ [ "pending", Date.new(2026, 11, 2), inviter.id ], [ "active", Date.new(2026, 11, 9), member.id ] ]
+      end
+
       # WHY: #505 AC4, the group refused until they join, and reached once they have.
       it "reaches the group's page only once they have joined" do
         member = create(:member, :pending)

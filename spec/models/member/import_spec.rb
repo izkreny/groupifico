@@ -1,10 +1,22 @@
 require "rails_helper"
 
 RSpec.describe Member::Import do
-  let(:group) { create(:group) }
+  # WHY: an owner, because every group has one and the import records its oldest active owner as making each first change.
+  let!(:owner) { create(:member, :active, :owner) }
+  let(:group) { owner.group }
 
   def csv(*rows)
     [ "first_name,last_name,email,mobile_phone", *rows ].join("\n")
+  end
+
+  it "records each added member's first change as active from today, made by the group's oldest active owner (#126 AC8)" do
+    travel_to owner.created_at + 1.day
+    create(:member, :active, :owner, group:)
+
+    described_class.new(group, csv("Ana,Horvat,ana@example.com,+385911111111")).save
+
+    member = group.members.find_by!(user: User.find_by!(email: "ana@example.com"))
+    expect(Member::StatusChange.where(member:).pluck(:status, :starts_on, :updater_id)).to eq [ [ "active", Date.current, owner.id ] ]
   end
 
   describe "a row whose address no account holds" do

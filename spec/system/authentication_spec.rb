@@ -21,7 +21,8 @@ RSpec.describe "Authentication", type: :system do
   # The sign-in link is minted rather than read out of a delivered mail, which is what
   # `sign_in_through_the_browser` already does.
   it "signs an invitee in from the invitation, landing on the profile form" do
-    member = Member.create!(group: create(:group, name: "Riverside Choir"), email: "added@example.com", status: :pending)
+    inviter = create(:member, :active, :members_administrator, group: create(:group, name: "Riverside Choir"))
+    member  = Member.create!(group: inviter.group, email: "added@example.com", status: :pending, status_updater: inviter)
     link   = sign_in_form_link_in(MemberMailer.invitation(member))
 
     visit link.request_uri

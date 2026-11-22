@@ -49,7 +49,7 @@ class Member::Import
     end
 
     def import(row, line)
-      member  = Member.new(group: @group, email: row["email"])
+      member  = Member.new(group: @group, email: row["email"], status_updater: importer)
       user    = member.user
       profile = user.profile || user.build_profile
 
@@ -65,6 +65,11 @@ class Member::Import
           Row.new(line:, outcome: :refused, reasons: member.errors.full_messages + profile.errors.full_messages)
         end
       end
+    end
+
+    # WHY: the rake task has no acting member, so each first change is recorded as made by the group's oldest active owner, who always exists and stays the same as owners are added.
+    def importer
+      @importer ||= @group.members.active.owners.order(:created_at).first
     end
 
     def fill_blanks(profile, row)

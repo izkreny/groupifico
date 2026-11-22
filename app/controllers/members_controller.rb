@@ -66,7 +66,7 @@ class MembersController < ApplicationController
     attributes = member_params
     authorize! @member, to: :manage_roles? if granting_roles?(attributes)
 
-    if @member.update(attributes)
+    if update_with_status(attributes)
       redirect_to group_member_path(@group, @member),
         notice: "Member was successfully updated.",
         status: :see_other
@@ -93,7 +93,29 @@ class MembersController < ApplicationController
     # Used on update: the address stays out, so an existing membership cannot be handed to a
     # different user. Who may set a role is `MemberPolicy#manage_roles?`, asked above.
     def member_params
-      role_records params.expect(member: [ :status, roles: [] ]), held: @member.roles
+      role_records params.expect(member: [ :status, :status_starts_on, roles: [] ]), held: @member.roles
+    end
+
+    # WHY: a status moves through `change_status`, never a plain write, so its change is recorded; it runs in one transaction with the roles, so a refused status leaves the roles as they were, as one `update` did. A start date posted with an unchanged status is ignored, since nothing starts on it, and one not posted at all is today.
+    def update_with_status(attributes)
+      posted = attributes.extract!(:status, :status_starts_on)
+
+      saved = Member.transaction do
+        @member.assign_attributes(attributes)
+
+        written = if posted.key?(:status) && posted[:status] != @member.status
+          @member.change_status(posted[:status], starts_on: posted.fetch(:status_starts_on) { @member.status_starts_on })
+        else
+          @member.save
+        end
+
+        raise ActiveRecord::Rollback unless written
+        true
+      end
+
+      # WHY: a refused event puts the saved status back, so the form is handed the posted one to show what was picked.
+      @member.status = posted[:status] if !saved && posted[:status].in?(Member.statuses.keys)
+      saved
     end
 
     # A posted `roles` key that changes nothing is not a grant. The member form draws its role

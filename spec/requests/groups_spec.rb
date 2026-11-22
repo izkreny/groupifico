@@ -1209,6 +1209,16 @@ RSpec.describe "Groups", type: :request do
         expect(response).to redirect_to group_path(Group.sole)
       end
 
+      it "records the owner's first change as active from today, made by themselves (#126 AC8)" do
+        travel_to Time.zone.local(2026, 11, 9, 12)
+        sign_in_as(create(:user))
+
+        post groups_path, params: { group: { name: "Choraliers" } }
+
+        member = Member.sole
+        expect(Member::StatusChange.where(member:).pluck(:status, :starts_on, :updater_id)).to eq [ [ "active", Date.new(2026, 11, 9), member.id ] ]
+      end
+
       it "creates a Member joining the acting user to the group with the owner role" do
         user = create(:user)
         sign_in_as(user)

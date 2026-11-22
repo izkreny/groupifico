@@ -2,7 +2,9 @@ require "rails_helper"
 require "rake"
 
 RSpec.describe "members:import", type: :task do
-  let(:group) { create(:group, name: "Zbor") }
+  # WHY: an owner, because every group has one and the import records its oldest active owner as making each first change.
+  let(:owner) { create(:member, :active, :owner, group: create(:group, name: "Zbor")) }
+  let(:group) { owner.group }
 
   before { Rails.application.load_tasks unless Rake::Task.task_defined?("members:import") }
 
@@ -42,7 +44,7 @@ RSpec.describe "members:import", type: :task do
       expect { expect { run_task(group.id, rows) }.to raise_error(SystemExit) }
         .to output("line 2: added\nline 3: refused: User email is invalid\n").to_stdout
     }.to output("Nothing was imported: fix the refused rows and run it again.\n").to_stderr
-    expect(group.members).to be_empty
+    expect(group.members).to contain_exactly(owner)
   end
 
   it "aborts on an unknown group id before reading any row" do
@@ -53,6 +55,6 @@ RSpec.describe "members:import", type: :task do
   it "aborts on a header row it does not expect before reading any row" do
     expect { expect { run_task(group.id, "name,email\nAna Horvat,ana@example.com") }.to raise_error(SystemExit) }
       .to output("Expected the headers first_name, last_name, email, mobile_phone; got name, email\n").to_stderr
-    expect(group.members).to be_empty
+    expect(group.members).to contain_exactly(owner)
   end
 end

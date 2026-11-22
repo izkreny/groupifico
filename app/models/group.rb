@@ -88,7 +88,7 @@ class Group < ApplicationRecord
   # membership already on it and then relies on one `save` failing into `render :new`. Returned so
   # that `SignUp.redeem!` has the member to sign in and land.
   def add_owner(user)
-    members.build(user: user, roles: [ Role.new(name: Role::OWNER) ])
+    members.build(user: user, roles: [ Role.new(name: Role::OWNER) ]).tap { it.status_updater = it }
   end
 
   # Asked before a group loses an owner, by whichever end is losing one - the member being removed,

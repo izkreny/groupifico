@@ -205,6 +205,18 @@ RSpec.describe "JoinRequests", type: :request do
         expect(response).to redirect_to group_path(group)
       end
 
+      it "records the joiner's first change as active from today, made by themselves (#126 AC8)" do
+        travel_to Time.zone.local(2026, 11, 9, 12)
+        user = create(:user)
+        sign_in_as user
+        group = create(:group)
+
+        post join_request_path(token: JoinLink.mint(group))
+
+        member = Member.find_by!(group:, user:)
+        expect(Member::StatusChange.where(member:).pluck(:status, :starts_on, :updater_id)).to eq [ [ "active", Date.new(2026, 11, 9), member.id ] ]
+      end
+
       # WHY: #504 AC2, the group's page answered as it is for any member, rather than with the 404 a pending member gets.
       it "lets the new member open the group's page" do
         sign_in_as create(:user)
