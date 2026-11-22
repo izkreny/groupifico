@@ -305,6 +305,19 @@ RSpec.describe "The event detail", type: :system do
     expect(horizontal_overflow).to eq 0
   end
 
+  # WHY: #368, RF9; the credits' cap is a phone's, so a desktop line with room draws a name longer than it whole.
+  it "draws a credited name whole on a desktop" do
+    owner = create(:member, :active, :owner)
+    manager = create(:member, :active, group: owner.group, user: create(:user, first_name: "Bartholomew", last_name: "Žagar"))
+    event = create(:event, group: owner.group, creator: owner, manager:)
+    sign_in_as owner.user
+    resize_to ViewportHelper::DESKTOP
+
+    visit group_event_path(event.group, event)
+
+    expect(truncated?("##{ActionView::RecordIdentifier.dom_id(event)} a[href='#{group_member_path(owner.group, manager)}']")).to be false
+  end
+
   it "wraps a long multi-word event and place name and keeps both credits on one line on a phone" do
     owner = create(:member, :active, :owner)
     manager = create(:member, :active, group: owner.group, user: create(:user, first_name: "Maximilian Bartholomew Featherstonehaugh", last_name: "Montgomery Worthington Smythe"))
