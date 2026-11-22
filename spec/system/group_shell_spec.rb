@@ -247,6 +247,64 @@ RSpec.describe "The group shell", type: :system do
     expect(gap_to_row_end("#me-menu summary", "header")).to eq 0
   end
 
+  # WHY: #368; the header is fixed-height chrome, so a long name trims there, its controls stay on the screen, and the whole name rides in the `title` for a desktop pointer.
+  it "trims a long one-word group name in the header, its controls kept on a phone" do
+    member = create(:member, :owner, group: create(:group, name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious"))
+    create(:member, user: member.user, group: create(:group, name: "Harbour Band"))
+    sign_in_as member.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_path(member.group)
+
+    expect(truncated?("header h1")).to be true
+    expect(find("header h1")[:title]).to eq "Simpsoncalifragilisticexpialaciousannoyedgruntcious"
+    expect(horizontal_overflow).to eq 0
+    expect(gap_to_row_end("#me-menu summary", "header")).to eq 0
+  end
+
+  it "trims a long multi-word group name in the header, its controls kept on a phone" do
+    member = create(:member, :owner, group: create(:group, name: "The Extraordinarily Long Named Riverside Community Choir Of Greater Springfield"))
+    create(:member, user: member.user, group: create(:group, name: "Harbour Band"))
+    sign_in_as member.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_path(member.group)
+
+    expect(truncated?("header h1")).to be true
+    expect(find("header h1")[:title]).to eq "The Extraordinarily Long Named Riverside Community Choir Of Greater Springfield"
+    expect(horizontal_overflow).to eq 0
+    expect(gap_to_row_end("#me-menu summary", "header")).to eq 0
+  end
+
+  # WHY: #368; the open switcher is where a name the header trims is read whole, so its row wraps the name and keeps the owner badge inside the menu.
+  it "wraps a long one-word group name whole in the open switcher on a phone" do
+    member = create(:member, :owner, group: create(:group, name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious"))
+    create(:member, user: member.user, group: create(:group, name: "Harbour Band"))
+    sign_in_as member.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_path(member.group)
+    find("#group-switcher summary").click
+
+    expect(truncated?("#group-switcher a[aria-current='true']")).to be false
+    expect(gap_to_row_end("#group-switcher a[aria-current='true'] .badge", "#group-switcher ul")).to be >= 0
+    expect(horizontal_overflow).to eq 0
+  end
+
+  it "wraps a long multi-word group name whole in the open switcher on a phone" do
+    member = create(:member, :owner, group: create(:group, name: "The Extraordinarily Long Named Riverside Community Choir Of Greater Springfield"))
+    create(:member, user: member.user, group: create(:group, name: "Harbour Band"))
+    sign_in_as member.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_path(member.group)
+    find("#group-switcher summary").click
+
+    expect(truncated?("#group-switcher a[aria-current='true']")).to be false
+    expect(gap_to_row_end("#group-switcher a[aria-current='true'] .badge", "#group-switcher ul")).to be >= 0
+    expect(horizontal_overflow).to eq 0
+  end
+
   it "draws the header's chevron and pencil at 20px, 16px apart" do
     member = create(:member, :owner, group: create(:group))
     create(:member, user: member.user, group: create(:group))
