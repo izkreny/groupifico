@@ -140,4 +140,29 @@ RSpec.describe "The member edit page", type: :system do
     expect(page).to have_button "Remove"
     expect(form_actions_layout).to eq({ "buttons" => [ [ "Remove", 164 ], [ "Cancel", 164 ], [ "Save member", 164 ] ], "lines" => 1 })
   end
+
+  # WHY: #368; the heading names the member, so it wraps a long name inside the screen.
+  it "wraps a long one-word name in its heading on a phone" do
+    owner = create(:member, :active, :owner)
+    member = create(:member, :active, group: owner.group, user: create(:user, first_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", last_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious"))
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit edit_group_member_path(owner.group, member)
+
+    expect(page).to have_button "Save member"
+    expect(horizontal_overflow).to eq 0
+  end
+
+  it "wraps a long multi-word name in its heading on a phone" do
+    owner = create(:member, :active, :owner)
+    member = create(:member, :active, group: owner.group, user: create(:user, first_name: "Maximilian Bartholomew Featherstonehaugh", last_name: "Montgomery Worthington Smythe"))
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit edit_group_member_path(owner.group, member)
+
+    expect(page).to have_button "Save member"
+    expect(horizontal_overflow).to eq 0
+  end
 end
