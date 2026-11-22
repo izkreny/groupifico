@@ -98,13 +98,13 @@ class MembersController < ApplicationController
 
     # WHY: a status moves through `change_status`, never a plain write, so its change is recorded; it runs in one transaction with the roles, so a refused status leaves the roles as they were, as one `update` did. A start date posted with an unchanged status is ignored, since nothing starts on it, and one not posted at all is today.
     def update_with_status(attributes)
-      posted = attributes.extract!(:status)
+      posted = attributes.extract!(:status, :status_starts_on)
 
       saved = Member.transaction do
         @member.assign_attributes(attributes)
 
         written = if posted.key?(:status) && posted[:status] != @member.status
-          @member.change_status(posted[:status], starts_on: @member.status_starts_on)
+          @member.change_status(posted[:status], starts_on: posted.fetch(:status_starts_on) { @member.status_starts_on })
         else
           @member.save
         end

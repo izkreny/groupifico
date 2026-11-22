@@ -1273,6 +1273,16 @@ RSpec.describe "Members", type: :request do
         expect(Nokogiri::HTML(response.body).css("input[type=radio][name='member[status]'][checked]").map { it["value"] }).to eq [ "paused" ]
       end
 
+      it "writes nothing when the status is posted unchanged, whatever start date comes with it" do
+        updated_at = member.updated_at
+        travel 1.hour
+
+        patch group_member_path(member.group, member), params: { member: { status: "active", status_starts_on: "2026-11-05" } }
+
+        expect(response).to redirect_to group_member_path(member.group, member)
+        expect(member.reload.updated_at).to eq updated_at
+      end
+
       it "records no change when only the roles are saved, whatever start date is posted (#126 AC7)" do
         owner = create(:member, :active, :owner, group: actor.group)
         sign_in_as(owner.user)
