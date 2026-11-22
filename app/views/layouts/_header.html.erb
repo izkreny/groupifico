@@ -14,12 +14,12 @@
 
   <%# A pushed screen's title takes the group name's place, and with it go the switcher and the pencil, which both belong to the name. %>
   <% if title %>
-    <h1 class="font-heading text-shell sm:text-hero truncate min-w-0"><%= title %></h1>
+    <%= trimmed title, :h1, class: "font-heading text-shell sm:text-hero min-w-0" %>
   <%# With a second group the name and its chevron are the switcher, looking as a plain name and a ghost chevron button do, and opening a menu of the reader's groups, each a link, so nothing moves until one is pressed. The two chevrons swap on `[open]` alone. %>
   <% elsif switcher_id %>
     <details id="<%= switcher_id %>" class="dropdown group min-w-0" data-controller="dropdown" data-action="click@document->dropdown#close keydown@document->dropdown#close">
       <summary class="flex items-center gap-label-control min-w-0 cursor-pointer list-none rounded-field focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-        <h1 class="font-heading text-shell sm:text-hero truncate min-w-0"><%= group_name %></h1>
+        <%= trimmed group_name, :h1, class: "font-heading text-shell sm:text-hero min-w-0" %>
         <span class="btn btn-ghost btn-circle btn-sm text-primary flex-none">
           <%= icon :disclose, class: "size-icon-control group-open:hidden" %>
           <%= icon :close_panel, class: "size-icon-control hidden group-open:block" %>
@@ -29,7 +29,7 @@
       <%= render "layouts/group_switcher", memberships:, current_group: group %>
     </details>
   <% else %>
-    <h1 class="font-heading text-shell sm:text-hero truncate min-w-0"><%= group ? group_name : brand_name %></h1>
+    <%= trimmed(group ? group_name : brand_name, :h1, class: "font-heading text-shell sm:text-hero min-w-0") %>
   <% end %>
 
   <% if editable && !title %>
