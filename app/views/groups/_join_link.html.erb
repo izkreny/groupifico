@@ -13,7 +13,7 @@
 <div class="flex flex-col gap-3 pt-4">
   <% if join_link %>
     <% url = new_join_request_url(token: join_link.token) %>
-    <%= tag.div class: "flex flex-col gap-3", data: { controller: "clipboard", clipboard_content_value: url, clipboard_copied_value: "Link copied", clipboard_failed_value: "Couldn't copy. Select the link and copy it yourself.", clipboard_idle_class: "btn-primary", clipboard_done_class: "btn-secondary" } do %>
+    <%= tag.div class: "flex flex-col gap-3", data: clipboard_data(url, "link", idle_class: "btn-primary", done_class: "btn-secondary") do %>
       <input id="<%= id.(:url) %>" class="input w-full text-ellipsis text-base-content/70" type="text" autocomplete="off" value="<%= url %>" readonly
              aria-labelledby="<%= id.(:heading) %>" aria-describedby="<%= id.(:hint) %>">
 
@@ -22,7 +22,7 @@
         <span class="contents" hidden data-clipboard-target="done"><%= icon :copied, class: "size-icon-control" %>Link copied</span>
       <% end %>
 
-      <p class="text-meta sr-only" role="status" data-clipboard-target="status"></p>
+      <%= clipboard_status %>
     <% end %>
 
     <div class="flex flex-wrap gap-2">

@@ -42,43 +42,37 @@
       <%# WHY: each contact's status line sits below its row rather than in it, so the failure sentence it shows never squeezes the value and its buttons. %>
       <div>
         <dt class="text-xs">Email</dt>
-        <%= tag.dd data: { controller: "clipboard", clipboard_content_value: @member.email, clipboard_copied_value: "Email copied", clipboard_failed_value: "Couldn't copy. Select the email and copy it yourself." } do %>
+        <%= tag.dd data: clipboard_data(@member.email, "email") do %>
           <div class="flex items-center gap-2">
             <%# WHY: capped at three quarters of the row, which on a phone still leaves the copy and Email buttons their room; `min-w-0` lets the row shrink it so the trim can happen. %>
             <%= trimmed @member.email, class: "max-w-3/4 min-w-0" %>
 
-            <%= tag.button type: "button", class: "btn btn-ghost btn-circle btn-sm flex-none", aria: { label: "Copy #{name}'s email" }, data: { clipboard_target: "button", action: "clipboard#copy" } do %>
-              <span class="contents" data-clipboard-target="idle"><%= icon :copy, class: "size-icon-control" %></span>
-              <span class="contents" hidden data-clipboard-target="done"><%= icon :copied, class: "size-icon-control" %></span>
-            <% end %>
+            <%= clipboard_icon_button "Copy #{name}'s email" %>
 
             <%= mail_to @member.email, class: "btn btn-ghost btn-circle btn-sm flex-none ms-auto", aria: { label: "Email #{name}" } do %>
               <%= icon :email, class: "size-icon-control" %>
             <% end %>
           </div>
 
-          <p class="text-meta sr-only" role="status" data-clipboard-target="status"></p>
+          <%= clipboard_status %>
         <% end %>
       </div>
 
       <% if @member.mobile_phone %>
         <div>
           <dt class="text-xs">Mobile</dt>
-          <%= tag.dd data: { controller: "clipboard", clipboard_content_value: @member.mobile_phone, clipboard_copied_value: "Mobile copied", clipboard_failed_value: "Couldn't copy. Select the mobile and copy it yourself." } do %>
+          <%= tag.dd data: clipboard_data(@member.mobile_phone, "mobile") do %>
             <div class="flex items-center gap-2">
               <span><%= @member.mobile_phone %></span>
 
-              <%= tag.button type: "button", class: "btn btn-ghost btn-circle btn-sm flex-none", aria: { label: "Copy #{name}'s mobile" }, data: { clipboard_target: "button", action: "clipboard#copy" } do %>
-                <span class="contents" data-clipboard-target="idle"><%= icon :copy, class: "size-icon-control" %></span>
-                <span class="contents" hidden data-clipboard-target="done"><%= icon :copied, class: "size-icon-control" %></span>
-              <% end %>
+              <%= clipboard_icon_button "Copy #{name}'s mobile" %>
 
               <%= phone_to @member.mobile_phone, class: "btn btn-ghost btn-circle btn-sm flex-none ms-auto", aria: { label: "Call #{name}" } do %>
                 <%= icon :call, class: "size-icon-control" %>
               <% end %>
             </div>
 
-            <p class="text-meta sr-only" role="status" data-clipboard-target="status"></p>
+            <%= clipboard_status %>
           <% end %>
         </div>
       <% end %>
