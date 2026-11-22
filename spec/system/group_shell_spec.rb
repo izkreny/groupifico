@@ -247,7 +247,7 @@ RSpec.describe "The group shell", type: :system do
     expect(gap_to_row_end("#me-menu summary", "header")).to eq 0
   end
 
-  # WHY: #368; the header is fixed-height chrome, so a long name trims there, its controls stay on the screen, and the whole name rides in the `title` for a desktop pointer.
+  # WHY: #368; the header is fixed-height chrome, so a long name trims there and its controls stay on the screen; the `title` the trim carries is `spec/helpers/trim_helper_spec.rb`'s.
   it "trims a long one-word group name in the header, its controls kept on a phone" do
     member = create(:member, :owner, group: create(:group, name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious"))
     create(:member, user: member.user, group: create(:group, name: "Harbour Band"))
@@ -257,7 +257,6 @@ RSpec.describe "The group shell", type: :system do
     visit group_path(member.group)
 
     expect(truncated?("header h1")).to be true
-    expect(find("header h1")[:title]).to eq "Simpsoncalifragilisticexpialaciousannoyedgruntcious"
     expect(horizontal_overflow).to eq 0
     expect(gap_to_row_end("#me-menu summary", "header")).to eq 0
   end
@@ -271,7 +270,6 @@ RSpec.describe "The group shell", type: :system do
     visit group_path(member.group)
 
     expect(truncated?("header h1")).to be true
-    expect(find("header h1")[:title]).to eq "The Extraordinarily Long Named Riverside Community Choir Of Greater Springfield"
     expect(horizontal_overflow).to eq 0
     expect(gap_to_row_end("#me-menu summary", "header")).to eq 0
   end

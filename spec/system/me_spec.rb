@@ -48,8 +48,8 @@ RSpec.describe "The Me menu", type: :system do
     expect(page.evaluate_script("document.querySelector('#me-menu .dropdown-content').getBoundingClientRect().left")).to be >= 0
   end
 
-  # WHY: #368; the menu is fixed-height chrome, so a long name and email each trim to their line, with the whole value in the `title` for a desktop pointer and on the Me screen for a tap.
-  it "trims a long one-word name and a long email in the open menu, each whole in its title" do
+  # WHY: #368; the menu is fixed-height chrome, so a long name and email each trim to their line, and the Me screen a tap on Edit profile opens draws the name whole.
+  it "trims a long one-word name and a long email in the open menu on a phone" do
     sign_in_as create(:user, first_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", last_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", email: "simpsoncalifragilisticexpialaciousannoyedgruntcious@example.com")
     resize_to ViewportHelper::MOBILE
 
@@ -57,12 +57,10 @@ RSpec.describe "The Me menu", type: :system do
     open_me_menu
 
     expect([ truncated?("#me-menu p.font-heading"), truncated?("#me-menu p.text-meta") ]).to eq [ true, true ]
-    expect(find("#me-menu p.font-heading")[:title]).to eq "Simpsoncalifragilisticexpialaciousannoyedgruntcious Simpsoncalifragilisticexpialaciousannoyedgruntcious"
-    expect(find("#me-menu p.text-meta")[:title]).to eq "simpsoncalifragilisticexpialaciousannoyedgruntcious@example.com"
     expect(horizontal_overflow).to eq 0
   end
 
-  it "trims a long multi-word name in the open menu, whole in its title" do
+  it "trims a long multi-word name in the open menu on a phone" do
     sign_in_as create(:user, first_name: "Maximilian Bartholomew Featherstonehaugh", last_name: "Montgomery Worthington Smythe")
     resize_to ViewportHelper::MOBILE
 
@@ -70,7 +68,6 @@ RSpec.describe "The Me menu", type: :system do
     open_me_menu
 
     expect(truncated?("#me-menu p.font-heading")).to be true
-    expect(find("#me-menu p.font-heading")[:title]).to eq "Maximilian Bartholomew Featherstonehaugh Montgomery Worthington Smythe"
     expect(horizontal_overflow).to eq 0
   end
 
