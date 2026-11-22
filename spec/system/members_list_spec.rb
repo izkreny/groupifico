@@ -19,7 +19,12 @@ RSpec.describe "The members list", type: :system do
 
   # WHY: N7 in the browser, the plane on a dimmed row opening its dialog rather than posting, and the dialog itself undimmed.
   it "opens the Send again dialog from a pending row's plane, with no accessibility violations" do
-    open_caseys_invitation
+    actor = create(:member, :active, :members_administrator, :with_all_attributes)
+    create(:member, :pending, group: actor.group, user: create(:user, first_name: "Casey", last_name: "Moreno"))
+    sign_in_as actor.user
+
+    visit group_members_path(actor.group, status: "pending")
+    click_button "Resend invitation to Casey Moreno"
 
     expect(page).to have_css "dialog[open]", text: "Send Casey Moreno the invitation again?"
     expect(page.evaluate_script("getComputedStyle(document.querySelector('dialog[open] h3')).color")).not_to match %r{/ 0\.\d+\)}
@@ -27,8 +32,12 @@ RSpec.describe "The members list", type: :system do
   end
 
   it "resends an invitation on Send again, landing back on the Pending tab" do
-    actor = open_caseys_invitation
+    actor = create(:member, :active, :members_administrator, :with_all_attributes)
+    create(:member, :pending, group: actor.group, user: create(:user, first_name: "Casey", last_name: "Moreno"))
+    sign_in_as actor.user
 
+    visit group_members_path(actor.group, status: "pending")
+    click_button "Resend invitation to Casey Moreno"
     within("dialog[open]") { click_button "Send again" }
 
     expect(page).to have_text "Invitation sent again."
@@ -597,15 +606,5 @@ RSpec.describe "The members list", type: :system do
 
       expect([ clear.top == show.top && clear.left < show.left, narrow_show.top < narrow_clear.top ]).to eq [ true, true ]
     end
-  end
-
-  # Casey is a pending member of the administrator's group, whose plane opens the Send again dialog.
-  def open_caseys_invitation
-    actor = create(:member, :active, :members_administrator, :with_all_attributes)
-    create(:member, :pending, group: actor.group, user: create(:user, first_name: "Casey", last_name: "Moreno"))
-    sign_in_as actor.user
-    visit group_members_path(actor.group, status: "pending")
-    click_button "Resend invitation to Casey Moreno"
-    actor
   end
 end
