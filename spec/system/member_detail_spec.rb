@@ -95,15 +95,77 @@ RSpec.describe "The member detail page", type: :system do
     expect(horizontal_overflow).to eq 0
   end
 
-  it "draws its edit, email and call icons at 20px" do
+  it "draws its edit, email, call and copy icons at 20px" do
     reader = create(:member, :active, :members_administrator, :with_all_attributes)
     target = create(:member, :active, :with_all_attributes, group: reader.group)
     sign_in_as reader.user
 
     visit group_member_path(target.group, target)
 
-    expect(page.evaluate_script(<<~JS)).to eq [ 20, 20, 20 ]
-      [ "Edit", "Email ", "Call " ].map(label => document.querySelector(`main a[aria-label^='${label}'] svg`).getBoundingClientRect().width)
+    expect(page.evaluate_script(<<~JS)).to eq [ 20, 20, 20, 20, 20 ]
+      [ "a[aria-label^='Edit']", "a[aria-label^='Email ']", "a[aria-label^='Call ']", "button[aria-label$=' email']", "button[aria-label$=' mobile']" ]
+        .map(control => document.querySelector(`main ${control} svg`).getBoundingClientRect().width)
     JS
+  end
+
+  # WHY: #370 AC2, walked in the browser, since only the browser can tell that the copy wrote the clipboard and confirmed it on the screen it was pressed on.
+  context "with the copy buttons" do
+    def clipboard(permission, setting)
+      # WHY: granted or denied in the browser context Cuprite opened for this session rather than Chrome's default one, where a setting reaches no page here.
+      page.driver.browser.page.command("Browser.setPermission", origin: page.evaluate_script("location.origin"), browserContextId: page.driver.browser.page.context_id, permission: { name: permission }, setting:)
+    end
+
+    it "copies the email and confirms it on the button" do
+      reader = create(:member, :active)
+      target = create(:member, :active, group: reader.group)
+      sign_in_as reader.user
+
+      visit group_member_path(target.group, target)
+      clipboard "clipboard-read", "granted"
+      click_on "Copy #{target.full_name}'s email"
+
+      expect(page).to have_css "button[aria-label$=' email'] [data-clipboard-target='done']:not([hidden])", visible: :all
+      expect(page).to have_css "[role='status'].sr-only", exact_text: "Email copied", visible: :all
+      expect(page.evaluate_async_script("navigator.clipboard.readText().then(arguments[0])")).to eq target.email
+      expect(page).to have_current_path group_member_path(target.group, target)
+    end
+
+    it "copies the mobile and confirms it on the button" do
+      reader = create(:member, :active)
+      target = create(:member, :active, group: reader.group)
+      sign_in_as reader.user
+
+      visit group_member_path(target.group, target)
+      clipboard "clipboard-read", "granted"
+      click_on "Copy #{target.full_name}'s mobile"
+
+      expect(page).to have_css "button[aria-label$=' mobile'] [data-clipboard-target='done']:not([hidden])", visible: :all
+      expect(page).to have_css "[role='status'].sr-only", exact_text: "Mobile copied", visible: :all
+      expect(page.evaluate_async_script("navigator.clipboard.readText().then(arguments[0])")).to eq target.mobile_phone
+    end
+
+    it "turns the check back into the copy icon" do
+      reader = create(:member, :active)
+      target = create(:member, :active, group: reader.group)
+      sign_in_as reader.user
+
+      visit group_member_path(target.group, target)
+      click_on "Copy #{target.full_name}'s email"
+
+      expect(page).to have_css "button[aria-label$=' email'] [data-clipboard-target='done']:not([hidden])", visible: :all
+      expect(page).to have_css "button[aria-label$=' email'] [data-clipboard-target='idle']:not([hidden])", visible: :all, wait: 4
+    end
+
+    it "says so when the browser refuses the copy" do
+      reader = create(:member, :active)
+      target = create(:member, :active, group: reader.group)
+      sign_in_as reader.user
+
+      visit group_member_path(target.group, target)
+      clipboard "clipboard-write", "denied"
+      click_on "Copy #{target.full_name}'s email"
+
+      expect(page).to have_css "[role='status']:not(.sr-only)", text: "Couldn't copy. Select the email and copy it yourself."
+    end
   end
 end

@@ -574,6 +574,30 @@ RSpec.describe "Members", type: :request do
         expect(html.css("##{ActionView::RecordIdentifier.dom_id(target)} .badge").map(&:text)).to eq [ "events admin", "active" ]
       end
 
+      # WHY: #370 AC1 and AC3; each copy button sits right after its value, carries the whole value for the clipboard and says whose value it copies.
+      it "offers a copy button right after the email and the mobile, named for the member" do
+        reader = create(:member, :active)
+        target = create(:member, group: reader.group, user: create(:user, :with_full_profile))
+        sign_in_as(reader.user)
+
+        get group_member_path(target.group, target)
+
+        buttons = Nokogiri::HTML(response.body).css("dd span + button")
+        expect(buttons.map { it["aria-label"] }).to eq [ "Copy #{target.full_name}'s email", "Copy #{target.full_name}'s mobile" ]
+        expect(buttons.map { it.ancestors("dd").first["data-clipboard-content-value"] }).to eq [ target.email, target.mobile_phone ]
+      end
+
+      # WHY: #370 AC4; a member without a mobile has no mobile to copy, just as they have none to call.
+      it "offers no mobile copy button for a member without a mobile" do
+        reader = create(:member, :active)
+        target = create(:member, group: reader.group, user: create(:user, :not_set_up))
+        sign_in_as(reader.user)
+
+        get group_member_path(target.group, target)
+
+        expect(Nokogiri::HTML(response.body).css("button[aria-label^='Copy ']").map { it["aria-label"] }).to eq [ "Copy #{target.full_name}'s email" ]
+      end
+
       it "lists the events the member manages, earliest first" do
         reader = create(:member, :active)
         target = create(:member, group: reader.group)

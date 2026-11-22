@@ -39,27 +39,46 @@
     <dl class="card-body gap-3">
       <%# Each row is one `div` holding only its `dt` and `dd`, the one wrapper a `dl` admits, so
           the contact button sits inside the `dd` beside the value it acts on. %>
+      <%# WHY: each contact's status line sits below its row rather than in it, so the failure sentence it shows never squeezes the value and its buttons. %>
       <div>
         <dt class="text-xs">Email</dt>
-        <dd class="flex items-center justify-between gap-2">
-          <span><%= @member.email %></span>
+        <%= tag.dd data: { controller: "clipboard", clipboard_content_value: @member.email, clipboard_copied_value: "Email copied", clipboard_failed_value: "Couldn't copy. Select the email and copy it yourself." } do %>
+          <div class="flex items-center gap-2">
+            <span><%= @member.email %></span>
 
-          <%= mail_to @member.email, class: "btn btn-ghost btn-circle btn-sm flex-none", aria: { label: "Email #{name}" } do %>
-            <%= icon :email, class: "size-icon-control" %>
-          <% end %>
-        </dd>
+            <%= tag.button type: "button", class: "btn btn-ghost btn-circle btn-sm flex-none", aria: { label: "Copy #{name}'s email" }, data: { clipboard_target: "button", action: "clipboard#copy" } do %>
+              <span class="contents" data-clipboard-target="idle"><%= icon :copy, class: "size-icon-control" %></span>
+              <span class="contents" hidden data-clipboard-target="done"><%= icon :copied, class: "size-icon-control" %></span>
+            <% end %>
+
+            <%= mail_to @member.email, class: "btn btn-ghost btn-circle btn-sm flex-none ms-auto", aria: { label: "Email #{name}" } do %>
+              <%= icon :email, class: "size-icon-control" %>
+            <% end %>
+          </div>
+
+          <p class="text-meta sr-only" role="status" data-clipboard-target="status"></p>
+        <% end %>
       </div>
 
       <% if @member.mobile_phone %>
         <div>
           <dt class="text-xs">Mobile</dt>
-          <dd class="flex items-center justify-between gap-2">
-            <span><%= @member.mobile_phone %></span>
+          <%= tag.dd data: { controller: "clipboard", clipboard_content_value: @member.mobile_phone, clipboard_copied_value: "Mobile copied", clipboard_failed_value: "Couldn't copy. Select the mobile and copy it yourself." } do %>
+            <div class="flex items-center gap-2">
+              <span><%= @member.mobile_phone %></span>
 
-            <%= phone_to @member.mobile_phone, class: "btn btn-ghost btn-circle btn-sm flex-none", aria: { label: "Call #{name}" } do %>
-              <%= icon :call, class: "size-icon-control" %>
-            <% end %>
-          </dd>
+              <%= tag.button type: "button", class: "btn btn-ghost btn-circle btn-sm flex-none", aria: { label: "Copy #{name}'s mobile" }, data: { clipboard_target: "button", action: "clipboard#copy" } do %>
+                <span class="contents" data-clipboard-target="idle"><%= icon :copy, class: "size-icon-control" %></span>
+                <span class="contents" hidden data-clipboard-target="done"><%= icon :copied, class: "size-icon-control" %></span>
+              <% end %>
+
+              <%= phone_to @member.mobile_phone, class: "btn btn-ghost btn-circle btn-sm flex-none ms-auto", aria: { label: "Call #{name}" } do %>
+                <%= icon :call, class: "size-icon-control" %>
+              <% end %>
+            </div>
+
+            <p class="text-meta sr-only" role="status" data-clipboard-target="status"></p>
+          <% end %>
         </div>
       <% end %>
 
