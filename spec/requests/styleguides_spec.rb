@@ -111,8 +111,18 @@ RSpec.describe "The styleguide", type: :request do
 
         get "/styleguide"
 
-        section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Member rows, owner and paused" }
+        section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Member rows, owner, paused and pending" }
         expect(section.text).to include "not signed in yet"
+      end
+
+      it "draws the plane that resends an invitation on the pending member's row for the owner" do
+        plant_styleguide_group(manager: "Ana Horvat")
+        sign_in_as(planted_member("Ana Horvat").user)
+
+        get "/styleguide"
+
+        section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Member rows, owner, paused and pending" }
+        expect(section.css("button[aria-label]").map { it["aria-label"] }).to include "Resend invitation to Petra Novak"
       end
 
       it "draws no not-signed-in mark on the member rows for a member who does not oversee the list" do
@@ -121,7 +131,7 @@ RSpec.describe "The styleguide", type: :request do
 
         get "/styleguide"
 
-        section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Member rows, owner and paused" }
+        section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Member rows, owner, paused and pending" }
         expect(section.text).not_to include "not signed in yet"
       end
 
@@ -190,7 +200,7 @@ RSpec.describe "The styleguide", type: :request do
         get "/styleguide"
 
         listed = Nokogiri::HTML(response.body).css("#member_switcher select option[value!='']").map { it["value"].to_i }
-        expect(listed).to eq [ "Ana Horvat", "Ivan Kovačević", "Marija Babić", "Luka Marić" ].map { planted_member(it).id }
+        expect(listed).to eq [ "Ana Horvat", "Ivan Kovačević", "Marija Babić", "Luka Marić", "Petra Novak" ].map { planted_member(it).id }
       end
 
       it "names the signed-in user in the switcher, though they are not a member" do
@@ -415,7 +425,7 @@ RSpec.describe "The styleguide", type: :request do
 
         get "/styleguide"
 
-        section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Member rows, owner and paused" }
+        section = Nokogiri::HTML(response.body).css("section").find { it.at_css("h2")&.text == "Member rows, owner, paused and pending" }
         expect(section.at_css("[data-theme=organic] li a").text.squish).to eq "Ana Horvat"
       end
 
@@ -473,11 +483,11 @@ RSpec.describe "The styleguide", type: :request do
       end
       # The summary is reached only through the builder, which draws it after the fields it reads,
       # and the confirm sheet through the event's delete partial, which is where its strings live; its scope wraps what it is rendered around, and its trigger is passed into a form's row.
-      # The address fields, the event's list fields with each name in them, a form's button row, the role tags, and a requested row's Send again dialog are each drawn by the one partial that renders them.
+      # The address fields, the event's list fields with each name in them, a form's button row, the role tags, a requested row's Send again dialog, and a pending row's are each drawn by the one partial that renders them.
       # The join link's dialog only frames the content the styleguide draws, and its two confirm sheets are drawn inside that content.
       # A filtered list's bar and closing line wrap what they are rendered around, its tabs, chips and sheet are drawn through the bar, and a list's picks, their groups and each pick are drawn through the shared filter form.
       # The switcher, the Me menu and its detached sign-out form are drawn through the header, the tabs through the layout's own wrappers, and an alert's frame and the roster toggle each wrap what they are rendered around.
-      rendered_by = { "shared/errors" => "form.with_error_summary", "shared/confirm_sheet" => %(render "events/delete"), "shared/confirm_scope" => %(render layout: "shared/confirm_scope"), "shared/confirm_trigger" => 'render("shared/confirm_trigger"', "addresses/form_fields" => %(render "events/form"), "events/list_fields" => %(render "events/form"), "events/list_name" => %(render "events/form"), "shared/form_actions" => %(render "events/form"), "members/roles" => %(render "members/member"), "events/request_again" => %(render "events/roster"), "layouts/group_switcher" => %(render "layouts/header"), "layouts/me_menu" => %(render "layouts/header"), "shared/detached_delete_form" => %(render "layouts/header"), "layouts/group_tabs" => %(render "layouts/dock"), "shared/alert" => %(render layout: "shared/alert"), "events/roster_toggle" => %(render layout: "events/roster_toggle"), "groups/join_link_dialog" => %(render "groups/join_link"), "groups/join_link_confirm" => %(render "groups/join_link"), "shared/filter_sheet" => %(render layout: "shared/filter_bar"), "shared/filter_bar" => %(render layout: "shared/filter_bar"), "shared/filter_tabs" => %(render layout: "shared/filter_bar"), "shared/filter_chips" => %(render layout: "shared/filter_bar"), "shared/filter_list" => %(render layout: "shared/filter_list"), "events/filter_fields" => %(render "shared/filter_form"), "members/filter_fields" => %(render "shared/filter_form"), "shared/filter_fieldset" => %(render "shared/filter_form"), "shared/filter_pick" => %(render "shared/filter_form") }
+      rendered_by = { "shared/errors" => "form.with_error_summary", "shared/confirm_sheet" => %(render "events/delete"), "shared/confirm_scope" => %(render layout: "shared/confirm_scope"), "shared/confirm_trigger" => 'render("shared/confirm_trigger"', "addresses/form_fields" => %(render "events/form"), "events/list_fields" => %(render "events/form"), "events/list_name" => %(render "events/form"), "shared/form_actions" => %(render "events/form"), "members/roles" => %(render "members/member"), "events/request_again" => %(render "events/roster"), "members/resend_invitation" => %(render "members/member"), "layouts/group_switcher" => %(render "layouts/header"), "layouts/me_menu" => %(render "layouts/header"), "shared/detached_delete_form" => %(render "layouts/header"), "layouts/group_tabs" => %(render "layouts/dock"), "shared/alert" => %(render layout: "shared/alert"), "events/roster_toggle" => %(render layout: "events/roster_toggle"), "groups/join_link_dialog" => %(render "groups/join_link"), "groups/join_link_confirm" => %(render "groups/join_link"), "shared/filter_sheet" => %(render layout: "shared/filter_bar"), "shared/filter_bar" => %(render layout: "shared/filter_bar"), "shared/filter_tabs" => %(render layout: "shared/filter_bar"), "shared/filter_chips" => %(render layout: "shared/filter_bar"), "shared/filter_list" => %(render layout: "shared/filter_list"), "events/filter_fields" => %(render "shared/filter_form"), "members/filter_fields" => %(render "shared/filter_form"), "shared/filter_fieldset" => %(render "shared/filter_form"), "shared/filter_pick" => %(render "shared/filter_form") }
 
       expect(partials).not_to be_empty
       expect((partials - %w[ layouts/head styleguides/section ]).reject { template.include?(rendered_by.fetch(it, %(render "#{it}"))) }).to be_empty

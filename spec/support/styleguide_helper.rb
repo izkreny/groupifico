@@ -8,6 +8,7 @@ module StyleguideHelper
     requested = create(:member, :active, group:, user: planted_user(waiting))
     coming    = create(:member, :active, group:, user: planted_user(said_yes))
     create(:member, :paused, group:, user: planted_user("Luka Marić"))
+    create(:member, :pending, group:, user: planted_user("Petra Novak"))
     create(:member, :paused, group: create(:group), user: owner.user)
 
     next_up = create(:event, :from_the_future, group:, status: :confirmed, address: create(:address), creator: owner, manager: owner)

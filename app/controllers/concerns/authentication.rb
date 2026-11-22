@@ -29,8 +29,13 @@ module Authentication
     # who is not signed in. Rodauth's equivalent hook defaults to a no-op and its own release notes
     # call that out as an account-confusion risk that a set hook had already prevented in a real
     # vulnerability; ADR 0004 quotes them.
+    #
+    # WHY: to the destination the visitor was carrying only when the link names the address already signed in, because an invitation's link is the sign-in form pointed at the group's join page and its invitee must still reach it, while a link meant for somebody else names a page this account would only be refused; `return_to` is `url_from`'s answer, so an off-site value lands on the root as before.
     def refuse_authenticated
-      redirect_to root_path, notice: "You are already signed in." if authenticated?
+      if authenticated?
+        redirect_to (return_to if params[:email].to_s.strip.casecmp?(Current.user.email)) || root_path,
+          notice: "You are already signed in."
+      end
     end
 
     def resume_session

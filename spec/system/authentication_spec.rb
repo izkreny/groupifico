@@ -15,14 +15,14 @@ RSpec.describe "Authentication", type: :system do
     expect(page).to have_current_path group_path(member.group)
   end
 
-  # The route #208 gives somebody an owner or administrator added: the welcome mail's link opens the
+  # The route #208 gives somebody an owner or administrator invited: the invitation's link opens the
   # sign-in form already holding their address, the button asks for a sign-in link, and that link
-  # lands them on the profile form, since an added member is known by the address alone (#472 AC1).
+  # lands them on the profile form, since an invitee is known by the address alone (#472 AC1).
   # The sign-in link is minted rather than read out of a delivered mail, which is what
   # `sign_in_through_the_browser` already does.
-  it "signs an added member in from the welcome mail, landing on the profile form" do
-    member = Member.create!(group: create(:group, name: "Riverside Choir"), email: "added@example.com")
-    link   = URI.parse(MemberMailer.welcome(member).body.encoded[%r{https?://\S+?/session/new\?email=[^\s"<]+}])
+  it "signs an invitee in from the invitation, landing on the profile form" do
+    member = Member.create!(group: create(:group, name: "Riverside Choir"), email: "added@example.com", status: :pending)
+    link   = sign_in_form_link_in(MemberMailer.invitation(member))
 
     visit link.request_uri
     expect(page).to have_field "Email", with: "added@example.com"

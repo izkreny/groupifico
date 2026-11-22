@@ -48,7 +48,7 @@ RSpec.describe "The new member page", type: :system do
     expect(page).to be_accessible
   end
 
-  it "adds the person and lands on their member page" do
+  it "invites the person and lands on their member page" do
     actor = create(:member, :active, :members_administrator, :with_all_attributes)
     sign_in_as actor.user
 
@@ -56,6 +56,7 @@ RSpec.describe "The new member page", type: :system do
     fill_in "Email", with: "new.person@example.com"
     click_button "Send invite"
 
-    expect(page).to have_text "Member was successfully created."
+    expect(page).to have_text "Invitation sent."
+    expect(page).to have_current_path group_member_path(actor.group, actor.group.members.pending.sole)
   end
 end

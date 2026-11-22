@@ -1,0 +1,38 @@
+<%# locals: (member:, name:) %>
+<%#
+  A pending row's tinted paper plane and the dialog it opens, built as `events/request_again` is: the plane is an ordinary form posting the invitation again, the dialog controller opens the dialog in its place, and Send again submits that same form. With JavaScript off the plane sends on the first press.
+%>
+<% id = dom_id(member, :resend_invitation) %>
+<%= render layout: "shared/confirm_scope" do %>
+  <%= button_to group_member_invitation_path(member.group, member),
+        class: "btn btn-ghost btn-circle btn-sm relative z-1 text-info",
+        form: { id: "#{id}_form" },
+        data: { dialog_target: "trigger" },
+        aria: { label: "Resend invitation to #{name}" } do %>
+    <%= icon :send_invite, class: "size-icon-control" %>
+  <% end %>
+
+  <%# WHY: `text-base-content` on the box, because a pending row is dimmed and the dialog, though drawn above the page, still inherits the row's colour. %>
+  <dialog id="<%= id %>" class="modal modal-bottom sm:modal-middle"
+          aria-labelledby="<%= id %>_title" aria-describedby="<%= id %>_body"
+          data-dialog-target="sheet">
+    <div class="modal-box text-start text-base-content">
+      <h3 id="<%= id %>_title" class="text-lg font-bold">Send <%= name %> the invitation again?</h3>
+      <p id="<%= id %>_body" class="py-4">It goes to <%= member.email %>.</p>
+
+      <div class="modal-action">
+        <form method="dialog">
+          <button class="btn btn-sm"><%= icon :cancel, class: "size-icon-control" %>Close</button>
+        </form>
+
+        <%= tag.button form: "#{id}_form", class: "btn btn-sm btn-primary" do %>
+          <%= icon :send_invite, class: "size-icon-control" %>Send again
+        <% end %>
+      </div>
+    </div>
+
+    <form method="dialog" class="modal-backdrop">
+      <button>close</button>
+    </form>
+  </dialog>
+<% end %>

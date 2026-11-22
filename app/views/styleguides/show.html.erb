@@ -247,8 +247,8 @@
     <% end %>
   <% end %>
 
-  <%= render layout: "styleguides/section", locals: { title: "Member rows, owner and paused" } do %>
-    <%= render "styleguides/app_partials/member_rows", owner: @owner, paused: @paused, manages:, oversees: %>
+  <%= render layout: "styleguides/section", locals: { title: "Member rows, owner, paused and pending" } do %>
+    <%= render "styleguides/app_partials/member_rows", owner: @owner, paused: @paused, pending: @pending, manages:, oversees: %>
   <% end %>
 
   <% if allowed_to?(:new?, newcomer) %>

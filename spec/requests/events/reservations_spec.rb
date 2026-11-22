@@ -82,6 +82,18 @@ RSpec.describe "Events::Reservations", type: :request do
 
         expect(flash[:notice]).to eq "Nobody was left to add."
       end
+
+      # WHY: #505 AC4, an invitee on no event roster until they join, so reserving for everyone passes them over.
+      it "leaves an invitee off the roster" do
+        actor   = create(:member, :active, :events_administrator)
+        event   = create(:event, group: actor.group, creator: actor)
+        create(:member, :pending, group: event.group)
+        sign_in_as(actor.user)
+
+        post group_event_reservation_path(event.group, event)
+
+        expect(event.registrations.pluck(:member_id)).to eq [ actor.id ]
+      end
     end
   end
 end

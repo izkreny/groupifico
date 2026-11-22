@@ -2,6 +2,8 @@ require "rails_helper"
 
 # The page a join link opens, which every holder of one lands on. What it shows and who reaches it are `spec/requests/join_requests_spec.rb`'s; what a browser adds is that the page passes axe, contrast of the group's name included, and that a long name wraps rather than running off a phone's screen.
 RSpec.describe "The join page", type: :system do
+  include ActiveJob::TestHelper
+
   it "has no accessibility violations in light" do
     token = JoinLink.mint(create(:group, name: "Riverside Choir"))
     prefer_colour_scheme :light
@@ -123,30 +125,69 @@ RSpec.describe "The join page", type: :system do
     expect(page).to be_accessible
   end
 
-  it "has no accessibility violations telling a pending member they are waiting in light" do
-    member = create(:member, :pending)
+  it "has no accessibility violations offering an invitee Join and Decline in light" do
+    member = create(:member, :pending, group: create(:group, name: "Riverside Choir"))
     sign_in_as member.user
-    token = JoinLink.mint(member.group)
     prefer_colour_scheme :light
     resize_to ViewportHelper::MOBILE
 
-    visit new_join_request_path(token:)
+    visit group_invitation_path(member.group)
 
-    expect(page).to have_text "Your request to join is waiting for approval."
+    expect(page).to have_button "Join Riverside Choir"
+    expect(page).to have_button "Decline"
     expect(page).to be_accessible
   end
 
-  it "has no accessibility violations telling a pending member they are waiting in dark" do
-    member = create(:member, :pending)
+  it "has no accessibility violations offering an invitee Join and Decline in dark" do
+    member = create(:member, :pending, group: create(:group, name: "Riverside Choir"))
     sign_in_as member.user
-    token = JoinLink.mint(member.group)
     prefer_colour_scheme :dark
     resize_to ViewportHelper::MOBILE
 
-    visit new_join_request_path(token:)
+    visit group_invitation_path(member.group)
 
     expect(rendered_colour_scheme).to eq "dark"
     expect(page).to be_accessible
+  end
+
+  # WHY: #505 AC1 walked in the browser up to the inbox, every hop the real one: the invitation's link opens the sign-in form holding the address, and the sign-in link it mails carries the join page.
+  it "takes an invitee from the invitation's link to a mailed sign-in link that carries the join page" do
+    member = create(:member, :pending, group: create(:group, name: "Riverside Choir"))
+    resize_to ViewportHelper::MOBILE
+
+    visit sign_in_form_link_in(MemberMailer.invitation(member)).request_uri
+    expect(page).to have_field "Email", with: member.email
+    perform_enqueued_jobs { click_button "Email me a sign-in link" }
+
+    expect(page).to have_text "Check your inbox"
+    expect(Rack::Utils.parse_query(mailed_sign_in_link(member.email).query)["return_to"]).to eq group_invitation_path(member.group)
+  end
+
+  # WHY: #505 AC1 and AC2 walked on from the inbox: the mailed sign-in link lands on the join page, and Join reaches the group.
+  it "takes an invitee from the mailed sign-in link to the join page, and Join into the group" do
+    member = create(:member, :pending, group: create(:group, name: "Riverside Choir"))
+    resize_to ViewportHelper::MOBILE
+
+    visit sign_in_link_in(SignInMailer.link(member.user, return_to: group_invitation_path(member.group))).request_uri
+    click_button "Sign in"
+    expect(page).to have_current_path group_invitation_path(member.group)
+    click_button "Join Riverside Choir"
+
+    expect(page).to have_current_path group_path(member.group)
+    expect(page).to have_text "You joined Riverside Choir."
+  end
+
+  # WHY: #505 AC3 in the browser, Decline posting and landing on the root with the group gone from it.
+  it "takes an invitee who presses Decline to the root page" do
+    member = create(:member, :pending, group: create(:group, name: "Riverside Choir"))
+    sign_in_as member.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_invitation_path(member.group)
+    click_button "Decline"
+
+    expect(page).to have_text "You declined the invitation to Riverside Choir."
+    expect(page).to have_current_path root_path
   end
 
   it "has no accessibility violations telling a member who left in light" do
