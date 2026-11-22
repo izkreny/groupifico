@@ -150,14 +150,26 @@ RSpec.describe "The join page", type: :system do
     expect(page).to be_accessible
   end
 
-  # WHY: #505 AC1 and AC2 walked in the browser, every hop the real one: the invitation's link opens the sign-in form holding the address, the mailed sign-in link carries the join page, and Join reaches the group.
-  it "takes an invitee from the invitation's link through signing in to the join page, and Join into the group" do
+  # WHY: #505 AC1 walked in the browser up to the inbox, every hop the real one: the invitation's link opens the sign-in form holding the address, and the sign-in link it mails carries the join page.
+  it "takes an invitee from the invitation's link to a mailed sign-in link that carries the join page" do
     member = create(:member, :pending, group: create(:group, name: "Riverside Choir"))
     resize_to ViewportHelper::MOBILE
 
     visit sign_in_form_link_in(MemberMailer.invitation(member)).request_uri
     expect(page).to have_field "Email", with: member.email
-    sign_in_from_the_mailed_link(member.email)
+    perform_enqueued_jobs { click_button "Email me a sign-in link" }
+
+    expect(page).to have_text "Check your inbox"
+    expect(Rack::Utils.parse_query(mailed_sign_in_link(member.email).query)["return_to"]).to eq group_invitation_path(member.group)
+  end
+
+  # WHY: #505 AC1 and AC2 walked on from the inbox: the mailed sign-in link lands on the join page, and Join reaches the group.
+  it "takes an invitee from the mailed sign-in link to the join page, and Join into the group" do
+    member = create(:member, :pending, group: create(:group, name: "Riverside Choir"))
+    resize_to ViewportHelper::MOBILE
+
+    visit sign_in_link_in(SignInMailer.link(member.user, return_to: group_invitation_path(member.group))).request_uri
+    click_button "Sign in"
     expect(page).to have_current_path group_invitation_path(member.group)
     click_button "Join Riverside Choir"
 
@@ -214,15 +226,4 @@ RSpec.describe "The join page", type: :system do
     expect(page).to have_css "h1", text: "Kammerchorgemeinschaftsvereinigungsorchester"
     expect(horizontal_overflow).to eq 0
   end
-
-  private
-    # Presses the sign-in form's button, then follows the link the delivered mail carries and spends it, so every hop is the real one.
-    def sign_in_from_the_mailed_link(email)
-      perform_enqueued_jobs do
-        click_button "Email me a sign-in link"
-        expect(page).to have_text "Check your inbox"
-      end
-      visit mailed_sign_in_link(email).request_uri
-      click_button "Sign in"
-    end
 end
