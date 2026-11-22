@@ -13,13 +13,15 @@
   <%= status_icon event, label: event.status, class: "size-icon-standalone self-center text-icon-muted" %>
 
   <%# WHY: the name's link is stretched over the whole row, daisyUI's `list-row` being its positioned container, so pressing anywhere on it opens the event while a screen reader still meets one link; the map link, the pencil and the answer buttons in `events/_response` are each lifted above that overlay with `relative z-1`, so the gaps between them still open the event. %>
-  <div>
-    <%= link_to event.name, group_event_path(event.group, event), class: "link link-hover after:absolute after:inset-0" %>
+  <%# WHY: the name and the place each trim to one line, so every row stays two lines tall; the row opens the event's screen, which draws both whole. `min-w-0` lets the row's cell shrink so the trims can happen. %>
+  <div class="min-w-0">
+    <%= trimmed event.name, :a, href: group_event_path(event.group, event), class: "link link-hover block after:absolute after:inset-0" %>
 
-    <div class="text-xs">
-      <%= event_schedule_start(event) %>
+    <div class="text-xs flex gap-1">
+      <span class="flex-none"><%= event_schedule_start(event) %></span>
       <% if event.address %>
-        · <%= link_to event.address.name, address_map_url(event.address), class: "link link-hover relative z-1", target: "_blank" %>
+        <span class="flex-none">·</span>
+        <%= trimmed event.address.name, :a, href: address_map_url(event.address), class: "link link-hover relative z-1 min-w-0", target: "_blank" %>
       <% end %>
     </div>
   </div>

@@ -49,8 +49,8 @@ RSpec.describe "The events list", type: :system do
     expect(topmost).to eq [ [ "Community Hall", true ], [ "Edit Tuesday rehearsal", true ], [ "Yes", true ], [ "Maybe", true ], [ "No", true ] ]
   end
 
-  # WHY: #368; daisyUI's `list-row` breaks a long word, so a row wraps a long event and place name and keeps its pencil inside it, on Upcoming and on To do alike.
-  it "wraps a long one-word event and place name inside an Upcoming row on a phone" do
+  # WHY: #368; a row trims a long event and place name to one line each, so it stays two lines tall and keeps its pencil inside it, on Upcoming and on To do alike; the event's screen draws both whole.
+  it "trims a long one-word event and place name in an Upcoming row on a phone" do
     member = create(:member, :owner)
     event = create(:event, group: member.group, creator: member, status: :unconfirmed, name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", address: create(:address, name: "SimpsoncalifragilisticexpialaciousannoyedgruntciousSimpsoncalifragilisticexpialaciousannoyedgruntcious"), starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours)
     sign_in_as member.user
@@ -59,11 +59,12 @@ RSpec.describe "The events list", type: :system do
     visit group_events_path(member.group)
 
     expect(gap_to_row_end("##{ActionView::RecordIdentifier.dom_id(event)} a[aria-label^='Edit ']", "##{ActionView::RecordIdentifier.dom_id(event)}")).to be >= 0
-    expect(gap_to_row_end("##{ActionView::RecordIdentifier.dom_id(event)} a[target='_blank']", "##{ActionView::RecordIdentifier.dom_id(event)}")).to be >= 0
+    expect(truncated?("##{ActionView::RecordIdentifier.dom_id(event)} div.min-w-0 > a")).to be true
+    expect(truncated?("##{ActionView::RecordIdentifier.dom_id(event)} a[target='_blank']")).to be true
     expect(horizontal_overflow).to eq 0
   end
 
-  it "wraps a long multi-word event and place name inside an Upcoming row on a phone" do
+  it "trims a long multi-word event and place name in an Upcoming row on a phone" do
     member = create(:member, :owner)
     event = create(:event, group: member.group, creator: member, status: :unconfirmed, name: "The Extraordinarily Long Named Spring Concert Of The Riverside Community Choir", address: create(:address, name: "The Extraordinarily Long Named Community Hall Of Greater Springfield"), starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours)
     sign_in_as member.user
@@ -72,11 +73,12 @@ RSpec.describe "The events list", type: :system do
     visit group_events_path(member.group)
 
     expect(gap_to_row_end("##{ActionView::RecordIdentifier.dom_id(event)} a[aria-label^='Edit ']", "##{ActionView::RecordIdentifier.dom_id(event)}")).to be >= 0
-    expect(gap_to_row_end("##{ActionView::RecordIdentifier.dom_id(event)} a[target='_blank']", "##{ActionView::RecordIdentifier.dom_id(event)}")).to be >= 0
+    expect(truncated?("##{ActionView::RecordIdentifier.dom_id(event)} div.min-w-0 > a")).to be true
+    expect(truncated?("##{ActionView::RecordIdentifier.dom_id(event)} a[target='_blank']")).to be true
     expect(horizontal_overflow).to eq 0
   end
 
-  it "wraps a long one-word event and place name inside a To do row on a phone" do
+  it "trims a long one-word event and place name in a To do row on a phone" do
     member = create(:member, :owner)
     event = create(:event, group: member.group, creator: member, status: :unconfirmed, name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", address: create(:address, name: "SimpsoncalifragilisticexpialaciousannoyedgruntciousSimpsoncalifragilisticexpialaciousannoyedgruntcious"), starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours)
     sign_in_as member.user
@@ -85,11 +87,12 @@ RSpec.describe "The events list", type: :system do
     visit group_events_path(member.group, scope: "to_do")
 
     expect(gap_to_row_end("##{ActionView::RecordIdentifier.dom_id(event)} a[aria-label^='Edit ']", "##{ActionView::RecordIdentifier.dom_id(event)}")).to be >= 0
-    expect(gap_to_row_end("##{ActionView::RecordIdentifier.dom_id(event)} a[target='_blank']", "##{ActionView::RecordIdentifier.dom_id(event)}")).to be >= 0
+    expect(truncated?("##{ActionView::RecordIdentifier.dom_id(event)} div.min-w-0 > a")).to be true
+    expect(truncated?("##{ActionView::RecordIdentifier.dom_id(event)} a[target='_blank']")).to be true
     expect(horizontal_overflow).to eq 0
   end
 
-  it "wraps a long multi-word event and place name inside a To do row on a phone" do
+  it "trims a long multi-word event and place name in a To do row on a phone" do
     member = create(:member, :owner)
     event = create(:event, group: member.group, creator: member, status: :unconfirmed, name: "The Extraordinarily Long Named Spring Concert Of The Riverside Community Choir", address: create(:address, name: "The Extraordinarily Long Named Community Hall Of Greater Springfield"), starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours)
     sign_in_as member.user
@@ -98,7 +101,8 @@ RSpec.describe "The events list", type: :system do
     visit group_events_path(member.group, scope: "to_do")
 
     expect(gap_to_row_end("##{ActionView::RecordIdentifier.dom_id(event)} a[aria-label^='Edit ']", "##{ActionView::RecordIdentifier.dom_id(event)}")).to be >= 0
-    expect(gap_to_row_end("##{ActionView::RecordIdentifier.dom_id(event)} a[target='_blank']", "##{ActionView::RecordIdentifier.dom_id(event)}")).to be >= 0
+    expect(truncated?("##{ActionView::RecordIdentifier.dom_id(event)} div.min-w-0 > a")).to be true
+    expect(truncated?("##{ActionView::RecordIdentifier.dom_id(event)} a[target='_blank']")).to be true
     expect(horizontal_overflow).to eq 0
   end
 
