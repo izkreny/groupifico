@@ -382,6 +382,37 @@ RSpec.describe "The event detail", type: :system do
     expect(page.evaluate_script("(box => box.scrollWidth - box.clientWidth)(document.querySelector('dialog[open] .modal-box'))")).to eq 0
   end
 
+  # WHY: #368; when the member stops being active between the page drawing and the press, Send again answers with an info flash that names them, so it wraps a long name and keeps Dismiss inside the alert.
+  it "wraps a long one-word name in Send again's info on a phone" do
+    owner = create(:member, :active, :owner)
+    registration = create(:registration, status: :response_requested, event: create(:event, group: owner.group, creator: owner, status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours), member: create(:member, :active, group: owner.group, user: create(:user, first_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", last_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious")))
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_event_path(owner.group, registration.event)
+    registration.member.update!(status: :paused)
+    send_again_to(registration.member)
+
+    expect(page).to have_css "#info"
+    expect(gap_to_row_end("#info [aria-label='Dismiss']", "#info")).to be >= 0
+    expect(horizontal_overflow).to eq 0
+  end
+
+  it "wraps a long multi-word name in Send again's info on a phone" do
+    owner = create(:member, :active, :owner)
+    registration = create(:registration, status: :response_requested, event: create(:event, group: owner.group, creator: owner, status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours), member: create(:member, :active, group: owner.group, user: create(:user, first_name: "Maximilian Bartholomew Featherstonehaugh", last_name: "Montgomery Worthington Smythe")))
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_event_path(owner.group, registration.event)
+    registration.member.update!(status: :paused)
+    send_again_to(registration.member)
+
+    expect(page).to have_css "#info"
+    expect(gap_to_row_end("#info [aria-label='Dismiss']", "#info")).to be >= 0
+    expect(horizontal_overflow).to eq 0
+  end
+
   # WHY: #368; Send again's notice names the member, so it wraps a long name and keeps Dismiss inside the alert.
   it "wraps a long one-word name in Send again's notice on a phone" do
     owner = create(:member, :active, :owner)
