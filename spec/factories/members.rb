@@ -34,6 +34,8 @@ FactoryBot.define do
   factory :member, aliases: [ :creator, :manager ] do
     user
     group
+    # A member made outside any request records their own first status change, as a link joiner does.
+    status_updater { instance }
 
     trait :with_all_attributes do
       user factory: %i[user with_full_profile]

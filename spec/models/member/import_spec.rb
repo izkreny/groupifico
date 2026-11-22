@@ -1,7 +1,9 @@
 require "rails_helper"
 
 RSpec.describe Member::Import do
-  let(:group) { create(:group) }
+  # WHY: an owner, because every group has one and the import records its oldest active owner as making each first change.
+  let!(:owner) { create(:member, :active, :owner) }
+  let(:group) { owner.group }
 
   def csv(*rows)
     [ "first_name,last_name,email,mobile_phone", *rows ].join("\n")

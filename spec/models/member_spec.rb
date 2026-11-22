@@ -219,16 +219,17 @@ RSpec.describe Member, type: :model do
     it "creates the user along with the membership when no account holds the address" do
       group = create(:group)
 
-      member = described_class.create!(group:, email: "new.person@example.com")
+      member = described_class.create!(group:, email: "new.person@example.com", status_updater: create(:member))
 
       expect(member.user).to eq User.find_by!(email: "new.person@example.com")
     end
 
     it "takes the existing account when one holds the address, however it is cased" do
-      user  = create(:user, email: "known.person@example.com")
-      group = create(:group)
+      user    = create(:user, email: "known.person@example.com")
+      group   = create(:group)
+      updater = create(:member)
 
-      expect { described_class.create!(group:, email: " Known.Person@Example.com ") }
+      expect { described_class.create!(group:, email: " Known.Person@Example.com ", status_updater: updater) }
         .not_to change(User, :count)
 
       expect(group.members.preloaded.sole.user).to eq user
@@ -300,6 +301,92 @@ RSpec.describe Member, type: :model do
 
       expect(member.update(status: :pending)).to be false
       expect(member.errors[:status]).to eq [ "cannot be changed to pending" ]
+    end
+  end
+
+  describe "status changes" do
+    def history(member) = member.status_changes.order(:starts_on).pluck(:starts_on, :status, :updater_id)
+
+    def on(year, month, day) = travel_to(Time.zone.local(year, month, day, 12))
+
+    before { on(2026, 11, 2) }
+
+    let!(:owner)  { create(:member, :active, :owner) }
+    let!(:member) { create(:member, :active, group: owner.group) }
+
+    it "records the new status, the day it starts on and the member who made it (#126 AC1)" do
+      on(2026, 11, 9)
+      member.change_status(:paused, starts_on: Date.new(2026, 11, 5), updater: owner)
+
+      expect(history(member)).to eq [ [ Date.new(2026, 11, 2), "active", member.id ], [ Date.new(2026, 11, 5), "paused", owner.id ] ]
+    end
+
+    it "keeps the member's status the status of their latest change (#126 AC2)" do
+      on(2026, 11, 9)
+      member.change_status(:paused, starts_on: Date.new(2026, 11, 5), updater: owner)
+      member.change_status(:inactive, starts_on: Date.new(2026, 11, 7), updater: owner)
+
+      expect([ member.reload.status, history(member).last[1] ]).to eq %w[ inactive inactive ]
+    end
+
+    it "starts a change today when no start date is given (#126 AC4)" do
+      on(2026, 11, 9)
+      member.change_status(:paused, updater: owner)
+
+      expect(history(member).last).to eq [ Date.new(2026, 11, 9), "paused", owner.id ]
+    end
+
+    it "refuses a start date after today, recording nothing (#126 AC5)" do
+      on(2026, 11, 9)
+      expect(member.change_status(:paused, starts_on: Date.new(2026, 11, 10), updater: owner)).to be false
+
+      expect(member.errors[:status_starts_on]).to eq [ "cannot be after today" ]
+      expect([ member.reload.status, history(member).size ]).to eq [ "active", 1 ]
+    end
+
+    it "folds a change on the latest change's day into that change (#126 AC6)" do
+      other = create(:member, :active, :administrator, group: owner.group)
+
+      on(2026, 11, 9)
+      member.change_status(:paused, updater: owner)
+      member.change_status(:inactive, updater: other)
+
+      expect(history(member)).to eq [ [ Date.new(2026, 11, 2), "active", member.id ], [ Date.new(2026, 11, 9), "inactive", other.id ] ]
+    end
+
+    it "drops a folded change that repeats the change before it, so the earlier one stands" do
+      on(2026, 11, 9)
+      member.change_status(:paused, starts_on: Date.new(2026, 11, 3), updater: owner)
+      member.change_status(:active, updater: owner)
+      member.change_status(:paused, updater: owner)
+
+      expect([ member.reload.status, history(member) ]).to eq [ "paused", [ [ Date.new(2026, 11, 2), "active", member.id ], [ Date.new(2026, 11, 3), "paused", owner.id ] ] ]
+    end
+
+    it "records no change when a member is saved with the status they have (#126 AC7)" do
+      on(2026, 11, 9)
+      member.update!(roles: [ Role.new(name: "administrator") ])
+
+      expect(member.change_status(:active, updater: owner)).to be true
+      expect(history(member)).to eq [ [ Date.new(2026, 11, 2), "active", member.id ] ]
+    end
+
+    it "still refuses pausing the group's last active owner, recording nothing (#126 AC10)" do
+      on(2026, 11, 9)
+      expect(owner.change_status(:paused, updater: owner)).to be false
+
+      expect(owner.errors[:status]).to eq [ "cannot leave the group without an active owner" ]
+      expect([ owner.reload.status, history(owner).size ]).to eq [ "active", 1 ]
+    end
+
+    it "refuses a start date before the latest change's, recording nothing (#126 AC12)" do
+      on(2026, 11, 9)
+      member.change_status(:paused, starts_on: Date.new(2026, 11, 5), updater: owner)
+
+      expect(member.change_status(:active, starts_on: Date.new(2026, 11, 4), updater: owner)).to be false
+
+      expect(member.errors[:status_starts_on]).to eq [ "cannot be before 5 Nov 2026, when the current status started" ]
+      expect([ member.reload.status, history(member).size ]).to eq [ "paused", 2 ]
     end
   end
 

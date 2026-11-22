@@ -38,6 +38,8 @@ class Member::StatusChange < ApplicationRecord
 
   enum :status, Member.statuses, validate: true
 
-  # WHY: `state_machines-audit_trail` writes the new state through `to=`; the column is named for what it holds rather than for the transition.
+  # WHY: `state_machines-audit_trail` writes the new state through `to=` and each context value through a writer named after the `Member` attribute it reads, while the columns are named for what they hold.
   alias_attribute :to, :status
+  alias_attribute :status_starts_on, :starts_on
+  alias_method :status_updater=, :updater=
 end
