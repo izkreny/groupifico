@@ -53,7 +53,8 @@
       <% group.addresses.each do |address| %>
         <div class="flex items-center gap-2">
           <%= form.radio_button :address_id, address.id, class: "radio radio-sm peer" %>
-          <%= form.label :address_id, where_choice_label(address), value: address.id, class: "grow min-w-0" %>
+          <%# WHY: `wrap-anywhere`, because a fieldset sizes to its content's narrowest width, so a long one-word place name would otherwise widen the whole form past a phone. %>
+          <%= form.label :address_id, where_choice_label(address), value: address.id, class: "grow min-w-0 wrap-anywhere" %>
 
           <% if allowed_to?(:update?, address) %>
             <%= link_to "Correct it", edit_address_path(address), target: "_blank", class: "link hidden peer-checked:inline flex-none" %>

@@ -98,6 +98,87 @@ RSpec.describe "The event form", type: :system do
     expect(horizontal_overflow).to eq 0
   end
 
+  # WHY: #368; the forms draw a member's name in the manager select and the list, and a place's name in the place select, and the selects' own boxes trim while the list wraps, so nothing widens a phone.
+  it "keeps the new event screen inside a phone's width with a long one-word member and place name" do
+    owner = create(:member, :active, :owner)
+    create(:member, :active, group: owner.group, user: create(:user, first_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", last_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious"))
+    create(:event, group: owner.group, creator: owner, address: create(:address, name: "SimpsoncalifragilisticexpialaciousannoyedgruntciousSimpsoncalifragilisticexpialaciousannoyedgruntcious"))
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit new_group_event_path(owner.group)
+
+    expect(page).to have_text "Simpsoncalifragilisticexpialaciousannoyedgruntcious Simpsoncalifragilisticexpialaciousannoyedgruntcious"
+    expect(horizontal_overflow).to eq 0
+  end
+
+  it "keeps the new event screen inside a phone's width with a long multi-word member and place name" do
+    owner = create(:member, :active, :owner)
+    create(:member, :active, group: owner.group, user: create(:user, first_name: "Maximilian Bartholomew Featherstonehaugh", last_name: "Montgomery Worthington Smythe"))
+    create(:event, group: owner.group, creator: owner, address: create(:address, name: "The Extraordinarily Long Named Community Hall Of Greater Springfield"))
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit new_group_event_path(owner.group)
+
+    expect(page).to have_text "Maximilian Bartholomew Featherstonehaugh Montgomery Worthington Smythe"
+    expect(horizontal_overflow).to eq 0
+  end
+
+  it "keeps the edit screen inside a phone's width with a long one-word manager, member and place name" do
+    owner = create(:member, :active, :owner)
+    long = create(:member, :active, group: owner.group, user: create(:user, first_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", last_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious"))
+    event = create(:event, group: owner.group, creator: owner, manager: long, address: create(:address, name: "SimpsoncalifragilisticexpialaciousannoyedgruntciousSimpsoncalifragilisticexpialaciousannoyedgruntcious"))
+    create(:registration, event:, member: long, status: :reserved)
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit edit_group_event_path(owner.group, event)
+
+    expect(page).to have_text "Simpsoncalifragilisticexpialaciousannoyedgruntcious Simpsoncalifragilisticexpialaciousannoyedgruntcious"
+    expect(horizontal_overflow).to eq 0
+  end
+
+  it "keeps the edit screen inside a phone's width with a long multi-word manager, member and place name" do
+    owner = create(:member, :active, :owner)
+    long = create(:member, :active, group: owner.group, user: create(:user, first_name: "Maximilian Bartholomew Featherstonehaugh", last_name: "Montgomery Worthington Smythe"))
+    event = create(:event, group: owner.group, creator: owner, manager: long, address: create(:address, name: "The Extraordinarily Long Named Community Hall Of Greater Springfield"))
+    create(:registration, event:, member: long, status: :reserved)
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit edit_group_event_path(owner.group, event)
+
+    expect(page).to have_text "Maximilian Bartholomew Featherstonehaugh Montgomery Worthington Smythe"
+    expect(horizontal_overflow).to eq 0
+  end
+
+  it "keeps the duplicate screen inside a phone's width with a long one-word event, manager and place name" do
+    owner = create(:member, :active, :owner)
+    long = create(:member, :active, group: owner.group, user: create(:user, first_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", last_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious"))
+    event = create(:event, group: owner.group, creator: owner, manager: long, name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", address: create(:address, name: "SimpsoncalifragilisticexpialaciousannoyedgruntciousSimpsoncalifragilisticexpialaciousannoyedgruntcious"))
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit duplicate_group_event_path(owner.group, event)
+
+    expect(page).to have_text "Simpsoncalifragilisticexpialaciousannoyedgruntcious Simpsoncalifragilisticexpialaciousannoyedgruntcious"
+    expect(horizontal_overflow).to eq 0
+  end
+
+  it "keeps the duplicate screen inside a phone's width with a long multi-word event, manager and place name" do
+    owner = create(:member, :active, :owner)
+    long = create(:member, :active, group: owner.group, user: create(:user, first_name: "Maximilian Bartholomew Featherstonehaugh", last_name: "Montgomery Worthington Smythe"))
+    event = create(:event, group: owner.group, creator: owner, manager: long, name: "The Extraordinarily Long Named Spring Concert Of The Riverside Community Choir", address: create(:address, name: "The Extraordinarily Long Named Community Hall Of Greater Springfield"))
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit duplicate_group_event_path(owner.group, event)
+
+    expect(page).to have_text "Maximilian Bartholomew Featherstonehaugh Montgomery Worthington Smythe"
+    expect(horizontal_overflow).to eq 0
+  end
+
   # "Delete event | Cancel | Save changes" fits a 508px row, which a 540px window leaves, though Edit profile's wider row does not: the edit screen's row shares one line by its own width. Three equal shares of 508px less two 8px gaps.
   it "shares one line equally between the edit screen's three buttons where they fit" do
     actor = create(:member, :active, :events_administrator)
