@@ -426,6 +426,16 @@ RSpec.describe Member, type: :model do
         expect(Registration.where(member:)).to be_empty
       end
 
+      it "keeps the registrations of a member deactivated from paused, who is not leaving active (#330 AC2)" do
+        paused = create(:member, :paused, group: owner.group)
+        on(2026, 11, 9)
+        registration = create(:registration, member: paused, event: event_ending_at(2026, 11, 12, 19), status: :yes)
+
+        paused.change_status(:inactive, updater: owner)
+
+        expect(Registration.where(member: paused)).to contain_exactly(registration)
+      end
+
       it "removes the unanswered registrations on events that have ended since the start date and still take answers (#330 AC9)" do
         create(:registration, member:, event: event_ending_at(2026, 11, 6, 19), status: :reserved)
         create(:registration, member:, event: event_ending_at(2026, 11, 7, 19, status: :unconfirmed), status: :response_requested)
