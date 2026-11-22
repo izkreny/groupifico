@@ -351,6 +351,37 @@ RSpec.describe "The event detail", type: :system do
     expect(horizontal_overflow).to eq 0
   end
 
+  # WHY: #368; the plane's dialog names the member in its heading, so it wraps a long name inside the box, read off the box's own scroll width because the dialog sits in the top layer, outside the document's.
+  it "wraps a long one-word name in Send again's dialog on a phone" do
+    owner = create(:member, :active, :owner)
+    event = create(:event, group: owner.group, creator: owner, status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+    long = create(:registration, event:, status: :response_requested, member: create(:member, :active, group: owner.group, user: create(:user, first_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", last_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious"))).member
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_event_path(event.group, event)
+    open_roster
+    click_button "Response requested from #{long.full_name}"
+
+    expect(page).to have_css "dialog[open] .modal-box", style: { opacity: "1" }
+    expect(page.evaluate_script("(box => box.scrollWidth - box.clientWidth)(document.querySelector('dialog[open] .modal-box'))")).to eq 0
+  end
+
+  it "wraps a long multi-word name in Send again's dialog on a phone" do
+    owner = create(:member, :active, :owner)
+    event = create(:event, group: owner.group, creator: owner, status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+    long = create(:registration, event:, status: :response_requested, member: create(:member, :active, group: owner.group, user: create(:user, first_name: "Maximilian Bartholomew Featherstonehaugh", last_name: "Montgomery Worthington Smythe"))).member
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_event_path(event.group, event)
+    open_roster
+    click_button "Response requested from #{long.full_name}"
+
+    expect(page).to have_css "dialog[open] .modal-box", style: { opacity: "1" }
+    expect(page.evaluate_script("(box => box.scrollWidth - box.clientWidth)(document.querySelector('dialog[open] .modal-box'))")).to eq 0
+  end
+
   # WHY: #368; Send again's notice names the member, so it wraps a long name and keeps Dismiss inside the alert.
   it "wraps a long one-word name in Send again's notice on a phone" do
     owner = create(:member, :active, :owner)
