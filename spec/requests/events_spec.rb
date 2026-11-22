@@ -30,6 +30,17 @@ RSpec.describe "Events", type: :request do
     end
 
     context "when signed in as an active member" do
+      # WHY: #368; a row trims its event's name and place, which the event's screen draws whole, so each link carries its whole value in the `title`.
+      it "carries a row's whole event and place name in each link's title" do
+        member = create(:member, :active)
+        event = create(:event, group: member.group, name: "The Extraordinarily Long Named Spring Concert", address: create(:address, name: "The Extraordinarily Long Named Community Hall"), starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group)
+
+        expect(Nokogiri::HTML(response.body).css("##{ActionView::RecordIdentifier.dom_id(event)} div.min-w-0 a").map { it["title"] }).to eq [ "The Extraordinarily Long Named Spring Concert", "The Extraordinarily Long Named Community Hall" ]
+      end
+
       it "shows the events page" do
         member = create(:member, :active)
         sign_in_as(member.user)

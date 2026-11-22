@@ -1,17 +1,18 @@
+<%# WHY: every message wraps with `wrap-anywhere`, because a notice can name a member, and a long one-word name would otherwise push the Dismiss button off a phone. %>
 <% if notice.present? %>
   <%= render layout: "shared/alert", locals: { kind: :success, id: "notice", dismissible: true, classes: "mb-5" } do %>
-    <span><%= notice %></span>
+    <span class="wrap-anywhere"><%= notice %></span>
   <% end %>
 <% end %>
 
 <% if info.present? %>
   <%= render layout: "shared/alert", locals: { kind: :info, id: "info", role: "status", dismissible: true, classes: "mb-5" } do %>
-    <span><%= info %></span>
+    <span class="wrap-anywhere"><%= info %></span>
   <% end %>
 <% end %>
 
 <% if alert.present? %>
   <%= render layout: "shared/alert", locals: { kind: :error, id: "alert", dismissible: true, classes: "mb-5" } do %>
-    <span><%= alert %></span>
+    <span class="wrap-anywhere"><%= alert %></span>
   <% end %>
 <% end %>

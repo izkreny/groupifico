@@ -225,4 +225,25 @@ RSpec.describe "The join page", type: :system do
     expect(page).to have_css "h1", text: "Kammerchorgemeinschaftsvereinigungsorchester"
     expect(horizontal_overflow).to eq 0
   end
+
+  # WHY: #368, the sweep's own pair of values.
+  it "breaks a long one-word group name rather than scrolling sideways at phone width" do
+    token = JoinLink.mint(create(:group, name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious"))
+    resize_to ViewportHelper::MOBILE
+
+    visit new_join_request_path(token:)
+
+    expect(page).to have_css "h1", text: "Simpsoncalifragilisticexpialaciousannoyedgruntcious"
+    expect(horizontal_overflow).to eq 0
+  end
+
+  it "wraps a long multi-word group name rather than scrolling sideways at phone width" do
+    token = JoinLink.mint(create(:group, name: "The Extraordinarily Long Named Riverside Community Choir Of Greater Springfield"))
+    resize_to ViewportHelper::MOBILE
+
+    visit new_join_request_path(token:)
+
+    expect(page).to have_css "h1", text: "The Extraordinarily Long Named Riverside Community Choir Of Greater Springfield"
+    expect(horizontal_overflow).to eq 0
+  end
 end

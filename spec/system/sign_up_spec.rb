@@ -103,6 +103,25 @@ RSpec.describe "Creating a group", type: :system do
       expect(horizontal_overflow).to eq 0
     end
 
+    # WHY: #368; the heading draws the email and the group name, so it breaks a long one-word value in each.
+    it "breaks a long one-word email and group name rather than scrolling sideways at phone width" do
+      resize_to ViewportHelper::MOBILE
+      visit sign_up_confirmation_path(token: SignUp.mint(
+        email: "simpsoncalifragilisticexpialaciousannoyedgruntcious@example.com", group_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious"))
+
+      expect(page).to have_css "h1", text: "Simpsoncalifragilisticexpialaciousannoyedgruntcious"
+      expect(horizontal_overflow).to eq 0
+    end
+
+    it "wraps a long multi-word group name rather than scrolling sideways at phone width" do
+      resize_to ViewportHelper::MOBILE
+      visit sign_up_confirmation_path(token: SignUp.mint(
+        email: "kassandra.wetherington.blythe@example.com", group_name: "The Extraordinarily Long Named Riverside Community Choir Of Greater Springfield"))
+
+      expect(page).to have_css "h1", text: "The Extraordinarily Long Named Riverside Community Choir Of Greater Springfield"
+      expect(horizontal_overflow).to eq 0
+    end
+
     # The one navigation in this flow a request spec cannot make: the button spends the link and
     # lands on the group it just created.
     #

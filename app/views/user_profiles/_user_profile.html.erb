@@ -6,5 +6,6 @@
     </div>
   </div>
 
-  <h1 class="text-record truncate"><%= user_profile.full_name %></h1>
+  <%# WHY: a record's heading wraps rather than trims, since this screen is where the Me menu's trimmed name is read whole. %>
+  <h1 class="text-record wrap-anywhere"><%= user_profile.full_name %></h1>
 </div>

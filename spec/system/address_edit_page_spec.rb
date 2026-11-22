@@ -126,4 +126,31 @@ RSpec.describe "The address edit page", type: :system do
       expect(page).to have_css "h2", text: "Community Hall, Room 2"
     end
   end
+
+  # WHY: #368; the note under the fields names the owning group, so it wraps a long name inside the screen.
+  it "keeps the form inside a phone's width when the owning group's name is long and one-word" do
+    address = create(:address, name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious")
+    owner = create(:member, :active, :owner, group: create(:group, name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", address:))
+    create(:event, group: owner.group, creator: owner, address:)
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit edit_address_path(address)
+
+    expect(page).to have_text "Used by 1 event"
+    expect(horizontal_overflow).to eq 0
+  end
+
+  it "keeps the form inside a phone's width when the owning group's name is long and multi-word" do
+    address = create(:address, name: "The Extraordinarily Long Named Community Hall Of Greater Springfield")
+    owner = create(:member, :active, :owner, group: create(:group, name: "The Extraordinarily Long Named Riverside Community Choir Of Greater Springfield", address:))
+    create(:event, group: owner.group, creator: owner, address:)
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit edit_address_path(address)
+
+    expect(page).to have_text "Used by 1 event"
+    expect(horizontal_overflow).to eq 0
+  end
 end

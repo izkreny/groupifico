@@ -586,6 +586,18 @@ RSpec.describe "Members", type: :request do
         expect(Nokogiri::HTML(response.body).css("[aria-labelledby=manages] li a").map(&:text)).to eq [ "Tuesday rehearsal", "Autumn concert" ]
       end
 
+      # WHY: #368; a managed event's name trims, since it links to the event's screen, so the link carries it whole in the `title`.
+      it "carries each managed event's whole name in its link's title" do
+        reader = create(:member, :active)
+        target = create(:member, group: reader.group)
+        create(:event, group: reader.group, manager: target, name: "The Extraordinarily Long Named Spring Concert")
+        sign_in_as(reader.user)
+
+        get group_member_path(target.group, target)
+
+        expect(Nokogiri::HTML(response.body).at_css("[aria-labelledby=manages] li a")["title"]).to eq "The Extraordinarily Long Named Spring Concert"
+      end
+
       it "leaves Manages out for a member who manages nothing" do
         reader = create(:member, :active)
         sign_in_as(reader.user)

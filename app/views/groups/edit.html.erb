@@ -8,7 +8,7 @@
 <%= render layout: "shared/confirm_scope", locals: { enabled: deletable, classes: "w-full" } do %>
   <%# `name_in_database` for the reason the layout gives: a refused rename leaves the typed name
       assigned, and this heading is the screen's own record title. %>
-  <h1 class="text-record"><%= @group.name_in_database %></h1>
+  <h1 class="text-record wrap-anywhere"><%= @group.name_in_database %></h1>
 
   <%= render "groups/form", group: @group, leading: (render("shared/confirm_trigger", id:, confirm: "Delete group") if deletable) %>
 

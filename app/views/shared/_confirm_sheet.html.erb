@@ -34,11 +34,12 @@
                 action: "close->type-to-confirm#reset turbo:before-cache@document->type-to-confirm#reset" }) %><% end %>>
     <div class="modal-box">
       <h3 id="<%= id %>_title" class="text-lg font-bold"><%= title %></h3>
-      <p id="<%= id %>_body" class="py-4"><%= body %></p>
+      <%# WHY: `wrap-anywhere` on both messages, because a body or a block can name a member's group, and a long one-word name would otherwise widen the box past a phone. %>
+      <p id="<%= id %>_body" class="py-4 wrap-anywhere"><%= body %></p>
 
       <% if block %>
         <%= render layout: "shared/alert", locals: { kind: :error, id: "#{id}_block" } do %>
-          <span><%= block %></span>
+          <span class="wrap-anywhere"><%= block %></span>
         <% end %>
       <% end %>
 

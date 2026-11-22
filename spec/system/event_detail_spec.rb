@@ -289,6 +289,174 @@ RSpec.describe "The event detail", type: :system do
     expect(gap_to_row_end("##{roster_row(ben)} [aria-label='No for Ben Cole']", ".card-body")).to be >= 0
   end
 
+  # WHY: #368; the screen wraps a long event name and place name, and trims the manager's name, which links to their screen; Duplicate and Edit, the place and the credits stay inside it.
+  it "wraps a long one-word event and place name and trims the manager's on a phone" do
+    owner = create(:member, :active, :owner)
+    manager = create(:member, :active, group: owner.group, user: create(:user, first_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", last_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious"))
+    event = create(:event, group: owner.group, creator: owner, manager:, name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", address: create(:address, name: "SimpsoncalifragilisticexpialaciousannoyedgruntciousSimpsoncalifragilisticexpialaciousannoyedgruntcious"))
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_event_path(event.group, event)
+
+    expect(gap_to_row_end("main a[aria-label='Edit']", "##{ActionView::RecordIdentifier.dom_id(event)}")).to be >= 0
+    expect(gap_to_row_end("##{ActionView::RecordIdentifier.dom_id(event)} a[target='_blank']", "##{ActionView::RecordIdentifier.dom_id(event)}")).to be >= 0
+    expect(truncated?("##{ActionView::RecordIdentifier.dom_id(event)} a[href='#{group_member_path(owner.group, manager)}']")).to be true
+    expect(horizontal_overflow).to eq 0
+  end
+
+  # WHY: #368, RF9; the credits' cap is a phone's, so a desktop line with room draws a name longer than it whole.
+  it "draws a credited name whole on a desktop" do
+    owner = create(:member, :active, :owner)
+    manager = create(:member, :active, group: owner.group, user: create(:user, first_name: "Bartholomew", last_name: "Žagar"))
+    event = create(:event, group: owner.group, creator: owner, manager:)
+    sign_in_as owner.user
+    resize_to ViewportHelper::DESKTOP
+
+    visit group_event_path(event.group, event)
+
+    expect(truncated?("##{ActionView::RecordIdentifier.dom_id(event)} a[href='#{group_member_path(owner.group, manager)}']")).to be false
+  end
+
+  it "wraps a long multi-word event and place name and keeps both credits on one line on a phone" do
+    owner = create(:member, :active, :owner)
+    manager = create(:member, :active, group: owner.group, user: create(:user, first_name: "Maximilian Bartholomew Featherstonehaugh", last_name: "Montgomery Worthington Smythe"))
+    event = create(:event, group: owner.group, creator: owner, manager:, name: "The Extraordinarily Long Named Spring Concert Of The Riverside Community Choir", address: create(:address, name: "The Extraordinarily Long Named Community Hall Of Greater Springfield"))
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_event_path(event.group, event)
+
+    expect(gap_to_row_end("main a[aria-label='Edit']", "##{ActionView::RecordIdentifier.dom_id(event)}")).to be >= 0
+    expect(gap_to_row_end("##{ActionView::RecordIdentifier.dom_id(event)} a[target='_blank']", "##{ActionView::RecordIdentifier.dom_id(event)}")).to be >= 0
+    expect(page.evaluate_script("[...document.querySelectorAll('##{ActionView::RecordIdentifier.dom_id(event)} a[href*=\"/members/\"]')].map((a) => a.getBoundingClientRect().top)").uniq.size).to eq 1
+    expect(horizontal_overflow).to eq 0
+  end
+
+  # WHY: #368; the roster's name cell wraps a long name, so the row's pills stay inside the card.
+  it "fits the list inside the card on a phone when a member's name is long and one-word" do
+    owner = create(:member, :active, :owner)
+    long = create(:member, :active, group: owner.group, user: create(:user, first_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", last_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious"))
+    event = create(:event, group: owner.group, creator: owner, status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+    create(:registration, event:, member: long, status: :reserved)
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_event_path(event.group, event)
+    open_roster
+
+    expect(gap_to_row_end("##{roster_row(long)} [aria-label^='No for']", ".card-body")).to be >= 0
+    expect(horizontal_overflow).to eq 0
+  end
+
+  it "fits the list inside the card on a phone when a member's name is long and multi-word" do
+    owner = create(:member, :active, :owner)
+    long = create(:member, :active, group: owner.group, user: create(:user, first_name: "Maximilian Bartholomew Featherstonehaugh", last_name: "Montgomery Worthington Smythe"))
+    event = create(:event, group: owner.group, creator: owner, status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+    create(:registration, event:, member: long, status: :reserved)
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_event_path(event.group, event)
+    open_roster
+
+    expect(gap_to_row_end("##{roster_row(long)} [aria-label^='No for']", ".card-body")).to be >= 0
+    expect(horizontal_overflow).to eq 0
+  end
+
+  # WHY: #368; the plane's dialog names the member in its heading, so it wraps a long name inside the box, read off the box's own scroll width because the dialog sits in the top layer, outside the document's.
+  it "wraps a long one-word name in Send again's dialog on a phone" do
+    owner = create(:member, :active, :owner)
+    event = create(:event, group: owner.group, creator: owner, status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+    long = create(:registration, event:, status: :response_requested, member: create(:member, :active, group: owner.group, user: create(:user, first_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", last_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious"))).member
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_event_path(event.group, event)
+    open_roster
+    click_button "Response requested from #{long.full_name}"
+
+    expect(page).to have_css "dialog[open] .modal-box", style: { opacity: "1" }
+    expect(page.evaluate_script("(box => box.scrollWidth - box.clientWidth)(document.querySelector('dialog[open] .modal-box'))")).to eq 0
+  end
+
+  it "wraps a long multi-word name in Send again's dialog on a phone" do
+    owner = create(:member, :active, :owner)
+    event = create(:event, group: owner.group, creator: owner, status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+    long = create(:registration, event:, status: :response_requested, member: create(:member, :active, group: owner.group, user: create(:user, first_name: "Maximilian Bartholomew Featherstonehaugh", last_name: "Montgomery Worthington Smythe"))).member
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_event_path(event.group, event)
+    open_roster
+    click_button "Response requested from #{long.full_name}"
+
+    expect(page).to have_css "dialog[open] .modal-box", style: { opacity: "1" }
+    expect(page.evaluate_script("(box => box.scrollWidth - box.clientWidth)(document.querySelector('dialog[open] .modal-box'))")).to eq 0
+  end
+
+  # WHY: #368; when the member stops being active between the page drawing and the press, Send again answers with an info flash that names them, so it wraps a long name and keeps Dismiss inside the alert.
+  it "wraps a long one-word name in Send again's info on a phone" do
+    owner = create(:member, :active, :owner)
+    registration = create(:registration, status: :response_requested, event: create(:event, group: owner.group, creator: owner, status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours), member: create(:member, :active, group: owner.group, user: create(:user, first_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", last_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious")))
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_event_path(owner.group, registration.event)
+    registration.member.update!(status: :paused)
+    send_again_to(registration.member)
+
+    expect(page).to have_css "#info"
+    expect(gap_to_row_end("#info [aria-label='Dismiss']", "#info")).to be >= 0
+    expect(horizontal_overflow).to eq 0
+  end
+
+  it "wraps a long multi-word name in Send again's info on a phone" do
+    owner = create(:member, :active, :owner)
+    registration = create(:registration, status: :response_requested, event: create(:event, group: owner.group, creator: owner, status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours), member: create(:member, :active, group: owner.group, user: create(:user, first_name: "Maximilian Bartholomew Featherstonehaugh", last_name: "Montgomery Worthington Smythe")))
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_event_path(owner.group, registration.event)
+    registration.member.update!(status: :paused)
+    send_again_to(registration.member)
+
+    expect(page).to have_css "#info"
+    expect(gap_to_row_end("#info [aria-label='Dismiss']", "#info")).to be >= 0
+    expect(horizontal_overflow).to eq 0
+  end
+
+  # WHY: #368; Send again's notice names the member, so it wraps a long name and keeps Dismiss inside the alert.
+  it "wraps a long one-word name in Send again's notice on a phone" do
+    owner = create(:member, :active, :owner)
+    event = create(:event, group: owner.group, creator: owner, status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+    long = create(:registration, event:, status: :response_requested, member: create(:member, :active, group: owner.group, user: create(:user, first_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", last_name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious"))).member
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_event_path(event.group, event)
+    send_again_to(long)
+
+    expect(page).to have_css "#notice"
+    expect(gap_to_row_end("#notice [aria-label='Dismiss']", "#notice")).to be >= 0
+    expect(horizontal_overflow).to eq 0
+  end
+
+  it "wraps a long multi-word name in Send again's notice on a phone" do
+    owner = create(:member, :active, :owner)
+    event = create(:event, group: owner.group, creator: owner, status: :confirmed, starts_at: 2.days.from_now, ends_at: 2.days.from_now + 2.hours)
+    long = create(:registration, event:, status: :response_requested, member: create(:member, :active, group: owner.group, user: create(:user, first_name: "Maximilian Bartholomew Featherstonehaugh", last_name: "Montgomery Worthington Smythe"))).member
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_event_path(event.group, event)
+    send_again_to(long)
+
+    expect(page).to have_css "#notice"
+    expect(gap_to_row_end("#notice [aria-label='Dismiss']", "#notice")).to be >= 0
+    expect(horizontal_overflow).to eq 0
+  end
+
   # Ben's row is the fullest an owner gets, the status, the paper plane and the pills, so it is the one where the status icons would fall into groups, and a phone is where they would wrap.
   it "spaces a roster row's status icons evenly on a phone" do
     owner, event, ben = rostered_event
@@ -616,6 +784,13 @@ RSpec.describe "The event detail", type: :system do
   def open_roster(sorted_by: nil)
     find("summary", text: "Who’s coming").click
     click_button sorted_by if sorted_by
+  end
+
+  # WHY: a helper beside `press_plane_once_answered`, because asking again takes the roster, the plane and its dialog's Send again, three steps every caller repeats.
+  def send_again_to(member)
+    open_roster
+    click_button "Response requested from #{member.full_name}"
+    click_button "Send again"
   end
 
   # The roster draws no plane on an answered row, so the member answers after the page is drawn and before the press.

@@ -139,6 +139,18 @@ RSpec.describe "Addresses", type: :request do
         expect(Nokogiri::HTML(response.body).at_xpath("//a[normalize-space()='Extra gig']")["href"]).to eq group_event_path(group, later)
       end
 
+      # WHY: #368; a Used by event's name trims, since it links to the event's screen, so the link carries it whole in the `title`.
+      it "carries each event's whole name in its link's title" do
+        address = create(:address)
+        group = create(:group)
+        create(:event, group:, address:, name: "The Extraordinarily Long Named Spring Concert")
+        sign_in_as(create(:member, group:).user)
+
+        get address_path(address)
+
+        expect(Nokogiri::HTML(response.body).at_css("[aria-labelledby=used_by] li a")["title"]).to eq "The Extraordinarily Long Named Spring Concert"
+      end
+
       it "says nothing about a home for a place only events use" do
         address = create(:address)
         event   = create(:event, address:)

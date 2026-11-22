@@ -141,6 +141,33 @@ RSpec.describe "Deleting my account", type: :system do
     end
   end
 
+  # WHY: #368; the sheet's body names the groups the member leaves and its block the groups they own alone, so both wrap a long name inside the box, read as the block's example above reads it.
+  it "keeps the open sheet inside a phone's width when its groups have long one-word names" do
+    member = create(:member, :owner, group: create(:group, name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious"))
+    create(:member, user: member.user, group: create(:group, name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious Two"))
+    sign_in_as member.user
+    resize_to ViewportHelper::MOBILE
+
+    visit edit_user_profile_path
+    find("button[form='#{dom_id(member.user, :confirm_delete)}_form']").click
+
+    expect(page).to have_css "##{dom_id(member.user, :confirm_delete)}_block"
+    expect(page.evaluate_script("(box => box.scrollWidth - box.clientWidth)(document.querySelector('dialog[open] .modal-box'))")).to eq 0
+  end
+
+  it "keeps the open sheet inside a phone's width when its groups have long multi-word names" do
+    member = create(:member, :owner, group: create(:group, name: "The Extraordinarily Long Named Riverside Community Choir Of Greater Springfield"))
+    create(:member, user: member.user, group: create(:group, name: "The Extraordinarily Long Named Harbour Brass Band Of Greater Springfield"))
+    sign_in_as member.user
+    resize_to ViewportHelper::MOBILE
+
+    visit edit_user_profile_path
+    find("button[form='#{dom_id(member.user, :confirm_delete)}_form']").click
+
+    expect(page).to have_css "##{dom_id(member.user, :confirm_delete)}_block"
+    expect(page.evaluate_script("(box => box.scrollWidth - box.clientWidth)(document.querySelector('dialog[open] .modal-box'))")).to eq 0
+  end
+
   # The one browser path left to the refusal: the block was not true when the sheet rendered, so
   # the primary enabled, and it became true before the press.
   it "paints the refusal's alert when a co-owner leaves between the sheet opening and the press" do

@@ -3,7 +3,7 @@
 <div class="grow flex flex-col gap-5">
   <%# The account is named so a link somebody else sent you is recognisable, which is the whole
       reason this GET renders a page instead of signing anybody in. %>
-  <h1 class="text-record text-center break-words">Sign in as <span class="block text-secondary"><%= @sign_in_token.user.email %></span></h1>
+  <h1 class="text-record text-center wrap-anywhere">Sign in as <span class="block text-secondary"><%= @sign_in_token.user.email %></span></h1>
 
   <%= button_to sign_in_path, params: { return_to: }, class: "btn btn-primary btn-block" do %>
     <%= icon :confirm, class: "size-icon-control" %> Sign in

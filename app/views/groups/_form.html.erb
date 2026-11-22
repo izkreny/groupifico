@@ -44,14 +44,15 @@
         <div class="card bg-base-200">
           <div class="card-body">
             <div class="flex items-center gap-2">
-              <span class="grow min-w-0 truncate"><%= group.address.name %></span>
+              <%# WHY: the card wraps the saved place whole rather than trimming it, because this is where the owner checks it before saving. %>
+              <span class="grow min-w-0 wrap-anywhere"><%= group.address.name %></span>
 
               <%= link_to edit_address_path(group.address), class: "btn btn-ghost btn-circle btn-sm text-primary flex-none", aria: { label: "Correct address" } do %>
                 <%= icon :edit, class: "size-icon-control" %>
               <% end %>
             </div>
 
-            <p><%= address_summary(group.address) %></p>
+            <p class="wrap-anywhere"><%= address_summary(group.address) %></p>
           </div>
         </div>
       <% else %>

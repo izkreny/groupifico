@@ -64,6 +64,33 @@ RSpec.describe "The groups index", type: :system do
     expect(page).to paint ".badge"
   end
 
+  # WHY: #368; a card wraps a long name and keeps its owner badge inside the card.
+  it "wraps a long one-word group name inside its card on a phone" do
+    member = create(:member, :owner, group: create(:group, name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious"))
+    create(:member, user: member.user)
+    sign_in_as member.user
+    resize_to ViewportHelper::MOBILE
+
+    visit groups_path
+
+    expect(page).to have_css ".badge", text: "owner"
+    expect(gap_to_row_end("#group_#{member.group.id} .badge", "#group_#{member.group.id} .card-body")).to be >= 0
+    expect(horizontal_overflow).to eq 0
+  end
+
+  it "wraps a long multi-word group name inside its card on a phone" do
+    member = create(:member, :owner, group: create(:group, name: "The Extraordinarily Long Named Riverside Community Choir Of Greater Springfield"))
+    create(:member, user: member.user)
+    sign_in_as member.user
+    resize_to ViewportHelper::MOBILE
+
+    visit groups_path
+
+    expect(page).to have_css ".badge", text: "owner"
+    expect(gap_to_row_end("#group_#{member.group.id} .badge", "#group_#{member.group.id} .card-body")).to be >= 0
+    expect(horizontal_overflow).to eq 0
+  end
+
   # A Turbo navigation. The whole card is the link, so this also proves the tap target is the card
   # rather than something inside it: a click at the meta line's text has to land on the group.
   it "lands on the group when its card is used" do

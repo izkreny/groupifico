@@ -12,8 +12,9 @@
       <ul class="list">
         <% @events.each do |event| %>
           <li class="list-row">
-            <div>
-              <%= link_to event.name, group_event_path(event.group, event), class: "link link-hover" %>
+            <%# WHY: the name trims rather than wraps, because it links to the event's screen, which draws it whole; `min-w-0` lets the row's cell shrink so the trim can happen. %>
+            <div class="min-w-0">
+              <%= trimmed event.name, :a, href: group_event_path(event.group, event), class: "link link-hover block" %>
               <div class="text-xs"><%= event_schedule_start(event) %></div>
             </div>
           </li>

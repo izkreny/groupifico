@@ -22,6 +22,17 @@ module ViewportHelper
     JS
   end
 
+  # Whether text is cut off by a `line-clamp`, and how many lines it shows, for the same reason: the element carries the whole string either way.
+  def clamped_lines(selector)
+    page.evaluate_script(<<~JS)
+      (() => {
+        const el = document.querySelector("#{selector}");
+        const lines = Math.round(el.clientHeight / parseFloat(getComputedStyle(el).lineHeight));
+        return el.scrollHeight > el.clientHeight + 1 ? lines : null;
+      })()
+    JS
+  end
+
   # The gap in px between where text actually ends and the next element begins. Measured off a
   # `Range` over the text rather than off its element's box, because a flex `gap` holds two boxes
   # the same distance apart however wide they are: a box stretched past its own text leaves the

@@ -29,6 +29,37 @@ RSpec.describe "The place screen", type: :system do
     expect(page).to be_accessible
   end
 
+  # WHY: #368; the screen wraps a long place name, street, area and home group's name, and keeps Correct and the map link inside it; a Used by event name trims, since it links to the event's screen, which draws it whole.
+  it "wraps a long one-word place, street, area and group and trims a Used by event on a phone" do
+    address = create(:address, name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", street_name: "SimpsoncalifragilisticexpialaciousannoyedgruntciousSimpsoncalifragilisticexpialaciousannoyedgruntcious", city: "SimpsoncalifragilisticexpialaciousannoyedgruntciousSimpsoncalifragilisticexpialaciousannoyedgruntcious")
+    owner = create(:member, :active, :owner, group: create(:group, name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious", address:))
+    create(:event, group: owner.group, creator: owner, address:, name: "SimpsoncalifragilisticexpialaciousannoyedgruntciousSimpsoncalifragilisticexpialaciousannoyedgruntcious")
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit address_path(address)
+
+    expect(gap_to_row_end("#address_#{address.id} a.btn", "#address_#{address.id}")).to be >= 0
+    expect(gap_to_row_end("#address_#{address.id} address a", "#address_#{address.id}")).to be >= 0
+    expect(truncated?("section[aria-labelledby='used_by'] li a")).to be true
+    expect(horizontal_overflow).to eq 0
+  end
+
+  it "wraps a long multi-word place, street, area and group and trims a Used by event on a phone" do
+    address = create(:address, name: "The Extraordinarily Long Named Community Hall Of Greater Springfield", street_name: "The Extraordinarily Long Named Avenue Of The Riverside Community", city: "The Extraordinarily Long Named City Of Greater Springfield In The Valley")
+    owner = create(:member, :active, :owner, group: create(:group, name: "The Extraordinarily Long Named Riverside Community Choir Of Greater Springfield", address:))
+    create(:event, group: owner.group, creator: owner, address:, name: "The Extraordinarily Long Named Spring Concert Of The Riverside Community Choir")
+    sign_in_as owner.user
+    resize_to ViewportHelper::MOBILE
+
+    visit address_path(address)
+
+    expect(gap_to_row_end("#address_#{address.id} a.btn", "#address_#{address.id}")).to be >= 0
+    expect(gap_to_row_end("#address_#{address.id} address a", "#address_#{address.id}")).to be >= 0
+    expect(truncated?("section[aria-labelledby='used_by'] li a")).to be true
+    expect(horizontal_overflow).to eq 0
+  end
+
   it "lands on the correction form from Correct" do
     sign_in_as member.user
 
