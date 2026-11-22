@@ -38,13 +38,13 @@ The owner, the administrator and the members administrator may add, edit and del
 
 ### The updater is whoever last wrote the row
 
-`updater` is a `Member`, set to the acting member by every write and overwritten by every edit, and the history screen shows it as "by Ana". A newcomer is the updater of their own first change when they join by link (#504), and of their `join` change when they accept an invitation (#505). It is not called `creator`, because `Event#creator` is set once and never changes, and one word must not mean two things.
+`updater` is a `Member`, set to the acting member by every write and overwritten by every edit, and the history screen shows it as "by Ana". A newcomer is the updater of their own first change when they join by link (#504), and of their `join` change when they accept an invitation (#505), and a new group's owner of their own first change. An import has no acting member, so it records the group's oldest active owner, who always exists and stays the same as owners are added. It is not called `creator`, because `Event#creator` is set once and never changes, and one word must not mean two things.
 
-`updater_id` is nullable, with a foreign key that nullifies on delete, until soft delete (#87) means a member is never deleted. The one-time backfill also leaves it null. A required `updater` would repeat #143, where a required `creator` whose member was deleted makes the event impossible to save.
+Every write names an updater, so an empty `updater_id` means one thing only: the member who made the change was deleted. The column stays nullable, with a foreign key that nullifies on delete, until soft delete (#87) means a member is never deleted. `Member::StatusChange` still requires an updater, and that does not repeat #143, where a required `creator` whose member was deleted makes the event impossible to save: an event's edit keeps its creator, while every write of a change sets a new updater.
 
 ### Every member starts with a change
 
-Every way a member comes into being writes the first change in the same save. An invitation by email asks for an email and nothing else (#505), so an invitee starts `pending` from today; a link joiner (#504) and a new group's owner start `active` from today; the import brings its own dates; and the one-time backfill gives every existing member one change dated the day their membership was created. The member edit form carries a start date that defaults to today.
+Every way a member comes into being writes the first change in the same save. An invitation by email asks for an email and nothing else (#505), so an invitee starts `pending` from today; a link joiner (#504), a new group's owner and every member the CSV import adds start `active` from today; and the history import (#478) replaces those first changes with the dates its file brings. There is no backfill: production starts again from an import before launch, so no member exists without a first change. The member edit form carries a start date that defaults to today.
 
 ### One event per transition, and no model callbacks
 
