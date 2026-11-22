@@ -9,7 +9,8 @@
 
     <%# Frame 4h's pencil at the end of the name's row, with Duplicate before it, each checked against the rule its action authorizes as on the event screen (`events/_event` carries why Duplicate checks `create?`), so a reader refused one gets no control. %>
     <div class="flex items-center justify-between gap-2">
-      <h2 class="card-title min-w-0 break-words">
+      <%# WHY: `wrap-anywhere` rather than `break-words`, because `card-title` is a flex row whose link keeps a long one-word name's full width unless the break counts toward its minimum. %>
+      <h2 class="card-title min-w-0 wrap-anywhere">
         <%= link_to event.name, group_event_path(event.group, event), class: "link link-hover after:absolute after:inset-0" %>
       </h2>
 
@@ -39,7 +40,7 @@
     <% if event.address %>
       <p class="flex items-center gap-icon-text">
         <%= link_to address_map_url(event.address), class: "group relative z-1 flex grow items-center gap-icon-text", target: "_blank" do %>
-          <%= icon :where, class: "size-icon-inline text-icon-muted" %><span class="group-hover:underline"><%= event.address.name %></span>
+          <%= icon :where, class: "size-icon-inline text-icon-muted" %><span class="group-hover:underline wrap-anywhere"><%= event.address.name %></span>
         <% end %>
       </p>
     <% end %>

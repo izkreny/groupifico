@@ -284,6 +284,37 @@ RSpec.describe "The group home", type: :system do
     end
   end
 
+  # WHY: #368; the card wraps a long event name and place name, and its Duplicate and Edit stay inside it.
+  it "wraps a long one-word event and place name inside the card on a phone" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    event = create(:event, :rehearsal, group: member.group, creator: member, status: :confirmed, name: "Simpsoncalifragilisticexpialaciousannoyedgruntcious",
+      address: create(:address, name: "SimpsoncalifragilisticexpialaciousannoyedgruntciousSimpsoncalifragilisticexpialaciousannoyedgruntcious"), starts_at: 2.days.from_now.change(hour: 19), ends_at: 2.days.from_now.change(hour: 21))
+    sign_in_as member.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_path(member.group)
+
+    expect(page).to have_css "##{ActionView::RecordIdentifier.dom_id(event, :next_up)} [aria-label^='Edit']"
+    expect(gap_to_row_end("##{ActionView::RecordIdentifier.dom_id(event, :next_up)} [aria-label^='Edit']", "##{ActionView::RecordIdentifier.dom_id(event, :next_up)} .card-body")).to be >= 0
+    expect(gap_to_row_end("##{ActionView::RecordIdentifier.dom_id(event, :next_up)} a[target='_blank'] span", "##{ActionView::RecordIdentifier.dom_id(event, :next_up)} .card-body")).to be >= 0
+    expect(horizontal_overflow).to eq 0
+  end
+
+  it "wraps a long multi-word event and place name inside the card on a phone" do
+    member = create(:member, :owner, group: create(:group, name: "Riverside Choir"))
+    event = create(:event, :rehearsal, group: member.group, creator: member, status: :confirmed, name: "The Extraordinarily Long Named Spring Concert Of The Riverside Community Choir",
+      address: create(:address, name: "The Extraordinarily Long Named Community Hall Of Greater Springfield"), starts_at: 2.days.from_now.change(hour: 19), ends_at: 2.days.from_now.change(hour: 21))
+    sign_in_as member.user
+    resize_to ViewportHelper::MOBILE
+
+    visit group_path(member.group)
+
+    expect(page).to have_css "##{ActionView::RecordIdentifier.dom_id(event, :next_up)} [aria-label^='Edit']"
+    expect(gap_to_row_end("##{ActionView::RecordIdentifier.dom_id(event, :next_up)} [aria-label^='Edit']", "##{ActionView::RecordIdentifier.dom_id(event, :next_up)} .card-body")).to be >= 0
+    expect(gap_to_row_end("##{ActionView::RecordIdentifier.dom_id(event, :next_up)} a[target='_blank'] span", "##{ActionView::RecordIdentifier.dom_id(event, :next_up)} .card-body")).to be >= 0
+    expect(horizontal_overflow).to eq 0
+  end
+
   # An answer keeps the reader where they pressed it: the card morphs in place, its question turned into the answer.
   # WHY: #473 AC3. Staying on the home is also what proves the press reached the answer button rather than the card's link to its event.
   it "writes the card's answer and stays on the home" do
