@@ -273,6 +273,9 @@ RSpec.describe Event, type: :model do
 
     def names = described_class.awaiting_answer_from(member).pluck(:name)
 
+    # WHY: GHI-502 N3. The events whose row asks the member a question, held to the same hand-written list as the scope, so the tab and the row cannot drift apart unseen.
+    def asked = member.registrations.includes(:event).select { it.response_due? && it.event.open_to_answers? }.map { it.event.name }
+
     # WHY: GHI-502 AC2. Before an event ends only a question still waiting is due; a held place asks nothing yet and an answer is given.
     it "returns an event that has not ended only where a response was requested" do
       register(:from_the_future, :reserved)
@@ -281,7 +284,7 @@ RSpec.describe Event, type: :model do
       register(:from_the_future, :maybe)
       register(:from_the_future, :no)
 
-      expect(names).to contain_exactly("from_the_future response_requested")
+      expect([ names, asked ]).to all contain_exactly("from_the_future response_requested")
     end
 
     # WHY: GHI-502 AC3. Once an event has ended, anyone whose attendance is still unknown is asked "Did you go?", a maybe included.
@@ -292,7 +295,7 @@ RSpec.describe Event, type: :model do
       register(:from_the_past, :maybe)
       register(:from_the_past, :no)
 
-      expect(names).to contain_exactly("from_the_past reserved", "from_the_past response_requested", "from_the_past maybe")
+      expect([ names, asked ]).to all contain_exactly("from_the_past reserved", "from_the_past response_requested", "from_the_past maybe")
     end
 
     # WHY: GHI-502 AC4. A concluded or canceled event takes no answer, so it waits on nobody.
@@ -301,7 +304,7 @@ RSpec.describe Event, type: :model do
       register(:from_the_future, :response_requested, event_status: :canceled)
       register(:from_the_past, :reserved, event_status: :canceled)
 
-      expect(names).to be_empty
+      expect([ names, asked ]).to all be_empty
     end
 
     it "leaves out a question put to another member" do
