@@ -5,8 +5,6 @@ class Event::Filter
   TAB = :scope
   # WHY: `nil` is the upcoming list because that list is the screen's own URL, with no `scope`.
   TABS = { nil => "Upcoming", "past" => "Past", "to_do" => "To do", "canceled" => "Canceled" }.freeze
-  # WHY: the events waiting on whoever runs them are the `EventPolicy#oversee?` columns' read, so the tab is theirs alone, the way Pending is on the members list.
-  OVERSEER_TABS = %w[ to_do ].freeze
   # WHY: in the sheet's order rather than the enum's, so the chips read in the order the sheet offers them.
   CATEGORIES = { "gig" => "Gig", "rehearsal" => "Rehearsal", "other" => "Other" }.freeze
   ANSWERS = { "yes" => "Yes", "maybe" => "Maybe", "no" => "No", "not_answered" => "Not answered" }.freeze
@@ -15,16 +13,17 @@ class Event::Filter
   # WHY: "Not answered" is a place on the event's list with no answer yet, so an event the reader is not listed on has no answer of theirs to match.
   STATUSES = Registration::ANSWERS.index_with { [ it ] }.merge("not_answered" => Registration.statuses.keys - Registration::ANSWERS).freeze
 
-  # WHY: the URL is the only place a filter lives, so a link shows exactly what it names and a plain visit opens on Upcoming with nothing on, with no remembered state to surprise anyone. Whether the reader oversees the events is the policy's answer, so the controller asks it and hands it in, as it does for `Member::Filter`.
-  def self.from(member, params, oversees:)
-    new(member, oversees:, scope: params[:scope], categories: params[:category], answers: params[:answer], managed: params[:managed])
+  # WHY: the URL is the only place a filter lives, so a link shows exactly what it names and a plain visit opens on Upcoming with nothing on, with no remembered state to surprise anyone. Whether the member may answer their own registration and whether they oversee the events are the policy's answers, so the controller asks both and hands them in, as it does for `Member::Filter`.
+  def self.from(member, params, oversees:, may_answer:)
+    new(member, oversees:, may_answer:, scope: params[:scope], categories: params[:category], answers: params[:answer], managed: params[:managed])
   end
 
   attr_reader :member, :scope, :categories, :answers
 
-  def initialize(member, oversees: false, scope: nil, categories: nil, answers: nil, managed: nil)
+  def initialize(member, oversees: false, may_answer: false, scope: nil, categories: nil, answers: nil, managed: nil)
     @member = member
     @oversees = oversees
+    @may_answer = may_answer
     @scope = scope.presence_in(offered_tabs.keys.compact)
     @categories = CATEGORIES.keys & Array(categories)
     @answers = ANSWERS.keys & Array(answers)
@@ -36,7 +35,7 @@ class Event::Filter
 
   def oversees? = @oversees
 
-  def offered_tabs = oversees? ? TABS : TABS.except(*OVERSEER_TABS)
+  def may_answer? = @may_answer
 
   def managed? = @managed
 
@@ -66,10 +65,18 @@ class Event::Filter
     def on_tab(events, tab)
       case tab
       when "past" then events.past.order(starts_at: :desc)
-      when "to_do" then events.to_do.order(:starts_at)
+      when "to_do" then waiting_on_member(events).order(:starts_at)
       when "canceled" then events.canceled.order(starts_at: :desc)
       else events.current_and_upcoming.order(:starts_at)
       end
+    end
+
+    # WHY: every reason an event waits on this member, joined in one list so an event both reasons put there is listed once: the question their own row asks, which a paused member has none of since they may not answer, and the events waiting on whoever runs them, for a member `EventPolicy#oversee?` admits.
+    def waiting_on_member(events)
+      reasons = []
+      reasons << events.awaiting_answer_from(member) if may_answer?
+      reasons << events.to_do if oversees?
+      reasons.reduce(:or) || events.none
     end
 
     def narrow(events)

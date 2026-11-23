@@ -58,7 +58,7 @@ RSpec.describe EventPolicy, type: :policy do
     let(:record)  { build(:event, group:) }
     let(:context) { { user: actor.user } }
 
-    failed "for a member holding no role, who may not see the To do list"
+    failed "for a member holding no role, whose To do lists only their own questions"
 
     succeed "for an owner" do
       let(:actor) { create(:member, :owner, group:) }
@@ -80,7 +80,7 @@ RSpec.describe EventPolicy, type: :policy do
       before { create(:event, group:, manager: actor) }
     end
 
-    succeed "for a paused events administrator, because seeing the To do list is a read" do
+    succeed "for a paused events administrator, because what To do adds is a read" do
       let(:actor) { create(:member, :paused, :events_administrator, group:) }
     end
   end

@@ -219,7 +219,7 @@
   <%= render layout: "styleguides/section", locals: { title: "Events filter" } do |theme| %>
     <% sample = Event::Filter.new(@owner, scope: "past", categories: %w[ gig ], answers: %w[ yes ]) %>
     <div class="flex flex-col gap-4">
-      <%= render layout: "shared/filter_bar", locals: { group: @group, filter: sample, counts: { nil => 4, "past" => 2, "canceled" => 0 }, count: 2, add_label: "New event", add_path: new_group_event_path(@group), namespace: "#{theme}_bar" } do %>
+      <%= render layout: "shared/filter_bar", locals: { group: @group, filter: sample, counts: { nil => 4, "past" => 2, "to_do" => 1, "canceled" => 0 }, count: 2, add_label: "New event", add_path: new_group_event_path(@group), namespace: "#{theme}_bar" } do %>
         <p class="text-meta text-muted">The list itself, drawn under Compact rows above.</p>
       <% end %>
       <%= render "shared/filter_form", group: @group, filter: sample, count: 2, namespace: theme %>
