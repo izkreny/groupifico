@@ -275,14 +275,22 @@ RSpec.describe Event, type: :model do
 
     # WHY: GHI-502 AC2. Before an event ends only a question still waiting is due; a held place asks nothing yet and an answer is given.
     it "returns an event that has not ended only where a response was requested" do
-      Registration.statuses.each_key { register(:from_the_future, it) }
+      register(:from_the_future, :reserved)
+      register(:from_the_future, :response_requested)
+      register(:from_the_future, :yes)
+      register(:from_the_future, :maybe)
+      register(:from_the_future, :no)
 
       expect(names).to contain_exactly("from_the_future response_requested")
     end
 
     # WHY: GHI-502 AC3. Once an event has ended, anyone whose attendance is still unknown is asked "Did you go?", a maybe included.
     it "returns an ended event where the member's attendance is still unknown" do
-      Registration.statuses.each_key { register(:from_the_past, it) }
+      register(:from_the_past, :reserved)
+      register(:from_the_past, :response_requested)
+      register(:from_the_past, :yes)
+      register(:from_the_past, :maybe)
+      register(:from_the_past, :no)
 
       expect(names).to contain_exactly("from_the_past reserved", "from_the_past response_requested", "from_the_past maybe")
     end
