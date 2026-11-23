@@ -287,6 +287,14 @@ RSpec.describe Event, type: :model do
       expect([ names, asked ]).to all contain_exactly("from_the_future response_requested")
     end
 
+    # WHY: GHI-502 AC2. An event under way has started but not ended, so a held place still asks nothing; it is the one place a reading of "ended" off the start would differ from the row's.
+    it "returns an event under way only where a response was requested" do
+      register(:ongoing, :reserved)
+      register(:ongoing, :response_requested)
+
+      expect([ names, asked ]).to all contain_exactly("ongoing response_requested")
+    end
+
     # WHY: GHI-502 AC3. Once an event has ended, anyone whose attendance is still unknown is asked "Did you go?", a maybe included.
     it "returns an ended event where the member's attendance is still unknown" do
       register(:from_the_past, :reserved)
