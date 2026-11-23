@@ -33,8 +33,9 @@ The specs prove which events each member's To do holds and that every column is 
 
 ## Open questions
 
-- ::Q1:: A paused member cannot answer, so their rows ask nothing: does their To do leave out their own reason? Assumed yes, since settled Q2 on #502 makes To do exactly the rows that ask, and built that way; a paused events administrator keeps what `oversee?` adds.
+None.
 
 ## Settled
 
-None yet.
+- ::Q1:: A paused member cannot answer, so their rows ask nothing: does their To do leave out their own reason? Yes: settled by the owner in the terminal on 2026-11-23.
+- ::Q2:: Does a paused events administrator keep the events waiting on whoever runs them, as #462 gave them? No: settled by the owner in the terminal on 2026-11-23, since confirming or concluding an event is an edit a paused member is refused, so a paused member's To do is empty. The controller asks `EventPolicy#update?` of an event with nothing on it but the group in place of `EventPolicy#oversee?`, which goes with its examples.
