@@ -240,6 +240,29 @@ RSpec.describe "The events list", type: :system do
     expect(page).to have_link("Clear all").and have_css("nav[aria-label='Event lists'] a", text: /\ATo do /).and be_accessible
   end
 
+  # WHY: GHI-502 AC1 and AC2. A member holding no role gets To do too, its count on the tab and the question on the row, and the open tab and the answer pills paint differently in each theme.
+  it "passes axe on a member's To do with the question put to them, in organic" do
+    member = create(:member, :active)
+    create(:registration, member:, event: next_event_for(member), status: :response_requested)
+    sign_in_as member.user
+    prefer_colour_scheme :light
+
+    visit group_events_path(member.group, scope: "to_do")
+
+    expect(page).to have_css("nav[aria-label='Event lists'] a[aria-current=page]", text: "To do (1)").and have_text("Are you coming?").and be_accessible
+  end
+
+  it "passes axe on a member's To do with the question put to them, in organic-dark" do
+    member = create(:member, :active)
+    create(:registration, member:, event: next_event_for(member), status: :response_requested)
+    sign_in_as member.user
+    prefer_colour_scheme :dark
+
+    visit group_events_path(member.group, scope: "to_do")
+
+    expect(page).to have_css("nav[aria-label='Event lists'] a[aria-current=page]", text: "To do (1)").and have_text("Are you coming?").and be_accessible
+  end
+
   # WHY: #460 AC12. The sheet is only in the accessibility tree while it is open, which only a browser can make it, and its picks paint differently in each theme.
   it "passes axe with the filter sheet open, in organic" do
     member = create(:member, :owner)
