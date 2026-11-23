@@ -71,7 +71,7 @@ class Event::Filter
       end
     end
 
-    # WHY: every reason an event waits on this member, joined in one list so an event both reasons put there is listed once: the question their own row asks, which a paused member has none of since they may not answer, and the events waiting on whoever runs them, for a member `EventPolicy#oversee?` admits.
+    # WHY: every reason an event waits on this member, joined in one list so an event both reasons put there is listed once: the question their own row asks, which a paused member has none of since they may not answer, and the events waiting on whoever runs them, for a member who may edit the group's events.
     def waiting_on_member(events)
       reasons = []
       reasons << events.awaiting_answer_from(member) if may_answer?

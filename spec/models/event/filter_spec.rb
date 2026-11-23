@@ -35,7 +35,7 @@ RSpec.describe Event::Filter do
   end
 
   describe "#offered_tabs" do
-    # WHY: GHI-502 AC1. To do comes third, after Past, for every member, since it lists what waits on whoever reads it; compared as pairs because a hash compares equal whatever its order.
+    # WHY: GHI-502 AC1. To do comes third, after Past, for every member, since it lists what waits on that member; compared as pairs because a hash compares equal whatever its order.
     it "offers To do third, after Past, to a member who does not oversee the events" do
       expect(described_class.new(member).offered_tabs.to_a).to eq [ [ nil, "Upcoming" ], [ "past", "Past" ], [ "to_do", "To do" ], [ "canceled", "Canceled" ] ]
     end
@@ -155,9 +155,9 @@ RSpec.describe Event::Filter do
         expect(names(described_class.new(member, may_answer: true, oversees: true, scope: "to_do"))).to eq [ "Autumn fair", "Harvest gig", "Winter gala", "Advent concert", "New year's gig" ]
       end
 
-      # WHY: GHI-502 Q1 on #526. A paused member may not answer, so no row asks them anything and their own reason adds nothing, while a paused events administrator keeps the events waiting on whoever runs them.
+      # WHY: GHI-502 Q1 on #526. A paused member may not answer, so no row asks them anything and their own reason adds nothing.
       it "leaves the member's own questions off To do while they may not answer" do
-        expect([ names(described_class.new(member, scope: "to_do")), names(described_class.new(member, oversees: true, scope: "to_do")) ]).to eq [ [], [ "Autumn fair", "Harvest gig", "Winter gala", "New year's gig" ] ]
+        expect(names(described_class.new(member, scope: "to_do"))).to be_empty
       end
     end
   end

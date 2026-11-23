@@ -330,18 +330,19 @@ RSpec.describe "Events", type: :request do
         expect(response.body).to include "Nothing to do."
       end
 
-      # WHY: #462 AC2. Seeing the To do list is a read, so pausing the member leaves it.
-      it "keeps To do while the member is paused" do
+      # WHY: GHI-502 Q2 on #526. Confirming or concluding an event is an edit a paused member is refused, so the event waiting on whoever runs the events is not on their To do.
+      it "says there is nothing to do while the member is paused" do
         actor = create(:member, :paused, :events_administrator)
+        confirmed_event(actor, days: -2, name: "Summer gig")
         sign_in_as(actor.user)
 
         get group_events_path(actor.group, scope: "to_do")
 
-        expect(Nokogiri::HTML(response.body).at_css("nav[aria-label='Event lists'] a[aria-current=page]")&.text).to eq "To do (0)"
+        expect([ Nokogiri::HTML(response.body).at_css("nav[aria-label='Event lists'] a[aria-current=page]")&.text, response.body.include?("Nothing to do.") ]).to eq [ "To do (0)", true ]
       end
     end
 
-    # WHY: #462 AC2 and AC3. The other two columns `EventPolicy#oversee?` admits, the events administrator being proven above.
+    # WHY: #462 AC2 and AC3. The other two columns that may edit the group's events, the events administrator being proven above.
     context "when signed in as an owner" do
       it "offers To do third and opens on Upcoming" do
         actor = create(:member, :active, :owner)
