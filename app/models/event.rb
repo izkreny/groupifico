@@ -94,6 +94,12 @@ class Event < ApplicationRecord
   # WHY: a fourth list, outside that partition: the events waiting on whoever runs them, which today is every event still unconfirmed, whatever its dates, and every past one still confirmed, so neither slips by unnoticed. It overlaps the partition rather than joining it, so an event on it is always on Upcoming or Past as well.
   scope :to_do, -> { unconfirmed.or(past.confirmed) }
 
+  # WHY: the events whose row puts a question to this member, `Registration#response_due?` on an event still `open_to_answers?` read across a list rather than a row: a question still waiting, and once the event has ended anyone whose attendance is still unknown, a `maybe` included. A subquery rather than a join, so an event stays one row and the list combines with `to_do` through `or`.
+  scope :awaiting_answer_from, ->(member) do
+    due = member.registrations.response_requested.or(member.registrations.where(status: %i[ reserved maybe ], event: Event.past))
+    where(status: OPEN_TO_ANSWERS, id: due.select(:event_id))
+  end
+
   scope :preloaded, -> { includes(:address, :group, :registrations, creator: :profile, manager: :profile) }
 
   # The tallies the event card draws, in one query, with a zero for a status nobody holds so the

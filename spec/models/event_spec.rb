@@ -261,6 +261,48 @@ RSpec.describe Event, type: :model do
     end
   end
 
+  describe ".awaiting_answer_from" do
+    let(:member) { create(:member) }
+
+    # WHY: one event per registration status, named for it, so each example lists by hand which of them the member's To do holds.
+    def register(timing, status, event_status: :confirmed)
+      event = create(:event, timing, group: member.group, name: "#{timing} #{status}", status: :confirmed)
+      travel_to(event.starts_at - 1.day) { create(:registration, event:, member:, status:) }
+      event.update!(status: event_status)
+    end
+
+    def names = described_class.awaiting_answer_from(member).pluck(:name)
+
+    # WHY: GHI-502 AC2. Before an event ends only a question still waiting is due; a held place asks nothing yet and an answer is given.
+    it "returns an event that has not ended only where a response was requested" do
+      Registration.statuses.each_key { register(:from_the_future, it) }
+
+      expect(names).to contain_exactly("from_the_future response_requested")
+    end
+
+    # WHY: GHI-502 AC3. Once an event has ended, anyone whose attendance is still unknown is asked "Did you go?", a maybe included.
+    it "returns an ended event where the member's attendance is still unknown" do
+      Registration.statuses.each_key { register(:from_the_past, it) }
+
+      expect(names).to contain_exactly("from_the_past reserved", "from_the_past response_requested", "from_the_past maybe")
+    end
+
+    # WHY: GHI-502 AC4. A concluded or canceled event takes no answer, so it waits on nobody.
+    it "leaves out a concluded or a canceled event" do
+      register(:from_the_past, :maybe, event_status: :concluded)
+      register(:from_the_future, :response_requested, event_status: :canceled)
+      register(:from_the_past, :reserved, event_status: :canceled)
+
+      expect(names).to be_empty
+    end
+
+    it "leaves out a question put to another member" do
+      create(:registration, event: create(:event, :from_the_future, group: member.group), status: :response_requested)
+
+      expect(names).to be_empty
+    end
+  end
+
   describe "#ongoing?" do
     it "is true between the event's start and its end" do
       freeze_time do
