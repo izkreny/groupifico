@@ -13,16 +13,16 @@ class Event::Filter
   # WHY: "Not answered" is a place on the event's list with no answer yet, so an event the reader is not listed on has no answer of theirs to match.
   STATUSES = Registration::ANSWERS.index_with { [ it ] }.merge("not_answered" => Registration.statuses.keys - Registration::ANSWERS).freeze
 
-  # WHY: the URL is the only place a filter lives, so a link shows exactly what it names and a plain visit opens on Upcoming with nothing on, with no remembered state to surprise anyone. Whether the member may answer their own registration and whether they oversee the events are the policy's answers, so the controller asks both and hands them in, as it does for `Member::Filter`.
-  def self.from(member, params, oversees:, may_answer:)
-    new(member, oversees:, may_answer:, scope: params[:scope], categories: params[:category], answers: params[:answer], managed: params[:managed])
+  # WHY: the URL is the only place a filter lives, so a link shows exactly what it names and a plain visit opens on Upcoming with nothing on, with no remembered state to surprise anyone. Whether the member may answer their own registration and whether they may edit the group's events are the policy's answers, so the controller asks both and hands them in, as it does for `Member::Filter`.
+  def self.from(member, params, may_edit:, may_answer:)
+    new(member, may_edit:, may_answer:, scope: params[:scope], categories: params[:category], answers: params[:answer], managed: params[:managed])
   end
 
   attr_reader :member, :scope, :categories, :answers
 
-  def initialize(member, oversees: false, may_answer: false, scope: nil, categories: nil, answers: nil, managed: nil)
+  def initialize(member, may_edit: false, may_answer: false, scope: nil, categories: nil, answers: nil, managed: nil)
     @member = member
-    @oversees = oversees
+    @may_edit = may_edit
     @may_answer = may_answer
     @scope = scope.presence_in(offered_tabs.keys.compact)
     @categories = CATEGORIES.keys & Array(categories)
@@ -33,7 +33,7 @@ class Event::Filter
 
   def tab = scope
 
-  def oversees? = @oversees
+  def may_edit? = @may_edit
 
   def may_answer? = @may_answer
 
@@ -75,7 +75,7 @@ class Event::Filter
     def waiting_on_member(events)
       reasons = []
       reasons << events.awaiting_answer_from(member) if may_answer?
-      reasons << events.to_do if oversees?
+      reasons << events.to_do if may_edit?
       reasons.reduce(:or) || events.none
     end
 

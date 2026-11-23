@@ -14,21 +14,21 @@ RSpec.describe Event::Filter do
   describe ".from" do
     # WHY: #460 AC10. The URL is the only place a filter lives, so a link's parameters are the whole filter.
     it "reads the list and filters from the URL's parameters" do
-      filter = described_class.from(member, ActionController::Parameters.new(scope: "past", category: %w[ rehearsal gig ], answer: %w[ not_answered ]), oversees: false, may_answer: true)
+      filter = described_class.from(member, ActionController::Parameters.new(scope: "past", category: %w[ rehearsal gig ], answer: %w[ not_answered ]), may_edit: false, may_answer: true)
 
       expect([ filter.scope, filter.categories, filter.answers ]).to eq [ "past", %w[ gig rehearsal ], %w[ not_answered ] ]
     end
 
     # WHY: #460 AC9. A URL with no filter in it is Upcoming with nothing on.
     it "is Upcoming with no filters when the URL carries none" do
-      filter = described_class.from(member, ActionController::Parameters.new(group_id: member.group_id), oversees: false, may_answer: true)
+      filter = described_class.from(member, ActionController::Parameters.new(group_id: member.group_id), may_edit: false, may_answer: true)
 
       expect([ filter.scope, filter.categories, filter.answers, filter.managed?, filter.narrowed? ]).to eq [ nil, [], [], false, false ]
     end
 
     # WHY: #462 AC3. Upcoming stays the default for a member who oversees the events too, To do being a tab they open rather than the one they land on.
     it "is Upcoming for a member who oversees the events when the URL names no list" do
-      filter = described_class.from(member, ActionController::Parameters.new(group_id: member.group_id), oversees: true, may_answer: true)
+      filter = described_class.from(member, ActionController::Parameters.new(group_id: member.group_id), may_edit: true, may_answer: true)
 
       expect(filter.scope).to be_nil
     end
@@ -121,7 +121,7 @@ RSpec.describe Event::Filter do
       upcoming(name: "Winter gala", status: :unconfirmed, starts_at: 9.days.from_now, ends_at: 9.days.from_now + 2.hours)
       upcoming(name: "Advent concert")
 
-      expect(names(described_class.new(member, oversees: true, scope: "to_do"))).to eq [ "Autumn fair", "Harvest gig", "Winter gala" ]
+      expect(names(described_class.new(member, may_edit: true, scope: "to_do"))).to eq [ "Autumn fair", "Harvest gig", "Winter gala" ]
     end
 
     # WHY: #462 AC6. The sheet's filters narrow To do like any other list.
@@ -129,7 +129,7 @@ RSpec.describe Event::Filter do
       create(:event, :from_the_past, group: member.group, creator: member, name: "Autumn fair", category: :gig, status: :confirmed)
       create(:event, :from_the_past, group: member.group, creator: member, name: "Full rehearsal", category: :rehearsal, status: :confirmed)
 
-      expect(names(described_class.new(member, oversees: true, scope: "to_do", categories: %w[ gig ]))).to eq [ "Autumn fair" ]
+      expect(names(described_class.new(member, may_edit: true, scope: "to_do", categories: %w[ gig ]))).to eq [ "Autumn fair" ]
     end
 
     context "with the questions put to the member" do
@@ -152,7 +152,7 @@ RSpec.describe Event::Filter do
 
       # WHY: GHI-502 AC5 and AC6. A member who also runs the events gets both reasons in one list, oldest first, the unconfirmed event that also asks them a question listed once.
       it "lists on To do both reasons in one list for a member who oversees the events" do
-        expect(names(described_class.new(member, may_answer: true, oversees: true, scope: "to_do"))).to eq [ "Autumn fair", "Harvest gig", "Winter gala", "Advent concert", "New year's gig" ]
+        expect(names(described_class.new(member, may_answer: true, may_edit: true, scope: "to_do"))).to eq [ "Autumn fair", "Harvest gig", "Winter gala", "Advent concert", "New year's gig" ]
       end
 
       # WHY: GHI-502 Q1 on #526. A paused member may not answer, so no row asks them anything and their own reason adds nothing.
@@ -178,7 +178,7 @@ RSpec.describe Event::Filter do
       create(:event, :from_the_past, group: member.group, creator: member, name: "Autumn fair", category: :gig, status: :confirmed)
       create(:event, :from_the_past, group: member.group, creator: member, name: "Summer gig", category: :gig, status: :concluded)
 
-      expect(described_class.new(member, oversees: true, categories: %w[ gig ]).counts(member.group.events)).to eq({ nil => 1, "to_do" => 1, "past" => 2, "canceled" => 0 })
+      expect(described_class.new(member, may_edit: true, categories: %w[ gig ]).counts(member.group.events)).to eq({ nil => 1, "to_do" => 1, "past" => 2, "canceled" => 0 })
     end
   end
 
