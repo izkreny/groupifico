@@ -12,9 +12,6 @@ class EventPolicy < ApplicationPolicy
   def create?  = membership.can_manage?(:events)
   def destroy? = membership.can_manage?(:events)
 
-  # Seeing the To do list, the events waiting on the three columns that run the group's events. A read, so it stays out of `WRITE_RULES` and a paused events administrator keeps it while losing every write, as `MemberPolicy#oversee?` does for the members list.
-  def oversee? = membership.can_manage?(:events)
-
   # Editing includes handing the event on, because `manager_id` is an attribute of the event like
   # its status and its location, so no separate rule exists for reassigning it.
   #

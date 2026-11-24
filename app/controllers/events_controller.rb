@@ -11,8 +11,10 @@ class EventsController < ApplicationController
   def index
     authorize! @group, to: :show?
 
-    # WHY: `Event::Filter` picks the list and every filter from its own literals, because the parameters are a member's input, and anything built out of them and sent to the relation is a door onto every scope the model has. Anything it does not offer is dropped, so a mistyped URL degrades to the upcoming list. To do is an `EventPolicy#oversee?` read, asked of an event with nothing on it but the group, and a reader not offered it gets the upcoming list rather than a refusal.
-    @filter = Event::Filter.from(Current.member, params, oversees: allowed_to?(:oversee?, Event.new(group: @group)))
+    # WHY: `Event::Filter` picks the list and every filter from its own literals, because the parameters are a member's input, and anything built out of them and sent to the relation is a door onto every scope the model has. Anything it does not offer is dropped, so a mistyped URL degrades to the upcoming list. What To do holds is two policy answers, each asked of a record with nothing on it but the group and the member: whether they may answer their own registration, and whether they may edit the group's events, which is what confirming or concluding the events waiting on whoever runs them takes. Both are writes, so a paused member's To do is empty.
+    @filter = Event::Filter.from(Current.member, params,
+      may_edit: allowed_to?(:update?, Event.new(group: @group)),
+      may_answer: allowed_to?(:update?, Registration.new(member: Current.member, event: Event.new(group: @group))))
 
     # Preloaded because every row reads the event for the reader's own registration and its place,
     # and `Event#registration_for` reads the loaded association: without this the list costs a

@@ -261,6 +261,67 @@ RSpec.describe Event, type: :model do
     end
   end
 
+  describe ".awaiting_answer_from" do
+    let(:member) { create(:member) }
+
+    # WHY: one event per registration status, named for it, so each example lists by hand which of them the member's To do holds.
+    def register(timing, status, event_status: :confirmed)
+      event = create(:event, timing, group: member.group, name: "#{timing} #{status}", status: :confirmed)
+      travel_to(event.starts_at - 1.day) { create(:registration, event:, member:, status:) }
+      event.update!(status: event_status)
+    end
+
+    def names = described_class.awaiting_answer_from(member).pluck(:name)
+
+    # WHY: GHI-502 N3. The events whose row asks the member a question, held to the same hand-written list as the scope, so the tab and the row cannot drift apart unseen.
+    def asked = member.registrations.includes(:event).select { it.response_due? && it.event.open_to_answers? }.map { it.event.name }
+
+    # WHY: GHI-502 AC2. Before an event ends only a question still waiting is due; a held place asks nothing yet and an answer is given.
+    it "returns an event that has not ended only where a response was requested" do
+      register(:from_the_future, :reserved)
+      register(:from_the_future, :response_requested)
+      register(:from_the_future, :yes)
+      register(:from_the_future, :maybe)
+      register(:from_the_future, :no)
+
+      expect([ names, asked ]).to all contain_exactly("from_the_future response_requested")
+    end
+
+    # WHY: GHI-502 AC2. An event under way has started but not ended, so a held place still asks nothing; it is the one place a reading of "ended" off the start would differ from the row's.
+    it "returns an event under way only where a response was requested" do
+      register(:ongoing, :reserved)
+      register(:ongoing, :response_requested)
+
+      expect([ names, asked ]).to all contain_exactly("ongoing response_requested")
+    end
+
+    # WHY: GHI-502 AC3. Once an event has ended, anyone whose attendance is still unknown is asked "Did you go?", a maybe included.
+    it "returns an ended event where the member's attendance is still unknown" do
+      register(:from_the_past, :reserved)
+      register(:from_the_past, :response_requested)
+      register(:from_the_past, :yes)
+      register(:from_the_past, :maybe)
+      register(:from_the_past, :no)
+
+      expect([ names, asked ]).to all contain_exactly("from_the_past reserved", "from_the_past response_requested", "from_the_past maybe")
+    end
+
+    # WHY: GHI-502 AC4. A concluded or canceled event takes no answer, so it waits on nobody.
+    it "leaves out a concluded or a canceled event" do
+      register(:from_the_past, :maybe, event_status: :concluded)
+      register(:from_the_future, :response_requested, event_status: :canceled)
+      register(:from_the_past, :reserved, event_status: :canceled)
+
+      expect([ names, asked ]).to all be_empty
+    end
+
+    it "leaves out a question put to another member" do
+      create(:registration, event: create(:event, :from_the_future, group: member.group), status: :response_requested)
+
+      expect(names).to be_empty
+    end
+  end
+
   describe "#ongoing?" do
     it "is true between the event's start and its end" do
       freeze_time do
