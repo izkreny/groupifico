@@ -12,7 +12,7 @@
 <% manages = allowed_to?(:edit?, unattached) %>
 
 <%# WHY: the list's + opens a dialog holding both ways in rather than linking to a page, so it is passed as the bar's `actions` with no `add_path`; the join link sits in it under the same `create?`, since the join link row marks the columns that add a person. %>
-<% add_member = render("members/add_dialog", group: @group, join_link: @group.join_link) if may_add %>
+<% add_member = render("members/add_dialog", group: @group, member: unattached, join_link: @group.join_link) if may_add %>
 
 <%= render layout: "shared/filter_bar", locals: { group: @group, filter: @filter, counts: @counts, count: @members.size, actions: add_member } do %>
   <div id="members">

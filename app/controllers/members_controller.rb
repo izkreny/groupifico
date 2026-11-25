@@ -54,7 +54,7 @@ class MembersController < ApplicationController
       MemberMailer.invitation(@member).deliver_later
 
       redirect_to group_member_path(@group, @member),
-        notice: "Invitation sent."
+        notice: "Invitation sent to #{@member.email}."
     else
       render :new, status: :unprocessable_content
     end

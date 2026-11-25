@@ -189,8 +189,8 @@ RSpec.describe "The members list", type: :system do
     JS
   end
 
-  # WHY: the join link lives in the Add member dialog the owner opens from the + on this page. Which state draws which control, and for whom, is `spec/requests/members_spec.rb`'s; what is left is that the dialog stays open through each action, that Copy puts the link on the clipboard, and that Regenerate and Delete ask first.
-  context "with the join link" do
+  # WHY: the invitation and the join link live in the Add member dialog the owner opens from the + on this page. Which state draws which control, and for whom, is `spec/requests/members_spec.rb`'s; what is left is where focus lands on opening, that an invitation lands where the member form's does, that the dialog stays open through each action, that Copy puts the link on the clipboard, and that Regenerate and Delete ask first.
+  context "with the Add member dialog" do
     def open_add_member
       click_on "Add member"
       expect(page).to have_css "dialog#add_member_dialog[open]"
@@ -213,6 +213,32 @@ RSpec.describe "The members list", type: :system do
       expect(page).to have_css "dialog#add_member_dialog[open]"
       expect(page).to have_css "#add_member_dialog button.btn-secondary", exact_text: "Link copied"
       expect(page.evaluate_async_script("navigator.clipboard.readText().then(arguments[0])")).to eq join_link_url
+    end
+
+    # WHY: #506 AC3, walked in the browser, since the sheet's form is the member form's invitation: it lands where that one does and names who was invited.
+    it "invites a person from the dialog and says who" do
+      member = create(:member, :active, :owner)
+      sign_in_as member.user
+
+      visit group_members_path(member.group)
+      open_add_member
+      fill_in "invite_by_email_email", with: "new.person@example.com"
+      click_on "Send invitation"
+
+      expect(page).to have_text "Invitation sent to new.person@example.com."
+      expect(page).to have_current_path group_member_path(member.group, member.group.members.pending.sole)
+    end
+
+    # WHY: #506 AC6, so a phone's keyboard stays down until the member taps the email field: opening focuses the link's primary control instead.
+    it "leaves the email field unfocused on opening" do
+      member = create(:member, :active, :owner)
+      sign_in_as member.user
+
+      visit group_members_path(member.group)
+      open_add_member
+
+      expect(page).to have_css "#add_member_dialog button:focus", exact_text: "Create new join link"
+      expect(page).to have_no_css "#invite_by_email_email:focus"
     end
 
     # WHY: the frame swap replaces the control that had focus, so the new state's primary control has to take it.
@@ -366,7 +392,7 @@ RSpec.describe "The members list", type: :system do
       open_add_member
 
       expect(rendered_colour_scheme).to eq "light"
-      expect(page).to paint "#add_member_dialog form button.btn-primary"
+      expect(page).to paint "#join_link form button.btn-primary"
       expect(page).to be_accessible
     end
 
@@ -380,7 +406,7 @@ RSpec.describe "The members list", type: :system do
       open_add_member
 
       expect(rendered_colour_scheme).to eq "dark"
-      expect(page).to paint "#add_member_dialog form button.btn-primary"
+      expect(page).to paint "#join_link form button.btn-primary"
       expect(page).to be_accessible
     end
 
@@ -395,7 +421,7 @@ RSpec.describe "The members list", type: :system do
       open_add_member
 
       expect(rendered_colour_scheme).to eq "light"
-      expect(page).to paint "#add_member_dialog button.btn-primary"
+      expect(page).to paint "#join_link button.btn-primary"
       expect(page).to be_accessible
     end
 
@@ -410,7 +436,7 @@ RSpec.describe "The members list", type: :system do
       open_add_member
 
       expect(rendered_colour_scheme).to eq "dark"
-      expect(page).to paint "#add_member_dialog button.btn-primary"
+      expect(page).to paint "#join_link button.btn-primary"
       expect(page).to be_accessible
     end
   end

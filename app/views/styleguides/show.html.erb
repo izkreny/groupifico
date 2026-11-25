@@ -257,6 +257,10 @@
     <%= render layout: "styleguides/section", locals: { title: "Member form" } do |theme| %>
       <%= render "members/form", group: @group, member: newcomer, submit: "Send invite", fits_at: 18, cancel: "#", namespace: "#{theme}_member" %>
     <% end %>
+
+    <%= render layout: "styleguides/section", locals: { title: "Invite by email" } do |theme| %>
+      <%= render "members/invite_by_email", group: @group, member: newcomer, namespace: theme %>
+    <% end %>
   <% end %>
 
   <%# WHY: the signed-in user's own profile, the one Edit profile lets anybody reach, rather than a sample's nobody else could open. %>

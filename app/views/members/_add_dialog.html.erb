@@ -1,5 +1,5 @@
-<%# locals: (group:, join_link:) %>
-<%# WHY: the list's one +, opening every way a person is added. The heading and its x sit outside the join link's Turbo Frame, because creating, regenerating or deleting the link swaps the frame's content in place, keeping the dialog open rather than closing it with a page load, and anything inside the frame is redrawn by each swap. %>
+<%# locals: (group:, member:, join_link:) %>
+<%# WHY: the list's one +, opening every way a person is added. The heading, its x and the invitation sit outside the join link's Turbo Frame, because creating, regenerating or deleting the link swaps the frame's content in place, keeping the dialog open rather than closing it with a page load, and anything inside the frame is redrawn by each swap. %>
 <%= render layout: "shared/confirm_scope" do %>
   <%= tag.button type: "button", class: "btn btn-ghost btn-circle btn-sm text-primary", aria: { label: "Add member" }, data: { dialog_target: "trigger", action: "dialog#show" } do %>
     <%= icon :new, class: "size-icon-control" %>
@@ -13,6 +13,10 @@
         <form method="dialog">
           <button class="btn btn-ghost btn-circle btn-sm" aria-label="Close"><%= icon :cancel, class: "size-icon-control" %></button>
         </form>
+      </div>
+
+      <div>
+        <%= render "members/invite_by_email", group:, member: %>
       </div>
 
       <%= turbo_frame_tag "join_link", data: { action: "turbo:frame-missing->dialog#visit" } do %>

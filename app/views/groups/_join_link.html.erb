@@ -29,5 +29,5 @@
     <%= button_to safe_join([ icon(:invite_link, class: "size-icon-control"), "Create new join link" ]), group_join_link_path(group), class: "btn btn-primary w-full", form_class: "w-full", autofocus: namespace.nil? %>
   <% end %>
 
-  <p id="<%= id.(:hint) %>" class="text-meta">Anyone with the link can join straight away.</p>
+  <p id="<%= id.(:hint) %>" class="text-meta">Whoever opens it signs in through a link mailed to them, fills in their profile, and joins with one click on the group's join page.</p>
 </div>

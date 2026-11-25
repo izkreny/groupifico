@@ -257,6 +257,32 @@ RSpec.describe "Members", type: :request do
         expect(response.body).not_to include new_group_member_path(actor.group)
       end
 
+      # WHY: #506 AC2, the dialog's heading and its two sections in order, the invitation asking for an address and nothing else.
+      it "heads the +'s dialog Add member, inviting by email above sharing the join link" do
+        actor = create(:member, :active, :members_administrator)
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group)
+
+        dialog = Nokogiri::HTML(response.body).at_css("#add_member_dialog")
+        controls = dialog.at_css("form[action='#{group_members_path(actor.group)}']").css("input:not([type=hidden]), select, textarea, button")
+        expect(dialog.css("h2, h3").map { it.text.strip }).to eq [ "Add member", "Invite by email", "Share join link" ]
+        expect(controls.map { [ it.name, it["type"], it.text.strip ] }).to eq [ [ "input", "email", "" ], [ "button", "submit", "Send invitation" ] ]
+      end
+
+      # WHY: #506 AC4, a line under each way in saying how the person gets in, the email field's description among them.
+      it "says under each way in how the person gets in" do
+        actor = create(:member, :active, :members_administrator)
+        JoinLink.mint(actor.group)
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group)
+
+        dialog = Nokogiri::HTML(response.body).at_css("#add_member_dialog")
+        expect(dialog.at_css("##{dialog.at_css("#invite_by_email_email")["aria-describedby"]}").text).to eq "They sign in through a link mailed to them, fill in their profile, and join with one click on the group's join page."
+        expect(dialog.at_css("##{dialog.at_css("#join_link_url")["aria-describedby"]}").text).to eq "Whoever opens it signs in through a link mailed to them, fills in their profile, and joins with one click on the group's join page."
+      end
+
       # WHY: #445 AC4, since the join link row marks the columns that add a person.
       it "shows the join link to a members administrator" do
         actor = create(:member, :active, :members_administrator)

@@ -35,7 +35,7 @@ module StyleguidesHelper
     call: "Calling a member: their row on the members list and the Mobile row on their screen.",
     email: "Emailing a member: their row on the members list and the Email row on their screen. Asking for an emailed link: the button on the sign-in and create-a-group forms.",
     add_member: "Not drawn yet: the legend's adding of a person.",
-    send_invite: "Bringing someone into the group: Send invite on the new member form.",
+    send_invite: "Bringing someone into the group: Send invite on the new member form, and Send invitation in the members list's Add member dialog.",
     invite_link: "The group's join link: Create new join link in the members list's Add member dialog.",
     copy: "Copying the group's join link: Copy link in the members list's Add member dialog.",
     regenerate: "Retiring the group's join link for a new one: Regenerate link in the members list's Add member dialog, and the primary of the sheet it opens.",

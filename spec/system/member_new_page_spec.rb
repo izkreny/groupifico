@@ -56,7 +56,7 @@ RSpec.describe "The new member page", type: :system do
     fill_in "Email", with: "new.person@example.com"
     click_button "Send invite"
 
-    expect(page).to have_text "Invitation sent."
+    expect(page).to have_text "Invitation sent to new.person@example.com."
     expect(page).to have_current_path group_member_path(actor.group, actor.group.members.pending.sole)
   end
 end
