@@ -16,7 +16,7 @@
 
   The pills also wait on `Event#open_to_answers?`, as on `events/_row`: `Registration` refuses every
   answer on an event that is over, so a pill there is a control certain to fail. Editing the list does
-  not, since correcting a roster after the fact is still the three roles' business.
+  not, since correcting a roster after the fact is still the business of the three roles and the event's manager.
 %>
 <% unattached = Registration.new(event: event) %>
 <% may_fill = allowed_to?(:create?, unattached) %>
