@@ -207,7 +207,7 @@ RSpec.describe "Registrations", type: :request do
     # update? is decided against the record as loaded, so a member passes it on their own
     # registration before any posted member_id is applied. Permitting member_id there let them
     # answer for somebody else and lose their own registration in the same request - two capabilities
-    # the events table gives the three roles, and one it gives nobody.
+    # the events table gives the three roles and the event's manager, and one it gives nobody.
     context "when a member posts another member's id onto their own registration" do
       it "leaves the registration where it was, and answers for nobody else" do
         event = create(:event)
