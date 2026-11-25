@@ -85,6 +85,7 @@ class EventsController < ApplicationController
     authorize! @event
     authorize_list_changes!
     @list_editable = allowed_to?(:create?, Registration.new(event: @event))
+    @list_removable = allowed_to?(:destroy?, Registration.new(event: @event))
 
     if list_moved_on?
       @event.assign_attributes(event_params)

@@ -1,4 +1,4 @@
-<%# locals: (event:, namespace: nil) %>
+<%# locals: (event:, namespace: nil, may_remove: nil) %>
 <%#
   WHY: who is on the list is edited inside the event's own form, so each button is a checkbox drawn as one: it posts with the event's Save rather than acting on its own, and a refused save draws it again pressed, read back from what was posted. A pressed `+` is `adding_ids`, a pressed trash `removing_ids`, beside the event rather than in it, as `EventsController#update` reads them.
 
@@ -8,7 +8,7 @@
 
   WHY: a status badge sits beside the name only when the member is not active, as in the members list, so the badges stand out on a list that is mostly active members.
 %>
-<% may_remove = allowed_to?(:destroy?, Registration.new(event: event)) %>
+<% may_remove = allowed_to?(:destroy?, Registration.new(event: event)) if may_remove.nil? %>
 <% listed = event.roster.map(&:member) %>
 <% addable, paused = members_available(event.group, event).partition(&:active?) %>
 <% adding = Array(params[:adding_ids]).map(&:to_s) %>
