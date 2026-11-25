@@ -1,6 +1,6 @@
-<%# locals: (group:, event:, submit:, cancel:, fits_at:, original: nil, namespace: nil, leading: nil, may_fill: nil, may_remove: nil) %>
+<%# locals: (group:, event:, submit:, cancel:, fits_at:, original: nil, namespace: nil, leading: nil, may_fill: nil) %>
 <%# `namespace` is the styleguide's, which draws this form once per theme; every screen leaves it out and keeps its ids. %>
-<%# WHY: `may_fill` and `may_remove` are the answers `EventsController#update` read before assigning anything, because a refused save draws an event already carrying the posted manager, which would ask the registering and removing rows of the successor. Asked here where nothing was posted. %>
+<%# WHY: `may_fill` is the answer `EventsController#update` read before assigning anything, because a refused save draws an event already carrying the posted manager, which would ask the registering row of the successor. Asked here where nothing was posted. %>
 <%= form_with(model: [group, event], namespace:, class: "contents") do |form| %>
   <%# WHY: posted beside the event rather than in it, because it names the duplicate screen's source,
       which only a refused save in `EventsController#create` reads, to draw that screen again. %>
@@ -21,7 +21,7 @@
     <%# WHY: a saved event already has a list, so its form edits that list member by member instead, and the roster's own buttons cover filling it at once. %>
     <% may_fill = allowed_to?(:create?, Registration.new(event: event)) if may_fill.nil? %>
     <% if may_fill && event.persisted? %>
-      <%= render "events/list_fields", event:, namespace:, may_remove: %>
+      <%= render "events/list_fields", event:, namespace: %>
     <% elsif may_fill %>
       <fieldset class="fieldset">
         <legend class="label">Fill the list</legend>

@@ -2324,7 +2324,7 @@ RSpec.describe "Events", type: :request do
         expect(event.registrations.where(id: own.id)).not_to exist
       end
 
-      # The form drawn again after a refused save asks the removing row of the event as it was loaded, as it does the registering row, so the manager's removal mark survives a hand-on typed in the same go and posts again on the next Save.
+      # The trash asks nothing of the event, so the form drawn again after a refused save keeps the manager's removal mark enabled even when the event already carries the posted successor, and it posts again on the next Save.
       it "keeps the member removed marked and enabled when a save that hands the event on is refused" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, manager: actor)
