@@ -229,6 +229,22 @@ RSpec.describe "The members list", type: :system do
       expect(page).to have_current_path group_member_path(member.group, member.group.members.pending.sole)
     end
 
+    # WHY: a refused address lands on the invite page as the member form's does, and that page has to be usable, with no dialog left modal over it.
+    it "shows a refused address on the invite page, with nothing left modal" do
+      member = create(:member, :active, :owner)
+      sign_in_as member.user
+
+      visit group_members_path(member.group)
+      open_add_member
+      fill_in "invite_by_email_email", with: member.user.email
+      click_on "Send invitation"
+
+      expect(page).to have_text "Email already belongs to a member of this group"
+      expect(page).to have_no_css "dialog[open]"
+      click_on "Cancel"
+      expect(page).to have_current_path group_members_path(member.group)
+    end
+
     # WHY: #506 AC6, so a phone's keyboard stays down until the member taps the email field: opening focuses the link's primary control instead.
     it "leaves the email field unfocused on opening" do
       member = create(:member, :active, :owner)
