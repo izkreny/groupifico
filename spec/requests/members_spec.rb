@@ -502,7 +502,7 @@ RSpec.describe "Members", type: :request do
 
         get group_members_path(actor.group)
 
-        expect(Nokogiri::HTML(response.body).css("#join_link_dialog, #join_link_heading, #join_link_url")).to be_empty
+        expect(Nokogiri::HTML(response.body).css("#add_member_dialog, #join_link_heading, #join_link_url")).to be_empty
       end
     end
 
@@ -515,7 +515,7 @@ RSpec.describe "Members", type: :request do
 
         get group_members_path(actor.group)
 
-        expect(Nokogiri::HTML(response.body).css("#join_link_dialog, #join_link_heading, #join_link_url")).to be_empty
+        expect(Nokogiri::HTML(response.body).css("#add_member_dialog, #join_link_heading, #join_link_url")).to be_empty
       end
 
       it "shows no join link to an events administrator" do
@@ -525,7 +525,7 @@ RSpec.describe "Members", type: :request do
 
         get group_members_path(actor.group)
 
-        expect(Nokogiri::HTML(response.body).css("#join_link_dialog, #join_link_heading, #join_link_url")).to be_empty
+        expect(Nokogiri::HTML(response.body).css("#add_member_dialog, #join_link_heading, #join_link_url")).to be_empty
       end
     end
 
