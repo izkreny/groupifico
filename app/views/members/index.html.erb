@@ -5,16 +5,16 @@
 <%#
   The group's roster, on the events list's structure so a member who has learned one list knows the other.
 
-  Each capability is the acting member's rather than a row's, so each is asked once, of a member with nothing on it but the group: a per-row `allowed_to?` builds a policy and looks up the acting member's membership for every member. `create?` decides the join link and the +, and `edit?` the pencil; both are write rules, so a paused manager sees neither. `oversee?`, which the filter already asked, decides the Pending and Inactive tabs and the "not signed in yet" mark and filter, and is a read a paused manager keeps.
+  Each capability is the acting member's rather than a row's, so each is asked once, of a member with nothing on it but the group: a per-row `allowed_to?` builds a policy and looks up the acting member's membership for every member. `create?` decides the + and its Add member dialog, and `edit?` the pencil; both are write rules, so a paused manager sees neither. `oversee?`, which the filter already asked, decides the Pending and Inactive tabs and the "not signed in yet" mark and filter, and is a read a paused manager keeps.
 %>
 <% unattached = Member.new(group: @group) %>
 <% may_add = allowed_to?(:create?, unattached) %>
 <% manages = allowed_to?(:edit?, unattached) %>
 
-<%# WHY: the join link beside the + because the link is the other way in, and decided by the same `create?`, since the join link row marks the columns that add a person. %>
-<% join_link = render("groups/join_link_dialog", group: @group, join_link: @group.join_link) if may_add %>
+<%# WHY: the list's + opens a dialog holding both ways in rather than linking to a page, so it is passed as the bar's `actions` with no `add_path`; the join link sits in it under the same `create?`, since the join link row marks the columns that add a person. %>
+<% add_member = render("members/add_dialog", group: @group, join_link: @group.join_link) if may_add %>
 
-<%= render layout: "shared/filter_bar", locals: { group: @group, filter: @filter, counts: @counts, count: @members.size, add_label: "Invite member", add_path: (new_group_member_path(@group) if may_add), actions: join_link } do %>
+<%= render layout: "shared/filter_bar", locals: { group: @group, filter: @filter, counts: @counts, count: @members.size, actions: add_member } do %>
   <div id="members">
     <% if @members.any? %>
       <%= render layout: "shared/filter_list" do %>

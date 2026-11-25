@@ -228,7 +228,7 @@ RSpec.describe "Members", type: :request do
         expect(html.at_css("##{ActionView::RecordIdentifier.dom_id(without, :row)} a[href='mailto:#{without.email}']")).to be_present
       end
 
-      # WHY: #484 AC1 and AC2. Adding people and overseeing the list are the members columns', so a member holding no role gets neither the + nor the Pending and Inactive tabs.
+      # WHY: #484 AC1 and AC2, and #506 AC5. Adding people and overseeing the list are the members columns', so a member holding no role gets neither the + nor the Pending and Inactive tabs.
       it "offers no +, no edit link, and only the Active and Paused tabs" do
         reader = create(:member, :active)
         other  = create(:member, group: reader.group)
@@ -236,13 +236,27 @@ RSpec.describe "Members", type: :request do
 
         get group_members_path(reader.group)
 
-        expect(response.body).not_to include new_group_member_path(reader.group)
+        expect(Nokogiri::HTML(response.body).css("[aria-label='Add member'], #add_member_dialog")).to be_empty
         expect(response.body).not_to include edit_group_member_path(reader.group, other)
         expect(Nokogiri::HTML(response.body).css("nav[aria-label='Member lists'] a").map { it.text[/\A\w+/] }).to eq %w[ Active Paused ]
       end
     end
 
     context "when signed in as a members administrator" do
+      # WHY: #506 AC1, one + opening the dialog that holds the join link, with no join link control beside it and no link to the invite page.
+      it "offers one + holding the join link, and no separate join link control" do
+        actor = create(:member, :active, :members_administrator)
+        sign_in_as(actor.user)
+
+        get group_members_path(actor.group)
+
+        html = Nokogiri::HTML(response.body)
+        expect(html.css("[aria-label='Add member']").map(&:name)).to eq %w[ button ]
+        expect(html.css("[aria-label='Join link']")).to be_empty
+        expect(html.at_css("#add_member_dialog turbo-frame#join_link")).to be_present
+        expect(response.body).not_to include new_group_member_path(actor.group)
+      end
+
       # WHY: #445 AC4, since the join link row marks the columns that add a person.
       it "shows the join link to a members administrator" do
         actor = create(:member, :active, :members_administrator)
@@ -336,27 +350,27 @@ RSpec.describe "Members", type: :request do
       end
 
       # WHY: #484 AC1. The + carries no text, so its accessible name is the only label it has, and the old count line goes with the old title row.
-      it "offers an icon-only + named Invite member, linking the invite form, and no member count" do
+      it "offers an icon-only + named Add member, and no member count" do
         actor = create(:member, :active, :members_administrator)
         create(:member, :paused, group: actor.group)
         sign_in_as(actor.user)
 
         get group_members_path(actor.group)
 
-        plus = Nokogiri::HTML(response.body).at_css("a[href='#{new_group_member_path(actor.group)}']")
-        expect([ plus["aria-label"], plus.text.strip, plus.at_css("svg").present? ]).to eq [ "Invite member", "", true ]
+        plus = Nokogiri::HTML(response.body).at_css("button[aria-label='Add member']")
+        expect([ plus.text.strip, plus.at_css("svg").present? ]).to eq [ "", true ]
         expect(response.body).not_to include "2 members"
       end
 
-      # WHY: the owner's pick on #486: the + first, then the join link, then the funnel.
-      it "draws the +, the join link and the funnel in that order" do
+      # WHY: the owner's pick on #486: the + first, then the funnel.
+      it "draws the + and the funnel in that order" do
         actor = create(:member, :active, :members_administrator)
         sign_in_as(actor.user)
 
         get group_members_path(actor.group)
 
         buttons = Nokogiri::HTML(response.body).css("main h2 + div > a[aria-label], main h2 + div > div > button[aria-label], main h2 + div > button[aria-label]")
-        expect(buttons.map { it["aria-label"] }).to eq [ "Invite member", "Join link", "Filter members" ]
+        expect(buttons.map { it["aria-label"] }).to eq [ "Add member", "Filter members" ]
       end
 
       # WHY: #484 AC2. Pending and Inactive are the tabs of a member who may add people.
@@ -385,13 +399,13 @@ RSpec.describe "Members", type: :request do
         expect(page.css("#members li[id]").map { it["id"] }).to eq [ ActionView::RecordIdentifier.dom_id(added, :row) ]
       end
 
-      it "offers no Invite while the reader is paused" do
+      it "offers no + while the reader is paused" do
         actor = create(:member, :paused, :members_administrator)
         sign_in_as(actor.user)
 
         get group_members_path(actor.group)
 
-        expect(response.body).not_to include new_group_member_path(actor.group)
+        expect(Nokogiri::HTML(response.body).css("[aria-label='Add member']")).to be_empty
       end
 
       it "keeps the Pending and Inactive tabs and offers no edit link while the member is paused" do
@@ -409,14 +423,14 @@ RSpec.describe "Members", type: :request do
     # The three columns the members table marks for adding, changing and removing a member are
     # `owner`, `administrator` and `members_administrator`; the last is proven above.
     context "when signed in as an owner" do
-      it "offers Invite, each member's edit form and the Inactive tab" do
+      it "offers the +, each member's edit form and the Inactive tab" do
         actor = create(:member, :active, :owner)
         other = create(:member, group: actor.group)
         sign_in_as(actor.user)
 
         get group_members_path(actor.group)
 
-        expect(response.body).to include new_group_member_path(actor.group)
+        expect(Nokogiri::HTML(response.body).css("[aria-label='Add member']")).to be_present
         expect(response.body).to include edit_group_member_path(actor.group, other)
         expect(Nokogiri::HTML(response.body).css("nav[aria-label='Member lists'] a").map { it.text[/\A\w+/] }).to include "Inactive"
       end
@@ -501,28 +515,28 @@ RSpec.describe "Members", type: :request do
         expect(Nokogiri::HTML(response.body).at_css("#join_link_url")["value"]).to eq new_join_request_url(token:)
       end
 
-      it "offers Invite, each member's edit form and the Inactive tab" do
+      it "offers the +, each member's edit form and the Inactive tab" do
         actor = create(:member, :active, :administrator)
         other = create(:member, group: actor.group)
         sign_in_as(actor.user)
 
         get group_members_path(actor.group)
 
-        expect(response.body).to include new_group_member_path(actor.group)
+        expect(Nokogiri::HTML(response.body).css("[aria-label='Add member']")).to be_present
         expect(response.body).to include edit_group_member_path(actor.group, other)
         expect(Nokogiri::HTML(response.body).css("nav[aria-label='Member lists'] a").map { it.text[/\A\w+/] }).to include "Inactive"
       end
     end
 
     context "when signed in as an events administrator" do
-      it "offers no Invite, no edit link and no Inactive tab" do
+      it "offers no +, no edit link and no Inactive tab" do
         actor = create(:member, :active, :events_administrator)
         other = create(:member, group: actor.group)
         sign_in_as(actor.user)
 
         get group_members_path(actor.group)
 
-        expect(response.body).not_to include new_group_member_path(actor.group)
+        expect(Nokogiri::HTML(response.body).css("[aria-label='Add member']")).to be_empty
         expect(response.body).not_to include edit_group_member_path(actor.group, other)
         expect(Nokogiri::HTML(response.body).css("nav[aria-label='Member lists'] a").map { it.text[/\A\w+/] }).to eq %w[ Active Paused ]
       end

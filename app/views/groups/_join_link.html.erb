@@ -2,15 +2,9 @@
 <%# `namespace` is the styleguide's, as on `groups/form`, since it draws this once per theme; every screen leaves it out and keeps its ids. `join_link` arrives apart from `group` for the styleguide too, which draws a sample link rather than make one. %>
 <% id = ->(name) { [ namespace, "join_link", name ].compact.join("_") } %>
 <%# WHY: each state's primary control carries `autofocus`, so `showModal` focuses it when the dialog opens and Turbo focuses it after every frame swap, which otherwise drops focus to the page with the control that had it. The styleguide's copies leave it off, since autofocus on a page that draws them inline scrolls the page to the sample on load. %>
-<div class="flex items-center justify-between gap-2">
-  <h2 id="<%= id.(:heading) %>" class="text-lg font-bold">Join link</h2>
+<h3 id="<%= id.(:heading) %>" class="font-semibold">Share join link</h3>
 
-  <form method="dialog">
-    <button class="btn btn-ghost btn-circle btn-sm" aria-label="Close"><%= icon :cancel, class: "size-icon-control" %></button>
-  </form>
-</div>
-
-<div class="flex flex-col gap-3 pt-4">
+<div class="flex flex-col gap-3 pt-3">
   <% if join_link %>
     <% url = new_join_request_url(token: join_link.token) %>
     <%= tag.div class: "flex flex-col gap-3", data: clipboard_data(url, "link", idle_class: "btn-primary", done_class: "btn-secondary") do %>

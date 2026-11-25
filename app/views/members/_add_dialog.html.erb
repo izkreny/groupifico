@@ -1,0 +1,27 @@
+<%# locals: (group:, join_link:) %>
+<%# WHY: the list's one +, opening every way a person is added. The heading and its x sit outside the join link's Turbo Frame, because creating, regenerating or deleting the link swaps the frame's content in place, keeping the dialog open rather than closing it with a page load, and anything inside the frame is redrawn by each swap. %>
+<%= render layout: "shared/confirm_scope" do %>
+  <%= tag.button type: "button", class: "btn btn-ghost btn-circle btn-sm text-primary", aria: { label: "Add member" }, data: { dialog_target: "trigger", action: "dialog#show" } do %>
+    <%= icon :new, class: "size-icon-control" %>
+  <% end %>
+
+  <dialog id="add_member_dialog" class="modal modal-bottom sm:modal-middle" aria-labelledby="add_member_heading" data-dialog-target="sheet">
+    <div class="modal-box flex flex-col gap-4">
+      <div class="flex items-center justify-between gap-2">
+        <h2 id="add_member_heading" class="text-lg font-bold">Add member</h2>
+
+        <form method="dialog">
+          <button class="btn btn-ghost btn-circle btn-sm" aria-label="Close"><%= icon :cancel, class: "size-icon-control" %></button>
+        </form>
+      </div>
+
+      <%= turbo_frame_tag "join_link", data: { action: "turbo:frame-missing->dialog#visit" } do %>
+        <%= render "groups/join_link", group:, join_link: %>
+      <% end %>
+    </div>
+
+    <form method="dialog" class="modal-backdrop">
+      <button>close</button>
+    </form>
+  </dialog>
+<% end %>
