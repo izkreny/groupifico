@@ -240,9 +240,11 @@ RSpec.describe "The members list", type: :system do
       click_on "Send invitation"
 
       expect(page).to have_text "Email already belongs to a member of this group"
-      expect(page).to have_no_css "dialog[open]"
+      # WHY: `:modal` rather than `dialog[open]`, since a dialog a morph left in the top layer has lost `open` and still blocks the page.
+      expect(page).to have_no_css ":modal"
       click_on "Cancel"
-      expect(page).to have_current_path group_members_path(member.group)
+      # WHY: the + rather than the path, which the refused POST already left the browser on.
+      expect(page).to have_button "Add member"
     end
 
     # WHY: #506 AC6, so a phone's keyboard stays down until the member taps the email field: opening focuses the link's primary control instead.
