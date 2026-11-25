@@ -240,8 +240,8 @@ RSpec.describe "The members list", type: :system do
       click_on "Send invitation"
 
       expect(page).to have_text "Email already belongs to a member of this group"
-      # WHY: `:modal` rather than `dialog[open]`, since a dialog a morph left in the top layer has lost `open` and still blocks the page.
-      expect(page).to have_no_css ":modal"
+      # WHY: `:modal` rather than `dialog[open]`, since a dialog a morph left in the top layer has lost `open` and still blocks the page; `visible: :all`, since daisyUI hides a `.modal` without `open`, which the default filter would skip.
+      expect(page).to have_no_css ":modal", visible: :all
       click_on "Cancel"
       # WHY: the + rather than the path, which the refused POST already left the browser on.
       expect(page).to have_button "Add member"
