@@ -99,19 +99,6 @@ RSpec.describe "Registrations", type: :request do
         expect(registration.reload.member).to eq holder
       end
 
-      it "changes another member's answer, which the manager may not" do
-        event = create(:event)
-        registration = create(:registration, status: "yes", event:, member: create(:member, group: event.group))
-        manager = create(:member, :active, group: event.group)
-        event.update!(manager: manager)
-        sign_in_as(manager.user)
-
-        patch group_event_registration_path(event.group, event, registration), params: { registration: { status: "no" } }
-
-        expect(response).to redirect_to root_path
-        expect(registration.reload.status).to eq "yes"
-      end
-
       it "lets a member change their own answer while holding no role" do
         event = create(:event)
         actor = create(:member, :active, group: event.group)
@@ -149,6 +136,59 @@ RSpec.describe "Registrations", type: :request do
       end
     end
 
+    context "when signed in as the event's manager" do
+      # WHY: GHI-530 AC1. An answer the manager corrects on their own event.
+      it "changes another member's answer" do
+        manager = create(:member, :active)
+        event = create(:event, group: manager.group, manager:)
+        registration = create(:registration, status: "yes", event:, member: create(:member, group: event.group))
+        sign_in_as(manager.user)
+
+        patch group_event_registration_path(event.group, event, registration), params: { registration: { status: "no" } }
+
+        expect(registration.reload.status).to eq "no"
+      end
+
+      # WHY: GHI-530 AC1. Any status, so a held place too, which no member may write about themselves.
+      it "puts another member's answer back to a held place" do
+        manager = create(:member, :active)
+        event = create(:event, group: manager.group, manager:)
+        registration = create(:registration, status: "yes", event:, member: create(:member, group: event.group))
+        sign_in_as(manager.user)
+
+        patch group_event_registration_path(event.group, event, registration), params: { registration: { status: "reserved" } }
+
+        expect(registration.reload.status).to eq "reserved"
+      end
+
+      # WHY: GHI-530 AC3. Managing one event corrects nothing on another.
+      it "refuses on an event they do not manage" do
+        manager = create(:member, :active)
+        create(:event, group: manager.group, manager:)
+        event = create(:event, group: manager.group)
+        registration = create(:registration, status: "yes", event:, member: create(:member, group: event.group))
+        sign_in_as(manager.user)
+
+        patch group_event_registration_path(event.group, event, registration), params: { registration: { status: "no" } }
+
+        expect(response).to redirect_to root_path
+        expect(registration.reload.status).to eq "yes"
+      end
+
+      # WHY: GHI-530 AC4. A paused manager keeps read and loses every write.
+      it "refuses while paused" do
+        manager = create(:member, :paused)
+        event = create(:event, group: manager.group, manager:)
+        registration = create(:registration, status: "yes", event:, member: create(:member, group: event.group))
+        sign_in_as(manager.user)
+
+        patch group_event_registration_path(event.group, event, registration), params: { registration: { status: "no" } }
+
+        expect(response).to redirect_to root_path
+        expect(registration.reload.status).to eq "yes"
+      end
+    end
+
     context "when signed in as a paused member" do
       it "refuses with a redirect carrying an alert, and leaves the registration unchanged" do
         event = create(:event)
@@ -167,7 +207,7 @@ RSpec.describe "Registrations", type: :request do
     # update? is decided against the record as loaded, so a member passes it on their own
     # registration before any posted member_id is applied. Permitting member_id there let them
     # answer for somebody else and lose their own registration in the same request - two capabilities
-    # the events table gives the three roles, and one it gives nobody.
+    # the events table gives the three roles and the event's manager, and one it gives nobody.
     context "when a member posts another member's id onto their own registration" do
       it "leaves the registration where it was, and answers for nobody else" do
         event = create(:event)

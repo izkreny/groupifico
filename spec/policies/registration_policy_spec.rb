@@ -10,9 +10,8 @@ require 'rails_helper'
 # was watched happening. That shielding is a property of the callers, not of the scopes, and it
 # disappears the moment a second caller arrives.
 RSpec.describe RegistrationPolicy, type: :policy do
-  # One example per marked registration cell of the events table in docs/AUTHORIZATION.md. The split
-  # that needs the most care is the manager's: marked for registering somebody, unmarked for
-  # changing their answer afterwards and for removing their registration.
+  # One example per marked registration cell of the events table in docs/AUTHORIZATION.md. The manager's
+  # cells need the most care, because each is marked on the manager's own event only.
   describe_rule :show? do
     let(:actor)   { create(:member) }
     let(:event)   { create(:event, group: actor.group) }
@@ -92,7 +91,19 @@ RSpec.describe RegistrationPolicy, type: :policy do
       let(:actor) { create(:member, :events_administrator, group:) }
     end
 
-    failed "for the event's manager, who requests and does not overrule" do
+    # WHY: GHI-530 AC1. The manager corrects an answer on their own event.
+    succeed "for the event's manager, changing another member's answer" do
+      let(:event) { create(:event, group:, manager: actor) }
+    end
+
+    # WHY: GHI-530 AC3. Managing one event corrects nothing on another.
+    failed "for the manager of another event in the group" do
+      before { create(:event, group:, manager: actor) }
+    end
+
+    # WHY: GHI-530 AC4. A paused manager keeps read and loses every write.
+    failed "for the event's manager while paused" do
+      let(:actor) { create(:member, :paused, group:) }
       let(:event) { create(:event, group:, manager: actor) }
     end
 
@@ -131,7 +142,25 @@ RSpec.describe RegistrationPolicy, type: :policy do
       let(:record) { create(:registration, event:, member: actor) }
     end
 
-    failed "for the event's manager" do
+    # WHY: GHI-530 AC2. The manager removes a registration on their own event.
+    succeed "for the event's manager" do
+      let(:event) { create(:event, group:, manager: actor) }
+    end
+
+    # WHY: GHI-530 AC2. Their own registration included.
+    succeed "for the event's manager removing their own registration" do
+      let(:event)  { create(:event, group:, manager: actor) }
+      let(:record) { create(:registration, event:, member: actor) }
+    end
+
+    # WHY: GHI-530 AC3. Managing one event removes nothing from another.
+    failed "for the manager of another event in the group" do
+      before { create(:event, group:, manager: actor) }
+    end
+
+    # WHY: GHI-530 AC4. A paused manager keeps read and loses every write.
+    failed "for the event's manager while paused" do
+      let(:actor) { create(:member, :paused, group:) }
       let(:event) { create(:event, group:, manager: actor) }
     end
 

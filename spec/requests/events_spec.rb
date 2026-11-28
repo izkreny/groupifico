@@ -1371,11 +1371,10 @@ RSpec.describe "Events", type: :request do
       end
     end
 
-    # The manager's column of the events table: editing their event and filling it, and nothing the
-    # three roles keep for themselves - copying it, deleting it, overruling an answer, taking
-    # somebody off the list.
+    # The manager's column of the events table: editing their event, filling its list and correcting
+    # it, and nothing the three roles keep for themselves - copying it and deleting it.
     context "when signed in as the event's manager" do
-      it "offers Edit, and nothing the roles keep for themselves" do
+      it "offers Edit, and no Duplicate, which the roles keep for themselves" do
         manager = create(:member, :active)
         event = detailed_event(manager)
         event.update!(manager:)
@@ -1384,7 +1383,19 @@ RSpec.describe "Events", type: :request do
         get group_event_path(event.group, event)
 
         expect(response.body).to include %(aria-label="Edit")
-        expect(response.body).not_to include %(aria-label="Duplicate"), "Yes for Ben Cole"
+        expect(response.body).not_to include %(aria-label="Duplicate")
+      end
+
+      # WHY: GHI-530 AC1. The roster's answer pills reach another member's row for the manager of the event.
+      it "offers the answers on another member's row" do
+        manager = create(:member, :active)
+        event = detailed_event(manager)
+        event.update!(manager:)
+        sign_in_as(manager.user)
+
+        get group_event_path(event.group, event)
+
+        expect(response.body).to include "Yes for Ben Cole"
       end
 
       it "offers the paper plane and Request the rest, because filling the event is the manager's job" do
@@ -1815,7 +1826,8 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include "Delete event"
       end
 
-      it "puts the trash on a member on the list disabled, because removing is not the manager's" do
+      # WHY: GHI-530 AC2. The edit form's list offers the manager the trash on every row.
+      it "puts the trash on a member on the list enabled" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, manager: actor)
         listed = create(:registration, event:, member: create(:member, :active, group: event.group)).member
@@ -1823,7 +1835,7 @@ RSpec.describe "Events", type: :request do
 
         get edit_group_event_path(event.group, event)
 
-        expect(Nokogiri::HTML(response.body).at_css("input[name='removing_ids[]'][value='#{listed.id}']")["disabled"]).to eq "disabled"
+        expect(Nokogiri::HTML(response.body).at_css("input[name='removing_ids[]'][value='#{listed.id}']")["disabled"]).to be_nil
       end
 
       # The order the fields are filled in is a decision of the owner's, and only the markup's order says it.
@@ -2287,17 +2299,44 @@ RSpec.describe "Events", type: :request do
         expect(Nokogiri::HTML(response.body).at_css("input[name='adding_ids[]'][value='#{successor.id}']")&.[]("checked")).to eq "checked"
       end
 
-      it "refuses a removal and saves nothing, because removing is not the manager's" do
+      # WHY: GHI-530 AC2. A removal the manager posts lands, so the registration leaves the roster and the list alike.
+      it "removes another member's registration" do
         actor = create(:member, :active)
-        event = create(:event, group: actor.group, manager: actor, name: "Original")
+        event = create(:event, group: actor.group, manager: actor)
         listed = create(:registration, event:, member: create(:member, :active, group: event.group))
         sign_in_as(actor.user)
 
         patch group_event_path(event.group, event), params: { event: { name: "Renamed" }, removing_ids: [ listed.member_id ] }
 
-        expect(response).to redirect_to root_path
-        expect(listed.reload).to be_persisted
-        expect(event.reload.name).to eq "Original"
+        expect(response).to redirect_to group_event_path(event.group, event)
+        expect(event.registrations.where(id: listed.id)).not_to exist
+      end
+
+      # WHY: GHI-530 AC2. Their own registration included.
+      it "removes their own registration" do
+        actor = create(:member, :active)
+        event = create(:event, group: actor.group, manager: actor)
+        own = create(:registration, event:, member: actor)
+        sign_in_as(actor.user)
+
+        patch group_event_path(event.group, event), params: { event: { name: "Renamed" }, removing_ids: [ actor.id ] }
+
+        expect(event.registrations.where(id: own.id)).not_to exist
+      end
+
+      # The trash asks nothing of the event, so the form drawn again after a refused save keeps the manager's removal mark enabled even when the event already carries the posted successor, and it posts again on the next Save.
+      it "keeps the member removed marked and enabled when a save that hands the event on is refused" do
+        actor = create(:member, :active)
+        event = create(:event, group: actor.group, manager: actor)
+        successor = create(:member, :active, group: event.group)
+        listed = create(:registration, event:, member: create(:member, :active, group: event.group)).member
+        sign_in_as(actor.user)
+
+        patch group_event_path(event.group, event), params: { event: { name: "", manager_id: successor.id }, removing_ids: [ listed.id ] }
+
+        expect(response).to have_http_status :unprocessable_content
+        trash = Nokogiri::HTML(response.body).at_css("input[name='removing_ids[]'][value='#{listed.id}']")
+        expect([ trash["checked"], trash["disabled"] ]).to eq [ "checked", nil ]
       end
     end
 

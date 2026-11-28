@@ -138,7 +138,7 @@ RSpec.describe "Registrations::ResponseRequests", type: :request do
         expect(flash[:info]).to eq "This event is canceled, so no response was requested."
       end
 
-      it "leaves an answer as it was, because a manager does not overrule one" do
+      it "leaves an answer as it was, because a request moves only a held place" do
         actor = create(:member, :active)
         event = create(:event, group: actor.group, creator: actor, manager: actor, status: :confirmed)
         answered = create(:registration, event:, member: create(:member, group: event.group), status: :no)

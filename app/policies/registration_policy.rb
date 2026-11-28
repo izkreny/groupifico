@@ -13,16 +13,17 @@ class RegistrationPolicy < ApplicationPolicy
   # decides an action and that one decides a status, and `update?` already shows them parting.
   def create? = membership.can_manage?(:events) || manages_event?
 
-  # Changing somebody else's answer is not the manager's, deliberately: filling an event is their
-  # job, overruling an answer is not. So `manages_event?` is absent here and present above.
+  # Changing somebody else's answer is the three roles', and the manager's on their own event, so a
+  # mistake made filling it is theirs to correct. `own?` is what grants everyone else their own answer.
   #
   # No `edit?` beside it: a registration has no form of its own, and the roster row that answers
   # one posts straight to `update`.
-  def update? = own? || membership.can_manage?(:events)
+  def update? = own? || membership.can_manage?(:events) || manages_event?
 
-  # Taking a registration away is the three roles', their own included. A member holding none of
-  # them withdraws nothing: the answer to not attending is `no`, which `update?` already covers.
-  def destroy? = membership.can_manage?(:events)
+  # Taking a registration away is the three roles', and the manager's on their own event, their own
+  # registration included. A member holding none of them withdraws nothing: the answer to not
+  # attending is `no`, which `update?` already covers.
+  def destroy? = membership.can_manage?(:events) || manages_event?
 
   # Which statuses the actor may write, checked by the controller alongside the rules above, because a
   # posted status is not on the record when `update?` runs. A member may say `yes`, `maybe` or `no`
