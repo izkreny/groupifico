@@ -16,7 +16,7 @@ class MembersController < ApplicationController
   def index
     authorize! @group, to: :show?
 
-    # WHY: `Member::Filter` picks the tab and every filter from its own literals, as `Event::Filter` does for the events list. Pending and Inactive are `MemberPolicy#oversee?` reads, asked of a member with nothing on it but the group, and a reader not offered them gets the Active list rather than a refusal, the way an unknown event list degrades to Upcoming.
+    # WHY: `Member::Filter` picks the tab and every filter from its own literals, as `Event::Filter` does for the events list. Invited and Inactive are `MemberPolicy#oversee?` reads, asked of a member with nothing on it but the group, and a reader not offered them gets the Active list rather than a refusal, the way an unknown event list degrades to Upcoming.
     @filter = Member::Filter.from(Current.member, params, oversees: allowed_to?(:oversee?, Member.new(group: @group)))
 
     members = authorized_scope(@group.members)
@@ -53,7 +53,7 @@ class MembersController < ApplicationController
     if @member.save
       MemberMailer.invitation(@member).deliver_later
 
-      # WHY: the Pending tab rather than the invitee's own page, so whoever invited sees where an invitee waits until they join, beside the others still waiting.
+      # WHY: the Invited tab rather than the invitee's own page, so whoever invited sees where an invitee waits until they join, beside the others still waiting.
       redirect_to group_members_path(@group, Member::Filter::TAB => "pending"),
         notice: { text: "Invitation sent to %{link}.", link: @member.email, url: group_member_path(@group, @member) }
     else

@@ -28,12 +28,12 @@ RSpec.describe Member::Filter do
 
   describe ".new" do
     context "with values the reader is not offered" do
-      # WHY: #484 AC8. Pending and Inactive are the overseers' tabs, so anyone else asking for them gets the Active list.
-      it "drops the Pending and Inactive tabs for a reader who does not oversee the list" do
+      # WHY: #484 AC8. Invited and Inactive are the overseers' tabs, so anyone else asking for them gets the Active list.
+      it "drops the Invited and Inactive tabs for a reader who does not oversee the list" do
         expect([ described_class.new(reader, status: "pending").status, described_class.new(reader, status: "inactive").status ]).to eq [ nil, nil ]
       end
 
-      it "keeps the Pending and Inactive tabs for a reader who oversees the list" do
+      it "keeps the Invited and Inactive tabs for a reader who oversees the list" do
         expect([ described_class.new(reader, oversees: true, status: "pending").status, described_class.new(reader, oversees: true, status: "inactive").status ]).to eq [ "pending", "inactive" ]
       end
 
@@ -55,9 +55,9 @@ RSpec.describe Member::Filter do
   end
 
   describe "#offered_tabs" do
-    # WHY: #484 AC2. Active and Paused for every member, Pending and Inactive besides for one who oversees the list.
-    it "offers Active and Paused to every reader, and Pending and Inactive besides to one who oversees the list" do
-      expect([ described_class.new(reader).offered_tabs.values, described_class.new(reader, oversees: true).offered_tabs.values ]).to eq [ %w[ Active Paused ], %w[ Active Paused Pending Inactive ] ]
+    # WHY: #484 AC2. Active and Paused for every member, Invited and Inactive besides for one who oversees the list.
+    it "offers Active and Paused to every reader, and Invited and Inactive besides to one who oversees the list" do
+      expect([ described_class.new(reader).offered_tabs.values, described_class.new(reader, oversees: true).offered_tabs.values ]).to eq [ %w[ Active Paused ], %w[ Active Paused Invited Inactive ] ]
     end
   end
 

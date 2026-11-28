@@ -1,4 +1,4 @@
-# Resending a pending member's invitation, from their row on the Pending tab.
+# Resending a pending member's invitation, from their row on the Invited tab.
 class Members::InvitationsController < ApplicationController
   include GroupScoped
 

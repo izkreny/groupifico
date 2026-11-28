@@ -25,7 +25,7 @@ RSpec.describe "Members::Invitations", type: :request do
 
     # The *Add a person* row, one context per column, because resending is inviting again.
     context "when signed in as an owner" do
-      it "sends the pending member their invitation again and returns to the Pending tab" do
+      it "sends the pending member their invitation again and returns to the Invited tab" do
         actor   = create(:member, :active, :owner)
         invitee = create(:member, :pending, group: actor.group)
         sign_in_as actor.user
@@ -38,7 +38,7 @@ RSpec.describe "Members::Invitations", type: :request do
     end
 
     context "when signed in as an administrator" do
-      it "sends the pending member their invitation again and returns to the Pending tab" do
+      it "sends the pending member their invitation again and returns to the Invited tab" do
         actor   = create(:member, :active, :administrator)
         invitee = create(:member, :pending, group: actor.group)
         sign_in_as actor.user
@@ -51,7 +51,7 @@ RSpec.describe "Members::Invitations", type: :request do
     end
 
     context "when signed in as a members administrator" do
-      it "sends the pending member their invitation again and returns to the Pending tab" do
+      it "sends the pending member their invitation again and returns to the Invited tab" do
         actor   = create(:member, :active, :members_administrator)
         invitee = create(:member, :pending, group: actor.group)
         sign_in_as actor.user
