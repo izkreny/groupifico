@@ -101,7 +101,7 @@ RSpec.describe "Members", type: :request do
       end
 
       # WHY: #484 AC8. Who has left and who is waiting are `MemberPolicy#oversee?` reads, so a member not offered those tabs gets the Active list from their URLs, as an unknown events list degrades to Upcoming.
-      it "lists the active members to a member who may not oversee the list opening the Pending or Inactive tab's URL" do
+      it "lists the active members to a member who may not oversee the list opening the Invited or Inactive tab's URL" do
         member = create(:member, :active)
         create(:member, :inactive, group: member.group)
         create(:member, :pending, group: member.group)
@@ -228,7 +228,8 @@ RSpec.describe "Members", type: :request do
         expect(html.at_css("##{ActionView::RecordIdentifier.dom_id(without, :row)} a[href='mailto:#{without.email}']")).to be_present
       end
 
-      # WHY: #484 AC1 and AC2, and #506 AC5. Adding people and overseeing the list are the members columns', so a member holding no role gets neither the + nor the Pending and Inactive tabs.
+      # WHY: GHI-533 AC3. A member who may not add a person still sees no Invited tab.
+      # WHY: #484 AC1 and AC2, and #506 AC5. Adding people and overseeing the list are the members columns', so a member holding no role gets neither the + nor the Invited and Inactive tabs.
       it "offers no +, no edit link, and only the Active and Paused tabs" do
         reader = create(:member, :active)
         other  = create(:member, group: reader.group)
@@ -294,8 +295,9 @@ RSpec.describe "Members", type: :request do
         expect(Nokogiri::HTML(response.body).at_css("#join_link_url")["value"]).to eq new_join_request_url(token:)
       end
 
-      # WHY: #505 AC4, an invitee under Pending only.
-      it "lists an invitee under Pending alone" do
+      # WHY: GHI-533 AC2. The Invited tab lists exactly the invitees the Pending tab listed.
+      # WHY: #505 AC4, an invitee under Invited only.
+      it "lists an invitee under Invited alone" do
         actor   = create(:member, :active, :members_administrator)
         invitee = create(:member, :pending, group: actor.group)
         sign_in_as(actor.user)
@@ -399,8 +401,8 @@ RSpec.describe "Members", type: :request do
         expect(buttons.map { it["aria-label"] }).to eq [ "Add member", "Filter members" ]
       end
 
-      # WHY: #484 AC2. Pending and Inactive are the tabs of a member who may add people.
-      it "offers each member's edit form and the Active, Paused, Pending and Inactive tabs" do
+      # WHY: #484 AC2. Invited and Inactive are the tabs of a member who may add people.
+      it "offers each member's edit form and the Active, Paused, Invited and Inactive tabs" do
         actor = create(:member, :active, :members_administrator)
         other = create(:member, group: actor.group)
         sign_in_as(actor.user)
@@ -409,7 +411,7 @@ RSpec.describe "Members", type: :request do
 
         html = Nokogiri::HTML(response.body)
         expect(html.at_css("a[href='#{edit_group_member_path(actor.group, other)}']")).to be_present
-        expect(html.css("nav[aria-label='Member lists'] a").map { it.text[/\A\w+/] }).to eq %w[ Active Paused Pending Inactive ]
+        expect(html.css("nav[aria-label='Member lists'] a").map { it.text[/\A\w+/] }).to eq %w[ Active Paused Invited Inactive ]
       end
 
       # WHY: #484 AC4. Who has not signed in yet is the overseers' read, as the row's mark is.
@@ -434,7 +436,7 @@ RSpec.describe "Members", type: :request do
         expect(Nokogiri::HTML(response.body).css("[aria-label='Add member']")).to be_empty
       end
 
-      it "keeps the Pending and Inactive tabs and offers no edit link while the member is paused" do
+      it "keeps the Invited and Inactive tabs and offers no edit link while the member is paused" do
         actor = create(:member, :paused, :members_administrator)
         other = create(:member, group: actor.group)
         sign_in_as(actor.user)
@@ -442,7 +444,7 @@ RSpec.describe "Members", type: :request do
         get group_members_path(actor.group)
 
         expect(response.body).not_to include edit_group_member_path(actor.group, other)
-        expect(Nokogiri::HTML(response.body).css("nav[aria-label='Member lists'] a").map { it.text[/\A\w+/] }).to eq %w[ Active Paused Pending Inactive ]
+        expect(Nokogiri::HTML(response.body).css("nav[aria-label='Member lists'] a").map { it.text[/\A\w+/] }).to eq %w[ Active Paused Invited Inactive ]
       end
     end
 
@@ -1596,7 +1598,7 @@ RSpec.describe "Members", type: :request do
     def row_of(member) = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(member, :row)}")
 
     context "when signed in as an owner" do
-      it "lists them on the Pending tab, with no edit link" do
+      it "lists them on the Invited tab, with no edit link" do
         owner   = create(:member, :active, :owner)
         pending = create(:member, :pending, group: owner.group)
         sign_in_as(owner.user)
@@ -1607,15 +1609,16 @@ RSpec.describe "Members", type: :request do
         expect(response.body).not_to include edit_group_member_path(owner.group, pending)
       end
 
-      # WHY: #484 AC12. A pending member is counted on the Pending tab alone.
-      it "counts them on the Pending tab, not the Active one" do
+      # WHY: GHI-533 AC1. The invitees' tab reads "Invited" with its count, where "Pending" was.
+      # WHY: #484 AC12. A pending member is counted on the Invited tab alone.
+      it "counts them on the Invited tab, not the Active one" do
         owner = create(:member, :active, :owner)
         create(:member, :pending, group: owner.group)
         sign_in_as(owner.user)
 
         get group_members_path(owner.group)
 
-        expect(Nokogiri::HTML(response.body).css("nav[aria-label='Member lists'] a").map(&:text).values_at(0, 2)).to eq [ "Active (1)", "Pending (1)" ]
+        expect(Nokogiri::HTML(response.body).css("nav[aria-label='Member lists'] a").map(&:text).values_at(0, 2)).to eq [ "Active (1)", "Invited (1)" ]
       end
 
       it "shows their page" do
@@ -1672,7 +1675,7 @@ RSpec.describe "Members", type: :request do
     end
 
     context "when signed in as a members administrator" do
-      it "lists them on the Pending tab, with no edit link" do
+      it "lists them on the Invited tab, with no edit link" do
         actor   = create(:member, :active, :members_administrator)
         pending = create(:member, :pending, group: actor.group)
         sign_in_as(actor.user)

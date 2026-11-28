@@ -31,7 +31,7 @@ RSpec.describe "The members list", type: :system do
     expect(page).to be_accessible
   end
 
-  it "resends an invitation on Send again, landing back on the Pending tab" do
+  it "resends an invitation on Send again, landing back on the Invited tab" do
     actor = create(:member, :active, :members_administrator, :with_all_attributes)
     create(:member, :pending, group: actor.group, user: create(:user, first_name: "Casey", last_name: "Moreno"))
     sign_in_as actor.user
@@ -496,8 +496,8 @@ RSpec.describe "The members list", type: :system do
 
       visit group_members_path(owner.group)
 
-      expect(tab_names(%w[ Active Paused Pending Inactive ])).to eq [ "Active (2 members)", "Paused (0 members)", "Pending (0 members)", "Inactive (0 members)" ]
-      expect(page.all("nav[aria-label='Member lists'] a").map(&:text)).to eq [ "Active (2)", "Paused (0)", "Pending (0)", "Inactive (0)" ]
+      expect(tab_names(%w[ Active Paused Invited Inactive ])).to eq [ "Active (2 members)", "Paused (0 members)", "Invited (0 members)", "Inactive (0 members)" ]
+      expect(page.all("nav[aria-label='Member lists'] a").map(&:text)).to eq [ "Active (2)", "Paused (0)", "Invited (0)", "Inactive (0)" ]
     end
 
     # WHY: the owner's pick on #486: four tabs and their counts do not fit a phone, so the row scrolls sideways and no label wraps.

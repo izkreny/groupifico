@@ -4,7 +4,7 @@ class Member::Filter
 
   TAB = :status
   # WHY: `nil` is the active list because that list is the screen's own URL, with no `status`.
-  TABS = { nil => "Active", "paused" => "Paused", "pending" => "Pending", "inactive" => "Inactive" }.freeze
+  TABS = { nil => "Active", "paused" => "Paused", "pending" => "Invited", "inactive" => "Inactive" }.freeze
   # WHY: who has left and who is waiting to be let in are the `MemberPolicy#oversee?` columns' reads, as the inactive toggle and the pending rows were.
   OVERSEER_TABS = %w[ pending inactive ].freeze
   ROLES = Role::NAMES.index_with(&:humanize).freeze

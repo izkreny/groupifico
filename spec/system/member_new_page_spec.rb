@@ -48,7 +48,7 @@ RSpec.describe "The new member page", type: :system do
     expect(page).to be_accessible
   end
 
-  it "invites the person and lands on the Pending tab, their row in it" do
+  it "invites the person and lands on the Invited tab, their row in it" do
     actor = create(:member, :active, :members_administrator, :with_all_attributes)
     sign_in_as actor.user
 

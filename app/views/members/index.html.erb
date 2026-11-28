@@ -5,7 +5,7 @@
 <%#
   The group's roster, on the events list's structure so a member who has learned one list knows the other.
 
-  Each capability is the acting member's rather than a row's, so each is asked once, of a member with nothing on it but the group: a per-row `allowed_to?` builds a policy and looks up the acting member's membership for every member. `create?` decides the + and its Add member dialog, and `edit?` the pencil; both are write rules, so a paused manager sees neither. `oversee?`, which the filter already asked, decides the Pending and Inactive tabs and the "not signed in yet" mark and filter, and is a read a paused manager keeps.
+  Each capability is the acting member's rather than a row's, so each is asked once, of a member with nothing on it but the group: a per-row `allowed_to?` builds a policy and looks up the acting member's membership for every member. `create?` decides the + and its Add member dialog, and `edit?` the pencil; both are write rules, so a paused manager sees neither. `oversee?`, which the filter already asked, decides the Invited and Inactive tabs and the "not signed in yet" mark and filter, and is a read a paused manager keeps.
 %>
 <% unattached = Member.new(group: @group) %>
 <% may_add = allowed_to?(:create?, unattached) %>
