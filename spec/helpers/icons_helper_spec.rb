@@ -1,11 +1,6 @@
 require 'rails_helper'
 
 RSpec.describe IconsHelper, type: :helper do
-  # The first `d` of a synced Heroicons file, which is what proves which drawing an icon came from.
-  def path_of(variant, name)
-    File.read(Rails.root.join("app/assets/svg/icons/heroicons/#{variant}/#{name}.svg"))[/ d="([^"]+)"/, 1]
-  end
-
   describe "#icon" do
     it "draws the legend's glyph inline, filled in the surrounding text's colour" do
       expect(helper.icon(:where, class: "size-icon-standalone")).to include(path_of("solid", "map-pin")).and include('fill="currentColor"')

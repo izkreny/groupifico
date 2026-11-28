@@ -71,8 +71,7 @@ RSpec.describe "Events", type: :request do
         get group_events_path(member.group, scope: "past")
 
         status = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(event)} > svg:first-child")
-        drawing = File.read(Rails.root.join("app/assets/svg/icons/heroicons/solid/archive-box.svg"))[/ d="([^"]+)"/, 1]
-        expect([ status.at_css("path")["d"], status["aria-label"], status["class"].split.include?("text-icon-muted") ]).to eq [ drawing, "concluded", true ]
+        expect([ status.at_css("path")["d"], status["aria-label"], status["class"].split.include?("text-icon-muted") ]).to eq [ path_of("solid", "archive-box"), "concluded", true ]
       end
 
       # WHY: #460 AC1. The screen's title names it, the list is a tab under it, and the funnel beside the + carries no text, so its accessible name is the only label it has.
