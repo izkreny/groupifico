@@ -330,6 +330,18 @@ RSpec.describe "Events", type: :request do
         expect(response.body).to include "Nothing to do."
       end
 
+      # WHY: GHI-529 AC5. Managing one waiting event narrows nothing for a member who runs the group's events, so another manager's waiting event is on their To do beside their own.
+      it "lists on To do another manager's waiting event beside the one they manage" do
+        actor = create(:member, :active, :events_administrator)
+        own = create(:event, :from_the_past, group: actor.group, creator: actor, manager: actor, name: "Harvest gig", status: :confirmed)
+        theirs = create(:event, :from_the_future, group: actor.group, creator: actor, manager: create(:member, :active, group: actor.group), name: "Advent concert", status: :unconfirmed)
+        sign_in_as(actor.user)
+
+        get group_events_path(actor.group, scope: "to_do")
+
+        expect(Nokogiri::HTML(response.body).css("#events li[id]").map { it["id"] }).to eq [ own, theirs ].map { ActionView::RecordIdentifier.dom_id(it) }
+      end
+
       # WHY: GHI-502 Q2 on #526. Confirming or concluding an event is an edit a paused member is refused, so the event waiting on whoever runs the events is not on their To do.
       it "says there is nothing to do while the member is paused" do
         actor = create(:member, :paused, :events_administrator)
@@ -401,16 +413,31 @@ RSpec.describe "Events", type: :request do
         expect(response.body).not_to include %(href="#{new_group_event_path(actor.group)}")
       end
 
-      # WHY: GHI-502 AC1, and #462 AC4 still: managing one event is no reason to have To do list every event waiting on whoever runs the group's events, so the unconfirmed event they manage counts nowhere but Upcoming.
-      it "offers To do with none of the events waiting on whoever runs the group's events" do
+      # WHY: GHI-529 AC1, AC2 and AC3. A manager runs their own event, so To do lists the ones they manage that wait on whoever runs them, oldest first, its tab counting those rows, and none somebody else manages or nobody does.
+      it "lists on To do the waiting events they manage, and none somebody else manages or nobody does" do
         actor = create(:member, :active)
-        create(:event, :from_the_future, group: actor.group, manager: actor, status: :unconfirmed)
+        ended = create(:event, :from_the_past, group: actor.group, creator: actor, manager: actor, name: "Harvest gig", status: :confirmed)
+        ahead = create(:event, :from_the_future, group: actor.group, creator: actor, manager: actor, name: "Winter gala", status: :unconfirmed)
+        create(:event, :from_the_future, group: actor.group, creator: actor, manager: create(:member, :active, group: actor.group), name: "Advent concert", status: :unconfirmed)
+        create(:event, :from_the_past, group: actor.group, creator: actor, name: "Autumn fair", status: :confirmed)
         sign_in_as(actor.user)
 
-        get group_events_path(actor.group)
+        get group_events_path(actor.group, scope: "to_do")
 
-        tabs = Nokogiri::HTML(response.body).css("nav[aria-label='Event lists'] a")
-        expect([ tabs.map(&:text), tabs.map { it["aria-current"] } ]).to eq [ [ "Upcoming (1)", "Past (0)", "To do (0)", "Canceled (0)" ], [ "page", nil, nil, nil ] ]
+        html = Nokogiri::HTML(response.body)
+        expect(html.at_css("nav[aria-label='Event lists'] a[aria-current=page]").text).to eq "To do (2)"
+        expect(html.css("#events li[id]").map { it["id"] }).to eq [ ended, ahead ].map { ActionView::RecordIdentifier.dom_id(it) }
+      end
+
+      # WHY: GHI-529 AC4. Confirming or concluding their event is an edit a paused manager is refused, so the event they manage is not on their To do.
+      it "says there is nothing to do while the manager is paused" do
+        actor = create(:member, :paused)
+        create(:event, :from_the_future, group: actor.group, creator: actor, manager: actor, status: :unconfirmed)
+        sign_in_as(actor.user)
+
+        get group_events_path(actor.group, scope: "to_do")
+
+        expect([ Nokogiri::HTML(response.body).at_css("nav[aria-label='Event lists'] a[aria-current=page]")&.text, response.body.include?("Nothing to do.") ]).to eq [ "To do (0)", true ]
       end
     end
 
