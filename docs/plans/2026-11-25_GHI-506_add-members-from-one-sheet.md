@@ -35,4 +35,4 @@ None.
 
 ## Settled
 
-- None yet.
+- ::Q1:: Where does an invitation land once sent? Settled by the owner in the terminal on 2026-11-28: on the members list's Pending tab, the invitee's row in it, with the notice naming the address, from the sheet and the invite page alike, rather than on the invitee's own page.
