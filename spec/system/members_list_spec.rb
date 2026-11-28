@@ -189,11 +189,11 @@ RSpec.describe "The members list", type: :system do
     JS
   end
 
-  # WHY: the join link lives in a dialog the owner opens from beside the + on this page. Which state draws which control, and for whom, is `spec/requests/members_spec.rb`'s; what is left is that the dialog stays open through each action, that Copy puts the link on the clipboard, and that Regenerate and Delete ask first.
-  context "with the join link" do
-    def open_join_link
-      click_on "Join link"
-      expect(page).to have_css "dialog#join_link_dialog[open]"
+  # WHY: the invitation and the join link live in the Add member dialog the owner opens from the + on this page. Which state draws which control, and for whom, is `spec/requests/members_spec.rb`'s; what is left is where focus lands on opening, that an invitation lands where the member form's does, that the dialog stays open through each action, that Copy puts the link on the clipboard, and that Regenerate and Delete ask first.
+  context "with the Add member dialog" do
+    def open_add_member
+      click_on "Add member"
+      expect(page).to have_css "dialog#add_member_dialog[open]"
     end
 
     def join_link_url = find_by_id("join_link_url").value
@@ -206,13 +206,71 @@ RSpec.describe "The members list", type: :system do
       visit group_members_path(member.group)
       # WHY: reading the clipboard back needs its permission, granted in the browser context Cuprite opened for this session rather than Chrome's default one, where a grant reaches no page here.
       page.driver.browser.page.command("Browser.setPermission", origin: page.evaluate_script("location.origin"), browserContextId: page.driver.browser.page.context_id, permission: { name: "clipboard-read" }, setting: "granted")
-      open_join_link
+      open_add_member
       click_on "Create new join link"
       click_on "Copy link"
 
-      expect(page).to have_css "dialog#join_link_dialog[open]"
-      expect(page).to have_css "#join_link_dialog button.btn-secondary", exact_text: "Link copied"
+      expect(page).to have_css "dialog#add_member_dialog[open]"
+      expect(page).to have_css "#add_member_dialog button.btn-secondary", exact_text: "Link copied"
       expect(page.evaluate_async_script("navigator.clipboard.readText().then(arguments[0])")).to eq join_link_url
+    end
+
+    # WHY: #506 AC3, walked in the browser, since the sheet's form is the member form's invitation: it lands where that one does and names who was invited.
+    it "invites a person from the dialog and says who" do
+      member = create(:member, :active, :owner)
+      sign_in_as member.user
+
+      visit group_members_path(member.group)
+      open_add_member
+      fill_in "invite_by_email_email", with: "new.person@example.com"
+      click_on "Send invitation"
+
+      expect(page).to have_text "Invitation sent to new.person@example.com."
+      expect(page).to have_current_path group_members_path(member.group, status: "pending")
+      expect(page).to have_css "##{ActionView::RecordIdentifier.dom_id(member.group.members.pending.sole, :row)}"
+    end
+
+    it "opens the invitee's member page from the notice" do
+      member = create(:member, :active, :owner)
+      sign_in_as member.user
+
+      visit group_members_path(member.group)
+      open_add_member
+      fill_in "invite_by_email_email", with: "new.person@example.com"
+      click_on "Send invitation"
+      within("#notice") { click_link "new.person@example.com" }
+
+      expect(page).to have_current_path group_member_path(member.group, member.group.members.pending.sole)
+    end
+
+    # WHY: a refused address lands on the invite page as the member form's does, and that page has to be usable, with no dialog left modal over it.
+    it "shows a refused address on the invite page, with nothing left modal" do
+      member = create(:member, :active, :owner)
+      sign_in_as member.user
+
+      visit group_members_path(member.group)
+      open_add_member
+      fill_in "invite_by_email_email", with: member.user.email
+      click_on "Send invitation"
+
+      expect(page).to have_text "Email already belongs to a member of this group"
+      # WHY: `:modal` rather than `dialog[open]`, since a dialog a morph left in the top layer has lost `open` and still blocks the page; `visible: :all`, since daisyUI hides a `.modal` without `open`, which the default filter would skip.
+      expect(page).to have_no_css ":modal", visible: :all
+      click_on "Cancel"
+      # WHY: the + rather than the path, which the refused POST already left the browser on.
+      expect(page).to have_button "Add member"
+    end
+
+    # WHY: #506 AC6, so a phone's keyboard stays down until the member taps the email field: opening focuses the link's primary control instead.
+    it "leaves the email field unfocused on opening" do
+      member = create(:member, :active, :owner)
+      sign_in_as member.user
+
+      visit group_members_path(member.group)
+      open_add_member
+
+      expect(page).to have_css "#add_member_dialog button:focus", exact_text: "Create new join link"
+      expect(page).to have_no_css "#invite_by_email_email:focus"
     end
 
     # WHY: the frame swap replaces the control that had focus, so the new state's primary control has to take it.
@@ -221,10 +279,10 @@ RSpec.describe "The members list", type: :system do
       sign_in_as member.user
 
       visit group_members_path(member.group)
-      open_join_link
+      open_add_member
       click_on "Create new join link"
 
-      expect(page).to have_css "#join_link_dialog button:focus", exact_text: "Copy link"
+      expect(page).to have_css "#add_member_dialog button:focus", exact_text: "Copy link"
     end
 
     it "turns Link copied back into Copy link" do
@@ -233,11 +291,11 @@ RSpec.describe "The members list", type: :system do
       sign_in_as member.user
 
       visit group_members_path(member.group)
-      open_join_link
+      open_add_member
       click_on "Copy link"
 
-      expect(page).to have_css "#join_link_dialog button.btn-secondary", exact_text: "Link copied"
-      expect(page).to have_css "#join_link_dialog button.btn-primary", exact_text: "Copy link", wait: 4
+      expect(page).to have_css "#add_member_dialog button.btn-secondary", exact_text: "Link copied"
+      expect(page).to have_css "#add_member_dialog button.btn-primary", exact_text: "Copy link", wait: 4
     end
 
     it "says so when the browser refuses the copy" do
@@ -248,7 +306,7 @@ RSpec.describe "The members list", type: :system do
       visit group_members_path(member.group)
       # WHY: denied in the browser context Cuprite opened for this session, for the reason the copy example gives.
       page.driver.browser.page.command("Browser.setPermission", origin: page.evaluate_script("location.origin"), browserContextId: page.driver.browser.page.context_id, permission: { name: "clipboard-write" }, setting: "denied")
-      open_join_link
+      open_add_member
       click_on "Copy link"
 
       expect(page).to have_css "[role='status']:not(.sr-only)", text: "Couldn't copy. Select the link and copy it yourself."
@@ -261,13 +319,13 @@ RSpec.describe "The members list", type: :system do
       sign_in_as member.user
 
       visit group_members_path(member.group)
-      open_join_link
+      open_add_member
       click_on "Regenerate link"
       within("dialog#join_link_regenerate") { click_on "Regenerate" }
 
       expect(page).to have_no_field "join_link_url", with: new_join_request_url(token:)
       expect(join_link_url).to include "token="
-      expect(page).to have_css "dialog#join_link_dialog[open]"
+      expect(page).to have_css "dialog#add_member_dialog[open]"
     end
 
     # WHY: #445 AC2, walked in the browser: Delete asks first, then offers to create a new link in the dialog still open.
@@ -277,12 +335,12 @@ RSpec.describe "The members list", type: :system do
       sign_in_as member.user
 
       visit group_members_path(member.group)
-      open_join_link
+      open_add_member
       click_on "Delete link"
       within("dialog#join_link_delete") { click_on "Delete link" }
 
-      expect(page).to have_css "#join_link_dialog button:focus", exact_text: "Create new join link"
-      expect(page).to have_css "dialog#join_link_dialog[open]"
+      expect(page).to have_css "#add_member_dialog button:focus", exact_text: "Create new join link"
+      expect(page).to have_css "dialog#add_member_dialog[open]"
     end
 
     # WHY: a refusal redirects to a page with no `join_link` frame, which Turbo would answer with "Content missing" inside the dialog, so the refusal has to reach the page it redirected to.
@@ -292,12 +350,12 @@ RSpec.describe "The members list", type: :system do
       sign_in_as member.user
 
       visit group_members_path(member.group)
-      open_join_link
+      open_add_member
       member.update!(status: :paused)
       click_on "Create new join link"
 
       expect(page).to have_text "You are not allowed to do that."
-      expect(page).to have_no_css "dialog#join_link_dialog[open]"
+      expect(page).to have_no_css "dialog#add_member_dialog[open]"
     end
 
     # WHY: the owner's order on #453 that Regenerate asks first, so cancelling it leaves the link working.
@@ -307,7 +365,7 @@ RSpec.describe "The members list", type: :system do
       sign_in_as member.user
 
       visit group_members_path(member.group)
-      open_join_link
+      open_add_member
       click_on "Regenerate link"
       within("dialog#join_link_regenerate") { click_on "Cancel" }
 
@@ -322,7 +380,7 @@ RSpec.describe "The members list", type: :system do
       sign_in_as member.user
 
       visit group_members_path(member.group)
-      open_join_link
+      open_add_member
       click_on "Delete link"
       within("dialog#join_link_delete") { click_on "Cancel" }
 
@@ -336,24 +394,24 @@ RSpec.describe "The members list", type: :system do
       sign_in_as member.user
 
       visit group_members_path(member.group)
-      open_join_link
-      within("dialog#join_link_dialog") { click_on "Close" }
+      open_add_member
+      within("dialog#add_member_dialog") { click_on "Close" }
 
-      expect(page).to have_no_css "dialog#join_link_dialog[open]"
+      expect(page).to have_no_css "dialog#add_member_dialog[open]"
     end
 
-    it "closes a confirmation from its x, keeping the join link dialog open" do
+    it "closes a confirmation from its x, keeping the Add member dialog open" do
       member = create(:member, :active, :owner)
       JoinLink.mint(member.group)
       sign_in_as member.user
 
       visit group_members_path(member.group)
-      open_join_link
+      open_add_member
       click_on "Delete link"
       within("dialog#join_link_delete") { click_on "Close" }
 
       expect(page).to have_no_css "dialog#join_link_delete[open]"
-      expect(page).to have_css "dialog#join_link_dialog[open]"
+      expect(page).to have_css "dialog#add_member_dialog[open]"
     end
 
     it "paints the dialog with no link in light, with no accessibility violations" do
@@ -363,10 +421,10 @@ RSpec.describe "The members list", type: :system do
       resize_to ViewportHelper::MOBILE
 
       visit group_members_path(member.group)
-      open_join_link
+      open_add_member
 
       expect(rendered_colour_scheme).to eq "light"
-      expect(page).to paint "#join_link_dialog form button.btn-primary"
+      expect(page).to paint "#join_link form button.btn-primary"
       expect(page).to be_accessible
     end
 
@@ -377,10 +435,10 @@ RSpec.describe "The members list", type: :system do
       resize_to ViewportHelper::MOBILE
 
       visit group_members_path(member.group)
-      open_join_link
+      open_add_member
 
       expect(rendered_colour_scheme).to eq "dark"
-      expect(page).to paint "#join_link_dialog form button.btn-primary"
+      expect(page).to paint "#join_link form button.btn-primary"
       expect(page).to be_accessible
     end
 
@@ -392,10 +450,10 @@ RSpec.describe "The members list", type: :system do
       resize_to ViewportHelper::MOBILE
 
       visit group_members_path(member.group)
-      open_join_link
+      open_add_member
 
       expect(rendered_colour_scheme).to eq "light"
-      expect(page).to paint "#join_link_dialog button.btn-primary"
+      expect(page).to paint "#join_link button.btn-primary"
       expect(page).to be_accessible
     end
 
@@ -407,27 +465,16 @@ RSpec.describe "The members list", type: :system do
       resize_to ViewportHelper::MOBILE
 
       visit group_members_path(member.group)
-      open_join_link
+      open_add_member
 
       expect(rendered_colour_scheme).to eq "dark"
-      expect(page).to paint "#join_link_dialog button.btn-primary"
+      expect(page).to paint "#join_link button.btn-primary"
       expect(page).to be_accessible
     end
   end
 
-  # WHY: #484. The list takes the events list's structure, so what the browser adds there is walked here too: the +, the tabs, the sheet's count, the chips, the funnel, the stacking and axe in both themes. Who is offered which tab and filter is `spec/requests/members_spec.rb`'s.
+  # WHY: #484. The list takes the events list's structure, so what the browser adds there is walked here too: the tabs, the sheet's count, the chips, the funnel, the stacking and axe in both themes. Who is offered which tab and filter is `spec/requests/members_spec.rb`'s.
   context "with its tabs and filter sheet" do
-    # WHY: #484 AC1. The + is icon-only, so its accessible name is the link Capybara clicks.
-    it "lands on the invite form from the +" do
-      owner = create(:member, :active, :owner)
-      sign_in_as owner.user
-
-      visit group_members_path(owner.group)
-      click_link "Invite member"
-
-      expect(page).to have_current_path new_group_member_path(owner.group)
-    end
-
     # WHY: #484 AC7. Each tab is a link carrying every filter on, so a filter survives switching tabs.
     it "switches tabs with every filter still on" do
       owner  = create(:member, :active, :owner)

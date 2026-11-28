@@ -229,8 +229,10 @@
   <%# WHY: an overseer's samples, so the tabs and the sheet show everything the members filter offers. The bar's has no filter on, so its funnel shows the muted ink the events bar's never does; the form drawn open below it shows picks. %>
   <%= render layout: "styleguides/section", locals: { title: "Members filter" } do |theme| %>
     <% sample = Member::Filter.new(@owner, oversees: true, status: "paused", roles: %w[ owner ], not_signed_in: "1") %>
+    <%# WHY: the list's + as a bare button rather than `members/add_dialog`, whose dialog would repeat the join link's ids once per theme; its content is drawn under Join link, on. %>
+    <% add_member = tag.button(icon(:new, class: "size-icon-control"), type: "button", class: "btn btn-ghost btn-circle btn-sm text-primary", aria: { label: "Add member" }) %>
     <div class="flex flex-col gap-4">
-      <%= render layout: "shared/filter_bar", locals: { group: @group, filter: Member::Filter.new(@owner, oversees: true, status: "paused"), counts: { nil => 19, "paused" => 2, "pending" => 1, "inactive" => 0 }, count: 2, add_label: "Invite member", add_path: new_group_member_path(@group), namespace: "#{theme}_bar" } do %>
+      <%= render layout: "shared/filter_bar", locals: { group: @group, filter: Member::Filter.new(@owner, oversees: true, status: "paused"), counts: { nil => 19, "paused" => 2, "pending" => 1, "inactive" => 0 }, count: 2, actions: add_member, namespace: "#{theme}_bar" } do %>
         <p class="text-meta text-muted">The list itself, drawn under Member rows below.</p>
       <% end %>
       <%= render "shared/filter_form", group: @group, filter: sample, count: 2, namespace: theme %>
@@ -254,6 +256,10 @@
   <% if allowed_to?(:new?, newcomer) %>
     <%= render layout: "styleguides/section", locals: { title: "Member form" } do |theme| %>
       <%= render "members/form", group: @group, member: newcomer, submit: "Send invite", fits_at: 18, cancel: "#", namespace: "#{theme}_member" %>
+    <% end %>
+
+    <%= render layout: "styleguides/section", locals: { title: "Invite by email" } do |theme| %>
+      <%= render "members/invite_by_email", group: @group, member: newcomer, namespace: theme %>
     <% end %>
   <% end %>
 

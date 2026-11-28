@@ -1,0 +1,13 @@
+<%# locals: (group:, member:, namespace: nil) %>
+<%# `namespace` is the styleguide's, as on `groups/join_link`, since it draws this once per theme; the members list leaves it out and keeps its ids. The field takes its name from the heading, as the join link's input does, so the section asks for an address and nothing else. %>
+<% id = ->(name) { [ namespace, "invite_by_email", name ].compact.join("_") } %>
+<h3 id="<%= id.(:heading) %>" class="font-semibold">Invite by email</h3>
+
+<%= form_with model: [ group, member ], id: id.(:form), class: "flex flex-col gap-3 pt-3" do |form| %>
+  <%= form.email_field :email, id: id.(:email), class: "input w-full", required: true, autocomplete: "off",
+        aria: { labelledby: id.(:heading), describedby: id.(:hint) } %>
+
+  <%= form.button class: "btn btn-primary w-full" do %><%= icon :send_invite, class: "size-icon-control" %>Send invitation<% end %>
+
+  <p id="<%= id.(:hint) %>" class="text-meta">They sign in through a link mailed to them, fill in their profile, and join with one click on the group's join page.</p>
+<% end %>

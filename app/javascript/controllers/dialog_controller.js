@@ -28,7 +28,7 @@ export default class extends Controller {
     this.sheetTarget.showModal()
   }
 
-  // WHY: a trigger that stands in no form, such as the members page's join link button, has no submit to stand guard over, so it opens its dialog directly.
+  // WHY: a trigger that stands in no form, such as the members list's +, has no submit to stand guard over, so it opens its dialog directly.
   show() {
     this.sheetTarget.showModal()
   }
