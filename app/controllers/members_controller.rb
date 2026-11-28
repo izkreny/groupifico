@@ -53,7 +53,8 @@ class MembersController < ApplicationController
     if @member.save
       MemberMailer.invitation(@member).deliver_later
 
-      redirect_to group_member_path(@group, @member),
+      # WHY: the Pending tab rather than the invitee's own page, so whoever invited sees where an invitee waits until they join, beside the others still waiting.
+      redirect_to group_members_path(@group, Member::Filter::TAB => "pending"),
         notice: "Invitation sent to #{@member.email}."
     else
       render :new, status: :unprocessable_content

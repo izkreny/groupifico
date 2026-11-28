@@ -1064,7 +1064,7 @@ RSpec.describe "Members", type: :request do
 
         member = Member.find_by!(user: invitee, group: actor.group)
         expect(member).to be_pending
-        expect(response).to redirect_to group_member_path(actor.group, member)
+        expect(response).to redirect_to group_members_path(actor.group, status: "pending")
       end
 
       it "records the invitee's first change as pending from today, made by whoever invited them (#126 AC3)" do

@@ -48,7 +48,7 @@ RSpec.describe "The new member page", type: :system do
     expect(page).to be_accessible
   end
 
-  it "invites the person and lands on their member page" do
+  it "invites the person and lands on the Pending tab, their row in it" do
     actor = create(:member, :active, :members_administrator, :with_all_attributes)
     sign_in_as actor.user
 
@@ -57,6 +57,7 @@ RSpec.describe "The new member page", type: :system do
     click_button "Send invite"
 
     expect(page).to have_text "Invitation sent to new.person@example.com."
-    expect(page).to have_current_path group_member_path(actor.group, actor.group.members.pending.sole)
+    expect(page).to have_current_path group_members_path(actor.group, status: "pending")
+    expect(page).to have_css "##{ActionView::RecordIdentifier.dom_id(actor.group.members.pending.sole, :row)}"
   end
 end
