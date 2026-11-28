@@ -62,6 +62,19 @@ RSpec.describe "Events", type: :request do
         expect(links.map(&:text)).to eq [ "Spring concert" ]
       end
 
+      # WHY: GHI-539 AC2. The archive box is the only thing that changes on a concluded row, so its icon keeps the status as its name and the muted icon ink.
+      it "draws a concluded row's status as an archive box named concluded, in the muted icon ink" do
+        member = create(:member, :active)
+        event  = create(:event, :from_the_past, group: member.group)
+        sign_in_as(member.user)
+
+        get group_events_path(member.group, scope: "past")
+
+        status = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(event)} > svg:first-child")
+        drawing = File.read(Rails.root.join("app/assets/svg/icons/heroicons/solid/archive-box.svg"))[/ d="([^"]+)"/, 1]
+        expect([ status.at_css("path")["d"], status["aria-label"], status["class"].split.include?("text-icon-muted") ]).to eq [ drawing, "concluded", true ]
+      end
+
       # WHY: #460 AC1. The screen's title names it, the list is a tab under it, and the funnel beside the + carries no text, so its accessible name is the only label it has.
       it "titles the screen Events, with an icon-only funnel named Filter events, the lists as tabs and no list menu" do
         member = create(:member, :active)

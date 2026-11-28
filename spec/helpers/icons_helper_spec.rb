@@ -48,6 +48,14 @@ RSpec.describe IconsHelper, type: :helper do
       expect(helper.status_icon(build(:event, status: :canceled), class: "size-icon-standalone")).to include(path_of("solid", "no-symbol"))
     end
 
+    # WHY: GHI-539 AC1. The screens draw an event's status at all three sizes, so each has to reach the archive box's own drawing.
+    it "draws a concluded event as an archive box at every size" do
+      event = build(:event, status: :concluded)
+
+      expect([ helper.status_icon(event, class: "size-icon-standalone"), helper.status_icon(event, class: "size-icon-control"), helper.status_icon(event, class: "size-icon-inline") ])
+        .to match [ including(path_of("solid", "archive-box")), including(path_of("mini", "archive-box")), including(path_of("micro", "archive-box")) ]
+    end
+
     it "draws the glyph the legend gives a registration's status" do
       expect(helper.status_icon(build(:registration, status: :maybe), class: "size-icon-standalone")).to include(path_of("solid", "clock"))
     end
