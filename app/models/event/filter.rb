@@ -13,16 +13,17 @@ class Event::Filter
   # WHY: "Not answered" is a place on the event's list with no answer yet, so an event the reader is not listed on has no answer of theirs to match.
   STATUSES = Registration::ANSWERS.index_with { [ it ] }.merge("not_answered" => Registration.statuses.keys - Registration::ANSWERS).freeze
 
-  # WHY: the URL is the only place a filter lives, so a link shows exactly what it names and a plain visit opens on Upcoming with nothing on, with no remembered state to surprise anyone. Whether the member may answer their own registration and whether they may edit the group's events are the policy's answers, so the controller asks both and hands them in, as it does for `Member::Filter`.
-  def self.from(member, params, may_edit:, may_answer:)
-    new(member, may_edit:, may_answer:, scope: params[:scope], categories: params[:category], answers: params[:answer], managed: params[:managed])
+  # WHY: the URL is the only place a filter lives, so a link shows exactly what it names and a plain visit opens on Upcoming with nothing on, with no remembered state to surprise anyone. Whether the member may answer their own registration, whether they may edit the group's events and whether they may edit the events they manage are the policy's answers, so the controller asks all three and hands them in, as it does for `Member::Filter`.
+  def self.from(member, params, may_edit:, may_edit_managed:, may_answer:)
+    new(member, may_edit:, may_edit_managed:, may_answer:, scope: params[:scope], categories: params[:category], answers: params[:answer], managed: params[:managed])
   end
 
   attr_reader :member, :scope, :categories, :answers
 
-  def initialize(member, may_edit: false, may_answer: false, scope: nil, categories: nil, answers: nil, managed: nil)
+  def initialize(member, may_edit: false, may_edit_managed: false, may_answer: false, scope: nil, categories: nil, answers: nil, managed: nil)
     @member = member
     @may_edit = may_edit
+    @may_edit_managed = may_edit_managed
     @may_answer = may_answer
     @scope = scope.presence_in(offered_tabs.keys.compact)
     @categories = CATEGORIES.keys & Array(categories)
@@ -34,6 +35,8 @@ class Event::Filter
   def tab = scope
 
   def may_edit? = @may_edit
+
+  def may_edit_managed? = @may_edit_managed
 
   def may_answer? = @may_answer
 
@@ -71,11 +74,15 @@ class Event::Filter
       end
     end
 
-    # WHY: every reason an event waits on this member, joined in one list so an event both reasons put there is listed once: the question their own row asks, which a paused member has none of since they may not answer, and the events waiting on whoever runs them, for a member who may edit the group's events.
+    # WHY: every reason an event waits on this member, joined in one list so an event two reasons put there is listed once: the question their own row asks, which a paused member has none of since they may not answer, and the events waiting on whoever runs them, every one of the group's for a member who may edit the group's events, and otherwise the ones they manage. The events they manage are among the group's, so they are asked for only when the group's are not.
     def waiting_on_member(events)
       reasons = []
       reasons << events.awaiting_answer_from(member) if may_answer?
-      reasons << events.to_do if may_edit?
+      if may_edit?
+        reasons << events.to_do
+      elsif may_edit_managed?
+        reasons << events.to_do.where(manager: member)
+      end
       reasons.reduce(:or) || events.none
     end
 

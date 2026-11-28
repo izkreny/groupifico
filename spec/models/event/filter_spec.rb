@@ -14,21 +14,21 @@ RSpec.describe Event::Filter do
   describe ".from" do
     # WHY: #460 AC10. The URL is the only place a filter lives, so a link's parameters are the whole filter.
     it "reads the list and filters from the URL's parameters" do
-      filter = described_class.from(member, ActionController::Parameters.new(scope: "past", category: %w[ rehearsal gig ], answer: %w[ not_answered ]), may_edit: false, may_answer: true)
+      filter = described_class.from(member, ActionController::Parameters.new(scope: "past", category: %w[ rehearsal gig ], answer: %w[ not_answered ]), may_edit: false, may_edit_managed: false, may_answer: true)
 
       expect([ filter.scope, filter.categories, filter.answers ]).to eq [ "past", %w[ gig rehearsal ], %w[ not_answered ] ]
     end
 
     # WHY: #460 AC9. A URL with no filter in it is Upcoming with nothing on.
     it "is Upcoming with no filters when the URL carries none" do
-      filter = described_class.from(member, ActionController::Parameters.new(group_id: member.group_id), may_edit: false, may_answer: true)
+      filter = described_class.from(member, ActionController::Parameters.new(group_id: member.group_id), may_edit: false, may_edit_managed: false, may_answer: true)
 
       expect([ filter.scope, filter.categories, filter.answers, filter.managed?, filter.narrowed? ]).to eq [ nil, [], [], false, false ]
     end
 
     # WHY: #462 AC3. Upcoming stays the default for a member who oversees the events too, To do being a tab they open rather than the one they land on.
     it "is Upcoming for a member who oversees the events when the URL names no list" do
-      filter = described_class.from(member, ActionController::Parameters.new(group_id: member.group_id), may_edit: true, may_answer: true)
+      filter = described_class.from(member, ActionController::Parameters.new(group_id: member.group_id), may_edit: true, may_edit_managed: false, may_answer: true)
 
       expect(filter.scope).to be_nil
     end
@@ -160,6 +160,32 @@ RSpec.describe Event::Filter do
         expect(names(described_class.new(member, scope: "to_do"))).to be_empty
       end
     end
+
+    context "with the events the member manages" do
+      # WHY: an ended event still confirmed and an unconfirmed one ahead that this member manages, one of theirs already concluded, an unconfirmed one another member manages and an ended one still confirmed that nobody manages.
+      before do
+        create(:event, :from_the_past, group: member.group, creator: member, manager: member, name: "Harvest gig", status: :confirmed, starts_at: 5.days.ago.change(hour: 18))
+        upcoming(manager: member, name: "Winter gala", status: :unconfirmed, starts_at: 9.days.from_now.change(hour: 18))
+        create(:event, :from_the_past, group: member.group, creator: member, manager: member, name: "Summer gig", status: :concluded, starts_at: 10.days.ago.change(hour: 18))
+        upcoming(manager: create(:member, :active, group: member.group), name: "Advent concert", status: :unconfirmed, starts_at: 20.days.from_now.change(hour: 18))
+        create(:event, :from_the_past, group: member.group, creator: member, name: "Autumn fair", status: :confirmed, starts_at: 20.days.ago.change(hour: 18))
+      end
+
+      # WHY: GHI-529 AC1. A manager holding no events role gets on To do every event they manage that is unconfirmed, or ended and still confirmed, oldest first.
+      it "lists on To do the waiting events the member manages, oldest first" do
+        expect(names(described_class.new(member, may_edit_managed: true, scope: "to_do"))).to eq [ "Harvest gig", "Winter gala" ]
+      end
+
+      # WHY: GHI-529 AC2. Managing one event is a grant on that event alone, so a waiting event somebody else manages, or nobody does, stays off their To do.
+      it "leaves off To do the waiting events somebody else manages or nobody does" do
+        expect(names(described_class.new(member, may_edit_managed: true, scope: "to_do")) & [ "Advent concert", "Autumn fair" ]).to be_empty
+      end
+
+      # WHY: GHI-529 AC5. A member who oversees the events still gets every waiting event, whether they manage it or not.
+      it "lists on To do every waiting event for a member who oversees the events, whoever manages it" do
+        expect(names(described_class.new(member, may_edit: true, may_edit_managed: true, scope: "to_do"))).to eq [ "Autumn fair", "Harvest gig", "Winter gala", "Advent concert" ]
+      end
+    end
   end
 
   describe "#counts" do
@@ -179,6 +205,15 @@ RSpec.describe Event::Filter do
       create(:event, :from_the_past, group: member.group, creator: member, name: "Summer gig", category: :gig, status: :concluded)
 
       expect(described_class.new(member, may_edit: true, categories: %w[ gig ]).counts(member.group.events)).to eq({ nil => 1, "to_do" => 1, "past" => 2, "canceled" => 0 })
+    end
+
+    # WHY: GHI-529 AC3. A manager's To do counts the waiting events they manage, which is what it lists, and not the one somebody else manages.
+    it "counts on To do the waiting events the member manages" do
+      upcoming(manager: member, name: "Winter gala", status: :unconfirmed)
+      create(:event, :from_the_past, group: member.group, creator: member, manager: member, name: "Harvest gig", status: :confirmed)
+      upcoming(manager: create(:member, :active, group: member.group), name: "Advent concert", status: :unconfirmed)
+
+      expect(described_class.new(member, may_edit_managed: true).counts(member.group.events)["to_do"]).to eq 2
     end
   end
 
