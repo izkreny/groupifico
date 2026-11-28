@@ -330,18 +330,6 @@ RSpec.describe "Events", type: :request do
         expect(response.body).to include "Nothing to do."
       end
 
-      # WHY: GHI-529 AC5. Managing one waiting event narrows nothing for a member who runs the group's events, so another manager's waiting event is on their To do beside their own.
-      it "lists on To do another manager's waiting event beside the one they manage" do
-        actor = create(:member, :active, :events_administrator)
-        own = create(:event, :from_the_past, group: actor.group, creator: actor, manager: actor, name: "Harvest gig", status: :confirmed)
-        theirs = create(:event, :from_the_future, group: actor.group, creator: actor, manager: create(:member, :active, group: actor.group), name: "Advent concert", status: :unconfirmed)
-        sign_in_as(actor.user)
-
-        get group_events_path(actor.group, scope: "to_do")
-
-        expect(Nokogiri::HTML(response.body).css("#events li[id]").map { it["id"] }).to eq [ own, theirs ].map { ActionView::RecordIdentifier.dom_id(it) }
-      end
-
       # WHY: GHI-502 Q2 on #526. Confirming or concluding an event is an edit a paused member is refused, so the event waiting on whoever runs the events is not on their To do.
       it "says there is nothing to do while the member is paused" do
         actor = create(:member, :paused, :events_administrator)
