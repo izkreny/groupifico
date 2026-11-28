@@ -5,7 +5,8 @@ module IconsHelper
     # Event.statuses
     unconfirmed: "question-mark-circle",
     confirmed: "check-badge",
-    concluded: "shield-check",
+    # WHY: the legend draws a shield, which reads as verified or protected, where an archive box says done and put away.
+    concluded: "archive-box",
     canceled: "no-symbol",
 
     # Registration.statuses
