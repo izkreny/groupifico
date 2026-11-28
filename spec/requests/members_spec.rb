@@ -1067,6 +1067,17 @@ RSpec.describe "Members", type: :request do
         expect(response).to redirect_to group_members_path(actor.group, status: "pending")
       end
 
+      it "names the invitee in the notice as a link to their member page" do
+        actor = create(:member, :active, :members_administrator)
+        sign_in_as(actor.user)
+
+        post group_members_path(actor.group), params: { member: { email: "new.person@example.com" } }
+        follow_redirect!
+
+        link = Nokogiri::HTML(response.body).at_css("#notice a")
+        expect([ link.text, link["href"] ]).to eq [ "new.person@example.com", group_member_path(actor.group, actor.group.members.pending.sole) ]
+      end
+
       it "records the invitee's first change as pending from today, made by whoever invited them (#126 AC3)" do
         actor = create(:member, :active, :members_administrator)
         sign_in_as(actor.user)

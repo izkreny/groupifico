@@ -55,7 +55,7 @@ class MembersController < ApplicationController
 
       # WHY: the Pending tab rather than the invitee's own page, so whoever invited sees where an invitee waits until they join, beside the others still waiting.
       redirect_to group_members_path(@group, Member::Filter::TAB => "pending"),
-        notice: "Invitation sent to #{@member.email}."
+        notice: { text: "Invitation sent to %{link}.", link: @member.email, url: group_member_path(@group, @member) }
     else
       render :new, status: :unprocessable_content
     end

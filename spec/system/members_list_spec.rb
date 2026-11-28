@@ -230,6 +230,19 @@ RSpec.describe "The members list", type: :system do
       expect(page).to have_css "##{ActionView::RecordIdentifier.dom_id(member.group.members.pending.sole, :row)}"
     end
 
+    it "opens the invitee's member page from the notice" do
+      member = create(:member, :active, :owner)
+      sign_in_as member.user
+
+      visit group_members_path(member.group)
+      open_add_member
+      fill_in "invite_by_email_email", with: "new.person@example.com"
+      click_on "Send invitation"
+      within("#notice") { click_link "new.person@example.com" }
+
+      expect(page).to have_current_path group_member_path(member.group, member.group.members.pending.sole)
+    end
+
     # WHY: a refused address lands on the invite page as the member form's does, and that page has to be usable, with no dialog left modal over it.
     it "shows a refused address on the invite page, with nothing left modal" do
       member = create(:member, :active, :owner)
